@@ -1,0 +1,46 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: white;
+    color: black;
+    margin: 0;
+}
+
+nav {
+    padding: 12px;
+    border-bottom: 1px solid black;
+    display: flex;
+    justify-content: space-between;
+}
+
+button {
+    padding: 6px 10px;
+    margin: 4px;
+    cursor: pointer;
+}
+
+.container {
+    padding: 20px;
+    max-width: 600px;
+    margin: auto
+}
+
+input, select {
+    display: block;
+    margin-bottom: 10px;
+    padding: 6px;
+    width: 90%;
+}
+
+select {
+    width: 93%;
+}
+
+.card {
+    border: 1px solid black;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.error {
+    color: red;
+}

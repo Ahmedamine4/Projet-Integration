@@ -1,28 +1,31 @@
-<template>
-  <div>
-    <h1>Login</h1>
-
-    <form @submit.prevent="login">
-      <div>
-        <input v-model="email" placeholder="email" />
-      </div>
-
-      <div>
-        <input v-model="password" type="password" placeholder="password" />
-      </div>
-
-      <button type="submit">Login</button>
-    </form>
-  </div>
-</template>
-
 <script setup>
-import { ref } from "vue"
+import { ref } from 'vue';
+import { useAuthStore } from '../stores/auth';
+import { useRoute } from 'vue-router';
 
-const email = ref("")
-const password = ref("")
+const authStore = useAuthStore();
+const router = useRoute();
+const email = ref('');
+const password = ref('');
+const error = ref('');
 
-function login() {
-  console.log("Login attempt:", email.value, password.value)
+const login = async () => {
+    try {
+        await authStore.login(email.value, password.value);
+        router.push('/dashboard');
+    }
+    catch(err) {
+        error.value = err.message;
+    }
 }
 </script>
+
+<template>
+    <div class="card">
+        <h2>Login</h2>
+        <input v-model="email" placeholder="email" />
+        <input type="password" v-model="password" placeholder="password" />
+        <button @click="login">Login</button>
+        <p class="error">{{error}}</p>
+    </div>
+</template>
