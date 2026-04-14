@@ -28,7 +28,7 @@ export const usePortfolioStore = defineStore('portfolio', {
             this.portfolios.push({
                 name: name.trim(),
                 owner: ownerName,
-                public: true
+                isPublic: true
             });
         }
     }
