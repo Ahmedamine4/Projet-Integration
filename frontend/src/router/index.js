@@ -33,7 +33,6 @@ const router = createRouter({
   history: createWebHistory(),
   routes
 });
-
 router.beforeEach((to, from) => {
   const authStore = useAuthStore();
   if (to.meta.requiresAuth && !authStore.user)

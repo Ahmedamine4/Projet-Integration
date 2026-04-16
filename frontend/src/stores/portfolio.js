@@ -1,9 +1,18 @@
 import { defineStore } from "pinia";
 import { useAuthStore } from "./auth";
 
+function loadPotfolios() {
+    const storedPotfolios = localStorage.getItem('stored_portfolios');
+    return storedPotfolios? JSON.parse(storedPotfolios): [];
+}
+
+function savePortfolios(potfolios) {
+    localStorage.setItem('stored_portfolios', JSON.stringify(potfolios));
+}
+
 export const usePortfolioStore = defineStore('portfolio', {
     state: () => ({
-        portfolios: []
+        portfolios: loadPotfolios()
     }),
     getters: {
         filteredPortfolios(state) {
@@ -30,6 +39,7 @@ export const usePortfolioStore = defineStore('portfolio', {
                 owner: ownerName,
                 isPublic: true
             });
+            savePortfolios(this.portfolios);
         }
     }
 })

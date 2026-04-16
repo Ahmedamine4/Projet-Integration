@@ -6,13 +6,6 @@ body {
     margin: 0;
 }
 
-nav {
-    padding: 12px;
-    border-bottom: 1px solid black;
-    display: flex;
-    justify-content: space-between;
-}
-
 button {
     padding: 6px 10px;
     margin: 4px;
@@ -32,10 +25,6 @@ input, select {
     width: 90%;
 }
 
-select {
-    width: 93%;
-}
-
 .card {
     border: 1px solid black;
     padding: 15px;
@@ -45,26 +34,7 @@ select {
 .error {
     color: red;
 }
+
 .bold{
     font-weight: var(--font-bold);
-}
-
-.title_brand {
-    letter-spacing: 1px;
-    font-family: var(--font-display);
-    font-weight: var(--font-medium);
-    color: var(--color-primary);
-    white-space: nowrap;
-    font-size: 5rem;
-    margin: 0;
-    
-}
-.home_section_1{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    gap: var(--space-xs);
-    width: 100%;
-    height: 70vh;
 }

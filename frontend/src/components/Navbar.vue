@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const router = useRouter();
-const navigate = (path) => router.push(path);
 
 const logout = () => {
     authStore.logout();
@@ -16,9 +15,9 @@ const logout = () => {
     <nav>
         <div><b>PortfolioGen</b></div>
         <div v-if="!authStore.user">
-            <button @click="navigate('/')">Home</button>
-            <button @click="navigate('/login')">Login</button>
-            <button @click="navigate('/register')">Register</button>
+            <button @click="router.push('/')">Home</button>
+            <button @click="router.push('/login')">Login</button>
+            <button @click="router.push('/register')">Register</button>
         </div>
         <div v-else>
             {{authStore.user.name}} ({{authStore.user.role}})
@@ -26,3 +25,12 @@ const logout = () => {
         </div>
     </nav>
 </template>
+
+<style scoped>
+nav {
+    padding: 12px;
+    border-bottom: 1px solid black;
+    display: flex;
+    justify-content: space-between;
+}
+</style>
