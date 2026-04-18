@@ -7,9 +7,6 @@ const router = useRouter();
 
 <template>
     <section class="home-hero">
-        <div class="home-hero__glow home-hero__glow--left" />
-        <div class="home-hero__glow home-hero__glow--right" />
-
         <header class="home-hero__nav">
             <BaseButton variant="ghost" size="sm" @click="router.push('/login')">
                 Sign in
@@ -42,32 +39,10 @@ const router = useRouter();
     flex-direction: column;
     justify-content: flex-start;
     background:
-        radial-gradient(at top center, rgba(var(--color-secondary-rgb), 0.28), transparent 28%),
-        radial-gradient(var(--color-background), var(--color-background) 44%, var(--color-surface));
+        linear-gradient(225deg, rgba(var(--color-secondary-rgb), 0.22), transparent 38%),
+        linear-gradient(140deg, rgba(var(--color-primary-rgb), 0.05), transparent 42%),
+        linear-gradient(200deg, var(--color-background), var(--color-background) 48%, var(--color-surface) 100%);
     color: var(--color-primary);
-    isolation: isolate;
-}
-
-.home-hero__glow {
-    position: absolute;
-    inset: auto;
-    width: 34rem;
-    height: 34rem;
-    border-radius: 50%;
-    background: radial-gradient(rgba(var(--color-secondary-rgb), 0.3), rgba(var(--color-secondary-rgb), 0.08) 35%, transparent 72%);
-    filter: blur(20px);
-    pointer-events: none;
-    z-index: -1;
-}
-
-.home-hero__glow--left {
-    top: -8rem;
-    left: -8rem;
-}
-
-.home-hero__glow--right {
-    top: -7rem;
-    right: -6rem;
 }
 
 .home-hero__nav {
