@@ -42,8 +42,8 @@ const router = useRouter();
     flex-direction: column;
     justify-content: flex-start;
     background:
-        radial-gradient(circle at top center, rgba(232, 181, 125, 0.28), transparent 28%),
-        radial-gradient(circle at center, #fbf7f2 0%, #f7f2eb 44%, #f2ece4 100%);
+        radial-gradient(at top center, rgba(var(--color-secondary-rgb), 0.28), transparent 28%),
+        radial-gradient(var(--color-background), var(--color-background) 44%, var(--color-surface));
     color: var(--color-primary);
     isolation: isolate;
 }
@@ -54,7 +54,7 @@ const router = useRouter();
     width: 34rem;
     height: 34rem;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(236, 185, 128, 0.3) 0%, rgba(236, 185, 128, 0.08) 35%, transparent 72%);
+    background: radial-gradient(rgba(var(--color-secondary-rgb), 0.3), rgba(var(--color-secondary-rgb), 0.08) 35%, transparent 72%);
     filter: blur(20px);
     pointer-events: none;
     z-index: -1;
