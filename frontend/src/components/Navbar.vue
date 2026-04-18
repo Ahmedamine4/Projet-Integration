@@ -23,7 +23,7 @@ const logout = () => {
             <BaseButton variant="pill" size="sm" @click="router.push('/register')">Register</BaseButton>
         </div>
         <div v-else class="nav-actions">
-            {{authStore.user.name}} ({{authStore.user.role}})
+            <span class="nav-user">{{authStore.user.name}} ({{authStore.user.role}})</span>
             <BaseButton variant="ghost" size="sm" @click="logout">Logout</BaseButton>
         </div>
     </nav>
@@ -32,8 +32,10 @@ const logout = () => {
 <style scoped>
 nav {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: var(--space-sm);
     padding: var(--space-md) var(--space-lg);
     border-bottom: 1px solid var(--color-primary-hover);
     background-color: var(--color-background);
@@ -61,6 +63,14 @@ nav {
     display: flex;
     align-items: center;
     gap: var(--space-md);
+    min-width: 0;
+    margin-left: auto;
+}
+
+.nav-user {
+    min-width: 0;
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
 }
 
 @media (max-width: 768px) {
@@ -70,6 +80,20 @@ nav {
 
     .nav-actions {
         gap: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-mark {
+        font-size: 1.15rem;
+    }
+
+    .nav-actions {
+        gap: var(--space-xs);
+    }
+
+    .nav-user {
+        font-size: var(--font-size-xs);
     }
 }
 </style>

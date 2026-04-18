@@ -83,4 +83,10 @@ const register = async () => {
     display: flex;
     margin: 0 auto;
 }
+
+@media (max-width: 480px) {
+    .register-card {
+        width: 100%;
+    }
+}
 </style>

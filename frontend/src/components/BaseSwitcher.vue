@@ -58,8 +58,7 @@ const thumbStyle = computed(() => {
     position: relative;
     display: flex;
     width: 100%;
-    max-width: 420px;
-    margin: 0 auto var(--space-md);
+    margin: 0 0 var(--space-md);
     padding: var(--space-xs);
     border: 1px solid var(--color-primary-hover);
     border-radius: var(--radius-sm);
@@ -101,11 +100,15 @@ const thumbStyle = computed(() => {
     z-index: 1;
     flex: 1;
     cursor: pointer;
-    padding: 0.15rem var(--space-md);
+    min-width: 0;
+    padding: clamp(0.35rem, 1.6vw, 0.55rem) clamp(0.35rem, 2vw, var(--space-md));
     border-radius: var(--radius-sm);
     text-align: center;
+    font-size: clamp(0.68rem, 1.9vw, var(--font-size-sm));
+    line-height: 1.2;
     color: var(--color-primary);
     user-select: none;
+    white-space: nowrap;
     transition: color var(--transition-normal),
         transform var(--transition-fast);
 }

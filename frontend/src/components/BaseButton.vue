@@ -127,8 +127,24 @@ button {
 }
 
 @media (max-width: 768px) {
+    .base-button--ghost,
     .base-button--pill {
-        padding: 0.75rem 1.35rem;
+        padding: 0.78rem 1.35rem;
+    }
+
+    .base-button--pill {
+        box-shadow: 0 10px 24px rgba(67, 47, 25, 0.08);
+    }
+}
+
+@media (max-width: 480px) {
+    .base-button--ghost,
+    .base-button--pill {
+        padding: 0.68rem 0.95rem;
+    }
+
+    .base-button--sm {
+        font-size: var(--font-size-xs);
     }
 }
 </style>

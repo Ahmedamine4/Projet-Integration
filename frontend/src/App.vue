@@ -35,4 +35,11 @@ const isHomeRoute = computed(() => route.name === 'home');
 .app-shell--full {
     width: 100%;
 }
+
+@media (max-width: 768px) {
+    .container {
+        width: min(calc(100% - 2 * var(--space-md)), 1100px);
+        padding: var(--space-lg) 0;
+    }
+}
 </style>

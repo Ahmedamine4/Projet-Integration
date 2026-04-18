@@ -37,4 +37,10 @@ const login = async () => {
     display: flex;
     margin: 0 auto;
 }
+
+@media (max-width: 480px) {
+    .auth-button {
+        width: 100%;
+    }
+}
 </style>

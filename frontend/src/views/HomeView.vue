@@ -49,7 +49,7 @@ const router = useRouter();
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 0.9rem;
+    gap: var(--space-md);
     padding: 2.2rem 3rem 0;
 }
 
@@ -92,8 +92,10 @@ const router = useRouter();
 @media (max-width: 768px) {
     .home-hero__nav {
         padding: 1.5rem 1.25rem 0;
-        gap: 0.6rem;
+        gap: var(--space-sm);
+        flex-wrap: wrap;
     }
+
     .home-hero__content {
         width: min(100% - 2rem, 36rem);
         margin-top: clamp(1rem, 3.5vh, 2rem);
@@ -101,6 +103,19 @@ const router = useRouter();
 
     .hero-title {
         line-height: 0.98;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-hero__nav {
+        justify-content: center;
+        gap: var(--space-xs);
+        padding-top: var(--space-md);
+    }
+
+    .home-hero__content {
+        width: min(100% - 1.5rem, 36rem);
+        padding-top: 1.5rem;
     }
 }
 </style>
