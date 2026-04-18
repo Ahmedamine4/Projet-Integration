@@ -33,10 +33,13 @@ const router = createRouter({
   history: createWebHistory(),
   routes
 });
-router.beforeEach((to, from) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore();
-  if (to.meta.requiresAuth && !authStore.user)
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return '/login';
+  }
+  
   return true;
 })
 

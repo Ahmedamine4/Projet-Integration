@@ -2,6 +2,9 @@
     import { ref } from 'vue';
     import { useAuthStore } from '@/stores/auth';
     import { usePortfolioStore } from '@/stores/portfolio';
+    import BaseButton from '@/components/BaseButton.vue';
+    import BaseCard from '@/components/BaseCard.vue';
+    import BaseInput from '@/components/BaseInput.vue';
 
     const authStore = useAuthStore();
     const portfolioStore = usePortfolioStore();
@@ -24,19 +27,22 @@
     <div >
         <h2>Dashboard</h2>
         <p>Hello {{authStore.user?.name}} ({{authStore.user?.role}})</p>
-        <div v-if="authStore.user?.role === 'student'" class="card">
-            <h3>Create Portfolio</h3>
-            <input v-model="newPortfolio" placeholder="Portfolio name" />
+        <BaseCard
+            v-if="authStore.user?.role === 'student'"
+            full-width
+            title="Create Portfolio"
+            title-level="h3"
+        >
+            <BaseInput v-model="newPortfolio" label="Portfolio name" placeholder="Portfolio name" />
             <p class="error">{{createError}}</p>
-            <button @click="createPortfolioHandler">Create</button>
-        </div>
-        <div class="card">
-            <h3>Potfolios</h3>
+            <BaseButton @click="createPortfolioHandler">Create</BaseButton>
+        </BaseCard>
+        <BaseCard full-width title="Potfolios" title-level="h3">
             <ul>
                 <li v-for="p in portfolioStore.filteredPortfolios" :key="p.name">
                     {{p.name}} - {{p.owner}}
                 </li>
             </ul>
-        </div>
+        </BaseCard>
     </div>
 </template>

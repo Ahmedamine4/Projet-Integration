@@ -2,20 +2,31 @@
 import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
+import BaseButton from '@/components/BaseButton.vue';
+import BaseCard from '@/components/BaseCard.vue';
+import BaseInput from '@/components/BaseInput.vue';
+import BaseSwitcher from '@/components/BaseSwitcher.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
-const name = ref('');
+const firstName = ref('');
+const lastName = ref('');
 const email = ref('');
 const role = ref('student');
 const password = ref('');
 const confirm = ref('');
 const error = ref('');
+const roleOptions = [
+    { label: 'Student', value: 'student' },
+    { label: 'Teacher', value: 'teacher' },
+    { label: 'Professional', value: 'professional' },
+];
 
 const register = async () => {
     try {
         await authStore.register({
-            name: name.value,
+            firstName: firstName.value,
+            lastName: lastName.value,
             email: email.value,
             role: role.value,
             password: password.value,
@@ -30,60 +41,41 @@ const register = async () => {
 </script>
 
 <template>
-    <div class="card">
-        <h2>Register</h2>
-        <div class="role-switch">
-            <input type="radio" id="student" value="student" v-model="role">
-            <label for="student" :class="{selected: role === 'student'}">Student</label>
+    <BaseCard title="Register" class="register-card">
+        <BaseSwitcher
+            v-model="role"
+            name="register-role"
+            :options="roleOptions"
+        />
 
-            <input type="radio" id="teacher" value="teacher" v-model="role" >
-            <label for="teacher" :class="{selected: role === 'teacher'}">Teacher</label>
+        <BaseInput
+            v-model="firstName"
+            label="First name"
+            placeholder="First name"
+            autocomplete="given-name"
+        />
 
-            <input type="radio" id="professional" value="professional" v-model="role">
-            <label for="professional" :class="{selected: role === 'professional'}">Professional</label>
-        </div>
+        <BaseInput
+            v-model="lastName"
+            label="Last name"
+            placeholder="Last name"
+            autocomplete="family-name"
+        />
 
-        <input v-model="name" placeholder="name" />
+        <BaseInput v-model="email" label="Email" placeholder="email" />
 
-        <input v-model="email" placeholder="email" />
+        <BaseInput v-model="password" label="Password" type="password" placeholder="password" />
 
-        <input type="password" v-model="password" placeholder="password" />
+        <BaseInput v-model="confirm" label="Confirm password" type="password" placeholder="confirm password" />
 
-        <input type="password" v-model="confirm" placeholder="confirm password" />
-
-        <button @click="register">Register</button>
+        <BaseButton @click="register">Register</BaseButton>
         <p class="error">{{error}}</p>
-    </div>
+    </BaseCard>
 </template>
 
 <style scoped>
-.role-switch {
-    display: flex;
-    border: 1px solid black;
-    width: 60%;
-    justify-content: space-between;
-    border-radius: 3px;
-    padding: 2px;
-    margin: 10px auto;
+.register-card {
+    width: min(100%, 28rem);
+    padding: var(--space-md);
 }
-
-.role-switch input {
-  display: none;
-}
-
-.role-switch label {
-    flex: 1;
-    cursor: pointer;
-    padding: 4px 10px;
-    border-radius: 3px;
-    text-align: center;
-    transition: all 0.15s ease;
-}
-
-.selected {
-    background-color: black;
-    color: white;
-    font-weight: bold;
-}
-
 </style>

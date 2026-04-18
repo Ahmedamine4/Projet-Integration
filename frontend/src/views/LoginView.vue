@@ -2,6 +2,9 @@
 import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
+import BaseButton from '@/components/BaseButton.vue';
+import BaseCard from '@/components/BaseCard.vue';
+import BaseInput from '@/components/BaseInput.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -21,11 +24,10 @@ const login = async () => {
 </script>
 
 <template>
-    <div class="card">
-        <h2>Login</h2>
-        <input v-model="email" placeholder="email" />
-        <input type="password" v-model="password" placeholder="password" />
-        <button @click="login">Login</button>
+    <BaseCard title="Login">
+        <BaseInput v-model="email" label="Email" placeholder="email" />
+        <BaseInput v-model="password" label="Password" type="password" placeholder="password" />
+        <BaseButton @click="login">Login</BaseButton>
         <p class="error">{{error}}</p>
-    </div>
+    </BaseCard>
 </template>

@@ -1,39 +1,58 @@
 import { defineStore } from 'pinia';
+import api from '@/services/api';
 
-function loadUsers() {
-    const storedUsers = localStorage.getItem('stored_users');
-    return storedUsers? JSON.parse(storedUsers): [];
+function getStoredUser() {
+    const storedUser = localStorage.getItem('current_user');
+    return storedUser ? JSON.parse(storedUser) : null;
 }
 
-function saveUsers(users) {
-    localStorage.setItem('stored_users', JSON.stringify(users));
+function getStoredToken() {
+    return localStorage.getItem('token');
 }
 
-function saveCurrentUser(user) {
+function persistSession(user, token) {
     localStorage.setItem('current_user', JSON.stringify(user));
+    localStorage.setItem('token', token);
+}
+
+function clearSession() {
+    localStorage.removeItem('current_user');
+    localStorage.removeItem('token');
 }
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: null,
-        users: loadUsers()
+        user: getStoredUser(),
+        token: getStoredToken()
     }),
+    getters: {
+        isAuthenticated: (state) => Boolean(state.user && state.token)
+    },
     actions: {
-        login(email, password) {
+        async login(email, password) {
             if (!email.includes('@')) throw new Error('Valid email required');
-            if (!password) throw new Error('Password is required');
-            const found = this.users.find(u =>
-                u.email === email &&
-                u.password === password
-            )
-            if (!found) throw new Error('Invalid credentials');
-            this.user = found;
-            saveCurrentUser(this.user);
-        },
-        register(userData) {
-            const { name, email, password, role, confirm } = userData;
 
-            if (!name.trim()) throw new Error('Name is required');
+            if (!password) throw new Error('Password is required');
+
+            const { data } = await api.post('/auth/login', {
+                email,
+                password
+            });
+
+            this.user = data.user;
+            this.token = data.token;
+
+            persistSession(data.user, data.token);
+        },
+
+        async register(userData) {
+            const { firstName, lastName, email, password, role, confirm } = userData;
+            const trimmedFirstName = firstName.trim();
+            const trimmedLastName = lastName.trim();
+
+            if (!trimmedFirstName) throw new Error('First name is required');
+
+            if (!trimmedLastName) throw new Error('Last name is required');
 
             if (!email.includes('@')) throw new Error('Valid email required');
 
@@ -41,22 +60,28 @@ export const useAuthStore = defineStore('auth', {
 
             if (password !== confirm) throw new Error('Passwords must match');
 
-            if (this.users.find(u => u.email === email)) throw new Error('Email already exists');
+            const { data } = await api.post('/auth/register', {
+                name: `${trimmedFirstName} ${trimmedLastName}`,
+                email,
+                password,
+                role
+            });
 
-            const newUser = {name: name.trim(), email, password, role};
-            this.users.push(newUser);
-            saveUsers(this.users);
+            this.user = data.user;
+            this.token = data.token;
 
-            this.user = newUser;
-            saveCurrentUser(this.user);
+            persistSession(data.user, data.token);
         },
+
         logout() {
             this.user = null;
-            localStorage.removeItem('current_user');
+            this.token = null;
+            clearSession();
         },
+
         restoreSession() {
-            const currentUser = localStorage.getItem('current_user');
-            if (currentUser) this.user = JSON.parse(currentUser);
+           this.user = getStoredUser();
+           this.token = getStoredToken();
         }
     }
-})
+});
