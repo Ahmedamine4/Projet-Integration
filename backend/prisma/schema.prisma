@@ -1,0 +1,481 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS (Remplace les contraintes CHECK)
+// ==========================================
+
+enum RoleUtilisateur {
+  etudiant
+  professeur
+  admin
+  professionnel
+  administration
+}
+
+enum StatutValidation {
+  en_attente
+  valide
+  refuse
+}
+
+// ==========================================
+// UTILISATEURS ET HERITAGES
+// ==========================================
+
+model Utilisateur {
+  utilisateur_id   Int              @id @default(autoincrement())
+  nom              String           @db.VarChar(50)
+  prenom           String           @db.VarChar(50)
+  role             RoleUtilisateur?
+  email            String           @unique @db.VarChar(100)
+  mot_de_passe     String?          @db.VarChar(255)
+  date_de_creation DateTime?
+
+  // Relations d'héritage (1-to-1)
+  administrateur Administrateur?
+  administration Administration?
+  etudiant       Etudiant?
+  professeur     Professeur?
+  professionnel  Professionnel?
+
+  // Autres relations
+  notifications Notification[]
+  connexions    Connexion[]
+  interactions  Interaction[]
+
+  @@map("utilisateurs")
+}
+
+model Administrateur {
+  admin_utilisateur_id Int     @id
+  niveau_acces         String? @db.VarChar(50)
+
+  utilisateur            Utilisateur     @relation(fields: [admin_utilisateur_id], references: [utilisateur_id])
+  professionnels_valides Professionnel[] @relation("AdminValidation")
+
+  @@map("administrateurs")
+}
+
+model Administration {
+  admin_inst_utilisateur_id Int     @id
+  poste                     String? @db.VarChar(100)
+  bureau                    String? @db.VarChar(50)
+  telephone                 String? @db.VarChar(20)
+
+  utilisateur  Utilisateur   @relation(fields: [admin_inst_utilisateur_id], references: [utilisateur_id])
+  institutions Institution[]
+
+  @@map("administrations")
+}
+
+model Etudiant {
+  etudiant_utilisateur_id Int     @id
+  promotion               String? @db.VarChar(50)
+  niveau                  String? @db.VarChar(50)
+  github_API              String?
+
+  utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
+  portfolio               Portfolio?
+  experiences             Experience[]
+  clubs                   Adherent[]
+  filieres                Etudie[]
+  badges                  Obtient[]
+  lettres_recommandations LettresDeRecommendations[]
+
+  @@map("etudiants")
+}
+
+model Professeur {
+  prof_utilisateur_id Int     @id
+  departement         String? @db.VarChar(50)
+  specialite          String? @db.VarChar(50)
+
+  utilisateur             Utilisateur                @relation(fields: [prof_utilisateur_id], references: [utilisateur_id])
+  lettres_recommandations LettresDeRecommendations[]
+  enseigne                Enseigne[]
+  validations_projets     ValidationDuProjet[]
+  validations_stages      ValidationStage[]
+
+  @@map("professeurs")
+}
+
+model Professionnel {
+  professionnel_utilisateur_id Int               @id
+  entreprise                   String?           @db.VarChar(100)
+  post                         String?           @db.VarChar(50)
+  email_professionnel          String?           @db.VarChar(100)
+  statut                       StatutValidation?
+  admin_id                     Int?
+
+  utilisateur Utilisateur     @relation(fields: [professionnel_utilisateur_id], references: [utilisateur_id])
+  admin       Administrateur? @relation("AdminValidation", fields: [admin_id], references: [admin_utilisateur_id])
+
+  @@map("professionnels")
+}
+
+// ==========================================
+// ENTITÉS PRINCIPALES
+// ==========================================
+
+model Filiere {
+  filiere_id   Int          @id @default(autoincrement())
+  nom          String?      @db.VarChar(50)
+  etudiants    Etudie[]
+  professeurs  Enseigne[]
+  institutions Appartient[]
+
+  @@map("filieres")
+}
+
+model Club {
+  club_id       Int         @id @default(autoincrement())
+  nom           String?     @db.VarChar(50)
+  description   String?
+  date_creation DateTime?
+  responsable   String?     @db.VarChar(50)
+  adherents     Adherent[]
+  institutions  Reconnait[]
+  activites     Organise[]
+
+  @@map("clubs")
+}
+
+model Badge {
+  badge_id    Int       @id @default(autoincrement())
+  nom         String?   @db.VarChar(50)
+  icone       String?
+  score       Int?
+  description String?
+  etudiants   Obtient[]
+
+  @@map("badges")
+}
+
+model Competence {
+  competence_id Int        @id @default(autoincrement())
+  type          String?    @db.VarChar(50)
+  nom           String?    @db.VarChar(50)
+  description   String?
+  niveau        String?    @db.VarChar(50)
+  experiences   Develope[]
+
+  @@map("competences")
+}
+
+model Portfolio {
+  portfolio_id      Int           @id @default(autoincrement())
+  titre             String?       @db.VarChar(100)
+  objectif_cible    String?       @db.VarChar(100)
+  visibilite        Boolean?
+  date_generation   DateTime?
+  score_credibilite Int?
+  utilisateur_id    Int           @unique
+  etudiant          Etudiant      @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  interactions      Interaction[]
+
+  @@map("portfolio")
+}
+
+model Notification {
+  notification_id   Int         @id @default(autoincrement())
+  message           String?
+  date_notification DateTime?
+  lu                Boolean?
+  type              String?     @db.VarChar(50)
+  utilisateur_id    Int
+  utilisateur       Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+
+  @@map("notifications")
+}
+
+model Connexion {
+  connexion_id      Int         @id @default(autoincrement())
+  ip_address        String?     @db.VarChar(50)
+  statut            Boolean?
+  date_de_connexion DateTime?
+  utilisateur_id    Int
+  utilisateur       Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+
+  @@map("connexions")
+}
+
+model Institution {
+  institution_id            Int                       @id @default(autoincrement())
+  nom                       String?                   @db.VarChar(50)
+  address                   String?                   @db.VarChar(50)
+  email                     String?                   @db.VarChar(255)
+  description               String?
+  admin_inst_utilisateur_id Int
+
+  administration Administration            @relation(fields: [admin_inst_utilisateur_id], references: [admin_inst_utilisateur_id])
+  clubs          Reconnait[]
+  activites      ValideActivite[]
+  filieres       Appartient[]
+  certifications ValidationCertification[]
+
+  @@map("institutions")
+}
+
+// ==========================================
+// EXPERIENCES ET HERITAGES
+// ==========================================
+
+model Experience {
+  experience_id  Int       @id @default(autoincrement())
+  titre          String?   @db.VarChar(100)
+  date_experience DateTime?
+  visibilite     Boolean?
+  type           String?   @db.VarChar(50)
+  description    String?
+  utilisateur_id Int
+
+  etudiant      Etudiant       @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  certification Certification?
+  projet        Projet?
+  activite      Activite?
+  stage         Stage?
+
+  documentations Documentation[]
+  interactions   Interaction[]
+  competences    Develope[]
+
+  @@map("experiences")
+}
+
+model Certification {
+  experience_id Int                       @id
+  document      String?
+  lien_URL      String?
+  code          String?
+  experience    Experience                @relation(fields: [experience_id], references: [experience_id])
+  validations   ValidationCertification[]
+
+  @@map("certifications")
+}
+
+model Documentation {
+  documentation_id Int        @id @default(autoincrement())
+  captures         String?
+  pdf              String?
+  experience_id    Int
+  experience       Experience @relation(fields: [experience_id], references: [experience_id])
+
+  @@map("documentations")
+}
+
+model Projet {
+  experience_id    Int                 @id
+  type_projet      String?             @db.VarChar(50)
+  lien_github      String?
+  lien_youtube     String?
+  resultat_obtenus String?
+  role             String?             @db.VarChar(50)
+  experience       Experience          @relation(fields: [experience_id], references: [experience_id])
+  validation       ValidationDuProjet?
+
+  @@map("projets")
+}
+
+model Activite {
+  experience_id Int              @id
+  type          String?          @db.VarChar(50)
+  lieu          String?          @db.VarChar(100)
+  experience    Experience       @relation(fields: [experience_id], references: [experience_id])
+  validations   ValideActivite[]
+  organisateurs Organise[]
+
+  @@map("activites")
+}
+
+model Stage {
+  experience_id      Int               @id
+  duree              String?           @db.VarChar(50)
+  missions_realisees String?
+  rapport_stage      String?
+  experience         Experience        @relation(fields: [experience_id], references: [experience_id])
+  validations        ValidationStage[]
+
+  @@map("stages")
+}
+
+model Interaction {
+  interaction_id   Int               @id @default(autoincrement())
+  type             String?           @db.VarChar(50)
+  texte            String?
+  statut           StatutValidation?
+  date_interaction DateTime?
+  portfolio_id     Int?
+  experience_id    Int?
+  utilisateur_id   Int
+
+  portfolio   Portfolio?  @relation(fields: [portfolio_id], references: [portfolio_id])
+  experience  Experience? @relation(fields: [experience_id], references: [experience_id])
+  utilisateur Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+
+  @@map("interactions")
+}
+
+// ==========================================
+// TABLES DE JONCTION (Relations Many-to-Many)
+// ==========================================
+
+model Adherent {
+  utilisateur_id Int
+  club_id        Int
+  etudiant       Etudiant @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  club           Club     @relation(fields: [club_id], references: [club_id])
+
+  @@id([utilisateur_id, club_id])
+  @@map("adherent")
+}
+
+model Etudie {
+  utilisateur_id Int
+  filiere_id     Int
+  etudiant       Etudiant @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  filiere        Filiere  @relation(fields: [filiere_id], references: [filiere_id])
+
+  @@id([utilisateur_id, filiere_id])
+  @@map("etudie")
+}
+
+model Reconnait {
+  club_id        Int
+  institution_id Int
+  club           Club        @relation(fields: [club_id], references: [club_id])
+  institution    Institution @relation(fields: [institution_id], references: [institution_id])
+
+  @@id([club_id, institution_id])
+  @@map("reconnait")
+}
+
+model Obtient {
+  utilisateur_id Int
+  badge_id       Int
+  etudiant       Etudiant @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  badge          Badge    @relation(fields: [badge_id], references: [badge_id])
+
+  @@id([utilisateur_id, badge_id])
+  @@map("obtient")
+}
+
+model LettresDeRecommendations {
+  utilisateur_id      Int
+  prof_utilisateur_id Int
+  type_candidature    String?           @db.VarChar(50)
+  fichier             String?
+  statut              StatutValidation?
+  date_lettre         DateTime?
+  commentaire         String?
+
+  etudiant   Etudiant   @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  professeur Professeur @relation(fields: [prof_utilisateur_id], references: [prof_utilisateur_id])
+
+  @@id([utilisateur_id, prof_utilisateur_id])
+  @@map("lettres_de_recommendations")
+}
+
+model Enseigne {
+  utilisateur_id Int
+  filiere_id     Int
+  professeur     Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
+  filiere        Filiere    @relation(fields: [filiere_id], references: [filiere_id])
+
+  @@id([utilisateur_id, filiere_id])
+  @@map("enseigne")
+}
+
+model Develope {
+  competence_id Int
+  experience_id Int
+  competence    Competence @relation(fields: [competence_id], references: [competence_id])
+  experience    Experience @relation(fields: [experience_id], references: [experience_id])
+
+  @@id([competence_id, experience_id])
+  @@map("develope")
+}
+
+model ValideActivite {
+  experience_id  Int
+  institution_id Int
+  activite       Activite    @relation(fields: [experience_id], references: [experience_id])
+  institution    Institution @relation(fields: [institution_id], references: [institution_id])
+
+  @@id([experience_id, institution_id])
+  @@map("valide_activite")
+}
+
+model Appartient {
+  filiere_id     Int
+  institution_id Int
+  filiere        Filiere     @relation(fields: [filiere_id], references: [filiere_id])
+  institution    Institution @relation(fields: [institution_id], references: [institution_id])
+
+  @@id([filiere_id, institution_id])
+  @@map("appartient")
+}
+
+model Organise {
+  experience_id Int
+  club_id       Int
+  activite      Activite @relation(fields: [experience_id], references: [experience_id])
+  club          Club     @relation(fields: [club_id], references: [club_id])
+
+  @@id([experience_id, club_id])
+  @@map("organise")
+}
+
+model ValidationDuProjet {
+  experience_id  Int               @id
+  statut         StatutValidation?
+  date_d_action  DateTime?
+  commentaire    String?
+  utilisateur_id Int
+
+  projet     Projet     @relation(fields: [experience_id], references: [experience_id])
+  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
+
+  @@map("validation_du_projet")
+}
+
+model ValidationStage {
+  utilisateur_id Int
+  experience_id  Int
+  statut         StatutValidation?
+  date_d_action  DateTime?
+  commentaire    String?
+
+  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
+  stage      Stage      @relation(fields: [experience_id], references: [experience_id])
+
+  @@id([utilisateur_id, experience_id])
+  @@map("validation_stage")
+}
+
+model ValidationCertification {
+  institution_id Int
+  experience_id  Int
+  statut         StatutValidation?
+  date_d_action  DateTime?
+  commentaire    String?
+
+  institution   Institution   @relation(fields: [institution_id], references: [institution_id])
+  certification Certification @relation(fields: [experience_id], references: [experience_id])
+
+  @@id([institution_id, experience_id])
+  @@map("validation_certification")
+}
