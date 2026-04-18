@@ -58,6 +58,7 @@ const thumbStyle = computed(() => {
     position: relative;
     display: flex;
     width: 100%;
+    min-height: 2.625rem;
     margin: 0 0 var(--space-md);
     padding: var(--space-xs);
     border: 1px solid var(--color-primary-hover);
@@ -97,11 +98,14 @@ const thumbStyle = computed(() => {
 
 .base-switcher label {
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 1;
     flex: 1;
     cursor: pointer;
     min-width: 0;
-    padding: clamp(0.35rem, 1.6vw, 0.55rem) clamp(0.35rem, 2vw, var(--space-md));
+    padding: 0 var(--space-md);
     border-radius: var(--radius-sm);
     text-align: center;
     font-size: clamp(0.68rem, 1.9vw, var(--font-size-sm));

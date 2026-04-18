@@ -42,12 +42,14 @@ const updateValue = (event) => {
 input {
     display: block;
     width: 100%;
+    min-height: 2.625rem;
     margin-bottom: var(--space-md);
     padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--color-primary-hover);
     border-radius: var(--radius-sm);
     background-color: #fff;
     color: var(--color-primary);
+    line-height: 1.2;
     transition: border-color var(--transition-fast),
         box-shadow var(--transition-fast);
 }
