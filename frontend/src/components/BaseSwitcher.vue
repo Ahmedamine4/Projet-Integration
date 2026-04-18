@@ -89,8 +89,8 @@ const thumbStyle = computed(() => {
     border-radius: var(--radius-sm);
     background-color: var(--color-primary);
     box-shadow: var(--shadow-sm);
-    transition: left var(--transition-normal),
-        width var(--transition-normal),
+    transition: left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        width 0.35s ease,
         background-color var(--transition-fast);
     will-change: left;
     z-index: 0;
