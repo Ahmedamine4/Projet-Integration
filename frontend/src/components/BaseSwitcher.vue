@@ -74,8 +74,8 @@ const thumbStyle = computed(() => {
 
 .base-switcher__thumb {
     position: absolute;
-    top: var(--space-xs);
-    bottom: var(--space-xs);
+    top: 0.12rem;
+    bottom: 0.12rem;
     left: calc(
         var(--space-xs) +
         var(--active-index) * (
@@ -101,7 +101,7 @@ const thumbStyle = computed(() => {
     z-index: 1;
     flex: 1;
     cursor: pointer;
-    padding: var(--radius-sm) var(--space-md);
+    padding: 0.15rem var(--space-md);
     border-radius: var(--radius-sm);
     text-align: center;
     color: var(--color-primary);

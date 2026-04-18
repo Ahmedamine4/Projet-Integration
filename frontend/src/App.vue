@@ -22,6 +22,12 @@ const isHomeRoute = computed(() => route.name === 'home');
     min-height: 100vh;
 }
 
+.container {
+    width: min(calc(100% - 2 * var(--space-lg)), 1100px);
+    margin: 0 auto;
+    padding: var(--space-xl) 0;
+}
+
 .app-shell {
     min-height: 100vh;
 }

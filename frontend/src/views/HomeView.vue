@@ -7,8 +7,8 @@ const router = useRouter();
 
 <template>
     <section class="home-hero">
-        <div class="home-hero__glow home-hero__glow--left"></div>
-        <div class="home-hero__glow home-hero__glow--right"></div>
+        <div class="home-hero__glow home-hero__glow--left" />
+        <div class="home-hero__glow home-hero__glow--right" />
 
         <header class="home-hero__nav">
             <BaseButton variant="ghost" size="sm" @click="router.push('/login')">

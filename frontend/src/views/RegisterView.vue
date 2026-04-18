@@ -68,7 +68,7 @@ const register = async () => {
 
         <BaseInput v-model="confirm" label="Confirm password" type="password" placeholder="confirm password" />
 
-        <BaseButton @click="register">Register</BaseButton>
+        <BaseButton class="auth-button" @click="register">Register</BaseButton>
         <p class="error">{{error}}</p>
     </BaseCard>
 </template>
@@ -77,5 +77,10 @@ const register = async () => {
 .register-card {
     width: min(100%, 28rem);
     padding: var(--space-md);
+}
+
+.auth-button {
+    display: flex;
+    margin: 0 auto;
 }
 </style>

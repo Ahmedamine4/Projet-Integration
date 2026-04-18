@@ -45,6 +45,13 @@ const classes = computed(() => [
 </template>
 
 <style scoped>
+
+button {
+    font: inherit;
+    border: none;
+    background: none;
+}
+
 .base-button {
     display: inline-flex;
     align-items: center;
@@ -88,14 +95,16 @@ const classes = computed(() => [
     background: var(--color-primary-hover);
 }
 
+.base-button--ghost, .base-button--pill {
+    padding: 0.9rem 2rem;
+    border-radius: 999px;
+}
+
 .base-button--ghost {
-    padding: 0;
     background: transparent;
 }
 
 .base-button--pill {
-    padding: 0.9rem 2rem;
-    border-radius: 999px;
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 12px 30px rgba(67, 47, 25, 0.08);
 }

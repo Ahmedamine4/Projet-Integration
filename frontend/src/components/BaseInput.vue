@@ -38,6 +38,26 @@ const updateValue = (event) => {
 </template>
 
 <style scoped>
+
+input {
+    display: block;
+    width: 100%;
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-primary-hover);
+    border-radius: var(--radius-sm);
+    background-color: #fff;
+    color: var(--color-primary);
+    transition: border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px rgba(236, 108, 15, 0.15);
+}
+
 .base-input {
     display: block;
     width: 100%;

@@ -27,7 +27,14 @@ const login = async () => {
     <BaseCard title="Login">
         <BaseInput v-model="email" label="Email" placeholder="email" />
         <BaseInput v-model="password" label="Password" type="password" placeholder="password" />
-        <BaseButton @click="login">Login</BaseButton>
+        <BaseButton class="auth-button" @click="login">Login</BaseButton>
         <p class="error">{{error}}</p>
     </BaseCard>
 </template>
+
+<style scoped>
+.auth-button {
+    display: flex;
+    margin: 0 auto;
+}
+</style>
