@@ -1,14 +1,14 @@
 services:
   backend:
     build:
-      context: ./backend
+      context: ../../backend
       target: production
     environment:
       - NODE_ENV=production
 
   frontend:
     build:
-      context: ./frontend
+      context: ../../frontend
       target: production
     ports:
       - "80:80"
@@ -17,7 +17,7 @@ services:
 
   ai:
     build:
-      context: ./ai
+      context: ../../ai
       target: production
     environment:
       - ENV=production

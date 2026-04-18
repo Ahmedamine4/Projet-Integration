@@ -1,7 +1,7 @@
 services:
   backend:
     build:
-      context: ./backend
+      context: ../../backend
       target: development
     volumes:
       - ./backend:/app
@@ -11,7 +11,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../../frontend
       target: development
     volumes:
       - ./frontend:/app
@@ -21,7 +21,7 @@ services:
     
   ai:
     build:
-      context: ./ai
+      context: ../../ai
       target: development
     volumes:
       - ./ai:/app

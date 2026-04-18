@@ -4,16 +4,16 @@ services:
     ports:
       - "4001:4001"
     build:
-      context: ./backend
+      context: ../../backend
     env_file:
-      - ./backend/.env
+      - ../../backend/.env
     depends_on:
       db:
         condition: service_healthy
   frontend:
     container_name: frontend-container
     build:
-      context: ./frontend
+      context: ../../frontend
     ports:
       - "5173:5173"
     depends_on:
@@ -39,7 +39,7 @@ services:
   ai:
     container_name: ai-container
     build:
-      context: ./ai
+      context: ../../ai
     ports:
       - "8000:8000"
     depends_on:
