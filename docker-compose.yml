@@ -1,0 +1,50 @@
+services:
+  backend:
+    container_name: back-app-container
+    ports:
+      - "4001:4001"
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+  frontend:
+    container_name: frontend-container
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+  db:
+    image: postgres:16-alpine
+    container_name: postgres-db-container
+    restart: always
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d appdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+  ai:
+    container_name: ai-container
+    build:
+      context: ./ai
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+
+volumes:
+  postgres-db:
