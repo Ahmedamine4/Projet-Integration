@@ -114,6 +114,19 @@ button {
     opacity: 0.9;
 }
 
+.base-button--xs {
+    font-size: var(--font-size-xs);
+}
+
+.base-button--xs.base-button--primary {
+    padding: 0.62rem 1.15rem;
+}
+
+.base-button--xs.base-button--ghost,
+.base-button--xs.base-button--pill {
+    padding: 0.68rem 1.3rem;
+}
+
 .base-button--sm {
     font-size: var(--font-size-sm);
 }
@@ -141,6 +154,15 @@ button {
     .base-button--ghost,
     .base-button--pill {
         padding: 0.68rem 0.95rem;
+    }
+
+    .base-button--xs.base-button--primary {
+        padding: 0.56rem 1rem;
+    }
+
+    .base-button--xs.base-button--ghost,
+    .base-button--xs.base-button--pill {
+        padding: 0.6rem 1rem;
     }
 
     .base-button--sm {

@@ -8,16 +8,15 @@ const router = useRouter();
 <template>
     <section class="home-hero">
         <header class="home-hero__nav">
-            <BaseButton variant="ghost" size="sm" @click="router.push('/login')">
+            <BaseButton variant="ghost" size="xs" @click="router.push('/login')">
                 Sign in
             </BaseButton>
-            <BaseButton variant="pill" size="sm" @click="router.push('/register')">
+            <BaseButton variant="pill" size="xs" @click="router.push('/register')">
                 Sign up
             </BaseButton>
         </header>
 
         <div class="home-hero__content">
-            <p class="home-hero__eyebrow">Build, verify, and present your best work</p>
 
             <h1 class="hero-title hero-title--top">
                 Your <span class="hero-title__strong">Portfolio,</span>
@@ -26,6 +25,7 @@ const router = useRouter();
             <h2 class="hero-title hero-title--bottom">
                 Certified for the Real World
             </h2>
+            <p class="home-hero__eyebrow">Build, verify, and present your best work</p>
         </div>
     </section>
 </template>
@@ -61,7 +61,7 @@ const router = useRouter();
 }
 
 .home-hero__eyebrow {
-    margin: 0 0 1.2rem;
+    margin: var(--space-xl) 0 1.2rem;
     font-size: 0.86rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;

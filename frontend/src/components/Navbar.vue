@@ -18,9 +18,9 @@ const logout = () => {
             Port<span class="brand-mark__strong">Craft</span>
         </div>
         <div v-if="!authStore.user" class="nav-actions">
-            <BaseButton variant="ghost" size="sm" @click="router.push('/')">Home</BaseButton>
-            <BaseButton variant="ghost" size="sm" @click="router.push('/login')">Login</BaseButton>
-            <BaseButton variant="pill" size="sm" @click="router.push('/register')">Register</BaseButton>
+            <BaseButton variant="ghost" size="xs" @click="router.push('/')">Home</BaseButton>
+            <BaseButton variant="ghost" size="xs" @click="router.push('/login')">Login</BaseButton>
+            <BaseButton variant="pill" size="xs" @click="router.push('/register')">Register</BaseButton>
         </div>
         <div v-else class="nav-actions">
             <span class="nav-user">{{authStore.user.name}} ({{authStore.user.role}})</span>
