@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -76,8 +75,10 @@ model Administration {
   bureau                    String? @db.VarChar(50)
   telephone                 String? @db.VarChar(20)
 
-  utilisateur  Utilisateur   @relation(fields: [admin_inst_utilisateur_id], references: [utilisateur_id])
-  institutions Institution[]
+  institution_id            Int     @unique
+
+  utilisateur Utilisateur @relation(fields: [admin_inst_utilisateur_id], references: [utilisateur_id])
+  institution Institution @relation(fields: [institution_id], references: [institution_id])
 
   @@map("administrations")
 }
@@ -214,14 +215,14 @@ model Connexion {
 }
 
 model Institution {
-  institution_id            Int                       @id @default(autoincrement())
-  nom                       String?                   @db.VarChar(50)
-  address                   String?                   @db.VarChar(50)
-  email                     String?                   @db.VarChar(255)
-  description               String?
-  admin_inst_utilisateur_id Int
+  institution_id Int     @id @default(autoincrement())
+  nom            String? @db.VarChar(50)
+  address        String? @db.VarChar(50)
+  email          String? @db.VarChar(255)
+  description    String?
 
-  administration Administration            @relation(fields: [admin_inst_utilisateur_id], references: [admin_inst_utilisateur_id])
+  administration Administration? 
+
   clubs          Reconnait[]
   activites      ValideActivite[]
   filieres       Appartient[]
