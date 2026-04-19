@@ -31,7 +31,7 @@ defineProps({
 <style scoped>
 .card {
     width: min(100%, 32rem);
-    margin: var(--space-lg) auto 0;
+    margin: calc(3 * var(--space-xl)) auto 0;
     padding: var(--space-lg);
     background-color: var(--color-surface);
     border: 1px solid var(--color-primary-hover);
