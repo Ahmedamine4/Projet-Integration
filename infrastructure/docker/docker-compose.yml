@@ -14,8 +14,9 @@ services:
     container_name: frontend-container
     build:
       context: ../../frontend
-    ports:
-      - "5173:5173"
+      #target: development # pour nginx
+    # ports:
+    #   - "5173:5173"  gerer au niveau de nginx pour le reverse proxy
     depends_on:
       - backend
   db:
@@ -44,7 +45,20 @@ services:
       - "8000:8000"
     depends_on:
       - db
+  nginx:
+    container_name: nginx-proxy
+    build:
+      context: ../../infrastructure/nginx
+    ports:
+      - "80:80"
+      - "443:443" # On expose le port 443 pour HTTPS
+    volumes:
+      - nginx-certs:/etc/nginx/ssl # Volume pour garder les certs
+    depends_on:
+      - frontend
+      - backend
 
 
 volumes:
   postgres-db:
+  nginx-certs: # Volume pour stocker les certificats TLS de Nginx
