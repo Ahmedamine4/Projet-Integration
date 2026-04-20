@@ -1,7 +1,7 @@
 const app = require("./app");
 const prisma = require("./config/db");
 
-const PORT = process.env.PORT || 4001;
+const PORT = process.env.PORT || 3000;
 
 async function demarrerServeur() {
   try {
