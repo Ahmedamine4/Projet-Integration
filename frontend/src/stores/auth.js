@@ -47,12 +47,10 @@ export const useAuthStore = defineStore('auth', {
 
         async register(userData) {
             const { firstName, lastName, email, password, role, confirm } = userData;
-            const trimmedFirstName = firstName.trim();
-            const trimmedLastName = lastName.trim();
 
-            if (!trimmedFirstName) throw new Error('First name is required');
+            if (!firstName.trim()) throw new Error('First name is required');
 
-            if (!trimmedLastName) throw new Error('Last name is required');
+            if (!lastName.trim()) throw new Error('Last name is required');
 
             if (!email.includes('@')) throw new Error('Valid email required');
 
@@ -61,7 +59,8 @@ export const useAuthStore = defineStore('auth', {
             if (password !== confirm) throw new Error('Passwords must match');
 
             const { data } = await api.post('/auth/register', {
-                name: `${trimmedFirstName} ${trimmedLastName}`,
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
                 email,
                 password,
                 role
@@ -85,3 +84,17 @@ export const useAuthStore = defineStore('auth', {
         }
     }
 });
+
+
+/*
+{
+  "user": {
+    "id": 1,
+    "firstName": "Moussa"
+    "lastName": "El Moussaoui",
+    "email": "moussa@example.com",
+    "role": "student"
+  },
+  "token": "abc123"
+}
+*/

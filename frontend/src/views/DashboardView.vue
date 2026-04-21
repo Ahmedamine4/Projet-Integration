@@ -29,6 +29,7 @@
         <p>Hello {{authStore.user?.name}} ({{authStore.user?.role}})</p>
         <BaseCard
             v-if="authStore.user?.role === 'student'"
+            class="card--panel"
             full-width
             title="Create Portfolio"
             title-level="h3"
@@ -37,7 +38,7 @@
             <p class="error">{{createError}}</p>
             <BaseButton @click="createPortfolioHandler">Create</BaseButton>
         </BaseCard>
-        <BaseCard full-width title="Potfolios" title-level="h3">
+        <BaseCard class="card--panel" full-width title="Potfolios" title-level="h3">
             <ul>
                 <li v-for="p in portfolioStore.filteredPortfolios" :key="p.name">
                     {{p.name}} - {{p.owner}}

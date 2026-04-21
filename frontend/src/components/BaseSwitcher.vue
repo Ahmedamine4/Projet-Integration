@@ -13,7 +13,7 @@ const props = defineProps({
     name: {
         type: String,
         default: 'base-switcher',
-    },
+    }
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -23,6 +23,7 @@ const selectOption = (value) => {
 };
 
 const activeIndex = computed(() => props.options.findIndex((option) => option.value === props.modelValue));
+
 const thumbStyle = computed(() => {
     return {
         '--active-index': activeIndex.value >= 0 ? activeIndex.value : 0,
@@ -33,8 +34,15 @@ const thumbStyle = computed(() => {
 
 <template>
     <div class="base-switcher">
-        <span class="base-switcher__thumb" :style="thumbStyle" aria-hidden="true" />
-        <template v-for="option in options" :key="option.value">
+        <span
+            class="base-switcher__thumb"
+            :style="thumbStyle" aria-hidden="true"
+        />
+
+        <template
+            v-for="option in options"
+            :key="option.value"
+        >
             <input
                 :id="`${name}-${option.value}`"
                 :checked="modelValue === option.value"
@@ -59,11 +67,11 @@ const thumbStyle = computed(() => {
     display: flex;
     width: 100%;
     min-height: 2.625rem;
-    margin: 0 0 var(--space-md);
+    margin: 0;
     padding: var(--space-xs);
-    border: 1px solid var(--color-primary-hover);
-    border-radius: var(--radius-sm);
-    background-color: var(--color-background);
+    border: none;
+    border-radius: 999px;
+    background: rgba(var(--color-primary-rgb), 0.05);
     gap: var(--space-xs);
     isolation: isolate;
 }
@@ -74,8 +82,8 @@ const thumbStyle = computed(() => {
 
 .base-switcher__thumb {
     position: absolute;
-    top: 0.12rem;
-    bottom: 0.12rem;
+    top: 0.2rem;
+    bottom: 0.2rem;
     left: calc(
         var(--space-xs) +
         var(--active-index) * (
@@ -86,10 +94,11 @@ const thumbStyle = computed(() => {
     width: calc(
         (100% - (2 * var(--space-xs)) - ((var(--option-count) - 1) * var(--space-xs))) / var(--option-count)
     );
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     background-color: var(--color-primary);
     box-shadow: var(--shadow-sm);
-    transition: left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transition:
+        left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
         width 0.35s ease,
         background-color var(--transition-fast);
     will-change: left;
@@ -106,14 +115,17 @@ const thumbStyle = computed(() => {
     cursor: pointer;
     min-width: 0;
     padding: 0 var(--space-md);
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     text-align: center;
-    font-size: clamp(0.68rem, 1.9vw, var(--font-size-sm));
+    font-size: var(--font-size-xs);
     line-height: 1.2;
     color: var(--color-primary);
     user-select: none;
     white-space: nowrap;
-    transition: color var(--transition-normal),
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition:
+        color var(--transition-normal),
         transform var(--transition-fast);
 }
 

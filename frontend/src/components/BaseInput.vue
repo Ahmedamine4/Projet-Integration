@@ -42,16 +42,20 @@ const updateValue = (event) => {
 input {
     display: block;
     width: 100%;
-    min-height: 2.625rem;
+    min-height: 2.5rem;
     margin-bottom: var(--space-md);
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-primary-hover);
-    border-radius: var(--radius-sm);
-    background-color: #fff;
+    border: 1px solid rgba(var(--color-primary-rgb), 0.18);
+    border-radius: 0.8rem;
+    background: rgba(var(--color-background-rgb), 0.78);
     color: var(--color-primary);
     line-height: 1.2;
     transition: border-color var(--transition-fast),
         box-shadow var(--transition-fast);
+}
+
+input::placeholder {
+    color: rgba(var(--color-primary-rgb), 0.42);
 }
 
 input:focus {
@@ -68,10 +72,12 @@ input:focus {
 
 .base-input__label {
     display: block;
-    margin-bottom: var(--space-xs);
-    font-size: var(--font-size-sm);
+    margin-bottom: 0.45rem;
+    font-size: var(--font-size-xs);
     font-weight: var(--font-medium);
-    color: var(--color-primary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-primary-hover);
 }
 
 .base-input input {

@@ -8,7 +8,7 @@ const props = defineProps({
     },
     variant: {
         type: String,
-        default: 'primary',
+        default: 'pill',
     },
     size: {
         type: String,
@@ -58,10 +58,11 @@ button {
     justify-content: center;
     gap: 0.4rem;
     border: none;
-    border-radius: var(--radius-sm);
     cursor: pointer;
     color: var(--color-primary);
     font-weight: var(--font-medium);
+    padding: 0.9rem 2rem;
+    border-radius: 999px;
     transition:
         transform var(--transition-fast),
         opacity var(--transition-fast),
@@ -84,22 +85,6 @@ button {
     opacity: 0.6;
 }
 
-.base-button--primary {
-    padding: 0.75rem 1.4rem;
-    background: var(--color-primary);
-    color: var(--color-background);
-    box-shadow: var(--shadow-sm);
-}
-
-.base-button--primary:hover:not(:disabled) {
-    background: var(--color-primary-hover);
-}
-
-.base-button--ghost, .base-button--pill {
-    padding: 0.9rem 2rem;
-    border-radius: 999px;
-}
-
 .base-button--ghost {
     background: transparent;
 }
@@ -116,14 +101,6 @@ button {
 
 .base-button--xs {
     font-size: var(--font-size-xs);
-}
-
-.base-button--xs.base-button--primary {
-    padding: 0.62rem 1.15rem;
-}
-
-.base-button--xs.base-button--ghost,
-.base-button--xs.base-button--pill {
     padding: 0.68rem 1.3rem;
 }
 

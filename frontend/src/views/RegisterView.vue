@@ -12,10 +12,10 @@ const router = useRouter();
 const firstName = ref('');
 const lastName = ref('');
 const email = ref('');
-const role = ref('student');
 const password = ref('');
 const confirm = ref('');
 const error = ref('');
+const role = ref('student');
 const roleOptions = [
     { label: 'Student', value: 'student' },
     { label: 'Teacher', value: 'teacher' },
