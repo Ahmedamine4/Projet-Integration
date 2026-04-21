@@ -69,7 +69,10 @@ const login = async () => {
                 {{ error }}
             </p>
             
-            <BaseSubmitButton block>
+            <BaseSubmitButton
+                block
+                :disabled="!email.includes('@') || password.length < 8"
+            >
                 Sign In
             </BaseSubmitButton>
         </form>

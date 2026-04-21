@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
-import BaseButton from '@/components/BaseButton.vue';
+import BaseSubmitButton from '@/components/BaseSubmitButton.vue';
 import BaseCard from '@/components/BaseCard.vue';
 import BaseInput from '@/components/BaseInput.vue';
 import BaseSwitcher from '@/components/BaseSwitcher.vue';
@@ -68,7 +68,19 @@ const register = async () => {
 
         <BaseInput v-model="confirm" label="Confirm password" type="password" placeholder="confirm password" />
 
-        <BaseButton class="auth-button" @click="register">Register</BaseButton>
+        <BaseSubmitButton
+            class="auth-button"
+            @click="register"
+            block
+            :disabled="
+                !firstName.trim() ||
+                !lastName.trim() ||
+                !email.includes('@') ||
+                password.length < 8 ||
+                password !== confirm"
+        >
+            Register
+        </BaseSubmitButton>
         <p class="error">{{error}}</p>
     </BaseCard>
 </template>

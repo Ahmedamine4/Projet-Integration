@@ -30,10 +30,6 @@ export const useAuthStore = defineStore('auth', {
     },
     actions: {
         async login(email, password) {
-            if (!email.includes('@')) throw new Error('Valid email required');
-
-            if (!password) throw new Error('Password is required');
-
             const { data } = await api.post('/auth/login', {
                 email,
                 password
@@ -46,18 +42,7 @@ export const useAuthStore = defineStore('auth', {
         },
 
         async register(userData) {
-            const { firstName, lastName, email, password, role, confirm } = userData;
-
-            if (!firstName.trim()) throw new Error('First name is required');
-
-            if (!lastName.trim()) throw new Error('Last name is required');
-
-            if (!email.includes('@')) throw new Error('Valid email required');
-
-            if (password.length < 8) throw new Error('Password must be at least 8 characters');
-
-            if (password !== confirm) throw new Error('Passwords must match');
-
+            const {firstName, lastName, email, password , role} = userData;
             const { data } = await api.post('/auth/register', {
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
