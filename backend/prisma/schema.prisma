@@ -16,6 +16,12 @@ datasource db {
 // ==========================================
 // ENUMS (Remplace les contraintes)
 // ==========================================
+enum TypeExperience {
+  certification
+  projet
+  stage
+  activite
+}
 
 enum RoleUtilisateur {
   etudiant
@@ -236,11 +242,11 @@ model Institution {
 // ==========================================
 
 model Experience {
-  experience_id   String    @id @default(cuid())
-  titre           String?   @db.VarChar(100)
+  experience_id   String         @id @default(cuid())
+  titre           String?        @db.VarChar(100)
   date_experience DateTime?
   visibilite      Boolean?
-  type            String?   @db.VarChar(50)
+  type            TypeExperience
   description     String?
   utilisateur_id  String
 
