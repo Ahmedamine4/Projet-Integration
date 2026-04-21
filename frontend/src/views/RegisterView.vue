@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router';
 import BaseSubmitButton from '@/components/BaseSubmitButton.vue';
 import BaseCard from '@/components/BaseCard.vue';
 import BaseInput from '@/components/BaseInput.vue';
-import BaseSwitcher from '@/components/BaseSwitcher.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -15,12 +14,6 @@ const email = ref('');
 const password = ref('');
 const confirm = ref('');
 const error = ref('');
-const role = ref('student');
-const roleOptions = [
-    { label: 'Student', value: 'student' },
-    { label: 'Teacher', value: 'teacher' },
-    { label: 'Professional', value: 'professional' },
-];
 
 const register = async () => {
     try {
@@ -28,7 +21,6 @@ const register = async () => {
             firstName: firstName.value,
             lastName: lastName.value,
             email: email.value,
-            role: role.value,
             password: password.value,
             confirm: confirm.value
         });
@@ -42,11 +34,6 @@ const register = async () => {
 
 <template>
     <BaseCard title="Register" class="register-card">
-        <BaseSwitcher
-            v-model="role"
-            name="register-role"
-            :options="roleOptions"
-        />
 
         <BaseInput
             v-model="firstName"

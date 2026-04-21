@@ -4,7 +4,6 @@ import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
 import BaseCard from '@/components/BaseCard.vue';
 import BaseInput from '@/components/BaseInput.vue';
-import BaseSwitcher from '@/components/BaseSwitcher.vue';
 import BaseSubmitButton from '@/components/BaseSubmitButton.vue';
 
 const authStore = useAuthStore();
@@ -13,13 +12,6 @@ const router = useRouter();
 const email = ref('');
 const password = ref('');
 const error = ref('');
-const role = ref('student');
-
-const roleOptions = [
-    { label: 'Student', value: 'student' },
-    { label: 'Teacher', value: 'teacher' },
-    { label: 'Pro', value: 'professional' },
-];
 
 const login = async () => {
     try {
@@ -44,11 +36,6 @@ const login = async () => {
         </p>
 
         <form class="auth-form" @submit.prevent="login">
-            <BaseSwitcher
-                v-model="role"
-                name="login-role"
-                :options="roleOptions"
-            />
 
             <BaseInput
                 v-model="email"
