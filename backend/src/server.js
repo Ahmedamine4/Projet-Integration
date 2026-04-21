@@ -1,10 +1,24 @@
-const app = require("./app"); // recupere l'app cree dans app.js
-const pool = require("./config/db");
+const app = require("./app");
+const prisma = require("./config/db");
 
-const PORT = process.env.PORT || 4001;  // s'il exist un port dans .env -> affectation , sinon port=4001
+const PORT = process.env.PORT || 3000;
 
-app.listen(PORT,() => {console.log(`app is up and running on port : ${PORT}`)
- console.log("SERVER STARTED ✔");
-}); // listen c pour demarre le serveur , le console est juste pour verifier que ca marche
+async function demarrerServeur() {
+  try {
+    
+    await prisma.$connect();
+    console.log("🗄️  Connexion à la base de données PostgreSQL réussie !");
 
-// test du DB
+    app.listen(PORT, () => {
+      console.log(`🚀 Serveur en écoute sur le port : ${PORT}`);
+      console.log("✅ SERVER STARTED ✔");
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur critique : Impossible de se connecter à la base de données !");
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+demarrerServeur();
