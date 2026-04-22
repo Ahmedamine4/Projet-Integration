@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
-import SubmitButton from '@/components/SubmitButton.vue';
+import Button from '@/components/Button.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -55,12 +55,13 @@ const login = async () => {
                 {{ error }}
             </p>
             
-            <SubmitButton
+            <Button
                 block
+                variant="submit"
                 :disabled="!email.includes('@') || password.length < 8"
             >
                 Sign In
-            </SubmitButton>
+            </Button>
         </form>
 
         <p class="auth-footer">

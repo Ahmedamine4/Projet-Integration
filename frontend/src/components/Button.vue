@@ -2,10 +2,6 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-    type: {
-        type: String,
-        default: 'button',
-    },
     variant: {
         type: String,
         default: 'pill',
@@ -36,7 +32,6 @@ const classes = computed(() => [
 
 <template>
     <button
-        :type="type"
         :class="classes"
         :disabled="disabled"
     >
@@ -46,23 +41,16 @@ const classes = computed(() => [
 
 <style scoped>
 
-button {
-    font: inherit;
-    border: none;
-    background: none;
-}
-
 .button {
+    font: inherit;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
     border: none;
     cursor: pointer;
     color: var(--color-primary);
     font-weight: var(--font-medium);
     padding: 0.9rem 2rem;
-    border-radius: 999px;
     transition:
         transform var(--transition-fast),
         opacity var(--transition-fast),
@@ -77,7 +65,11 @@ button {
 
 .button:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(236, 108, 15, 0.18);
+    box-shadow:
+        0 0 0 3px rgba(var(--color-secondary-rgb), 0.55),
+        0 0 16px rgba(var(--color-secondary-rgb), 0.55),
+        0 0 34px rgba(var(--color-secondary-rgb), 0.42),
+        0 0 60px rgba(var(--color-secondary-rgb), 0.28);
 }
 
 .button:disabled {
@@ -86,17 +78,32 @@ button {
 }
 
 .button--ghost {
+    border-radius: 999px;
     background: transparent;
 }
 
 .button--pill {
+    border-radius: 999px;
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 12px 30px rgba(67, 47, 25, 0.08);
+}
+
+.button--submit {
+    padding: 0.78rem 1.1rem;
+    border-radius: 0.8rem;
+    background-color: var(--color-secondary);
+    color: var(--color-background);
+    box-shadow: 0 12px 24px rgba(var(--color-secondary-rgb), 0.28);
 }
 
 .button--pill:hover:not(:disabled),
 .button--ghost:hover:not(:disabled) {
     opacity: 0.9;
+}
+
+.button--submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--color-secondary) 88%, white);
 }
 
 .button--xs {

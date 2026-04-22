@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
-import SubmitButton from '@/components/SubmitButton.vue';
+import Button from '@/components/Button.vue';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 
@@ -55,9 +55,10 @@ const register = async () => {
 
         <Input v-model="confirm" label="Confirm password" type="password" placeholder="confirm password" />
 
-        <SubmitButton
+        <Button
             class="auth-button"
             @click="register"
+            variant="submit"
             block
             :disabled="
                 !firstName.trim() ||
@@ -67,7 +68,7 @@ const register = async () => {
                 password !== confirm"
         >
             Register
-        </SubmitButton>
+        </Button>
         <p class="error">{{error}}</p>
     </Card>
 </template>
