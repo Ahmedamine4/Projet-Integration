@@ -15,8 +15,8 @@ defineProps({
     <button
         type="submit"
         :class="[
-            'base-submit-button',
-            {'base-submit-button--block': block},
+            'submit-button',
+            {'submit-button--block': block},
         ]"
         :disabled="disabled"
     >
@@ -31,7 +31,7 @@ button {
     background: none;
 }
 
-.base-submit-button {
+.submit-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -51,23 +51,23 @@ button {
         background-color var(--transition-fast);
 }
 
-.base-submit-button:hover:not(:disabled) {
+.submit-button:hover:not(:disabled) {
     transform: translateY(-1px);
     background: color-mix(in srgb, var(--color-secondary) 88%, white);
 }
 
-.base-submit-button:focus-visible {
+.submit-button:focus-visible {
     outline: none;
     box-shadow:
         0 0 0 3px rgba(var(--color-secondary-rgb)),
         0 12px 24px rgba(var(--color-secondary-rgb), 0.28);
 }
-.base-submit-button:disabled {
+.submit-button:disabled {
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.base-submit-button--block {
+.submit-button--block {
     width: 100%;
 }
 </style>

@@ -25,11 +25,11 @@ const props = defineProps({
 });
 
 const classes = computed(() => [
-    'base-button',
-    `base-button--${props.variant}`,
-    `base-button--${props.size}`,
+    'button',
+    `button--${props.variant}`,
+    `button--${props.size}`,
     {
-        'base-button--block': props.block,
+        'button--block': props.block,
     },
 ]);
 </script>
@@ -52,7 +52,7 @@ button {
     background: none;
 }
 
-.base-button {
+.button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -71,78 +71,78 @@ button {
         color var(--transition-fast);
 }
 
-.base-button:hover:not(:disabled) {
+.button:hover:not(:disabled) {
     transform: translateY(-1px);
 }
 
-.base-button:focus-visible {
+.button:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px rgba(236, 108, 15, 0.18);
 }
 
-.base-button:disabled {
+.button:disabled {
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.base-button--ghost {
+.button--ghost {
     background: transparent;
 }
 
-.base-button--pill {
+.button--pill {
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 12px 30px rgba(67, 47, 25, 0.08);
 }
 
-.base-button--pill:hover:not(:disabled),
-.base-button--ghost:hover:not(:disabled) {
+.button--pill:hover:not(:disabled),
+.button--ghost:hover:not(:disabled) {
     opacity: 0.9;
 }
 
-.base-button--xs {
+.button--xs {
     font-size: var(--font-size-xs);
     padding: 0.68rem 1.3rem;
 }
 
-.base-button--sm {
+.button--sm {
     font-size: var(--font-size-sm);
 }
 
-.base-button--md {
+.button--md {
     font-size: var(--font-size-md);
 }
 
-.base-button--block {
+.button--block {
     width: 100%;
 }
 
 @media (max-width: 768px) {
-    .base-button--ghost,
-    .base-button--pill {
+    .button--ghost,
+    .button--pill {
         padding: 0.78rem 1.35rem;
     }
 
-    .base-button--pill {
+    .button--pill {
         box-shadow: 0 10px 24px rgba(67, 47, 25, 0.08);
     }
 }
 
 @media (max-width: 480px) {
-    .base-button--ghost,
-    .base-button--pill {
+    .button--ghost,
+    .button--pill {
         padding: 0.68rem 0.95rem;
     }
 
-    .base-button--xs.base-button--primary {
+    .button--xs.button--primary {
         padding: 0.56rem 1rem;
     }
 
-    .base-button--xs.base-button--ghost,
-    .base-button--xs.base-button--pill {
+    .button--xs.button--ghost,
+    .button--xs.button--pill {
         padding: 0.6rem 1rem;
     }
 
-    .base-button--sm {
+    .button--sm {
         font-size: var(--font-size-xs);
     }
 }

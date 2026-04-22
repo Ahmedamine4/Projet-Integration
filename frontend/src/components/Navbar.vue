@@ -1,7 +1,7 @@
 <script setup>
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
-import BaseButton from './BaseButton.vue';
+import Button from './Button.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -18,13 +18,13 @@ const logout = () => {
             Port<span class="brand-mark__strong">Craft</span>
         </div>
         <div v-if="!authStore.user" class="nav-actions">
-            <BaseButton variant="ghost" size="xs" @click="router.push('/')">Home</BaseButton>
-            <BaseButton variant="ghost" size="xs" @click="router.push('/login')">Login</BaseButton>
-            <BaseButton variant="pill" size="xs" @click="router.push('/register')">Register</BaseButton>
+            <Button variant="ghost" size="xs" @click="router.push('/')">Home</Button>
+            <Button variant="ghost" size="xs" @click="router.push('/login')">Login</Button>
+            <Button variant="pill" size="xs" @click="router.push('/register')">Register</Button>
         </div>
         <div v-else class="nav-actions">
             <span class="nav-user">{{authStore.user.name}} ({{authStore.user.role}})</span>
-            <BaseButton variant="ghost" size="sm" @click="logout">Logout</BaseButton>
+            <Button variant="ghost" size="sm" @click="logout">Logout</Button>
         </div>
     </nav>
 </template>

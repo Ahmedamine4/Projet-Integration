@@ -25,36 +25,9 @@ const isFullScreenRoute = computed(() => {
 
         <template v-else>
             <Navbar v-if="!isFullScreenRoute" />
-            <main :class="`app-shell ${isFullScreenRoute ? 'app-shell--full' : 'container'}`">
+            <main>
                 <router-view />
             </main>
         </template>
     </div>
 </template>
-
-<style scoped>
-#app {
-    min-height: 100vh;
-}
-
-.container {
-    width: min(calc(100% - 2 * var(--space-lg)), 1100px);
-    margin: 0 auto;
-    padding: var(--space-xl) 0;
-}
-
-.app-shell {
-    min-height: 100vh;
-}
-
-.app-shell--full {
-    width: 100%;
-}
-
-@media (max-width: 768px) {
-    .container {
-        width: min(calc(100% - 2 * var(--space-md)), 1100px);
-        padding: var(--space-lg) 0;
-    }
-}
-</style>

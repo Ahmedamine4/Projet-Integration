@@ -23,10 +23,6 @@ a {
     text-decoration: none;
 }
 
-#app {
-    min-height: 100vh;
-}
-
 .error {
     color: var(--color-error);
     font-size: var(--font-size-sm);

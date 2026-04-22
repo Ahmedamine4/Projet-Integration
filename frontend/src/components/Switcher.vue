@@ -12,7 +12,7 @@ const props = defineProps({
     },
     name: {
         type: String,
-        default: 'base-switcher',
+        default: 'switcher',
     }
 });
 
@@ -33,9 +33,9 @@ const thumbStyle = computed(() => {
 </script>
 
 <template>
-    <div class="base-switcher">
+    <div class="switcher">
         <span
-            class="base-switcher__thumb"
+            class="switcher__thumb"
             :style="thumbStyle" aria-hidden="true"
         />
 
@@ -62,7 +62,7 @@ const thumbStyle = computed(() => {
 </template>
 
 <style scoped>
-.base-switcher {
+.switcher {
     position: relative;
     display: flex;
     width: 100%;
@@ -76,11 +76,11 @@ const thumbStyle = computed(() => {
     isolation: isolate;
 }
 
-.base-switcher input {
+.switcher input {
     display: none;
 }
 
-.base-switcher__thumb {
+.switcher__thumb {
     position: absolute;
     top: 0.2rem;
     bottom: 0.2rem;
@@ -105,7 +105,7 @@ const thumbStyle = computed(() => {
     z-index: 0;
 }
 
-.base-switcher label {
+.switcher label {
     position: relative;
     display: flex;
     align-items: center;
@@ -129,15 +129,15 @@ const thumbStyle = computed(() => {
         transform var(--transition-fast);
 }
 
-.base-switcher label:hover {
+.switcher label:hover {
     transform: translateY(-1px);
 }
 
-.base-switcher label:active {
+.switcher label:active {
     transform: translateY(0);
 }
 
-.base-switcher label.selected {
+.switcher label.selected {
     color: var(--color-background);
     font-weight: var(--font-bold);
 }

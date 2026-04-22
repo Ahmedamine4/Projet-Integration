@@ -2,9 +2,9 @@
 import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
-import BaseCard from '@/components/BaseCard.vue';
-import BaseInput from '@/components/BaseInput.vue';
-import BaseSubmitButton from '@/components/BaseSubmitButton.vue';
+import Card from '@/components/Card.vue';
+import Input from '@/components/Input.vue';
+import SubmitButton from '@/components/SubmitButton.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -26,9 +26,8 @@ const login = async () => {
 
 <template>
 
-    <BaseCard
+    <Card
         title="Welcome back"
-        fullWidth
         size="md"
     >
         <p class="auth-subtitle">
@@ -37,14 +36,14 @@ const login = async () => {
 
         <form class="auth-form" @submit.prevent="login">
 
-            <BaseInput
+            <Input
                 v-model="email"
                 label="Email address"
                 placeholder="name@company.com"
                 autocomplete="email"
             />
 
-            <BaseInput
+            <Input
                 v-model="password"
                 label="Password"
                 type="password"
@@ -56,12 +55,12 @@ const login = async () => {
                 {{ error }}
             </p>
             
-            <BaseSubmitButton
+            <SubmitButton
                 block
                 :disabled="!email.includes('@') || password.length < 8"
             >
                 Sign In
-            </BaseSubmitButton>
+            </SubmitButton>
         </form>
 
         <p class="auth-footer">
@@ -70,7 +69,7 @@ const login = async () => {
                 Register now
             </RouterLink>
         </p>
-    </BaseCard>
+    </Card>
 </template>
 
 <style scoped>

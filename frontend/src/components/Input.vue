@@ -1,5 +1,4 @@
 <script setup>
-import { computed, useAttrs } from 'vue';
 
 defineOptions({
     inheritAttrs: false,
@@ -17,8 +16,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
-const attrs = useAttrs();
-const inputId = computed(() => attrs.id ?? `base-input-${props.label.toLowerCase().replace(/\s+/g, '-') || 'field'}`);
 
 const updateValue = (event) => {
     emit('update:modelValue', event.target.value);
@@ -26,11 +23,10 @@ const updateValue = (event) => {
 </script>
 
 <template>
-    <label class="base-input">
-        <span v-if="label" class="base-input__label">{{ label }}</span>
+    <label class="input">
+        <span v-if="label" class="input__label">{{ label }}</span>
         <input
             v-bind="$attrs"
-            :id="inputId"
             :value="modelValue"
             @input="updateValue"
         >
@@ -64,13 +60,13 @@ input:focus {
     box-shadow: 0 0 0 3px rgba(236, 108, 15, 0.15);
 }
 
-.base-input {
+.input {
     display: block;
     width: 100%;
     margin-bottom: var(--space-md);
 }
 
-.base-input__label {
+.input__label {
     display: block;
     margin-bottom: 0.45rem;
     font-size: var(--font-size-xs);
@@ -80,7 +76,7 @@ input:focus {
     color: var(--color-primary-hover);
 }
 
-.base-input input {
+.input input {
     margin-bottom: 0;
 }
 </style>

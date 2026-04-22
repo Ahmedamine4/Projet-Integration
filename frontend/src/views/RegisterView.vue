@@ -2,9 +2,9 @@
 import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
-import BaseSubmitButton from '@/components/BaseSubmitButton.vue';
-import BaseCard from '@/components/BaseCard.vue';
-import BaseInput from '@/components/BaseInput.vue';
+import SubmitButton from '@/components/SubmitButton.vue';
+import Card from '@/components/Card.vue';
+import Input from '@/components/Input.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -33,29 +33,29 @@ const register = async () => {
 </script>
 
 <template>
-    <BaseCard title="Register" class="register-card">
+    <Card title="Register" class="register-card">
 
-        <BaseInput
+        <Input
             v-model="firstName"
             label="First name"
             placeholder="First name"
             autocomplete="given-name"
         />
 
-        <BaseInput
+        <Input
             v-model="lastName"
             label="Last name"
             placeholder="Last name"
             autocomplete="family-name"
         />
 
-        <BaseInput v-model="email" label="Email" placeholder="email" />
+        <Input v-model="email" label="Email" placeholder="email" />
 
-        <BaseInput v-model="password" label="Password" type="password" placeholder="password" />
+        <Input v-model="password" label="Password" type="password" placeholder="password" />
 
-        <BaseInput v-model="confirm" label="Confirm password" type="password" placeholder="confirm password" />
+        <Input v-model="confirm" label="Confirm password" type="password" placeholder="confirm password" />
 
-        <BaseSubmitButton
+        <SubmitButton
             class="auth-button"
             @click="register"
             block
@@ -67,9 +67,9 @@ const register = async () => {
                 password !== confirm"
         >
             Register
-        </BaseSubmitButton>
+        </SubmitButton>
         <p class="error">{{error}}</p>
-    </BaseCard>
+    </Card>
 </template>
 
 <style scoped>
