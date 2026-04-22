@@ -1,5 +1,5 @@
-FROM node:20-alpine AS base
-
+FROM node:24-alpine AS base
+#changement du version node
 FROM base AS development
 
 WORKDIR /app

@@ -7,7 +7,6 @@ FROM base AS development
 COPY . .
 EXPOSE 5173
 CMD ["npm", "run", "dev"]
-# A verifier si il faut exposer sur 0.0.0.0
 
 FROM base AS production
 COPY . .
