@@ -67,6 +67,10 @@ const loginWithGoogle = async () => {
                 Sign In
             </Button>
 
+            <div class="auth-divider">
+                <span>Or continue with Google</span>
+            </div>
+
             <Button
                 type="button"
                 variant="pill"
@@ -93,7 +97,6 @@ const loginWithGoogle = async () => {
         />
     </Card>
 </template>
-
 <style scoped>
 
 .auth-form {
@@ -123,5 +126,25 @@ const loginWithGoogle = async () => {
     height: 1rem;
     width: 1rem;
     margin: 0 0.5rem;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-primary-hover);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(var(--color-primary-rgb), 0.18);
 }
 </style>
