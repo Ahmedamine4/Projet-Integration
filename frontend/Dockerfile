@@ -1,15 +1,14 @@
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 WORKDIR /app
 COPY package*.json .
 RUN npm install
-
 FROM base AS development
 COPY . .
 EXPOSE 5173
 CMD ["npm", "run", "dev"]
 
 FROM base AS production
-COPY . .
+COPY . . 
 RUN npm run build
 
 FROM nginx:alpine
