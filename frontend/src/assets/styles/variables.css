@@ -36,7 +36,9 @@
   --color-surface: #e8e6de;
   --color-surface-rgb: 232, 230, 222;
   --color-error: #bd1f1e;
+  --color-error-rgb: 189, 31, 30;
   --color-success: #23a279;
+  --color-success-rgb: 35, 162, 121;
 
   /* Typography */
     /* Fonts */
@@ -68,8 +70,8 @@
   --radius-lg: 20px;
 
   /* Shadows */
-  --shadow-sm: 0 2px 6px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
 
   /* Transition */
   --transition-fast: 0.2s ease;

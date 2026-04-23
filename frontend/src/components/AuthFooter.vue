@@ -38,7 +38,8 @@ defineProps({
     text-decoration: none;
 }
 
-.auth-footer a:hover {
+.auth-footer a:hover,
+.auth-footer a:focus-visible {
     text-decoration: underline;
 }
 
