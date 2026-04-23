@@ -7,6 +7,7 @@ import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import AuthFooter from '@/components/AuthFooter.vue';
 import Error from '@/components/Error.vue';
+import Divider from '@/components/Divider.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -32,6 +33,15 @@ const register = async () => {
         error.value = err.message;
     }
 }
+
+const registerWithGoogle = async () => {
+    try {
+        await authStore.startGoogleAuth();
+    }
+    catch(err) {
+        error.value = err.message;
+    } 
+};
 </script>
 
 <template>
@@ -86,6 +96,17 @@ const register = async () => {
                     password !== confirm"
             >
                 Register
+            </Button>
+
+            <Divider>Or continue with Google</Divider>
+
+            <Button
+                type="button"
+                variant="google"
+                block
+                @click="registerWithGoogle"
+            >
+                Continue with Google
             </Button>
 
             <Error v-if="error">

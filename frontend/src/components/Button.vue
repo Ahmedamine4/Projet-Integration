@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import googleIcon from '@/assets/icons/google.svg'
 
 const props = defineProps({
     variant: {
@@ -35,6 +36,12 @@ const classes = computed(() => [
         :class="classes"
         :disabled="disabled"
     >
+        <img
+            v-if="props.variant === 'google'"
+            :src="googleIcon"
+            alt="Google"
+            class="google-icon"
+        />
         <slot />
     </button>
 </template>
@@ -75,14 +82,22 @@ const classes = computed(() => [
 }
 
 .button--ghost {
-    border-radius: 999px;
     background: transparent;
 }
 
+.button--ghost,
 .button--pill {
     border-radius: 999px;
+}
+
+.button--google,
+.button--pill {
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 12px 30px rgba(67, 47, 25, 0.08);
+}
+
+.button--google {
+    border-radius: 0.8rem;
 }
 
 .button--submit {
@@ -93,6 +108,7 @@ const classes = computed(() => [
     box-shadow: 0 12px 24px rgba(var(--color-secondary-rgb), 0.28);
 }
 
+.button--google:hover:not(:disabled),
 .button--pill:hover:not(:disabled),
 .button--ghost:hover:not(:disabled) {
     opacity: 0.9;
@@ -122,18 +138,26 @@ const classes = computed(() => [
     width: 100%;
 }
 
+.google-icon {
+    height: 1rem;
+    width: 1rem;
+    margin: 0 0.5rem;
+}
+
 @media (max-width: 768px) {
+    .button--google,
     .button--ghost,
     .button--pill {
         padding: 0.78rem 1.35rem;
     }
-
+    .button--google,
     .button--pill {
         box-shadow: 0 10px 24px rgba(67, 47, 25, 0.08);
     }
 }
 
 @media (max-width: 480px) {
+    .button--google,
     .button--ghost,
     .button--pill {
         padding: 0.68rem 0.95rem;
