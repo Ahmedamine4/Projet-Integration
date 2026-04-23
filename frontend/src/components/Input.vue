@@ -103,6 +103,6 @@ input::placeholder {
 input:focus {
     outline: none;
     border-color: var(--color-secondary);
-    box-shadow: 0 0 0 3px rgba(236, 108, 15, 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 </style>

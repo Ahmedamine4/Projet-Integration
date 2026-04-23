@@ -63,13 +63,10 @@ const classes = computed(() => [
     transform: translateY(-1px);
 }
 
-.button:focus-visible {
+.button:focus-visible:not(.button--submit) {
     outline: none;
-    box-shadow:
-        0 0 0 3px rgba(var(--color-secondary-rgb), 0.55),
-        0 0 16px rgba(var(--color-secondary-rgb), 0.55),
-        0 0 34px rgba(var(--color-secondary-rgb), 0.42),
-        0 0 60px rgba(var(--color-secondary-rgb), 0.28);
+    border: 1px solid var(--color-secondary);
+    box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
 .button:disabled {
@@ -101,8 +98,9 @@ const classes = computed(() => [
     opacity: 0.9;
 }
 
+.button--submit:focus-visible,
 .button--submit:hover:not(:disabled) {
-    transform: translateY(-1px);
+    outline: none;
     background: color-mix(in srgb, var(--color-secondary) 88%, white);
 }
 
