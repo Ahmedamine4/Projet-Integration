@@ -15,6 +15,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',   
-    port: 5173
+    port: 5173,
+    allowedHosts: ['localhost', 'frontend'], // Permet d'accepter les requêtes venant du conteneur "frontend"
   }
 })
