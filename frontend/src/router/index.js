@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
+import {useAuthStore} from '../stores/auth';
 import HomeView from "../views/HomeView.vue";
 import LoginView from "../views/LoginView.vue";
 import RegisterView from "../views/RegisterView.vue";
 import DashboardView from "../views/DashboardView.vue";
-import {useAuthStore} from '../stores/auth';
+import AuthCallbackView from "@/views/AuthCallbackView.vue";
 
 const routes = [
   {
@@ -28,6 +29,12 @@ const routes = [
     name: "dashboard",
     component: DashboardView,
     meta: { requiresAuth: true }
+  },
+  {
+    path: "/auth/callback",
+    name: "auth-callback",
+    component: AuthCallbackView,
+    meta: { layout: 'auth' }
   }
 ]
 

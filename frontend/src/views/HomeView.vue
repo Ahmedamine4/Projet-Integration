@@ -25,7 +25,7 @@ const router = useRouter();
             <h2 class="hero-title hero-title--bottom">
                 Certified for the Real World
             </h2>
-            <p class="home-hero__eyebrow">Build, verify, and present your best work</p>
+            <p class="home-hero__tagline">Build, verify, and present your best work</p>
         </div>
     </section>
 </template>
@@ -34,7 +34,6 @@ const router = useRouter();
 .home-hero {
     position: relative;
     min-height: 100vh;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -60,7 +59,7 @@ const router = useRouter();
     text-align: center;
 }
 
-.home-hero__eyebrow {
+.home-hero__tagline {
     margin: var(--space-xl) 0 1.2rem;
     font-size: 0.86rem;
     letter-spacing: 0.18em;

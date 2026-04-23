@@ -8,7 +8,7 @@ const props = defineProps({
     },
     size: {
         type: String,
-        default: 'md',
+        default: 'sm',
     },
     block: {
         type: Boolean,
@@ -108,11 +108,12 @@ const classes = computed(() => [
 
 .button--xs {
     font-size: var(--font-size-xs);
-    padding: 0.68rem 1.3rem;
+    padding: 0.5rem 0.85rem;
 }
 
 .button--sm {
     font-size: var(--font-size-sm);
+    padding: 0.65rem 1rem;
 }
 
 .button--md {
@@ -138,10 +139,6 @@ const classes = computed(() => [
     .button--ghost,
     .button--pill {
         padding: 0.68rem 0.95rem;
-    }
-
-    .button--xs.button--primary {
-        padding: 0.56rem 1rem;
     }
 
     .button--xs.button--ghost,

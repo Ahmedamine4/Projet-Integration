@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
+import AuthFooter from '@/components/AuthFooter.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -33,60 +34,90 @@ const register = async () => {
 </script>
 
 <template>
-    <Card title="Register" class="register-card">
+    <Card title="Register" size="sm">
+        <p class="auth-subtitle">
+           Create an account to get started
+        </p>
+        <form class="auth-form" @submit.prevent="register">
+            <Input
+                v-model="firstName"
+                label="First name"
+                placeholder="First name"
+                autocomplete="given-name"
+            />
 
-        <Input
-            v-model="firstName"
-            label="First name"
-            placeholder="First name"
-            autocomplete="given-name"
+            <Input
+                v-model="lastName"
+                label="Last name"
+                placeholder="Last name"
+                autocomplete="family-name"
+            />
+
+            <Input
+                v-model="email"
+                label="Email"
+                placeholder="email"
+            />
+
+            <Input
+                v-model="password"
+                label="Password"
+                type="password"
+                placeholder="password"
+            />
+
+            <Input
+                v-model="confirm"
+                label="Confirm
+                password"
+                type="password"
+                placeholder="confirm password"
+            />
+
+            <Button
+                variant="submit"
+                block
+                :disabled="
+                    !firstName.trim() ||
+                    !lastName.trim() ||
+                    !email.includes('@') ||
+                    password.length < 8 ||
+                    password !== confirm"
+            >
+                Register
+            </Button>
+
+            <p v-if="error" class="auth-error">
+                {{ error }}
+            </p>
+
+        </form>
+        <AuthFooter
+            message="Already have an account?"
+            link-text="Login now"
+            to="/login"
         />
-
-        <Input
-            v-model="lastName"
-            label="Last name"
-            placeholder="Last name"
-            autocomplete="family-name"
-        />
-
-        <Input v-model="email" label="Email" placeholder="email" />
-
-        <Input v-model="password" label="Password" type="password" placeholder="password" />
-
-        <Input v-model="confirm" label="Confirm password" type="password" placeholder="confirm password" />
-
-        <Button
-            class="auth-button"
-            @click="register"
-            variant="submit"
-            block
-            :disabled="
-                !firstName.trim() ||
-                !lastName.trim() ||
-                !email.includes('@') ||
-                password.length < 8 ||
-                password !== confirm"
-        >
-            Register
-        </Button>
-        <p class="error">{{error}}</p>
     </Card>
 </template>
 
 <style scoped>
-.register-card {
-    width: min(100%, 28rem);
-    padding: var(--space-md);
+
+.auth-form {
+    display: grid;
+    gap: 0.2rem;
 }
 
-.auth-button {
-    display: flex;
-    margin: 0 auto;
+.auth-subtitle {
+    margin: 0 0 var(--space-lg);
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-primary-hover);
 }
 
-@media (max-width: 480px) {
-    .register-card {
-        width: 100%;
-    }
+.auth-error {
+    margin: 0.5rem auto 0.4rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-error);
 }
 </style>

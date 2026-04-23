@@ -1,7 +1,13 @@
 <script setup>
+import { computed } from 'vue';
 
 defineOptions({
     inheritAttrs: false,
+});
+
+const model = defineModel({
+    type: [String, Number],
+    default: '',
 });
 
 const props = defineProps({
@@ -9,56 +15,31 @@ const props = defineProps({
         type: String,
         default: '',
     },
-    modelValue: {
-        type: [String, Number],
-        default: '',
+    size: {
+        type: String,
+        default: 'sm'
     },
 });
 
-const emit = defineEmits(['update:modelValue']);
-
-const updateValue = (event) => {
-    emit('update:modelValue', event.target.value);
-};
+const classes = computed(() => [
+    'input',
+    `input--${props.size}`,
+]);
 </script>
 
 <template>
-    <label class="input">
-        <span v-if="label" class="input__label">{{ label }}</span>
+    <label :class="classes">
+        <span v-if="label" class="input__label">
+            {{ label }}
+        </span>
         <input
             v-bind="$attrs"
-            :value="modelValue"
-            @input="updateValue"
+            v-model="model"
         >
     </label>
 </template>
 
 <style scoped>
-
-input {
-    display: block;
-    width: 100%;
-    min-height: 2.5rem;
-    margin-bottom: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid rgba(var(--color-primary-rgb), 0.18);
-    border-radius: 0.8rem;
-    background: rgba(var(--color-background-rgb), 0.78);
-    color: var(--color-primary);
-    line-height: 1.2;
-    transition: border-color var(--transition-fast),
-        box-shadow var(--transition-fast);
-}
-
-input::placeholder {
-    color: rgba(var(--color-primary-rgb), 0.42);
-}
-
-input:focus {
-    outline: none;
-    border-color: var(--color-secondary);
-    box-shadow: 0 0 0 3px rgba(236, 108, 15, 0.15);
-}
 
 .input {
     display: block;
@@ -76,7 +57,52 @@ input:focus {
     color: var(--color-primary-hover);
 }
 
-.input input {
-    margin-bottom: 0;
+input {
+    display: block;
+    width: 100%;
+    min-height: 2.5rem;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.18);
+    border-radius: 0.8rem;
+    background: rgba(var(--color-surface-rgb), 0.32);
+    color: var(--color-primary);
+    font-size: var(--font-size-md);
+    line-height: 1.2;
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.input--xs input {
+    min-height: 2rem;
+    padding: 0.35rem 0.65rem;
+    font-size: var(--font-size-xs);
+}
+
+.input--sm input {
+    min-height: 2.25rem;
+    padding: 0.45rem 0.75rem;
+    font-size: var(--font-size-sm);
+}
+
+.input--md input {
+    min-height: 2.5rem;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-md);
+}
+
+.input--sm .input__label,
+.input--xs .input__label {
+    margin-bottom: 0.25rem;
+}
+
+input::placeholder {
+    color: rgba(var(--color-primary-rgb), 0.42);
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px rgba(236, 108, 15, 0.15);
 }
 </style>

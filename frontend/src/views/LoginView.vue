@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import Button from '@/components/Button.vue';
+import AuthFooter from '@/components/AuthFooter.vue';
+import googleIcon from '@/assets/icons/google.svg'
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -21,15 +23,21 @@ const login = async () => {
     catch(err) {
         error.value = err.message;
     }
-}
+};
+
+const loginWithGoogle = async () => {
+    try {
+        await authStore.startGoogleAuth();
+    }
+    catch(err) {
+        error.value = err.message;
+    } 
+};
 </script>
 
 <template>
 
-    <Card
-        title="Welcome back"
-        size="md"
-    >
+    <Card title="Welcome back" size="sm">
         <p class="auth-subtitle">
             Sign in to your account to continue
         </p>
@@ -51,10 +59,6 @@ const login = async () => {
                 autocomplete="current-password"
             />
             
-            <p v-if="error" class="auth-error">
-                {{ error }}
-            </p>
-            
             <Button
                 block
                 variant="submit"
@@ -62,14 +66,31 @@ const login = async () => {
             >
                 Sign In
             </Button>
-        </form>
 
-        <p class="auth-footer">
-            Don't have an account?
-            <RouterLink to="/register">
-                Register now
-            </RouterLink>
-        </p>
+            <Button
+                type="button"
+                variant="pill"
+                class="google-button"
+                block
+                @click="loginWithGoogle"
+            >
+                <img
+                    :src="googleIcon"
+                    alt="Google"
+                    class="google-icon"
+                />
+                Continue with Google
+            </Button>
+
+            <p v-if="error" class="auth-error">
+                {{ error }}
+            </p>
+        </form>
+        <AuthFooter
+            message="Don't have an account?"
+            link-text="Register now"
+            to="/register"
+        />
     </Card>
 </template>
 
@@ -77,7 +98,7 @@ const login = async () => {
 
 .auth-form {
     display: grid;
-    gap: 1rem;
+    gap: 0.7rem;
 }
 
 .auth-subtitle {
@@ -89,25 +110,18 @@ const login = async () => {
 }
 
 .auth-error {
-    margin: -0.35rem 0 0.9rem;
+    margin: 0.5rem auto 0.4rem;
     font-size: var(--font-size-sm);
     color: var(--color-error);
 }
 
-.auth-footer {
-    margin: 1.1rem 0 0;
-    text-align: center;
-    font-size: var(--font-size-sm);
-    color: var(--color-primary-hover);
+.google-button {
+    border-radius: 0.8rem;
 }
 
-.auth-footer a {
-    color: var(--color-secondary);
-    font-weight: var(--font-medium);
-    text-decoration: none;
-}
-
-.auth-footer a:hover {
-    text-decoration: underline;
+.google-button img {
+    height: 1rem;
+    width: 1rem;
+    margin: 0 0.5rem;
 }
 </style>

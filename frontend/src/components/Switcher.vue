@@ -1,28 +1,19 @@
 <script setup>
 import { computed } from 'vue';
 
+const model = defineModel({
+    type: String,
+    required: true,
+});
+
 const props = defineProps({
-    modelValue: {
-        type: String,
-        required: true,
-    },
     options: {
         type: Array,
         required: true,
-    },
-    name: {
-        type: String,
-        default: 'switcher',
     }
 });
 
-const emit = defineEmits(['update:modelValue']);
-
-const selectOption = (value) => {
-    emit('update:modelValue', value);
-};
-
-const activeIndex = computed(() => props.options.findIndex((option) => option.value === props.modelValue));
+const activeIndex = computed(() => props.options.findIndex((option) => option.value === model.value));
 
 const thumbStyle = computed(() => {
     return {
@@ -44,16 +35,14 @@ const thumbStyle = computed(() => {
             :key="option.value"
         >
             <input
-                :id="`${name}-${option.value}`"
-                :checked="modelValue === option.value"
-                :name="name"
+                :id="`switcher-${option.value}`"
+                v-model="model"
                 :value="option.value"
                 type="radio"
-                @change="selectOption(option.value)"
             >
             <label
-                :for="`${name}-${option.value}`"
-                :class="{ selected: modelValue === option.value }"
+                :for="`switcher-${option.value}`"
+                :class="{ selected: model === option.value }"
             >
                 {{ option.label }}
             </label>
@@ -81,19 +70,20 @@ const thumbStyle = computed(() => {
 }
 
 .switcher__thumb {
+    --switcher__thumb-width: calc(
+        (100% - 2 * var(--space-xs) - (var(--option-count) - 1) * var(--space-xs)) / var(--option-count)
+    );
     position: absolute;
     top: 0.2rem;
     bottom: 0.2rem;
     left: calc(
         var(--space-xs) +
         var(--active-index) * (
-            ((100% - (2 * var(--space-xs)) - ((var(--option-count) - 1) * var(--space-xs))) / var(--option-count)) +
+            var(--switcher__thumb-width) +
             var(--space-xs)
         )
     );
-    width: calc(
-        (100% - (2 * var(--space-xs)) - ((var(--option-count) - 1) * var(--space-xs))) / var(--option-count)
-    );
+    width: var(--switcher__thumb-width);
     border-radius: 999px;
     background-color: var(--color-primary);
     box-shadow: var(--shadow-sm);

@@ -44,6 +44,14 @@ defineProps({
     box-shadow: none;
 }
 
+.card--xs {
+    width: min(100%, 22rem);
+}
+
+.card--sm {
+    width: min(100%, 24rem);
+}
+
 .card--md {
     width: min(100%, 26rem);
 }
@@ -75,6 +83,8 @@ defineProps({
 }
 
 @media (max-width: 480px) {
+    .card--xs,
+    .card--sm,
     .card--md,
     .card--lg {
         width: 100%;
