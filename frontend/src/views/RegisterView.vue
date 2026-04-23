@@ -6,6 +6,7 @@ import Button from '@/components/Button.vue';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import AuthFooter from '@/components/AuthFooter.vue';
+import Error from '@/components/Error.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -87,9 +88,9 @@ const register = async () => {
                 Register
             </Button>
 
-            <p v-if="error" class="auth-error">
+            <Error v-if="error">
                 {{ error }}
-            </p>
+            </Error>
 
         </form>
         <AuthFooter
@@ -113,11 +114,5 @@ const register = async () => {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-primary-hover);
-}
-
-.auth-error {
-    margin: 0.5rem auto 0.4rem;
-    font-size: var(--font-size-sm);
-    color: var(--color-error);
 }
 </style>

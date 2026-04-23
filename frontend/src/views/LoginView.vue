@@ -6,6 +6,7 @@ import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import Button from '@/components/Button.vue';
 import AuthFooter from '@/components/AuthFooter.vue';
+import Error from '@/components/Error.vue';
 import googleIcon from '@/assets/icons/google.svg'
 
 const authStore = useAuthStore();
@@ -86,9 +87,10 @@ const loginWithGoogle = async () => {
                 Continue with Google
             </Button>
 
-            <p v-if="error" class="auth-error">
+            <Error v-if="error">
                 {{ error }}
-            </p>
+            </Error>
+            
         </form>
         <AuthFooter
             message="Don't have an account?"
@@ -110,12 +112,6 @@ const loginWithGoogle = async () => {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-primary-hover);
-}
-
-.auth-error {
-    margin: 0.5rem auto 0.4rem;
-    font-size: var(--font-size-sm);
-    color: var(--color-error);
 }
 
 .google-button {

@@ -41,4 +41,14 @@ defineProps({
 .auth-footer a:hover {
     text-decoration: underline;
 }
+
+.auth-footer a:focus-visible {
+    outline: none;
+    border-radius: 0.25rem;
+    text-shadow:
+        0 0 8px rgba(var(--color-secondary-rgb), 0.75),
+        0 0 16px rgba(var(--color-secondary-rgb), 0.55),
+        0 0 28px rgba(var(--color-secondary-rgb), 0.4);
+}
+
 </style>
