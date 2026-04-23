@@ -2,12 +2,28 @@ stages:
   - build
   - test
 
-build_project:
+image: docker:latest
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_DRIVER: overlay2 // Pour tester les images conteneur sans needing une machine virtuelle dédiée pour chaque job
+
+before_script:
+  - docker info 
+
+# BUILD
+build:
   stage: build
   script:
-    - echo "Building project stage ..."
+    - docker compose -f docker-compose.yml build
 
-test_project:
+# TEST
+test:
   stage: test
   script:
-    - echo "Running tests stage ..."
+    - docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+    - sleep 15
+    - docker compose ps
+    - docker compose down
