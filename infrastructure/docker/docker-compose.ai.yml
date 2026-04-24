@@ -3,3 +3,10 @@ services:
     build:
       context: ../../ai
       target: development-ai
+    volumes:
+      - ../../ai/scripts:/app/scripts
+      - ../../ai/src:/app/src
+      - ../../ai/data:/app/data
+      - ../../ai/models:/app/models
+    ports:
+      - "8000:8000"
