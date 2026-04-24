@@ -1,6 +1,7 @@
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 import api from '@/services/api';
-import { supabase } from '@/services/supabase';
+import { supabase } from "@/services/supabase";
+import { ref, computed } from 'vue';
 
 function getStoredUser() {
     const storedUser = localStorage.getItem('current_user');
@@ -21,96 +22,103 @@ function clearSession() {
     localStorage.removeItem('token');
 }
 
-export const useAuthStore = defineStore('auth', {
-    state: () => ({
-        user: getStoredUser(),
-        token: getStoredToken()
-    }),
-    getters: {
-        isAuthenticated: (state) => Boolean(state.user && state.token)
-    },
-    actions: {
-        async login(email, password) {
-            const { data } = await api.post('/auth/login', {
-                email,
-                password
-            });
+export const useAuthStore = defineStore('auth', () => {
+    const user = ref(getStoredUser());
+    const token = ref(getStoredToken());
 
-            this.user = data.user;
-            this.token = data.token;
+    const isAuthenticated = computed(() => Boolean(user.value && token.value));
 
-            persistSession(data.user, data.token);
-        },
+    async function login(email, password) {
+        const { data } = await api.post('/auth/login', {
+            email,
+            password
+        });
 
-        async register(userData) {
-            const {firstName, lastName, email, password} = userData;
-            const { data } = await api.post('/auth/register', {
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                email,
-                password
-            });
+        user.value = data.user;
+        token.value = data.token;
 
-            this.user = data.user;
-            this.token = data.token;
-
-            persistSession(data.user, data.token);
-        },
-
-        async startGoogleAuth() {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                    queryParams: {
-                        prompt: 'select_account'
-                    }
-                }
-            });
-            if (error) throw error;
-        },
-
-        async completeGoogleAuth() {
-            const code = new URLSearchParams(window.location.search).get('code');
-
-            if (code) {
-                const {error} = await supabase.auth.exchangeCodeForSession(code);
-                if (error) throw error;
-            }
-
-            const { data, error } = await supabase.auth.getSession();
-            if (error) throw error;
-
-            const supabaseToken = data.session?.access_token;
-            if (!supabaseToken) throw new Error('Missing Supabase session');
-
-            const reponse = await api.post(
-                '/auth/google',
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${supabaseToken}`
-                    }
-                }
-            );
-            
-            this.user = reponse.data.user;
-            this.token = reponse.data.token;
-
-            persistSession(reponse.data.user, reponse.data.token);
-        },
-
-        logout() {
-            this.user = null;
-            this.token = null;
-            clearSession();
-        },
-
-        restoreSession() {
-           this.user = getStoredUser();
-           this.token = getStoredToken();
-        }
+        persistSession(data.user, data.token);
     }
+
+    async function register(userData) {
+        const {firstName, lastName, email, password} = userData;
+        const { data } = await api.post('/auth/register', {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email,
+            password
+        });
+
+        user.value = data.user;
+        token.value = data.token;
+
+        persistSession(data.user, data.token);
+    }
+
+    async function startGoogleAuth() {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: {
+                    prompt: 'select_account'
+                }
+            }
+        });
+        if (error) throw error;
+    }
+
+    async function completeGoogleAuth() {
+        const code = new URLSearchParams(window.location.search).get('code');
+
+        if (code) {
+            const {error} = await supabase.auth.exchangeCodeForSession(code);
+            if (error) throw error;
+        }
+
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        const supabaseToken = data.session?.access_token;
+        if (!supabaseToken) throw new Error('Missing Supabase session');
+
+        const response = await api.post(
+            '/auth/google',
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${supabaseToken}`
+                }
+            }
+        );
+        
+        user.value = response.data.user;
+        token.value = response.data.token;
+
+        persistSession(response.data.user, response.data.token);
+    }
+
+    function logout() {
+        user.value = null;
+        token.value = null;
+        clearSession();
+    }
+
+    function restoreSession() {
+        user.value = getStoredUser();
+        token.value = getStoredToken();
+    }
+    return {
+        user,
+        token,
+        isAuthenticated,
+        login,
+        register,
+        startGoogleAuth,
+        completeGoogleAuth,
+        logout,
+        restoreSession
+    };
 });
 
 
