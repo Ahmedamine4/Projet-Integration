@@ -1,2 +1,0 @@
-
-console.log("Running tests 1");
