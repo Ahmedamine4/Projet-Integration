@@ -17,22 +17,69 @@ const email = ref('');
 const password = ref('');
 const confirm = ref('');
 const error = ref('');
+const serverError = ref('');
+const errors = ref({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: ''
+});
+errors.value = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: ''
+};
+const isValidName = (name) => {
+    return /^[A-Za-z]{1,50}$/.test(name);
+};
 
 const register = async () => {
+errors.value = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: ''
+    };
+    const trimmedFirstName = firstName.value.trim();
+    const trimmedLastName = lastName.value.trim();
+    const trimmedEmail = email.value.trim();
+
+     if (!isValidName(trimmedFirstName)) {
+        errors.value.firstName = "invalid first name";
+        return;
+    }
+     if (!isValidName(trimmedLastName)) {
+        errors.value.lastName = "invalid last name";
+        return;
+    }
+
+     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        errors.value.email = "invalid email";
+        return;
+    }
+    if (password.value != confirm.value ){
+        errors.value.password = "Passwords do not match";
+    }
+
     try {
         await authStore.register({
-            firstName: firstName.value,
-            lastName: lastName.value,
-            email: email.value,
+            firstName: trimmedFirstName,
+            lastName: trimmedLastName,
+            email: trimmedEmail,
             password: password.value,
             confirm: confirm.value
         });
         router.push('/dashboard');
     }
-    catch(err) {
-        error.value = err.message;
+   catch (err) {
+      if (!err.response) {
+      serverError.value = "Network error. Please try again.";
+    } else {
+      serverError.value = err.response.data?.message || "Something went wrong";
     }
-}
+  }
+};
 
 const registerWithGoogle = async () => {
     try {
@@ -56,6 +103,9 @@ const registerWithGoogle = async () => {
                 placeholder="First name"
                 autocomplete="given-name"
             />
+            <Error v-if="errors.firstName" class="field-error">
+              {{ errors.firstName }}
+            </Error>
 
             <Input
                 v-model="lastName"
@@ -63,20 +113,26 @@ const registerWithGoogle = async () => {
                 placeholder="Last name"
                 autocomplete="family-name"
             />
-
+            <Error v-if="errors.lastName" class="field-error">
+               {{ errors.lastName }} 
+            </Error>
             <Input
                 v-model="email"
                 label="Email"
                 placeholder="email"
             />
-
+            <Error v-if="errors.email" class="field-error">
+               {{ errors.email }}
+            </Error>
             <Input
                 v-model="password"
                 label="Password"
                 type="password"
                 placeholder="password"
             />
-
+            <Error v-if="errors.password" class="field-error">
+             {{ errors.password }}
+            </Error>
             <Input
                 v-model="confirm"
                 label="Confirm
@@ -91,12 +147,15 @@ const registerWithGoogle = async () => {
                 :disabled="
                     !firstName.trim() ||
                     !lastName.trim() ||
-                    !email.includes('@') ||
-                    password.length < 8 ||
-                    password !== confirm"
+                    !email ||
+                    !password||
+                    !confirm"
             >
                 Register
             </Button>
+            <p v-if="serverError" class="global-error">
+              ⚠ {{ serverError }}
+            </p>
 
             <Divider>Or continue with Google</Divider>
 
@@ -109,9 +168,6 @@ const registerWithGoogle = async () => {
                 Continue with Google
             </Button>
 
-            <Error v-if="error">
-                {{ error }}
-            </Error>
 
         </form>
         <AuthFooter
@@ -135,5 +191,21 @@ const registerWithGoogle = async () => {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-primary-hover);
+}
+.field-error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: -15px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.global-error {
+  color: var(--color-error);
+  font-size: 13px;
+  margin-top: 12px;
+  text-align: center;
 }
 </style>

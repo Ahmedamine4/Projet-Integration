@@ -5,8 +5,8 @@ import { useRouter } from 'vue-router';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import Button from '@/components/Button.vue';
-import AuthFooter from '@/components/AuthFooter.vue';
 import Error from '@/components/Error.vue';
+import AuthFooter from '@/components/AuthFooter.vue';
 import Divider from '@/components/Divider.vue';
 
 const authStore = useAuthStore();
@@ -15,15 +15,34 @@ const router = useRouter();
 const email = ref('');
 const password = ref('');
 const error = ref('');
+const errors = ref({
+  email: ''
+});
+errors.value = {
+  email: ''
+};
+
+error.value = '';
 
 const login = async () => {
+    const trimmedEmail = email.value.trim();
+     errors.value.email = '';
+      error.value = '';
+     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+  errors.value.email = "Invalid email address";
+  return;
+}
     try {
         await authStore.login(email.value, password.value);
         router.push('/dashboard');
     }
     catch(err) {
-        error.value = err.message;
+       if (!err.response) {
+      error.value = "Network error. Please try again.";
+    } else {
+      error.value = err.response.data?.message || "Something went wrong";
     }
+  }
 };
 
 const loginWithGoogle = async () => {
@@ -51,7 +70,9 @@ const loginWithGoogle = async () => {
                 placeholder="name@company.com"
                 autocomplete="email"
             />
-
+            <p v-if="errors.email" class="field-error">
+              {{ errors.email }}
+            </p>
             <Input
                 v-model="password"
                 label="Password"
@@ -63,7 +84,7 @@ const loginWithGoogle = async () => {
             <Button
                 block
                 variant="submit"
-                :disabled="!email.includes('@') || password.length < 8"
+                :disabled="!email.trim() || !password"
             >
                 Sign In
             </Button>
@@ -104,5 +125,14 @@ const loginWithGoogle = async () => {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-primary-hover);
+}
+.field-error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: -20px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 </style>
