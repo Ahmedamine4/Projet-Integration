@@ -55,9 +55,9 @@ export async function findProfesseurByEmail(email) {
 
 // INSCRIPTION
 export async function registerLocalUser(data) {
-  const { nom, prenom, password, confirmPassword, role } = data;
+  const { nom, email, prenom, password, } = data;
 
-  const email = normalizeEmail(data.email); //  correction importante pres test 
+  const email = normalizeEmail(email); //  correction importante pres test 
 
   if (!nom || !prenom || !email || !password || !confirmPassword) {
     throw new Error('Tous les champs sont requis');
@@ -71,32 +71,12 @@ export async function registerLocalUser(data) {
     throw new Error('Mot de passe trop court');
   }
 
-  if (password !== confirmPassword) {
-    throw new Error('Les mots de passe ne correspondent pas');
-  }
 
   const existingUser = await findUserByEmail(email);
   if (existingUser) {
     throw new Error('Email déjà utilisé');
   }
 
-  let finalRole = 'etudiant';
-
-  if (role === 'professeur') {
-    const allowed = await findProfesseurByEmail(email);
-    if (!allowed) {
-      throw new Error('Email non autorisé pour professeur');
-    }
-    finalRole = 'professeur';
-  }
-
-  if (role === 'professionnel') {
-    finalRole = 'professionnel';
-  }
-
-  if (role === 'administrateur') {
-    throw new Error('Création admin interdite');
-  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -106,7 +86,7 @@ export async function registerLocalUser(data) {
       prenom,
       email,
       mot_de_passe: hashedPassword,
-      role: finalRole,
+      role: 'Etudiant',
       provider: 'local',
     },
     select: USER_SELECT,
