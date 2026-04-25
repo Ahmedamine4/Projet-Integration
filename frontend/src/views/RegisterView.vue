@@ -16,7 +16,6 @@ const lastName = ref('');
 const email = ref('');
 const password = ref('');
 const confirm = ref('');
-const error = ref('');
 const serverError = ref('');
 const errors = ref({
     firstName: '',
@@ -41,6 +40,7 @@ errors.value = {
         email: '',
         password: ''
     };
+    serverError.value= '';
     const trimmedFirstName = firstName.value.trim();
     const trimmedLastName = lastName.value.trim();
     const trimmedEmail = email.value.trim();
@@ -60,6 +60,7 @@ errors.value = {
     }
     if (password.value != confirm.value ){
         errors.value.password = "Passwords do not match";
+        return;
     }
 
     try {
@@ -86,7 +87,7 @@ const registerWithGoogle = async () => {
         await authStore.startGoogleAuth();
     }
     catch(err) {
-        error.value = err.message;
+        serverError.value = err.message;
     } 
 };
 </script>
@@ -103,9 +104,9 @@ const registerWithGoogle = async () => {
                 placeholder="First name"
                 autocomplete="given-name"
             />
-            <Error v-if="errors.firstName" class="field-error">
+            <p v-if="errors.firstName" class="field-error">
               {{ errors.firstName }}
-            </Error>
+            </p>
 
             <Input
                 v-model="lastName"
@@ -113,26 +114,26 @@ const registerWithGoogle = async () => {
                 placeholder="Last name"
                 autocomplete="family-name"
             />
-            <Error v-if="errors.lastName" class="field-error">
+            <p v-if="errors.lastName" class="field-error">
                {{ errors.lastName }} 
-            </Error>
+            </p>
             <Input
                 v-model="email"
                 label="Email"
                 placeholder="email"
             />
-            <Error v-if="errors.email" class="field-error">
+            <p v-if="errors.email" class="field-error">
                {{ errors.email }}
-            </Error>
+            </p>
             <Input
                 v-model="password"
                 label="Password"
                 type="password"
                 placeholder="password"
             />
-            <Error v-if="errors.password" class="field-error">
+            <p v-if="errors.password" class="field-error">
              {{ errors.password }}
-            </Error>
+            </p>
             <Input
                 v-model="confirm"
                 label="Confirm
