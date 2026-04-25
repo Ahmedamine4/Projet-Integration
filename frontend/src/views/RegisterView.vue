@@ -131,9 +131,6 @@ const registerWithGoogle = async () => {
                 type="password"
                 placeholder="password"
             />
-            <p v-if="errors.password" class="field-error">
-             {{ errors.password }}
-            </p>
             <Input
                 v-model="confirm"
                 label="Confirm
@@ -141,7 +138,9 @@ const registerWithGoogle = async () => {
                 type="password"
                 placeholder="confirm password"
             />
-
+            <p v-if="errors.password" class="field-error">
+             {{ errors.password }}
+            </p>
             <Button
                 variant="submit"
                 block
