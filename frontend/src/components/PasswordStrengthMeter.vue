@@ -14,8 +14,7 @@ const rules = computed(() => [
     },
     {
         label: 'Alphabetic letter',
-        passed:
-            /[A-Za-z]/.test(props.password)
+        passed: /[A-Za-z]/.test(props.password)
     },
     {
         label: 'Number', passed: /\d/.test(props.password)
