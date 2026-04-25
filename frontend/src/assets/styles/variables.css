@@ -76,4 +76,7 @@
   /* Transition */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
+
+  /* Timing Functions */
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
 }

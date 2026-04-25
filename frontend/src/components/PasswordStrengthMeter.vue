@@ -71,6 +71,7 @@ const meterStyle = computed(() => ({
                         class="password-meter__checkbox"
                         type="checkbox"
                         :checked="rule.passed"
+                        tabindex="-1"
                     >
                     <span>{{ rule.label }}</span>
                 </li>
@@ -80,9 +81,15 @@ const meterStyle = computed(() => ({
 </template>
 
 <style scoped>
+.password-meter {
+    display: grid;
+    gap: 0.45rem;
+    margin-bottom: var(--space-md);
+}
 
 .password-meter-enter-from,
 .password-meter-leave-to {
+    margin-bottom: 0;
     max-height: 0;
     opacity: 0;
     transform: translateY(-0.35rem);
@@ -90,24 +97,21 @@ const meterStyle = computed(() => ({
 
 .password-meter-enter-active,
 .password-meter-leave-active {
+    overflow: hidden;
     transition:
-        max-height 0.3s ease,
-        opacity 0.3s ease,
-        transform 0.3s ease;
+        max-height var(--transition-normal),
+        opacity var(--transition-normal),
+        transform var(--transition-normal),
+        margin-bottom var(--transition-normal);
 }
 
 
 .password-meter-enter-to,
 .password-meter-leave-from {
-    max-height: 8rem;
+    margin-bottom: var(--space-md);
+    max-height: 4.5rem;
     opacity: 1;
     transform: translateY(0);
-}
-
-.password-meter {
-    display: grid;
-    gap: 0.45rem;
-    margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
 }
 
 .password-meter--weak {
@@ -143,6 +147,7 @@ const meterStyle = computed(() => ({
 }
 
 .password-meter__track {
+    overflow: hidden;
     height: 0.38rem;
     border-radius: 999px;
     background-color: rgba(var(--color-primary-rgb), 0.12);
@@ -154,8 +159,8 @@ const meterStyle = computed(() => ({
     border-radius: inherit;
     background: var(--meter-color);
     transition: 
-        width 0.3s ease,
-        background-color 0.3s ease;
+        width 0.3s var(--ease-overshoot),
+        background-color var(--transition-normal);
 }
 
 .password-meter__rules {

@@ -71,14 +71,16 @@ const registerWithGoogle = async () => {
                 placeholder="email"
             />
 
-            <Input
-                v-model="password"
-                label="Password"
-                type="password"
-                placeholder="password"
-            />
+            <div class="password-field">
+                <Input
+                    v-model="password"
+                    label="Password"
+                    type="password"
+                    placeholder="password"
+                />
 
-            <PasswordStrengthMeter :password />
+                <PasswordStrengthMeter :password />
+            </div>
 
             <Input
                 v-model="confirm"
@@ -138,5 +140,9 @@ const registerWithGoogle = async () => {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-primary-hover);
+}
+
+.password-field {
+    display: grid;
 }
 </style>

@@ -27,7 +27,7 @@ const thumbStyle = computed(() => {
     <div class="switcher">
         <span
             class="switcher__thumb"
-            :style="thumbStyle" aria-hidden="true"
+            :style="thumbStyle"
         />
 
         <template
@@ -88,7 +88,7 @@ const thumbStyle = computed(() => {
     background-color: var(--color-primary);
     box-shadow: var(--shadow-sm);
     transition:
-        left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        left 0.35s var(--ease-overshoot),
         width 0.35s ease,
         background-color var(--transition-fast);
     will-change: left;
