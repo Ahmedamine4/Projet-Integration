@@ -19,6 +19,10 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    loading: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const classes = computed(() => [
@@ -34,10 +38,14 @@ const classes = computed(() => [
 <template>
     <button
         :class="classes"
-        :disabled="disabled"
+        :disabled="disabled || loading"
     >
+        <span
+            v-if="loading"
+            class="button__spinner"
+        />
         <img
-            v-if="props.variant === 'google'"
+            v-else-if="props.variant === 'google'"
             :src="googleIcon"
             alt="Google"
             class="google-icon"
@@ -141,7 +149,23 @@ const classes = computed(() => [
 .google-icon {
     height: 1rem;
     width: 1rem;
-    margin: 0 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.button__spinner {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 999px;
+    animation: button-spin 0.7s linear infinite;
+} 
+
+@keyframes button-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @media (max-width: 768px) {

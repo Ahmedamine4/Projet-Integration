@@ -139,7 +139,8 @@ const meterStyle = computed(() => ({
 .password-meter__label {
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--color-primary-hover);
+    font-size: 0.6rem;
+    color: rgba(var(--color-primary-rgb), 0.78);
 }
 
 .password-meter__status {
@@ -159,7 +160,7 @@ const meterStyle = computed(() => ({
     border-radius: inherit;
     background: var(--meter-color);
     transition: 
-        width 0.3s var(--ease-overshoot),
+        width 0.48s var(--ease-overshoot),
         background-color var(--transition-normal);
 }
 

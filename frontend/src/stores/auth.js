@@ -69,13 +69,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function completeGoogleAuth() {
-        const code = new URLSearchParams(window.location.search).get('code');
-
-        if (code) {
-            const {error} = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw error;
-        }
-
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
 
@@ -98,9 +91,13 @@ export const useAuthStore = defineStore('auth', () => {
         persistSession(response.data.user, response.data.token);
     }
 
-    function logout() {
+    async function logout() {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+
         user.value = null;
         token.value = null;
+
         clearSession();
     }
 
@@ -126,7 +123,7 @@ export const useAuthStore = defineStore('auth', () => {
 {
   "user": {
     "id": 1,
-    "firstName": "Moussa"
+    "firstName": "Moussa",
     "lastName": "El Moussaoui",
     "email": "moussa@example.com",
     "role": "student"

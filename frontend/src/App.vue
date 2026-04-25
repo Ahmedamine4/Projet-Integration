@@ -9,12 +9,6 @@ const route = useRoute();
 
 const isAuthRoute = computed(() => route.meta.layout === 'auth');
 
-const fullScreenRoutes = ['home'];
-
-const isFullScreenRoute = computed(() => {
-    return fullScreenRoutes.includes(route.name);
-});
-
 </script>
 
 <template>
@@ -24,7 +18,6 @@ const isFullScreenRoute = computed(() => {
         </AuthLayout>
 
         <template v-else>
-            <Navbar v-if="!isFullScreenRoute" />
             <main>
                 <router-view />
             </main>

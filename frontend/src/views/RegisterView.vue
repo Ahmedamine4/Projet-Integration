@@ -18,8 +18,12 @@ const email = ref('');
 const password = ref('');
 const confirm = ref('');
 const error = ref('');
+const isRegistering = ref(false);
+const isGoogleLoading = ref(false);
 
 const register = async () => {
+    error.value = '';
+    isRegistering.value = true;
     try {
         await authStore.register({
             firstName: firstName.value,
@@ -28,20 +32,26 @@ const register = async () => {
             password: password.value,
             confirm: confirm.value
         });
-        router.push('/dashboard');
+        await router.push('/dashboard');
     }
     catch(err) {
         error.value = err.message;
     }
+    finally {
+        isRegistering.value = false;
+    }
 }
 
 const registerWithGoogle = async () => {
+    error.value = '';
+    isGoogleLoading.value = true;
     try {
         await authStore.startGoogleAuth();
     }
     catch(err) {
         error.value = err.message;
-    } 
+        isGoogleLoading.value = false;
+    }
 };
 </script>
 
@@ -93,7 +103,10 @@ const registerWithGoogle = async () => {
             <Button
                 variant="submit"
                 block
+                :loading="isRegistering"
                 :disabled="
+                    isRegistering ||
+                    isGoogleLoading ||
                     !firstName ||
                     !lastName ||
                     !email ||
@@ -109,6 +122,8 @@ const registerWithGoogle = async () => {
                 type="button"
                 variant="google"
                 block
+                :loading="isGoogleLoading"
+                :disabled="isRegistering || isGoogleLoading"
                 @click="registerWithGoogle"
             >
                 Continue with Google

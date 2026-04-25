@@ -15,23 +15,33 @@ const router = useRouter();
 const email = ref('');
 const password = ref('');
 const error = ref('');
+const isLoggingIn = ref(false);
+const isGoogleLoading = ref(false);
 
 const login = async () => {
+    error.value = '';
+    isLoggingIn.value = true;
     try {
         await authStore.login(email.value, password.value);
-        router.push('/dashboard');
+        await router.push('/dashboard');
     }
     catch(err) {
         error.value = err.message;
     }
+    finally {
+        isLoggingIn.value = false;
+    }
 };
 
 const loginWithGoogle = async () => {
+    error.value = '';
+    isGoogleLoading.value = true;
     try {
         await authStore.startGoogleAuth();
     }
     catch(err) {
         error.value = err.message;
+        isGoogleLoading.value = false;
     } 
 };
 </script>
@@ -63,7 +73,12 @@ const loginWithGoogle = async () => {
             <Button
                 block
                 variant="submit"
-                :disabled="!email.includes('@') || password.length < 8"
+                :loading="isLoggingIn"
+                :disabled="
+                    isLoggingIn ||
+                    isGoogleLoading ||
+                    !email ||
+                    !password"
             >
                 Sign In
             </Button>
@@ -74,6 +89,8 @@ const loginWithGoogle = async () => {
                 type="button"
                 variant="google"
                 block
+                :loading="isGoogleLoading"
+                :disabled="isLoggingIn || isGoogleLoading"
                 @click="loginWithGoogle"
             >
                 Continue with Google
