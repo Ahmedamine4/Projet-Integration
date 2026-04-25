@@ -8,6 +8,7 @@ import Input from '@/components/Input.vue';
 import AuthFooter from '@/components/AuthFooter.vue';
 import Error from '@/components/Error.vue';
 import Divider from '@/components/Divider.vue';
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -77,6 +78,8 @@ const registerWithGoogle = async () => {
                 placeholder="password"
             />
 
+            <PasswordStrengthMeter :password />
+
             <Input
                 v-model="confirm"
                 label="Confirm
@@ -89,11 +92,11 @@ const registerWithGoogle = async () => {
                 variant="submit"
                 block
                 :disabled="
-                    !firstName.trim() ||
-                    !lastName.trim() ||
-                    !email.includes('@') ||
-                    password.length < 8 ||
-                    password !== confirm"
+                    !firstName ||
+                    !lastName ||
+                    !email ||
+                    !password ||
+                    !confirm"
             >
                 Register
             </Button>
