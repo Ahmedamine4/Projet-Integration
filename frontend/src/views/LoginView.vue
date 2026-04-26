@@ -15,21 +15,21 @@ const router = useRouter();
 const email = ref('');
 const password = ref('');
 const error = ref('');
-const errors = ref({
+const errors = reactive({
   email: ''
 });
-errors.value = {
-  email: ''
+const isValidEmail = (email) => {
+  const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return regex.test(email);
 };
 
-error.value = '';
 
 const login = async () => {
     const trimmedEmail = email.value.trim();
-     errors.value.email = '';
+     errors.email = '';
       error.value = '';
-     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-  errors.value.email = "Invalid email address";
+     if (!isValidEmail(trimmedEmail)) {
+  errors.email = "Invalid email address";
   return;
 }
     try {

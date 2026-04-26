@@ -17,7 +17,7 @@ const email = ref('');
 const password = ref('');
 const confirm = ref('');
 const serverError = ref('');
-const errors = ref({
+const errors = reactive({
     firstName: '',
     lastName: '',
     email: '',
@@ -32,6 +32,8 @@ errors.value = {
 const isValidName = (name) => {
     return /^[A-Za-z]{1,50}$/.test(name);
 };
+const isValidEmail = (email) =>
+  /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
 
 const register = async () => {
 errors.value = {
@@ -46,20 +48,20 @@ errors.value = {
     const trimmedEmail = email.value.trim();
 
      if (!isValidName(trimmedFirstName)) {
-        errors.value.firstName = "invalid first name";
+        errors.firstName = "invalid first name";
         return;
     }
      if (!isValidName(trimmedLastName)) {
-        errors.value.lastName = "invalid last name";
+        errors.lastName = "invalid last name";
         return;
     }
 
-     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-        errors.value.email = "invalid email";
-        return;
+     if (!isValidEmail(trimmedEmail)) {
+      errors.email = "Invalid email address";
+      return;
     }
     if (password.value != confirm.value ){
-        errors.value.password = "Passwords do not match";
+        errors.password = "Passwords do not match";
         return;
     }
 
