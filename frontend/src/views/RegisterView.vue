@@ -94,7 +94,9 @@ const register = async () => {
         if (!err.response)
             serverError.value = "Network error. Please try again.";
         else
-            serverError.value = err.response.data?.message || "Something went wrong";
+            serverError.value =
+                err.response.data?.message ||
+                "Something went wrong";
     }
     finally {
         isRegistering.value = false;
