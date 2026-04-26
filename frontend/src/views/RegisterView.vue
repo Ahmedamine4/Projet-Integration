@@ -57,10 +57,10 @@ const register = async () => {
     const trimmedEmail = email.value.trim();
 
     if (!isValidName(trimmedFirstName))
-        errors.firstName = "invalid first name";
+        errors.firstName = "Invalid first name";
 
     if (!isValidName(trimmedLastName))
-        errors.lastName = "invalid last name";
+        errors.lastName = "Invalid last name";
 
     if (!isValidEmail(trimmedEmail))
         errors.email = "Invalid email address";

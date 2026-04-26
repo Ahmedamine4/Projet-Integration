@@ -128,18 +128,17 @@ const meterStyle = computed(() => ({
 .password-meter__header {
     display: flex;
     justify-content: space-between;
+    font-size: var(--font-size-xxs);
 }
 
 .password-meter__label {
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    font-size: 0.6rem;
-    color: rgba(var(--color-primary-rgb), 0.78);
+    color: rgba(var(--color-primary-rgb), 0.68);
 }
 
 .password-meter__status {
     color: var(--meter-color);
-    font-size: var(--font-size-xs);
 }
 
 .password-meter__track {
@@ -170,11 +169,11 @@ const meterStyle = computed(() => ({
 
 .password-meter__rule {
     display: grid;
-    grid-template-columns: 0.9rem 1fr;
+    grid-template-columns: 0.6rem 1fr;
     align-items: center;
     column-gap: 0.3rem;
     font-size: var(--font-size-xs);
-    color: rgba(var(--color-primary-rgb), 0.58);
+    color: rgba(var(--color-primary-rgb), 0.48);
 }
 
 .password-meter__rule--passed {
@@ -182,8 +181,8 @@ const meterStyle = computed(() => ({
 }
 
 .password-meter__checkbox {
-    width: 0.9rem;
-    height: 0.9rem;
+    width: 0.6rem;
+    height: 0.6rem;
     margin: 0;
     accent-color: var(--color-success);
     pointer-events: none;
