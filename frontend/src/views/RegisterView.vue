@@ -1,12 +1,11 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import AuthFooter from '@/components/AuthFooter.vue';
-import Error from '@/components/Error.vue';
 import Divider from '@/components/Divider.vue';
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter.vue';
 
@@ -17,41 +16,101 @@ const lastName = ref('');
 const email = ref('');
 const password = ref('');
 const confirm = ref('');
-const error = ref('');
+
 const isRegistering = ref(false);
 const isGoogleLoading = ref(false);
 
+const serverError = ref('');
+const errors = reactive({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirm: ''
+});
+
+const isValidName = (name) => {
+    const regex = /^(?=.{1,50}$)[A-Za-z]+(?: [A-Za-z]+)*$/;
+    return regex.test(name);
+};
+
+const isValidEmail = (email) => {
+    const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+};
+
+const isValidPassword = (password) => {
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    return regex.test(password);
+};
+
 const register = async () => {
-    error.value = '';
+    errors.firstName = '';
+    errors.lastName = '';
+    errors.email = '';
+    errors.password = '';
+    errors.confirm = '';
+
+    serverError.value = '';
+    const trimmedFirstName = firstName.value.trim();
+    const trimmedLastName = lastName.value.trim();
+    const trimmedEmail = email.value.trim();
+
+    if (!isValidName(trimmedFirstName))
+        errors.firstName = "invalid first name";
+
+    if (!isValidName(trimmedLastName))
+        errors.lastName = "invalid last name";
+
+    if (!isValidEmail(trimmedEmail))
+        errors.email = "Invalid email address";
+
+    if (!isValidPassword(password.value))
+        errors.password = "Password is not strong";
+
+    if (password.value !== confirm.value)
+        errors.confirm = "Passwords do not match";
+
+    if (
+        errors.firstName ||
+        errors.lastName ||
+        errors.email ||
+        errors.password ||
+        errors.confirm
+    ) return;
+
     isRegistering.value = true;
+
     try {
         await authStore.register({
-            firstName: firstName.value,
-            lastName: lastName.value,
-            email: email.value,
-            password: password.value,
-            confirm: confirm.value
+            firstName: trimmedFirstName,
+            lastName: trimmedLastName,
+            email: trimmedEmail,
+            password: password.value
         });
         await router.push('/dashboard');
     }
-    catch(err) {
-        error.value = err.message;
+    catch (err) {
+        if (!err.response)
+            serverError.value = "Network error. Please try again.";
+        else
+            serverError.value = err.response.data?.message || "Something went wrong";
     }
     finally {
         isRegistering.value = false;
     }
-}
+};
 
 const registerWithGoogle = async () => {
-    error.value = '';
+    serverError.value = '';
     isGoogleLoading.value = true;
     try {
         await authStore.startGoogleAuth();
     }
     catch(err) {
-        error.value = err.message;
+        serverError.value = err.message;
         isGoogleLoading.value = false;
-    }
+    } 
 };
 </script>
 
@@ -67,6 +126,9 @@ const registerWithGoogle = async () => {
                 placeholder="First name"
                 autocomplete="given-name"
             />
+            <p v-if="errors.firstName" class="field-error">
+              {{ errors.firstName }}
+            </p>
 
             <Input
                 v-model="lastName"
@@ -74,12 +136,18 @@ const registerWithGoogle = async () => {
                 placeholder="Last name"
                 autocomplete="family-name"
             />
-
+            <p v-if="errors.lastName" class="field-error">
+               {{ errors.lastName }} 
+            </p>
             <Input
                 v-model="email"
                 label="Email"
                 placeholder="email"
             />
+
+            <p v-if="errors.email" class="field-error">
+               {{ errors.email }}
+            </p>
 
             <div class="password-field">
                 <Input
@@ -92,6 +160,10 @@ const registerWithGoogle = async () => {
                 <PasswordStrengthMeter :password />
             </div>
 
+            <p v-if="errors.password" class="field-error">
+               {{ errors.password }}
+            </p>
+
             <Input
                 v-model="confirm"
                 label="Confirm
@@ -99,6 +171,10 @@ const registerWithGoogle = async () => {
                 type="password"
                 placeholder="confirm password"
             />
+
+            <p v-if="errors.confirm" class="field-error">
+             {{ errors.confirm }}
+            </p>
 
             <Button
                 variant="submit"
@@ -116,6 +192,10 @@ const registerWithGoogle = async () => {
                 Register
             </Button>
 
+            <p v-if="serverError" class="global-error">
+              ⚠ {{ serverError }}
+            </p>
+
             <Divider>Or continue with Google</Divider>
 
             <Button
@@ -129,9 +209,6 @@ const registerWithGoogle = async () => {
                 Continue with Google
             </Button>
 
-            <Error v-if="error">
-                {{ error }}
-            </Error>
 
         </form>
         <AuthFooter
@@ -159,5 +236,22 @@ const registerWithGoogle = async () => {
 
 .password-field {
     display: grid;
+}
+
+.field-error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: -15px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.global-error {
+  color: var(--color-error);
+  font-size: 13px;
+  margin-top: 12px;
+  text-align: center;
 }
 </style>

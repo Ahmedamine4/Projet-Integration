@@ -1,12 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import Button from '@/components/Button.vue';
-import AuthFooter from '@/components/AuthFooter.vue';
 import Error from '@/components/Error.vue';
+import AuthFooter from '@/components/AuthFooter.vue';
 import Divider from '@/components/Divider.vue';
 
 const authStore = useAuthStore();
@@ -14,19 +14,43 @@ const router = useRouter();
 
 const email = ref('');
 const password = ref('');
-const error = ref('');
+
 const isLoggingIn = ref(false);
 const isGoogleLoading = ref(false);
 
+const serverError = ref('');
+const errors = reactive({ email: '' });
+
+const isValidEmail = (email) => {
+    const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+};
+
+
 const login = async () => {
-    error.value = '';
+    errors.email = '';
+    serverError.value = '';
+
+    const trimmedEmail = email.value.trim();
+    if (!isValidEmail(trimmedEmail)) {
+        errors.email = "Invalid email address";
+        return;
+    }
+
     isLoggingIn.value = true;
+
     try {
         await authStore.login(email.value, password.value);
         await router.push('/dashboard');
     }
     catch(err) {
-        error.value = err.message;
+        if (!err.response)
+            serverError.value = "Network error. Please try again.";
+        else {
+            serverError.value =
+                err.response.data?.message ||
+                "Something went wrong";
+        }
     }
     finally {
         isLoggingIn.value = false;
@@ -34,13 +58,13 @@ const login = async () => {
 };
 
 const loginWithGoogle = async () => {
-    error.value = '';
+    serverError.value = '';
     isGoogleLoading.value = true;
     try {
         await authStore.startGoogleAuth();
     }
     catch(err) {
-        error.value = err.message;
+        serverError.value = err.message;
         isGoogleLoading.value = false;
     } 
 };
@@ -61,7 +85,9 @@ const loginWithGoogle = async () => {
                 placeholder="name@company.com"
                 autocomplete="email"
             />
-
+            <p v-if="errors.email" class="field-error">
+              {{ errors.email }}
+            </p>
             <Input
                 v-model="password"
                 label="Password"
@@ -96,8 +122,8 @@ const loginWithGoogle = async () => {
                 Continue with Google
             </Button>
 
-            <Error v-if="error">
-                {{ error }}
+            <Error v-if="serverError">
+                {{ serverError }}
             </Error>
             
         </form>
@@ -121,5 +147,14 @@ const loginWithGoogle = async () => {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-primary-hover);
+}
+.field-error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: -20px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 </style>
