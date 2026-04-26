@@ -85,6 +85,12 @@ const meterStyle = computed(() => ({
     display: grid;
     gap: 0.45rem;
     margin-bottom: var(--space-md);
+    overflow: hidden;
+    transition:
+        max-height var(--transition-normal),
+        opacity var(--transition-normal),
+        transform var(--transition-normal),
+        margin-bottom var(--transition-normal);
 }
 
 .password-meter-enter-from,
@@ -95,21 +101,10 @@ const meterStyle = computed(() => ({
     transform: translateY(-0.35rem);
 }
 
-.password-meter-enter-active,
-.password-meter-leave-active {
-    overflow: hidden;
-    transition:
-        max-height var(--transition-normal),
-        opacity var(--transition-normal),
-        transform var(--transition-normal),
-        margin-bottom var(--transition-normal);
-}
-
-
 .password-meter-enter-to,
 .password-meter-leave-from {
     margin-bottom: var(--space-md);
-    max-height: 4.5rem;
+    max-height: 6rem;
     opacity: 1;
     transform: translateY(0);
 }
@@ -133,7 +128,6 @@ const meterStyle = computed(() => ({
 .password-meter__header {
     display: flex;
     justify-content: space-between;
-    font-size: var(--font-size-xs);
 }
 
 .password-meter__label {
@@ -145,6 +139,7 @@ const meterStyle = computed(() => ({
 
 .password-meter__status {
     color: var(--meter-color);
+    font-size: var(--font-size-xs);
 }
 
 .password-meter__track {
@@ -159,7 +154,7 @@ const meterStyle = computed(() => ({
     height: 100%;
     border-radius: inherit;
     background: var(--meter-color);
-    transition: 
+    transition:
         width 0.48s var(--ease-overshoot),
         background-color var(--transition-normal);
 }
