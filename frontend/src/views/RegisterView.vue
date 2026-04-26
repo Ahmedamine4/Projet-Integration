@@ -157,12 +157,12 @@ const registerWithGoogle = async () => {
                     placeholder="password"
                 />
 
-                <PasswordStrengthMeter :password />
-            </div>
-
             <p v-if="errors.password" class="field-error">
                {{ errors.password }}
             </p>
+
+                <PasswordStrengthMeter :password />
+            </div>
 
             <Input
                 v-model="confirm"
