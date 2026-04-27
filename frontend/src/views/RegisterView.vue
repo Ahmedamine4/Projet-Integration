@@ -1,89 +1,259 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
+import Button from '@/components/Button.vue';
+import Card from '@/components/Card.vue';
+import Input from '@/components/Input.vue';
+import AuthFooter from '@/components/AuthFooter.vue';
+import Divider from '@/components/Divider.vue';
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
-const name = ref('');
+const firstName = ref('');
+const lastName = ref('');
 const email = ref('');
-const role = ref('student');
 const password = ref('');
 const confirm = ref('');
-const error = ref('');
+
+const isRegistering = ref(false);
+const isGoogleLoading = ref(false);
+
+const serverError = ref('');
+const errors = reactive({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirm: ''
+});
+
+const isValidName = (name) => {
+    const regex = /^(?=.{1,50}$)[A-Za-z]+(?: [A-Za-z]+)*$/;
+    return regex.test(name);
+};
+
+const isValidEmail = (email) => {
+    const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+};
+
+const isValidPassword = (password) => {
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    return regex.test(password);
+};
 
 const register = async () => {
+    errors.firstName = '';
+    errors.lastName = '';
+    errors.email = '';
+    errors.password = '';
+    errors.confirm = '';
+
+    serverError.value = '';
+    const trimmedFirstName = firstName.value.trim();
+    const trimmedLastName = lastName.value.trim();
+    const trimmedEmail = email.value.trim();
+
+    if (!isValidName(trimmedFirstName))
+        errors.firstName = "Invalid first name";
+
+    if (!isValidName(trimmedLastName))
+        errors.lastName = "Invalid last name";
+
+    if (!isValidEmail(trimmedEmail))
+        errors.email = "Invalid email address";
+
+    if (!isValidPassword(password.value))
+        errors.password = "Password is not strong";
+
+    if (password.value !== confirm.value)
+        errors.confirm = "Passwords do not match";
+
+    if (
+        errors.firstName ||
+        errors.lastName ||
+        errors.email ||
+        errors.password ||
+        errors.confirm
+    ) return;
+
+    isRegistering.value = true;
+
     try {
         await authStore.register({
-            name: name.value,
-            email: email.value,
-            role: role.value,
-            password: password.value,
-            confirm: confirm.value
+            firstName: trimmedFirstName,
+            lastName: trimmedLastName,
+            email: trimmedEmail,
+            password: password.value
         });
-        router.push('/dashboard');
+        await router.push('/dashboard');
+    }
+    catch (err) {
+        if (!err.response)
+            serverError.value = "Network error. Please try again.";
+        else
+            serverError.value =
+                err.response.data?.message ||
+                "Something went wrong";
+    }
+    finally {
+        isRegistering.value = false;
+    }
+};
+
+const registerWithGoogle = async () => {
+    serverError.value = '';
+    isGoogleLoading.value = true;
+    try {
+        await authStore.startGoogleAuth();
     }
     catch(err) {
-        error.value = err.message;
-    }
-}
+        serverError.value = err.message;
+        isGoogleLoading.value = false;
+    } 
+};
 </script>
 
 <template>
-    <div class="card">
-        <h2>Register</h2>
-        <div class="role-switch">
-            <input type="radio" id="student" value="student" v-model="role">
-            <label for="student" :class="{selected: role === 'student'}">Student</label>
+    <Card title="Register" size="sm">
+        <p class="auth-subtitle">
+           Create an account to get started
+        </p>
+        <form class="auth-form" @submit.prevent="register">
+            <Input
+                v-model="firstName"
+                label="First name"
+                placeholder="First name"
+                autocomplete="given-name"
+            />
+            <p v-if="errors.firstName" class="field-error">
+              {{ errors.firstName }}
+            </p>
 
-            <input type="radio" id="teacher" value="teacher" v-model="role" >
-            <label for="teacher" :class="{selected: role === 'teacher'}">Teacher</label>
+            <Input
+                v-model="lastName"
+                label="Last name"
+                placeholder="Last name"
+                autocomplete="family-name"
+            />
+            <p v-if="errors.lastName" class="field-error">
+               {{ errors.lastName }} 
+            </p>
+            <Input
+                v-model="email"
+                label="Email"
+                placeholder="email"
+            />
 
-            <input type="radio" id="professional" value="professional" v-model="role">
-            <label for="professional" :class="{selected: role === 'professional'}">Professional</label>
-        </div>
+            <p v-if="errors.email" class="field-error">
+               {{ errors.email }}
+            </p>
 
-        <input v-model="name" placeholder="name" />
+            <div class="password-field">
+                <Input
+                    v-model="password"
+                    label="Password"
+                    type="password"
+                    placeholder="password"
+                />
 
-        <input v-model="email" placeholder="email" />
+            <p v-if="errors.password" class="field-error">
+               {{ errors.password }}
+            </p>
 
-        <input type="password" v-model="password" placeholder="password" />
+                <PasswordStrengthMeter :password />
+            </div>
 
-        <input type="password" v-model="confirm" placeholder="confirm password" />
+            <Input
+                v-model="confirm"
+                label="Confirm
+                password"
+                type="password"
+                placeholder="confirm password"
+            />
 
-        <button @click="register">Register</button>
-        <p class="error">{{error}}</p>
-    </div>
+            <p v-if="errors.confirm" class="field-error">
+             {{ errors.confirm }}
+            </p>
+
+            <Button
+                variant="submit"
+                block
+                :loading="isRegistering"
+                :disabled="
+                    isRegistering ||
+                    isGoogleLoading ||
+                    !firstName ||
+                    !lastName ||
+                    !email ||
+                    !password ||
+                    !confirm"
+            >
+                Register
+            </Button>
+
+            <p v-if="serverError" class="global-error">
+              ⚠ {{ serverError }}
+            </p>
+
+            <Divider>Or continue with Google</Divider>
+
+            <Button
+                type="button"
+                variant="google"
+                block
+                :loading="isGoogleLoading"
+                :disabled="isRegistering || isGoogleLoading"
+                @click="registerWithGoogle"
+            >
+                Continue with Google
+            </Button>
+
+
+        </form>
+        <AuthFooter
+            message="Already have an account?"
+            link-text="Login now"
+            to="/login"
+        />
+    </Card>
 </template>
 
 <style scoped>
-.role-switch {
-    display: flex;
-    border: 1px solid black;
-    width: 60%;
-    justify-content: space-between;
-    border-radius: 3px;
-    padding: 2px;
-    margin: 10px auto;
+
+.auth-form {
+    display: grid;
+    gap: 0.2rem;
 }
 
-.role-switch input {
-  display: none;
+.auth-subtitle {
+    margin: 0 0 var(--space-lg);
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-primary-hover);
 }
 
-.role-switch label {
-    flex: 1;
-    cursor: pointer;
-    padding: 4px 10px;
-    border-radius: 3px;
-    text-align: center;
-    transition: all 0.15s ease;
+.password-field {
+    display: grid;
 }
 
-.selected {
-    background-color: black;
-    color: white;
-    font-weight: bold;
+.field-error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: -15px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
+.global-error {
+  color: var(--color-error);
+  font-size: 13px;
+  margin-top: 12px;
+  text-align: center;
+}
 </style>

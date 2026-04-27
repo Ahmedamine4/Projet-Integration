@@ -1,31 +1,160 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
+import Card from '@/components/Card.vue';
+import Input from '@/components/Input.vue';
+import Button from '@/components/Button.vue';
+import Error from '@/components/Error.vue';
+import AuthFooter from '@/components/AuthFooter.vue';
+import Divider from '@/components/Divider.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
+
 const email = ref('');
 const password = ref('');
-const error = ref('');
+
+const isLoggingIn = ref(false);
+const isGoogleLoading = ref(false);
+
+const serverError = ref('');
+const errors = reactive({ email: '' });
+
+const isValidEmail = (email) => {
+    const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+};
+
 
 const login = async () => {
+    errors.email = '';
+    serverError.value = '';
+
+    const trimmedEmail = email.value.trim();
+    if (!isValidEmail(trimmedEmail)) {
+        errors.email = "Invalid email address";
+        return;
+    }
+
+    isLoggingIn.value = true;
+
     try {
         await authStore.login(email.value, password.value);
-        router.push('/dashboard');
+        await router.push('/dashboard');
     }
     catch(err) {
-        error.value = err.message;
+        if (!err.response)
+            serverError.value = "Network error. Please try again.";
+        else {
+            serverError.value =
+                err.response.data?.message ||
+                "Something went wrong";
+        }
     }
-}
+    finally {
+        isLoggingIn.value = false;
+    }
+};
+
+const loginWithGoogle = async () => {
+    serverError.value = '';
+    isGoogleLoading.value = true;
+    try {
+        await authStore.startGoogleAuth();
+    }
+    catch(err) {
+        serverError.value = err.message;
+        isGoogleLoading.value = false;
+    } 
+};
 </script>
 
 <template>
-    <div class="card">
-        <h2>Login</h2>
-        <input v-model="email" placeholder="email" />
-        <input type="password" v-model="password" placeholder="password" />
-        <button @click="login">Login</button>
-        <p class="error">{{error}}</p>
-    </div>
+
+    <Card title="Welcome back" size="sm">
+        <p class="auth-subtitle">
+            Sign in to your account to continue
+        </p>
+
+        <form class="auth-form" @submit.prevent="login">
+
+            <Input
+                v-model="email"
+                label="Email address"
+                placeholder="name@company.com"
+                autocomplete="email"
+            />
+            <p v-if="errors.email" class="field-error">
+              {{ errors.email }}
+            </p>
+            <Input
+                v-model="password"
+                label="Password"
+                type="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+            />
+            
+            <Button
+                block
+                variant="submit"
+                :loading="isLoggingIn"
+                :disabled="
+                    isLoggingIn ||
+                    isGoogleLoading ||
+                    !email ||
+                    !password"
+            >
+                Sign In
+            </Button>
+            
+            <Divider>Or continue with Google</Divider>
+
+            <Button
+                type="button"
+                variant="google"
+                block
+                :loading="isGoogleLoading"
+                :disabled="isLoggingIn || isGoogleLoading"
+                @click="loginWithGoogle"
+            >
+                Continue with Google
+            </Button>
+
+            <Error v-if="serverError">
+                {{ serverError }}
+            </Error>
+            
+        </form>
+        <AuthFooter
+            message="Don't have an account?"
+            link-text="Register now"
+            to="/register"
+        />
+    </Card>
 </template>
+<style scoped>
+
+.auth-form {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.auth-subtitle {
+    margin: 0 0 var(--space-lg);
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-primary-hover);
+}
+.field-error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: -20px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+</style>

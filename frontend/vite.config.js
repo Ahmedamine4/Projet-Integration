@@ -8,6 +8,9 @@ export default defineConfig({
   plugins: [
     vue()
   ],
+  test: {
+  environment: 'jsdom'
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -15,7 +18,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',   
-    port: 5173,
-    allowedHosts: ['localhost', 'frontend'], // Permet d'accepter les requêtes venant du conteneur "frontend"
+    port: 5173
   }
+  
 })

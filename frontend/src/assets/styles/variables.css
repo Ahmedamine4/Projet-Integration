@@ -26,13 +26,19 @@
 :root {
   /* Colors */
   --color-primary: #100904;
+  --color-primary-rgb: 16, 9, 4;
   --color-primary-surface: #282421;
   --color-primary-hover: #413e3c;
   --color-secondary: #ec6c0f;
+  --color-secondary-rgb: 236, 108, 15;
   --color-background: #f4f3ef;
+  --color-background-rgb: 244, 243, 239;
   --color-surface: #e8e6de;
+  --color-surface-rgb: 232, 230, 222;
   --color-error: #bd1f1e;
+  --color-error-rgb: 189, 31, 30;
   --color-success: #23a279;
+  --color-success-rgb: 35, 162, 121;
 
   /* Typography */
     /* Fonts */
@@ -40,6 +46,7 @@
   --font-display: 'Norman', serif;
   --font-stencil: 'Norman_Stencil', serif;
     /* size */
+  --font-size-xxs: 0.65rem;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
@@ -64,10 +71,13 @@
   --radius-lg: 20px;
 
   /* Shadows */
-  --shadow-sm: 0 2px 6px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
 
   /* Transition */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
+
+  /* Timing Functions */
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
