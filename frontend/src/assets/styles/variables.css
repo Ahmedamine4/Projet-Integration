@@ -74,4 +74,5 @@
   /* Transition */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
+  --transition-slow: 0.7s ease; /* Ayoub: added it, used on SideBar behavior */
 }

@@ -4,6 +4,7 @@ import LoginView from "../views/LoginView.vue";
 import RegisterView from "../views/RegisterView.vue";
 import DashboardView from "../views/DashboardView.vue";
 import {useAuthStore} from '../stores/auth';
+import TestPage from '../views/TestPage.vue';
 
 const routes = [
   {
@@ -28,6 +29,13 @@ const routes = [
     name: "dashboard",
     component: DashboardView,
     meta: { requiresAuth: true }
+  },
+  // Test route for development purposes, needs to be removed later
+  {
+    path: "/test",
+    name: "test",
+    component: TestPage,
+    meta: { fullScreen: true }
   }
 ]
 

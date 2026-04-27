@@ -4,12 +4,13 @@ import { useRoute } from 'vue-router';
 import Navbar from './components/Navbar.vue';
 import AuthLayout from './layouts/AuthLayout.vue';
 import router from './router';
+import SideBar from './components/SideBar.vue';
 
 const route = useRoute();
 
 const isAuthRoute = computed(() => route.meta.layout === 'auth');
 
-const fullScreenRoutes = ['home'];
+const fullScreenRoutes = ['home', 'test'];
 
 const isFullScreenRoute = computed(() => {
     return fullScreenRoutes.includes(route.name);
@@ -24,10 +25,10 @@ const isFullScreenRoute = computed(() => {
         </AuthLayout>
 
         <template v-else>
-            <Navbar v-if="!isFullScreenRoute" />
-            <main :class="`app-shell ${isFullScreenRoute ? 'app-shell--full' : 'container'}`">
+            <SideBar/>
+            <!-- <main :class="`app-shell ${isFullScreenRoute ? 'app-shell--full' : 'container'}`">
                 <router-view />
-            </main>
+            </main-->
         </template>
     </div>
 </template>
