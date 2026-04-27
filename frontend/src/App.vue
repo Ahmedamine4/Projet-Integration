@@ -1,9 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import Navbar from './components/Navbar.vue';
 import AuthLayout from './layouts/AuthLayout.vue';
-import router from './router';
 
 const route = useRoute();
 
