@@ -4,10 +4,6 @@ defineProps({
         type: String,
         default: '',
     },
-    titleLevel: {
-        type: String,
-        default: 'h2',
-    },
     fullWidth: {
         type: Boolean,
         default: false,
@@ -28,9 +24,9 @@ defineProps({
         ]"
     >
 
-        <component :is="titleLevel" v-if="title">
+        <h2 v-if="title">
             {{ title }}
-        </component>
+        </h2>
         <slot />
     </div>
 </template>
@@ -41,7 +37,6 @@ defineProps({
     padding: 0;
     border: none;
     background: transparent;
-    box-shadow: none;
 }
 
 .card--xs {
@@ -62,7 +57,6 @@ defineProps({
 
 .card--full-width {
     width: 100%;
-    max-width: none;
 }
 
 .card > h2 {
@@ -70,16 +64,6 @@ defineProps({
     font-size: clamp(1.7rem, 2.4vw, 2.5rem);
     line-height: 1;
     color: var(--color-primary);
-}
-
-.card--panel {
-    width: min(100%, 32rem);
-    margin: calc(3 * var(--space-xl)) auto 0;
-    padding: var(--space-lg);
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-primary-hover);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
 }
 
 @media (max-width: 480px) {

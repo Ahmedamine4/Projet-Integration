@@ -17,7 +17,6 @@ const router = useRouter();
         </header>
 
         <div class="home-hero__content">
-
             <h1 class="hero-title hero-title--top">
                 Your <span class="hero-title__strong">Portfolio,</span>
             </h1>
@@ -48,7 +47,7 @@ const router = useRouter();
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: var(--space-md);
+    gap: var(--space-lg);
     padding: 2.2rem 3rem 0;
 }
 
@@ -91,7 +90,7 @@ const router = useRouter();
 @media (max-width: 768px) {
     .home-hero__nav {
         padding: 1.5rem 1.25rem 0;
-        gap: var(--space-sm);
+        gap: var(--space-md);
         flex-wrap: wrap;
     }
 
@@ -107,8 +106,7 @@ const router = useRouter();
 
 @media (max-width: 480px) {
     .home-hero__nav {
-        justify-content: center;
-        gap: var(--space-xs);
+        gap: var(--space-sm);
         padding-top: var(--space-md);
     }
 
