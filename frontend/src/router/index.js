@@ -6,6 +6,7 @@ import RegisterView from "../views/RegisterView.vue";
 import DashboardView from "../views/DashboardView.vue";
 import AuthCallbackView from "@/views/AuthCallbackView.vue";
 import NotFound from "@/views/NotFound.vue";
+import GettingStarted from "@/views/GettingStarted.vue";
 
 const routes = [
   {
@@ -30,6 +31,11 @@ const routes = [
     name: "dashboard",
     component: DashboardView,
     meta: { requiresAuth: true }
+  },
+  {
+    path: "/getting-started",
+    name: "getting-started",
+    component: GettingStarted,
   },
   {
     path: "/auth/callback",

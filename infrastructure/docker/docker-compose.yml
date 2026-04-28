@@ -19,6 +19,11 @@ services:
     #   - "5173:5173"  gerer au niveau de nginx pour le reverse proxy
     depends_on:
       - backend
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
   db:
     image: postgres:16-alpine
     container_name: postgres-db-container
