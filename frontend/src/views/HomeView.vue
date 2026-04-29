@@ -52,7 +52,12 @@ const router = useRouter();
 }
 
 .home-hero__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     width: min(100% - 3rem, 58rem);
+    height: 60vh;
     margin: clamp(0.75rem, 3vh, 2rem) auto 0;
     padding: 2rem 0 0;
     text-align: center;
