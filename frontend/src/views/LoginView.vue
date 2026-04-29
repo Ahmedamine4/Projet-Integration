@@ -78,24 +78,27 @@ const loginWithGoogle = async () => {
         </p>
 
         <form class="auth-form" @submit.prevent="login">
+            <div class="field">
+                <Input
+                    v-model="email"
+                    label="Email address"
+                    placeholder="name@company.com"
+                    autocomplete="email"
+                />
 
-            <Input
-                v-model="email"
-                label="Email address"
-                placeholder="name@company.com"
-                autocomplete="email"
-            />
-            <p v-if="errors.email" class="field-error">
-              {{ errors.email }}
-            </p>
-            <Input
-                v-model="password"
-                label="Password"
-                type="password"
-                placeholder="Enter your password"
-                autocomplete="current-password"
-            />
-            
+                <p v-if="errors.email" class="field-error">
+                    {{ errors.email }}
+                </p>
+            </div>
+            <div class="field">
+                <Input
+                    v-model="password"
+                    label="Password"
+                    type="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                />
+            </div>
             <Button
                 block
                 variant="submit"
@@ -135,10 +138,9 @@ const loginWithGoogle = async () => {
     </Card>
 </template>
 <style scoped>
-
 .auth-form {
     display: grid;
-    gap: 0.7rem;
+    gap: var(--space-md);
 }
 
 .auth-subtitle {
@@ -148,13 +150,18 @@ const loginWithGoogle = async () => {
     text-transform: uppercase;
     color: var(--color-primary-hover);
 }
+
 .field-error {
   color: var(--color-error);
   font-size: 12px;
-  margin-top: -20px;
-  margin-bottom: 8px;
+  margin: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-xs);
+}
+
+.field {
+    display: grid;
+    gap: var(--space-sm);
 }
 </style>

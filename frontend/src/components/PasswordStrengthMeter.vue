@@ -40,71 +40,66 @@ const meterStyle = computed(() => ({
 </script>
 
 <template>
-    <Transition name="password-meter">
-        <section
-            v-if="password"
-            class="password-meter"
-            :class="`password-meter--${strength.label.toLowerCase()}`"
-        >
-            <div class="password-meter__header">
-                <span class="password-meter__label">
-                    Password strength
-                </span>
-                <strong class="password-meter__status">
-                    {{ strength.label }}
-                </strong>
-            </div>
-            <div class="password-meter__track">
-                <span
-                    class="password-meter__fill"
-                    :style="meterStyle"
-                />
-            </div>
-            <ul class="password-meter__rules">
-                <li
-                    v-for="rule in rules"
-                    :key="rule.label"
-                    class="password-meter__rule"
-                    :class="{ 'password-meter__rule--passed': rule.passed }"
+    <section
+        class="password-meter"
+        :class="[
+            `password-meter--${strength.label.toLowerCase()}`,
+            { 'password-meter--visible': password }
+        ]"
+    >
+        <div class="password-meter__header">
+            <span class="password-meter__label">
+                Password strength
+            </span>
+            <strong class="password-meter__status">
+                {{ strength.label }}
+            </strong>
+        </div>
+
+        <div class="password-meter__track">
+            <span
+                class="password-meter__fill"
+                :style="meterStyle"
+            />
+        </div>
+
+        <ul class="password-meter__rules">
+            <li
+                v-for="rule in rules"
+                :key="rule.label"
+                class="password-meter__rule"
+                :class="{ 'password-meter__rule--passed': rule.passed }"
+            >
+                <input
+                    class="password-meter__checkbox"
+                    type="checkbox"
+                    :checked="rule.passed"
+                    tabindex="-1"
                 >
-                    <input
-                        class="password-meter__checkbox"
-                        type="checkbox"
-                        :checked="rule.passed"
-                        tabindex="-1"
-                    >
-                    <span>{{ rule.label }}</span>
-                </li>
-            </ul>
-        </section>
-    </Transition>
+                <span>{{ rule.label }}</span>
+            </li>
+        </ul>
+    </section>
 </template>
 
 <style scoped>
 .password-meter {
     display: grid;
-    gap: 0.45rem;
-    margin-bottom: var(--space-md);
+    gap: var(--space-xs);
+    padding-top: var(--space-xs);
+    margin: 0;
     overflow: hidden;
-    transition:
-        max-height var(--transition-normal),
-        opacity var(--transition-normal),
-        transform var(--transition-normal),
-        margin-bottom var(--transition-normal);
-}
-
-.password-meter-enter-from,
-.password-meter-leave-to {
-    margin-bottom: 0;
     max-height: 0;
     opacity: 0;
     transform: translateY(-0.35rem);
+    transition:
+        max-height var(--transition-normal),
+        opacity var(--transition-normal),
+        transform var(--transition-normal);
 }
 
-.password-meter-enter-to,
-.password-meter-leave-from {
-    margin-bottom: var(--space-md);
-    max-height: 6rem;
+.password-meter--visible {
+    max-height: 8rem;
     opacity: 1;
     transform: translateY(0);
 }

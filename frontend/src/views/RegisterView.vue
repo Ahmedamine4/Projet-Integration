@@ -122,34 +122,42 @@ const registerWithGoogle = async () => {
            Create an account to get started
         </p>
         <form class="auth-form" @submit.prevent="register">
-            <Input
-                v-model="firstName"
-                label="First name"
-                placeholder="First name"
-                autocomplete="given-name"
-            />
-            <p v-if="errors.firstName" class="field-error">
-              {{ errors.firstName }}
-            </p>
+            <div class="field">
+                <Input
+                    v-model="firstName"
+                    label="First name"
+                    placeholder="First name"
+                    autocomplete="given-name"
+                />
+                <p v-if="errors.firstName" class="field-error">
+                    {{ errors.firstName }}
+                </p>
+            </div>
 
-            <Input
-                v-model="lastName"
-                label="Last name"
-                placeholder="Last name"
-                autocomplete="family-name"
-            />
-            <p v-if="errors.lastName" class="field-error">
-               {{ errors.lastName }} 
-            </p>
-            <Input
-                v-model="email"
-                label="Email"
-                placeholder="email"
-            />
+            <div class="field">
+                <Input
+                    v-model="lastName"
+                    label="Last name"
+                    placeholder="Last name"
+                    autocomplete="family-name"
+                />
 
-            <p v-if="errors.email" class="field-error">
-               {{ errors.email }}
-            </p>
+                <p v-if="errors.lastName" class="field-error">
+                    {{ errors.lastName }} 
+                </p>
+            </div>
+
+            <div class="field">
+                <Input
+                    v-model="email"
+                    label="Email"
+                    placeholder="email"
+                />
+
+                <p v-if="errors.email" class="field-error">
+                    {{ errors.email }}
+                </p>
+            </div>
 
             <div class="password-field">
                 <Input
@@ -159,24 +167,25 @@ const registerWithGoogle = async () => {
                     placeholder="password"
                 />
 
-            <p v-if="errors.password" class="field-error">
-               {{ errors.password }}
-            </p>
+                <p v-if="errors.password" class="field-error">
+                {{ errors.password }}
+                </p>
 
                 <PasswordStrengthMeter :password />
             </div>
 
-            <Input
-                v-model="confirm"
-                label="Confirm
-                password"
-                type="password"
-                placeholder="confirm password"
-            />
+            <div class="field">
+                <Input
+                    v-model="confirm"
+                    label="Confirm password"
+                    type="password"
+                    placeholder="confirm password"
+                />
 
-            <p v-if="errors.confirm" class="field-error">
-             {{ errors.confirm }}
-            </p>
+                <p v-if="errors.confirm" class="field-error">
+                {{ errors.confirm }}
+                </p>
+            </div>
 
             <Button
                 variant="submit"
@@ -195,7 +204,7 @@ const registerWithGoogle = async () => {
             </Button>
 
             <p v-if="serverError" class="global-error">
-              ⚠ {{ serverError }}
+                {{ serverError }}
             </p>
 
             <Divider>Or continue with Google</Divider>
@@ -225,7 +234,7 @@ const registerWithGoogle = async () => {
 
 .auth-form {
     display: grid;
-    gap: 0.2rem;
+    gap: var(--space-md);
 }
 
 .auth-subtitle {
@@ -238,16 +247,16 @@ const registerWithGoogle = async () => {
 
 .password-field {
     display: grid;
+    gap: var(--space-xs);
 }
 
 .field-error {
   color: var(--color-error);
   font-size: 12px;
-  margin-top: -15px;
-  margin-bottom: 8px;
+  margin: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 
 .global-error {
@@ -255,5 +264,10 @@ const registerWithGoogle = async () => {
   font-size: 13px;
   margin-top: 12px;
   text-align: center;
+}
+
+.field {
+    display: grid;
+    gap: var(--space-xs);
 }
 </style>

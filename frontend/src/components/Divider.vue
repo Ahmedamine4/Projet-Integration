@@ -13,8 +13,7 @@
     font-size: var(--font-size-xs);
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    margin: 0;
 }
 
 .divider::before,
