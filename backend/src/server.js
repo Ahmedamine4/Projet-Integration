@@ -1,7 +1,8 @@
-const app = require("./app");
-const prisma = require("./config/db");
+import 'dotenv/config';
+import app from './app.js'; 
+import prisma from './config/prisma.js';
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // J'ai remis le port 3000
 
 async function demarrerServeur() {
   try {
