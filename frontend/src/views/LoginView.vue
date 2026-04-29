@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import Button from '@/components/Button.vue';
-import Error from '@/components/Error.vue';
 import AuthFooter from '@/components/AuthFooter.vue';
 import Divider from '@/components/Divider.vue';
 
@@ -99,18 +98,20 @@ const loginWithGoogle = async () => {
                     autocomplete="current-password"
                 />
             </div>
-            <Button
-                block
-                variant="submit"
-                :loading="isLoggingIn"
-                :disabled="
-                    isLoggingIn ||
-                    isGoogleLoading ||
-                    !email ||
-                    !password"
-            >
-                Sign In
-            </Button>
+            <div class="submit-row">
+                <Button
+                    block
+                    variant="submit"
+                    :loading="isLoggingIn"
+                    :disabled="
+                        isLoggingIn ||
+                        isGoogleLoading ||
+                        !email ||
+                        !password"
+                >
+                    Sign In
+                </Button>
+            </div>
             
             <Divider>Or continue with Google</Divider>
 
@@ -125,9 +126,9 @@ const loginWithGoogle = async () => {
                 Continue with Google
             </Button>
 
-            <Error v-if="serverError">
+            <p v-if="serverError" class="global-error">
                 {{ serverError }}
-            </Error>
+            </p>
             
         </form>
         <AuthFooter
@@ -152,16 +153,26 @@ const loginWithGoogle = async () => {
 }
 
 .field-error {
-  color: var(--color-error);
-  font-size: 12px;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
+    color: var(--color-error);
+    font-size: 12px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
 }
 
 .field {
     display: grid;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
+}
+
+.submit-row {
+    margin-top: var(--space-sm);
+}
+
+.global-error {
+    color: var(--color-error);
+    font-size: 13px;
+    text-align: center;
 }
 </style>

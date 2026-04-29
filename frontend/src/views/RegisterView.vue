@@ -159,53 +159,53 @@ const registerWithGoogle = async () => {
                 </p>
             </div>
 
-            <div class="password-field">
-                <Input
-                    v-model="password"
-                    label="Password"
-                    type="password"
-                    placeholder="password"
-                />
+            <div class="password-group">
+                <div class="field">
+                    <Input
+                        v-model="password"
+                        label="Password"
+                        type="password"
+                        placeholder="password"
+                    />
 
-                <p v-if="errors.password" class="field-error">
-                {{ errors.password }}
-                </p>
+                    <p v-if="errors.password" class="field-error">
+                        {{ errors.password }}
+                    </p>
 
-                <PasswordStrengthMeter :password />
+                    <PasswordStrengthMeter :password />
+                </div>
+
+                <div class="field">
+                    <Input
+                        v-model="confirm"
+                        label="Confirm password"
+                        type="password"
+                        placeholder="confirm password"
+                    />
+
+                    <p v-if="errors.confirm" class="field-error">
+                        {{ errors.confirm }}
+                    </p>
+                </div>
             </div>
 
-            <div class="field">
-                <Input
-                    v-model="confirm"
-                    label="Confirm password"
-                    type="password"
-                    placeholder="confirm password"
-                />
-
-                <p v-if="errors.confirm" class="field-error">
-                {{ errors.confirm }}
-                </p>
+            <div class="submit-row">
+                <Button
+                    variant="submit"
+                    block
+                    :loading="isRegistering"
+                    :disabled="
+                        isRegistering ||
+                        isGoogleLoading ||
+                        !firstName ||
+                        !lastName ||
+                        !email ||
+                        !password ||
+                        !confirm"
+                >
+                    Register
+                </Button>
             </div>
-
-            <Button
-                variant="submit"
-                block
-                :loading="isRegistering"
-                :disabled="
-                    isRegistering ||
-                    isGoogleLoading ||
-                    !firstName ||
-                    !lastName ||
-                    !email ||
-                    !password ||
-                    !confirm"
-            >
-                Register
-            </Button>
-
-            <p v-if="serverError" class="global-error">
-                {{ serverError }}
-            </p>
 
             <Divider>Or continue with Google</Divider>
 
@@ -220,6 +220,9 @@ const registerWithGoogle = async () => {
                 Continue with Google
             </Button>
 
+            <p v-if="serverError" class="global-error">
+                {{ serverError }}
+            </p>
 
         </form>
         <AuthFooter
@@ -245,25 +248,28 @@ const registerWithGoogle = async () => {
     color: var(--color-primary-hover);
 }
 
-.password-field {
-    display: grid;
+.field-error {
+    color: var(--color-error);
+    font-size: 12px;
+    margin: 0;
+    display: flex;
+    align-items: center;
     gap: var(--space-xs);
 }
 
-.field-error {
-  color: var(--color-error);
-  font-size: 12px;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
+.global-error {
+    color: var(--color-error);
+    font-size: 13px;
+    text-align: center;
 }
 
-.global-error {
-  color: var(--color-error);
-  font-size: 13px;
-  margin-top: 12px;
-  text-align: center;
+.password-group {
+    display: grid;
+    gap: var(--space-sm);
+}
+
+.submit-row {
+    margin-top: var(--space-sm);
 }
 
 .field {
