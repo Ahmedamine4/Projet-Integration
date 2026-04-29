@@ -73,6 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (error) throw error;
 
         const supabaseToken = data.session?.access_token;
+        console.log("Supabase session data:", supabaseToken);
         if (!supabaseToken) throw new Error('Missing Supabase session');
 
         const response = await api.post(

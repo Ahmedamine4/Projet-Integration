@@ -56,7 +56,8 @@ export async function googleAuth(req, res) {
     const token = authheader.startsWith('Bearer ')
       ? authheader.split(' ')[1]
       : req.body.access_token;
-
+      console.log("Token reçu pour Google Auth:", token);
+    
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -65,8 +66,9 @@ export async function googleAuth(req, res) {
     }
     //verifier le token google/supabase
     const { data, error } = await supabase.auth.getUser(token);
-
-    if (error || !data.user) {
+    console.log("Data from Supabase:", data );
+    console.log("Data from Supabase: errrrr" , error);
+    if ( !data.user) {
       return res.status(403).json({
         success: false,
         message: 'Token Google d\'authentification invalide',
