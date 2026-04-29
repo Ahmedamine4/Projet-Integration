@@ -7,5 +7,7 @@ const user = ref(authStore.user);
 </script>
 
 <template>
-    <Sidebar :user />
 </template>
+
+<style scoped>
+</style>

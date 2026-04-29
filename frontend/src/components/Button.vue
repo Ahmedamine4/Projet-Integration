@@ -22,7 +22,7 @@ const props = defineProps({
     loading: {
         type: Boolean,
         default: false,
-    },
+    }
 });
 
 const classes = computed(() => [
@@ -55,7 +55,6 @@ const classes = computed(() => [
 </template>
 
 <style scoped>
-
 .button {
     font: inherit;
     display: inline-flex;

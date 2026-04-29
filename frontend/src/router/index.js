@@ -7,6 +7,7 @@ import DashboardView from "../views/DashboardView.vue";
 import AuthCallbackView from "@/views/AuthCallbackView.vue";
 import NotFound from "@/views/NotFound.vue";
 import GettingStarted from "@/views/GettingStarted.vue";
+import Test from "@/views/Test.vue";
 
 const routes = [
   {
@@ -42,6 +43,11 @@ const routes = [
     name: "auth-callback",
     component: AuthCallbackView,
     meta: { layout: 'auth' }
+  },
+  {
+    path: "/test",
+    name: "test",
+    component: Test
   },
   {
     path: "/:pathMatch(.*)*",
