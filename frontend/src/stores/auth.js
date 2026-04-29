@@ -28,6 +28,25 @@ export const useAuthStore = defineStore('auth', () => {
 
     const isAuthenticated = computed(() => Boolean(user.value && token.value));
 
+    async function initAuth() {
+        if (token.value) {
+            await validateSession();
+        }
+    }
+
+    async function validateSession() {
+        if (!token.value) return;
+
+        try {
+            const { data } = await api.get('/auth/me'); //route pour valider le token
+            user.value = data.user;
+            persistSession(data.user, token.value);
+        } catch (error) {
+            console.error("Session invalide ou expirée", error);
+            logout();
+        }
+    }
+    
     async function login(email, password) {
         const { data } = await api.post('/auth/login', {
             email,
@@ -41,7 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function register(userData) {
-        const {firstName, lastName, email, password} = userData;
+        const { firstName, lastName, email, password } = userData;
         const { data } = await api.post('/auth/register', {
             firstName: firstName.trim(),
             lastName: lastName.trim(),
@@ -84,7 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
                 }
             }
         );
-        
+
         user.value = response.data.user;
         token.value = response.data.token;
 
@@ -109,6 +128,7 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         token,
         isAuthenticated,
+        initAuth,
         login,
         register,
         startGoogleAuth,

@@ -15,4 +15,16 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+api.interceptors.response.use( //cas de réponse 401, on logout et redirection vers login
+    (response) => response, 
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            const authStore = useAuthStore();
+            authStore.logout();
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default api;

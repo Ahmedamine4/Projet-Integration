@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useAuthStore } from '../stores/auth';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
 import Button from '@/components/Button.vue';
@@ -11,7 +11,7 @@ import Divider from '@/components/Divider.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
-
+const route = useRoute();
 const email = ref('');
 const password = ref('');
 
@@ -41,7 +41,8 @@ const login = async () => {
 
     try {
         await authStore.login(email.value, password.value);
-        await router.push('/dashboard');
+        const redirectPath = route.query.redirect || '/dashboard'; //redirect to dashboard after login, or to the path specified in the query
+        await router.push(redirectPath);
     }
     catch(err) {
         if (!err.response)

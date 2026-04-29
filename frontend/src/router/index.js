@@ -51,8 +51,10 @@ const router = createRouter({
 router.beforeEach((to) => {
   const authStore = useAuthStore();
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return '/login';
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth); // Vérifie si la route nécessite une authentification (pour les )
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } }; // ici on ajoute la route demandée dans les query params pour rediriger après login
   }
   
   return true;
