@@ -5,6 +5,8 @@ import { generateLocalToken } from '../config/jwt.js';
 // Champs envoyés au frontend
 const USER_SELECT = {
   utilisateur_id: true,
+  nom: true,
+  prenom: true,
   email: true,
   role: true,
   provider: true,

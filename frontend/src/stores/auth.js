@@ -3,28 +3,21 @@ import api from '@/services/api';
 import { supabase } from "@/services/supabase";
 import { ref, computed } from 'vue';
 
-function getStoredUser() {
-    const storedUser = localStorage.getItem('current_user');
-    return storedUser ? JSON.parse(storedUser) : null;
-}
+function normalizeUser(user) {
+    if (!user) return null;
 
-function getStoredToken() {
-    return localStorage.getItem('token');
-}
+    const { prenom, nom, ...rest } = user;
 
-function persistSession(user, token) {
-    localStorage.setItem('current_user', JSON.stringify(user));
-    localStorage.setItem('token', token);
-}
-
-function clearSession() {
-    localStorage.removeItem('current_user');
-    localStorage.removeItem('token');
+    return {
+        ...rest,
+        firstName: user.firstName || prenom || '',
+        lastName: user.lastName || nom || '',
+    };
 }
 
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref(getStoredUser());
-    const token = ref(getStoredToken());
+    const user = ref(null);
+    const token = ref(null);
 
     const isAuthenticated = computed(() => Boolean(user.value && token.value));
 
@@ -34,10 +27,8 @@ export const useAuthStore = defineStore('auth', () => {
             password
         });
 
-        user.value = data.user;
+        user.value = normalizeUser(data.user);
         token.value = data.token;
-
-        persistSession(data.user, data.token);
     }
 
     async function register(userData) {
@@ -49,10 +40,8 @@ export const useAuthStore = defineStore('auth', () => {
             password
         });
 
-        user.value = data.user;
+        user.value = normalizeUser(data.user);
         token.value = data.token;
-
-        persistSession(data.user, data.token);
     }
 
     async function startGoogleAuth() {
@@ -82,10 +71,8 @@ export const useAuthStore = defineStore('auth', () => {
             {  access_token: supabaseToken  }
         );
         
-        user.value = response.data.user;
+        user.value = normalizeUser(response.data.user);
         token.value = response.data.token;
-
-        persistSession(response.data.user, response.data.token);
     }
 
     async function logout() {
@@ -94,13 +81,6 @@ export const useAuthStore = defineStore('auth', () => {
 
         user.value = null;
         token.value = null;
-
-        clearSession();
-    }
-
-    function restoreSession() {
-        user.value = getStoredUser();
-        token.value = getStoredToken();
     }
     return {
         user,
@@ -111,21 +91,6 @@ export const useAuthStore = defineStore('auth', () => {
         startGoogleAuth,
         completeGoogleAuth,
         logout,
-        restoreSession
     };
 });
-
-
-/*
-{
-  "user": {
-    "id": 1,
-    "firstName": "Moussa",
-    "lastName": "El Moussaoui",
-    "email": "moussa@example.com",
-    "role": "student"
-  },
-  "token": "abc123"
-}
-*/
 
