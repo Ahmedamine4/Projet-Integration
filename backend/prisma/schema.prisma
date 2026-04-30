@@ -13,9 +13,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==========================================
-// ENUMS (Remplace les contraintes)
-// ==========================================
+
+// ENUMS
+
+
 enum TypeExperience {
   certification
   projet
@@ -37,9 +38,9 @@ enum StatutValidation {
   refuse
 }
 
-// ==========================================
+
 // UTILISATEURS ET HERITAGES
-// ==========================================
+
 
 model Utilisateur {
   utilisateur_id   String          @id @default(cuid())
@@ -97,13 +98,13 @@ model Etudiant {
   niveau                  String? @db.VarChar(50)
   github_API              String?
 
-  utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
-  portfolio               Portfolio?
-  experiences             Experience[]
-  clubs                   Club[]
-  filieres                Filiere[]
-  badges                  Badge[]
-  lettres_recommandations LettresDeRecommendations[]
+  utilisateur               Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
+  portfolio                 Portfolio?
+  experiences               Experience[]
+  clubs                     Club[]
+  institutions              ValideEtudiant[]
+  badges                    Badge[]
+  recommandations           LettresDeRecommendations[]
 
   @@map("etudiants")
 }
@@ -115,9 +116,9 @@ model Professeur {
 
   utilisateur             Utilisateur                @relation(fields: [prof_utilisateur_id], references: [utilisateur_id])
   lettres_recommandations LettresDeRecommendations[]
-  filieres                Filiere[]
-  validations_projets     ValidationDuProjet[]
-  validations_stages      ValidationStage[]
+  institutions            Institution[]
+  projets                 ValideProjet[]
+  stages                  ValideStage[]
 
   @@map("professeurs")
 }
@@ -136,19 +137,9 @@ model Professionnel {
   @@map("professionnels")
 }
 
-// ==========================================
+
 // ENTITÉS PRINCIPALES
-// ==========================================
 
-model Filiere {
-  filiere_id   String        @id @default(cuid())
-  nom          String?       @db.VarChar(50)
-  etudiants    Etudiant[]
-  professeurs  Professeur[]
-  institutions Institution[]
-
-  @@map("filieres")
-}
 
 model Club {
   club_id       String        @id @default(cuid())
@@ -229,19 +220,17 @@ model Institution {
   email          String  @db.VarChar(255)
   description    String?
 
-  directeur Directeur[]
-
+  directeur      Directeur[]
   clubs          Club[]
+  professeurs    Professeur[]
   activites      ValideActivite[]
-  filieres       Filiere[]
-  certifications ValidationCertification[]
+  etudiants      ValideEtudiant[]
+  certifications ValideCertification[]
 
   @@map("institutions")
 }
 
-// ==========================================
 // EXPERIENCES ET HERITAGES
-// ==========================================
 
 model Experience {
   experience_id   String         @id @default(cuid())
@@ -271,7 +260,7 @@ model Certification {
   lien_URL      String?
   code          String?
   experience    Experience               @relation(fields: [experience_id], references: [experience_id])
-  validations   ValidationCertification?
+  validation    ValideCertification?
 
   @@map("certifications")
 }
@@ -294,7 +283,7 @@ model Projet {
   resultat_obtenus String?
   role             String?             @db.VarChar(50)
   experience       Experience          @relation(fields: [experience_id], references: [experience_id])
-  validation       ValidationDuProjet?
+  validation       ValideProjet?
 
   @@map("projets")
 }
@@ -304,7 +293,7 @@ model Activite {
   type          String?         @db.VarChar(50)
   lieu          String?         @db.VarChar(100)
   experience    Experience      @relation(fields: [experience_id], references: [experience_id])
-  validations   ValideActivite?
+  validation    ValideActivite?
   clubs         Club[]
 
   @@map("activites")
@@ -316,7 +305,7 @@ model Stage {
   missions_realisees String?
   rapport_stage      String?
   experience         Experience       @relation(fields: [experience_id], references: [experience_id])
-  validations        ValidationStage?
+  validation         ValideStage?
 
   @@map("stages")
 }
@@ -338,9 +327,9 @@ model Interaction {
   @@map("interactions")
 }
 
-// ==========================================
+
 // TABLES DE JONCTION (Relations Many-to-Many)
-// ==========================================
+
 
 model LettresDeRecommendations {
   utilisateur_id      String
@@ -371,7 +360,7 @@ model ValideActivite {
   @@map("valide_activite")
 }
 
-model ValidationDuProjet {
+model ValideProjet {
   experience_id  String            @unique
   utilisateur_id String
   statut         StatutValidation?
@@ -382,10 +371,10 @@ model ValidationDuProjet {
   professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
 
   @@id([experience_id, utilisateur_id])
-  @@map("validation_du_projet")
+  @@map("valide_projet")
 }
 
-model ValidationStage {
+model ValideStage {
   utilisateur_id String
   experience_id  String            @unique
   statut         StatutValidation?
@@ -396,10 +385,10 @@ model ValidationStage {
   stage      Stage      @relation(fields: [experience_id], references: [experience_id])
 
   @@id([utilisateur_id, experience_id])
-  @@map("validation_stage")
+  @@map("valide_stage")
 }
 
-model ValidationCertification {
+model ValideCertification {
   institution_id String
   experience_id  String            @unique
   statut         StatutValidation?
@@ -410,5 +399,18 @@ model ValidationCertification {
   certification Certification @relation(fields: [experience_id], references: [experience_id])
 
   @@id([institution_id, experience_id])
-  @@map("validation_certification")
+  @@map("valide_certification")
+}
+
+model ValideEtudiant {
+  utilisateur_id String
+  institution_id String
+  statut         StatutValidation?
+  date_d_action  DateTime?
+
+  etudiant       Etudiant          @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  institution    Institution       @relation(fields: [institution_id], references: [institution_id])
+
+  @@id([utilisateur_id, institution_id])
+  @@map("valide_etudiant")
 }
