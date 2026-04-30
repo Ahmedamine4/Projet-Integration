@@ -11,10 +11,16 @@ const error = ref('');
 onMounted(async () => {
     try {
         await authStore.completeGoogleAuth();
-        router.replace('/dashboard');
+        router.replace('/getting-started');
     }
     catch (err) {
-        error.value = err.message;
+        if (!err.response)
+            error.value = "Network error. Please try again.";
+        else {
+            error.value =
+                err.response.data?.message ||
+                "Something went wrong";
+        }
     }
 });
 

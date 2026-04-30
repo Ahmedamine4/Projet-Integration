@@ -50,7 +50,7 @@ export async function authMiddleware(req, res, next) {
     }
 
     req.user = sanitizeUser(user);
-    req.authType = 'LOCAL';
+    req.authType = 'local';
 
     return next();
   } catch (error) {
@@ -68,7 +68,7 @@ export async function authMiddleware(req, res, next) {
     }
 
     req.user = sanitizeUser(user);
-    req.authType = 'GOOGLE';
+    req.authType = 'google';
 
     return next();
   } catch (error) {

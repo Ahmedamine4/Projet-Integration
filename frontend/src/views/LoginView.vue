@@ -40,7 +40,7 @@ const login = async () => {
 
     try {
         await authStore.login(email.value, password.value);
-        await router.push('/dashboard');
+        await router.push('/getting-started');
     }
     catch(err) {
         if (!err.response)
