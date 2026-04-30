@@ -35,14 +35,14 @@ const sidebarItems = [
     { label: 'Activities', icon: CalendarDays },
     { label: 'Portfolio', icon: FolderOpen },
     { label: 'Settings', icon: Settings }
-]
+];
 
 const selected = ref('Dashboard');
 
 const activeIndex = computed(() => {
     const index = sidebarItems.findIndex(item => item.label === selected.value);
     return index >= 0 ? index : 0;
-})
+});
 
 const thumbStyle = computed(() => {
     return {
@@ -120,6 +120,7 @@ const thumbStyle = computed(() => {
     top: 0;
     left: 0;
     flex-shrink: 0;
+    z-index: 800;
     width: 208px;
     height: 100vh;
     transition:
@@ -193,7 +194,7 @@ const thumbStyle = computed(() => {
 .sidebar__thumb {
     position: absolute;
     background: var(--color-background);
-    z-index: 10;
+    z-index: 1000;
     width: 10px;
     height: 25px;
     border-radius: 999px;
@@ -277,7 +278,6 @@ const thumbStyle = computed(() => {
     align-items: center;
     column-gap: var(--space-md);
     min-height: 38px;
-    min-width: 0;
     overflow: hidden;
     transition: column-gap var(--transition-normal);
 }

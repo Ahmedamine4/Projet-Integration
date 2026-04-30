@@ -66,7 +66,7 @@ const register = async () => {
         errors.email = "Invalid email address";
 
     if (!isValidPassword(password.value))
-        errors.password = "Password is not strong";
+        errors.password = "Password is not strong enouth";
 
     if (password.value !== confirm.value)
         errors.confirm = "Passwords do not match";
