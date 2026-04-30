@@ -178,7 +178,7 @@ p {
 
 .step-arrow {
     transition: transform 0.25s ease;
-    transform: rotate(90deg);
+    transform: rotate(-90deg);
 }
 
 .step-arrow.rotated {
