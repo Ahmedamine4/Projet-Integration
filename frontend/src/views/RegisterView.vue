@@ -88,7 +88,7 @@ const register = async () => {
             email: trimmedEmail,
             password: password.value
         });
-        await router.push('/dashboard');
+        await router.push('/getting-started');
     }
     catch (err) {
         if (!err.response)

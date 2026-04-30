@@ -13,6 +13,11 @@ import {
     Settings,
     LogOut
 } from 'lucide-vue-next';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
 
 defineProps({
     user: {
@@ -49,6 +54,15 @@ const thumbStyle = computed(() => {
         '--active-index': activeIndex.value
     };
 });
+
+async function handleLogout() {
+    try {
+        await authStore.logout();
+    }
+    finally {
+        router.replace('/login');
+    }
+}
 </script>
 
 <template>
@@ -105,6 +119,7 @@ const thumbStyle = computed(() => {
                 </div>
                 <button
                     class="sidebar__item"
+                    @click="handleLogout"
                 >
                     <LogOut />
                     <span>Log out</span>

@@ -1,6 +1,5 @@
 <template>
     <div class="error">
-        <span class="error__icon">⚠</span>
         <p><slot /></p>
     </div>
 </template>
@@ -17,11 +16,5 @@
     color: var(--color-error);
     font-size: var(--font-size-sm);
     line-height: 1.4;
-}
-.error__icon {
-    flex-shrink: 0;
-    font-size: 0.95rem;
-    line-height: 1.2;
-    opacity: 0.9;
 }
 </style>
