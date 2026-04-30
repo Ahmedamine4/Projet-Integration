@@ -1,8 +1,12 @@
-const express = require('express')
+import express from 'express';
+import institutionRoutes from './routes/institution.routes.js';
+// import linkEtudiantToInstitutionRoutes from './routes/link_etudiant_institutions.routes.js';
+
 const app = express();
 
-//test route , affichage apres le lancement
-app.get("/",(req,res) => {
-    res.send('<h1> Hello, API is running maintenant l! <h1>');
-});
-module.exports = app;  // export de l'app pour l'utilise dans sderver.js
+app.use(express.json());
+
+app.use('/api/institutions', institutionRoutes);
+// app.use('/api/link-etudiant-institutions', linkEtudiantToInstitutionRoutes);
+
+export default app;

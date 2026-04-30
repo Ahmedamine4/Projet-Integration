@@ -1,5 +1,5 @@
-const app = require("./app");
-const prisma = require("./config/db");
+import app from "./app.js";
+import prisma from "./config/db.js";
 
 const PORT = process.env.PORT || 3000;
 
