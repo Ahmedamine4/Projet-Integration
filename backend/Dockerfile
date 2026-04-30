@@ -5,14 +5,16 @@ FROM base AS development
 WORKDIR /app
 
 COPY package.json .
+COPY prisma ./prisma
 
 RUN npm install
+RUN npx prisma generate
 
 COPY . .
 
 EXPOSE 4001
 
-CMD ["npm","run","start-dev"]  
+CMD ["sh", "-c", "npx prisma migrate dev && npm run dev"] 
 
 FROM base AS production
 

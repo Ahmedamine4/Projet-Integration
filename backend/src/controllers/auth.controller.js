@@ -6,6 +6,7 @@ import {
   syncGoogleUser,
   getPublicUserById,
   getAllPublicUsers,
+  findUserByEmail
 } from '../services/auth.service.js';
 
 // Inscription locale
@@ -68,6 +69,13 @@ export async function googleAuth(req, res) {
       return res.status(403).json({
         success: false,
         message: 'Token Google d\'authentification invalide ou expiré',
+      });
+    }
+    const existingUser = await findUserByEmail(data.user.email);
+    if (existingUser && existingUser.provider !== 'google') {
+      return res.status(400).json({
+        success: false,
+        message: 'Un compte avec cet email existe déjà. Veuillez utiliser la connexion locale.',
       });
     }
     //ici on recupere les infos de l utilisateur a partir du token google/supabase

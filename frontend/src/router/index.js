@@ -40,7 +40,7 @@ const routes = [
     name: "getting-started",
     component: GettingStarted,
     meta: {
-      requiresAuth: true,
+      requiresAuth: false, // pour test uniquement !
       layout: 'app',
     }
   },
