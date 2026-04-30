@@ -30,13 +30,19 @@ const routes = [
     path: "/dashboard",
     name: "dashboard",
     component: DashboardView,
-    meta: { requiresAuth: false }
+    meta: {
+      requiresAuth: true,
+      layout: 'app',
+    }
   },
   {
     path: "/getting-started",
     name: "getting-started",
     component: GettingStarted,
-    meta: { requiresAuth: false }
+    meta: {
+      requiresAuth: true,
+      layout: 'app',
+    }
   },
   {
     path: "/auth/callback",

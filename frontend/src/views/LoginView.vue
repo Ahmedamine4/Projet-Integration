@@ -47,7 +47,7 @@ const login = async () => {
             serverError.value = "Network error. Please try again.";
         else {
             serverError.value =
-                err.response.data?.message ||
+                err.response.data?.error ||
                 "Something went wrong";
         }
     }

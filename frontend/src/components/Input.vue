@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, useAttrs } from 'vue';
+import { Eye, EyeOff } from 'lucide-vue-next';
 
 defineOptions({
     inheritAttrs: false,
@@ -17,8 +18,16 @@ const props = defineProps({
     },
     size: {
         type: String,
-        default: 'sm'
+        default: 'sm',
     },
+});
+
+const attrs = useAttrs();
+const isPasswordInput = computed(() => attrs.type === 'password');
+const isPasswordVisible = ref(false);
+const inputType = computed(() => {
+    if (!isPasswordInput.value) return attrs.type;
+    return isPasswordVisible.value ? 'text' : 'password';
 });
 
 const classes = computed(() => [
@@ -32,10 +41,24 @@ const classes = computed(() => [
         <span v-if="label" class="input__label">
             {{ label }}
         </span>
-        <input
-            v-bind="$attrs"
-            v-model="model"
-        >
+
+        <div class="input__control">
+            <input
+                v-bind="$attrs"
+                v-model="model"
+                :type="inputType"
+            >
+            
+            <button
+                v-if="isPasswordInput"
+                class="input__toggle"
+                type="button"
+                @click="isPasswordVisible = !isPasswordVisible"
+            >
+                <EyeOff v-if="isPasswordVisible" />
+                <Eye v-else />
+            </button>
+        </div>
     </label>
 </template>
 
@@ -54,6 +77,32 @@ const classes = computed(() => [
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-primary-hover);
+}
+
+.input__control {
+    position: relative;
+}
+
+.input__toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: rgba(var(--color-primary-rgb), 0.5);
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.input__toggle svg {
+    width: 1rem;
+    height: 1rem;
 }
 
 input {
@@ -88,6 +137,10 @@ input {
     min-height: 2.5rem;
     padding: var(--space-sm) var(--space-md);
     font-size: var(--font-size-md);
+}
+
+.input__control:has(.input__toggle) input {
+    padding-right: 2.45rem;
 }
 
 .input--sm .input__label,
