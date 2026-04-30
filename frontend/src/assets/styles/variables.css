@@ -25,8 +25,8 @@
 
 :root {
   /* Colors */
-  --color-primary: #100904;
-  --color-primary-rgb: 16, 9, 4;
+  --color-primary: #141414;
+  --color-primary-rgb: 20, 20, 20;
   --color-primary-surface: #282421;
   --color-primary-hover: #413e3c;
   --color-secondary: #ec6c0f;
