@@ -113,7 +113,7 @@ describe('LoginView', () => {
     });
 
     it('shows network error when login fails without response', async () => {
-        mocks.login.mockRejectedValueOnce(new Error('Network failed'));
+        mocks.login.mockRejectedValueOnce(new Error());
 
         const wrapper = mountLoginView();
 
