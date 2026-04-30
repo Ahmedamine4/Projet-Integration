@@ -71,19 +71,15 @@ export const useAuthStore = defineStore('auth', () => {
     async function completeGoogleAuth() {
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
+        if (!data || !data.session) {
+            throw new Error('Aucune session Google/Supabase trouvée');
+        }
 
-        const supabaseToken = data.session?.access_token;
-        console.log("Supabase session data:", supabaseToken);
-        if (!supabaseToken) throw new Error('Missing Supabase session');
+        const supabaseToken = data.session.access_token;
 
         const response = await api.post(
             '/auth/google',
-            {},
-            {
-                headers: {
-                    Authorization: `Bearer ${supabaseToken}`
-                }
-            }
+            {  access_token: supabaseToken  }
         );
         
         user.value = response.data.user;
@@ -132,3 +128,4 @@ export const useAuthStore = defineStore('auth', () => {
   "token": "abc123"
 }
 */
+

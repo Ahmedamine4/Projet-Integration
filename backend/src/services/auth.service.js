@@ -134,6 +134,10 @@ export async function loginLocalUser({ email, password }) {
 export async function syncGoogleUser(decoded) {
   const supabaseUid = decoded.sub;
   const email = normalizeEmail(decoded.email);
+  const metadata = decoded.user_metadata || {};
+  const fullName = metadata.full_name || "";
+  const googlePrenom = metadata.given_name || fullName.split(' ')[0] || "Prénom";
+  const googleNom = metadata.family_name || fullName.split(' ').slice(1).join(' ') || "Nom";
 
   if (!supabaseUid) {
     throw new Error('Token Google invalide');
@@ -159,8 +163,8 @@ export async function syncGoogleUser(decoded) {
 
   const newUser = await prisma.utilisateur.create({
     data: {
-      nom: 'Google',
-      prenom: 'User',
+      nom: googleNom,
+      prenom: googlePrenom,
       email,
       provider: 'google',
       supabase_uid: supabaseUid,

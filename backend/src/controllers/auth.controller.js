@@ -53,10 +53,7 @@ export async function login(req, res) {
 export async function googleAuth(req, res) {
   try {
     const authheader = req.headers.authorization || '';
-    const token = authheader.startsWith('Bearer ')
-      ? authheader.split(' ')[1]
-      : req.body.access_token;
-      console.log("Token reçu pour Google Auth:", token);
+    const token = req.body.access_token || (authheader.startsWith('Bearer ') ? authheader.split(' ')[1] : '');
     
     if (!token) {
       return res.status(401).json({
@@ -66,12 +63,11 @@ export async function googleAuth(req, res) {
     }
     //verifier le token google/supabase
     const { data, error } = await supabase.auth.getUser(token);
-    console.log("Data from Supabase:", data );
-    console.log("Data from Supabase: errrrr" , error);
-    if ( !data.user) {
+
+    if (error || !data?.user) {
       return res.status(403).json({
         success: false,
-        message: 'Token Google d\'authentification invalide',
+        message: 'Token Google d\'authentification invalide ou expiré',
       });
     }
     //ici on recupere les infos de l utilisateur a partir du token google/supabase
@@ -82,12 +78,13 @@ export async function googleAuth(req, res) {
       //hna le nom prenom sont dans user_metadata
 
     });
-    //reponse succes
+    const localToken = generateLocalToken(user);
     return res.status(200).json({
       success: true,
       message: 'Authentification Google réussie',
       provider: 'google',
-      user,
+      user: user,
+      token: localToken
     });
   }
   catch (error) {
