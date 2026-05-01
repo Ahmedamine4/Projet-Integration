@@ -1,6 +1,6 @@
 export default {
   test: {
-    include: ["test/**/*.test.js"],
+    include: ["tests/**/*.test.js"],
     pool: "vmThreads",
   },
 };
