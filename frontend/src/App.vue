@@ -12,19 +12,19 @@ const isAppRoute = computed(() => route.meta.layout === 'app');
 </script>
 
 <template>
-    <div id="app">
-        <AuthLayout v-if="isAuthRoute">
-            <router-view />
-        </AuthLayout>
+  <div id="app">
+    <AuthLayout v-if="isAuthRoute">
+      <router-view />
+    </AuthLayout>
 
-        <AppLayout v-else-if="isAppRoute">
-            <router-view />
-        </AppLayout>
+    <AppLayout v-else-if="isAppRoute">
+      <router-view />
+    </AppLayout>
 
-        <template v-else>
-            <main>
-                <router-view />
-            </main>
-        </template>
-    </div>
+    <template v-else>
+      <main>
+        <router-view />
+      </main>
+    </template>
+  </div>
 </template>
