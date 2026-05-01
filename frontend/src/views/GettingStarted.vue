@@ -1,100 +1,53 @@
 <script setup>
-import { computed, ref, reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import GettingStartedStep from '@/components/GettingStartedStep.vue';
-
-const expandedStep = ref(null);
-
-const schools = [
-    'Ecole Nationale des Sciences Appliquees',
-    'Faculte des Sciences',
-    'Faculte des Sciences et Techniques',
-    'Ecole Mohammadia d Ingenieurs',
-    'Ecole Nationale Superieure d Informatique et d Analyse des Systemes',
-    'Institut National des Postes et Telecommunications',
-    'Universite Mohammed V',
-    'Universite Hassan II',
-    'Universite Cadi Ayyad',
-    'Universite Ibn Tofail',
-    'Universite Abdelmalek Essaadi',
-    'Universite Sidi Mohamed Ben Abdellah',
-    'Universite Moulay Ismail',
-    'Universite Ibn Zohr',
-    'Universite Hassan Premier',
-    'Universite Mohammed Premier',
-    'Al Akhawayn University',
-    'Universite Internationale de Rabat',
-    'Universite Internationale de Casablanca',
-    'Ecole Hassania des Travaux Publics',
-    'Institut Agronomique et Veterinaire Hassan II',
-    'Ecole Nationale Superieure des Mines de Rabat',
-    'Ecole Nationale d Architecture',
-    'Ecole Superieure de Technologie',
-    'Institut Superieur de Commerce et d Administration des Entreprises',
-];
 
 const steps = [
     {
         key: 'school',
-        title: 'Choose your School',
-        description: 'Choose your school from the list of supported schools',
-        placeholder: 'Search for your school...',
-        confirmText: 'Confirm',
-        options: schools,
+        title: 'Build your academic path',
+        description: 'Choose your current level and add your schools',
     },
     {
         key: 'github',
         title: 'Connect your GitHub account',
         description: 'Connect your GitHub account to your profile',
-        placeholder: 'Enter your GitHub username...',
-        confirmText: 'Connect',
     },
     {
         key: 'linkedin',
         title: 'Connect your LinkedIn account',
         description: 'Connect your LinkedIn account to your profile',
-        placeholder: 'Enter your LinkedIn profile URL...',
-        confirmText: 'Connect',
     },
 ];
 
 const stepData = reactive({
-    school: { value: '', done: false },
-    github: { value: '', done: false },
-    linkedin: { value: '', done: false },
+    school: { done: false },
+    github: { done: false },
+    linkedin: { done: false },
 });
 
 const doneCount = computed(() => steps.reduce((acc, step) => {
     return stepData[step.key].done ? acc + 1 : acc;
 }, 0));
 
-function toggleStep(key) {
-    expandedStep.value = expandedStep.value === key ? null : key;
-}
-
-function completeStep(key) {
-    const step = steps.find(step => step.key === key);
-    const value = stepData[key].value.trim();
-
-    if (!step || !value) return;
-
-    if (step.options?.length && !step.options.includes(value))
-        return;
-
-    stepData[key].done = true;
-    expandedStep.value = null;
-}
-
 function isDone(key) {
     return stepData[key].done;
 }
 
+function handleStepAction(key) {
+    const step = steps.find(step => step.key === key);
+
+    if (!step) return;
+
+    stepData[key].done = true;
+}
 
 const meterStyle = computed(() => {
     const completionPercentage = doneCount.value * 100 / steps.length;
     let background = '';
-    if (completionPercentage < 25) background = 'var(--color-error)';
-    else if (completionPercentage < 50) background = '#e07012';
-    else if (completionPercentage < 75) background = '#d9b20b';
+    if (completionPercentage <= 25) background = 'var(--color-error)';
+    else if (completionPercentage <= 50) background = '#e07012';
+    else if (completionPercentage <= 75) background = '#d9b20b';
     else background = 'var(--color-success)';
     return {
         width : `${completionPercentage}%`,
@@ -128,17 +81,10 @@ const meterStyle = computed(() => {
                 <GettingStartedStep
                     v-for="step in steps"
                     :key="step.key"
-                    v-model="stepData[step.key].value"
                     :title="step.title"
                     :description="step.description"
-                    :placeholder="step.placeholder"
-                    :confirm-text="step.confirmText"
                     :done="isDone(step.key)"
-                    :expanded="expandedStep === step.key"
-                    :lock-when-done="step.lockWhenDone"
-                    :options="step.options"
-                    @toggle="toggleStep(step.key)"
-                    @complete="completeStep(step.key)"
+                    @action="handleStepAction(step.key)"
                 />
             </div>
         </div>
