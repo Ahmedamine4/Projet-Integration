@@ -24,8 +24,7 @@
     "pg": "^8.20.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prisma": "^6.19.3"
+    "nodemon": "^3.1.14"
   },
   "keywords": []
 }
