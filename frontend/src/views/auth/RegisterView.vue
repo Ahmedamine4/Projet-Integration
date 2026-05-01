@@ -250,7 +250,6 @@ const registerWithGoogle = async () => {
 </template>
 
 <style scoped>
-
 .auth-form {
     display: grid;
     gap: var(--space-md);

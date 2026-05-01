@@ -71,7 +71,6 @@ const loginWithGoogle = async () => {
 </script>
 
 <template>
-
     <Card title="Welcome back" size="sm">
         <p class="auth-subtitle">
             Sign in to your account to continue

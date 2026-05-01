@@ -1,7 +1,8 @@
 <script setup>
-import { computed, reactive } from 'vue';
+import { ref, computed, reactive } from 'vue';
 import GettingStartedStep from '@/components/getting-started/GettingStartedStep.vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
+import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 
 const steps = [
     {
@@ -31,6 +32,8 @@ const doneCount = computed(() => steps.reduce((acc, step) => {
     return stepData[step.key].done ? acc + 1 : acc;
 }, 0));
 
+const isSchoolModalOpen = ref(false);
+
 function isDone(key) {
     return stepData[key].done;
 }
@@ -40,7 +43,17 @@ function handleStepAction(key) {
 
     if (!step) return;
 
+    if (step.key === 'school') {
+        isSchoolModalOpen.value = true;
+        return;
+    }
+
     stepData[key].done = true;
+}
+
+function completeSchoolStep() {
+    stepData.school.done = true;
+    isSchoolModalOpen.value= false;
 }
 </script>
 
@@ -74,6 +87,11 @@ function handleStepAction(key) {
             </div>
         </div>
     </div>
+    <SchoolPathModal
+        :open="isSchoolModalOpen"
+        @close="isSchoolModalOpen = false"
+        @complete="completeSchoolStep"
+    />
 </template>
 
 <style scoped>
@@ -84,6 +102,7 @@ function handleStepAction(key) {
     padding: 3rem var(--space-xl);
     gap: 3rem;
 }
+
 .wrapper-getting-started {
     display: flex;
     flex-direction: column;
@@ -93,6 +112,7 @@ function handleStepAction(key) {
     height: fit-content;
     padding-bottom: 0;
 }
+
 .wrapper-header {
     display: flex;
     align-items: center;
@@ -102,6 +122,7 @@ function handleStepAction(key) {
     border-top-left-radius: var(--radius-md);
     border-top-right-radius: var(--radius-md);
 }
+
 .wrapper-steps {
     display: flex;
     flex-direction: column;
