@@ -7,6 +7,7 @@ import Input from '@/components/common/Input.vue';
 import Button from '@/components/common/Button.vue';
 import AuthFooter from '@/components/auth/AuthFooter.vue';
 import Divider from '@/components/common/Divider.vue';
+import Error from '@/components/common/Error.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -85,9 +86,12 @@ const loginWithGoogle = async () => {
                     autocomplete="email"
                 />
 
-                <p v-if="errors.email" class="field-error">
+                <Error
+                    v-if="errors.email"
+                    variant="field"
+                >
                     {{ errors.email }}
-                </p>
+                </Error>
             </div>
             <div class="field">
                 <Input
@@ -126,9 +130,9 @@ const loginWithGoogle = async () => {
                 Continue with Google
             </Button>
 
-            <p v-if="serverError" class="global-error">
+            <Error v-if="serverError">
                 {{ serverError }}
-            </p>
+            </Error>
             
         </form>
         <AuthFooter
@@ -152,15 +156,6 @@ const loginWithGoogle = async () => {
     color: var(--color-primary-hover);
 }
 
-.field-error {
-    color: var(--color-error);
-    font-size: 12px;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-}
-
 .field {
     display: grid;
     gap: var(--space-xs);
@@ -168,11 +163,5 @@ const loginWithGoogle = async () => {
 
 .submit-row {
     margin-top: var(--space-sm);
-}
-
-.global-error {
-    color: var(--color-error);
-    font-size: 13px;
-    text-align: center;
 }
 </style>

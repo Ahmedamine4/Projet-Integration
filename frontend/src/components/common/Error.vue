@@ -1,20 +1,31 @@
+<script setup>
+defineProps({
+    variant: {
+        type: String,
+        default: 'global'
+    }
+});
+</script>
+
 <template>
-    <div class="error">
-        <p><slot /></p>
-    </div>
+    <p :class="`error--${variant}`">
+        <slot />
+    </p>
 </template>
 
 <style scoped>
-.error {
+.error--field {
+    color: var(--color-error);
+    font-size: 12px;
+    margin: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    padding: 0.08rem 0.9rem;
-    margin: 1.2rem 0 0;
-    border: none;
+    gap: var(--space-xs);
+}
+
+.error--global {
     color: var(--color-error);
-    font-size: var(--font-size-sm);
-    line-height: 1.4;
+    font-size: 13px;
+    text-align: center;
 }
 </style>

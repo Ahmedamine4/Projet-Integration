@@ -8,6 +8,7 @@ import Input from '@/components/common/Input.vue';
 import AuthFooter from '@/components/auth/AuthFooter.vue';
 import Divider from '@/components/common/Divider.vue';
 import PasswordStrengthMeter from '@/components/auth/PasswordStrengthMeter.vue';
+import Error from '@/components/common/Error.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -129,9 +130,12 @@ const registerWithGoogle = async () => {
                     placeholder="First name"
                     autocomplete="given-name"
                 />
-                <p v-if="errors.firstName" class="field-error">
+                <Error
+                    v-if="errors.firstName"
+                    variant="field"
+                >
                     {{ errors.firstName }}
-                </p>
+                </Error>
             </div>
 
             <div class="field">
@@ -142,9 +146,12 @@ const registerWithGoogle = async () => {
                     autocomplete="family-name"
                 />
 
-                <p v-if="errors.lastName" class="field-error">
+                <Error
+                    v-if="errors.lastName"
+                    variant="field"
+                >
                     {{ errors.lastName }} 
-                </p>
+                </Error>
             </div>
 
             <div class="field">
@@ -154,9 +161,12 @@ const registerWithGoogle = async () => {
                     placeholder="email"
                 />
 
-                <p v-if="errors.email" class="field-error">
+                <Error
+                    v-if="errors.email"
+                    variant="field"
+                >
                     {{ errors.email }}
-                </p>
+                </Error>
             </div>
 
             <div class="password-group">
@@ -168,9 +178,12 @@ const registerWithGoogle = async () => {
                         placeholder="password"
                     />
 
-                    <p v-if="errors.password" class="field-error">
+                    <Error
+                        v-if="errors.password"
+                        variant="field"
+                    >
                         {{ errors.password }}
-                    </p>
+                    </Error>
 
                     <PasswordStrengthMeter :password />
                 </div>
@@ -183,9 +196,12 @@ const registerWithGoogle = async () => {
                         placeholder="confirm password"
                     />
 
-                    <p v-if="errors.confirm" class="field-error">
+                    <Error
+                        v-if="errors.confirm"
+                        variant="field"
+                    >
                         {{ errors.confirm }}
-                    </p>
+                    </Error>
                 </div>
             </div>
 
@@ -220,9 +236,9 @@ const registerWithGoogle = async () => {
                 Continue with Google
             </Button>
 
-            <p v-if="serverError" class="global-error">
+            <Error v-if="serverError">
                 {{ serverError }}
-            </p>
+            </Error>
 
         </form>
         <AuthFooter
@@ -246,21 +262,6 @@ const registerWithGoogle = async () => {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-primary-hover);
-}
-
-.field-error {
-    color: var(--color-error);
-    font-size: 12px;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-}
-
-.global-error {
-    color: var(--color-error);
-    font-size: 13px;
-    text-align: center;
 }
 
 .password-group {

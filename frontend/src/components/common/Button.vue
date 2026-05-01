@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import googleIcon from '@/assets/icons/google.svg'
+import Spinner from '@/components/common/Spinner.vue';
 
 const props = defineProps({
     variant: {
@@ -40,9 +41,9 @@ const classes = computed(() => [
         :class="classes"
         :disabled="disabled || loading"
     >
-        <span
+        <Spinner
             v-if="loading"
-            class="button__spinner"
+            class="spinner"
         />
         <img
             v-else-if="props.variant === 'google'"
@@ -151,20 +152,8 @@ const classes = computed(() => [
     margin-right: 0.5rem;
 }
 
-.button__spinner {
-    width: 1rem;
-    height: 1rem;
+.spinner {
     margin-right: 0.5rem;
-    border: 2px solid currentColor;
-    border-top-color: transparent;
-    border-radius: 999px;
-    animation: button-spin 0.7s linear infinite;
-} 
-
-@keyframes button-spin {
-    to {
-        transform: rotate(360deg);
-    }
 }
 
 @media (max-width: 768px) {

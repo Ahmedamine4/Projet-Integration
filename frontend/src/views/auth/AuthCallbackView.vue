@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Error from '@/components/common/Error.vue';
+import Spinner from '@/components/common/Spinner.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -31,32 +32,17 @@ onMounted(async () => {
         class="loading"
         v-if="!error"
     >
-        <span
-            class="loading__spinner"
+        <Spinner
+            size="lg"
+            class="spinner"
         />
         <span>Signing you in...</span>
     </div>
     <Error v-else>{{ error }}</Error>
 </template>
-<style scoped>
-.loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.loading__spinner {
-    width: 2rem;
-    height: 2rem;
-    margin-right: 1rem;
-    border: 3px solid currentColor;
-    border-top-color: transparent;
-    border-radius: 999px;
-    animation: loading-spin 0.7s linear infinite;
-} 
 
-@keyframes loading-spin {
-    to {
-        transform: rotate(360deg);
-    }
+<style scoped>
+.spinner {
+    margin-right: 1rem;
 }
 </style>
