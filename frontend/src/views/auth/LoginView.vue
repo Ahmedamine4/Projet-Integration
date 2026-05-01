@@ -1,12 +1,12 @@
 <script setup>
 import { ref, reactive } from 'vue';
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
-import Card from '@/components/Card.vue';
-import Input from '@/components/Input.vue';
-import Button from '@/components/Button.vue';
-import AuthFooter from '@/components/AuthFooter.vue';
-import Divider from '@/components/Divider.vue';
+import Card from '@/components/common/Card.vue';
+import Input from '@/components/common/Input.vue';
+import Button from '@/components/common/Button.vue';
+import AuthFooter from '@/components/auth/AuthFooter.vue';
+import Divider from '@/components/common/Divider.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();

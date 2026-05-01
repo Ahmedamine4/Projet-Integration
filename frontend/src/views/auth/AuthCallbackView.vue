@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import Error from '@/components/Error.vue';
+import Error from '@/components/common/Error.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();

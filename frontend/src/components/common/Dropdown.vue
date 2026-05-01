@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import Input from '@/components/Input.vue';
+import Input from '@/components/common/Input.vue';
 
 const model = defineModel({
     type: String,

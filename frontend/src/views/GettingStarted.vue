@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive } from 'vue';
-import GettingStartedStep from '@/components/GettingStartedStep.vue';
+import GettingStartedStep from '@/components/getting-started/GettingStartedStep.vue';
+import ProgressMeter from '@/components/common/ProgressMeter.vue';
 
 const steps = [
     {
@@ -41,20 +42,6 @@ function handleStepAction(key) {
 
     stepData[key].done = true;
 }
-
-const meterStyle = computed(() => {
-    const completionPercentage = doneCount.value * 100 / steps.length;
-    let background = '';
-    if (completionPercentage <= 25) background = 'var(--color-error)';
-    else if (completionPercentage <= 50) background = '#e07012';
-    else if (completionPercentage <= 75) background = '#d9b20b';
-    else background = 'var(--color-success)';
-    return {
-        width : `${completionPercentage}%`,
-        background
-    };
-});
-
 </script>
 
 <template>
@@ -68,12 +55,10 @@ const meterStyle = computed(() => {
                     <span>
                         {{ `${doneCount} / ${steps.length}` }}
                     </span>
-                    <div class="step-meter__bar">
-                        <div
-                            class="step-meter__fill"
-                            :style="meterStyle"
-                        />
-                    </div>
+                    <ProgressMeter
+                        :value="doneCount"
+                        :max="steps.length"
+                    />
                 </div>
             </div>
             <div class="wrapper-steps">
@@ -141,23 +126,5 @@ const meterStyle = computed(() => {
     flex-shrink: 0;
     font-size: var(--font-size-sm);
     color: rgba(var(--color-primary-rgb), 0.72);
-}
-
-.step-meter__bar {
-    flex: 1;
-    min-width: 6rem;
-    overflow: hidden;
-    height: 0.38rem;
-    border-radius: 999px;
-    background-color: rgba(var(--color-primary-rgb), 0.12);
-}
-
-.step-meter__fill {
-    height: 100%;
-    border-radius: inherit;
-    background: var(--color-success);
-    transition:
-        width 0.48s var(--ease-overshoot),
-        background var(--transition-normal);
 }
 </style>

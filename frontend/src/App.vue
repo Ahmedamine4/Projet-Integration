@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import AuthLayout from './layouts/AuthLayout.vue';
-import AppLayout from './layouts/AppLayout.vue';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 const route = useRoute();
 

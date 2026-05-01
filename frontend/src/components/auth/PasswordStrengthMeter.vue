@@ -1,5 +1,7 @@
 <script setup>
 import { computed } from 'vue';
+import ProgressMeter from '@/components/common/ProgressMeter.vue';
+
 const props = defineProps({
     password: {
         type: String,
@@ -27,41 +29,49 @@ const rules = computed(() => [
 
 const strength = computed(() => {
     const score = rules.value.filter(rule => rule.passed).length;
-    if (score <= 1) return { label: 'Weak', score };
-    if (score === 2) return { label: 'Fair', score };
-    if (score === 3) return { label: 'Good', score };
+    if (score <= 1) return {
+        label: 'Weak',
+        score,
+        color: 'var(--color-error)'
+    };
+    if (score === 2) return {
+        label: 'Fair',
+        score,
+        color: '#e07012'
+    };
+    if (score === 3) return {
+        label: 'Good',
+        score,
+        color: '#d9b20b'
+    };
 
-    return { label: 'Strong', score };
+    return {
+        label: 'Strong',
+        score,
+        color: 'var(--color-success)'
+    };
 });
 
-const meterStyle = computed(() => ({
-    width: `${strength.value.score * 25}%`
-}));
+const strengthTextStyle = computed(() => {
+    return { color: strength.value.color }
+});
 </script>
 
 <template>
     <section
         class="password-meter"
-        :class="[
-            `password-meter--${strength.label.toLowerCase()}`,
-            { 'password-meter--visible': password }
-        ]"
+        :class="{ 'password-meter--visible': password }"
     >
         <div class="password-meter__header">
             <span class="password-meter__label">
                 Password strength
             </span>
-            <strong class="password-meter__status">
+            <strong :style="strengthTextStyle">
                 {{ strength.label }}
             </strong>
         </div>
 
-        <div class="password-meter__track">
-            <div
-                class="password-meter__fill"
-                :style="meterStyle"
-            />
-        </div>
+        <ProgressMeter :value="strength.score" />
 
         <ul class="password-meter__rules">
             <li
@@ -104,22 +114,6 @@ const meterStyle = computed(() => ({
     transform: translateY(0);
 }
 
-.password-meter--weak {
-    --meter-color: var(--color-error);
-}
-
-.password-meter--fair {
-    --meter-color: #e07012;
-}
-
-.password-meter--good {
-    --meter-color: #d9b20b;
-}
-
-.password-meter--strong {
-    --meter-color: var(--color-success);
-}
-
 .password-meter__header {
     display: flex;
     justify-content: space-between;
@@ -130,26 +124,6 @@ const meterStyle = computed(() => ({
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: rgba(var(--color-primary-rgb), 0.68);
-}
-
-.password-meter__status {
-    color: var(--meter-color);
-}
-
-.password-meter__track {
-    overflow: hidden;
-    height: 0.38rem;
-    border-radius: 999px;
-    background-color: rgba(var(--color-primary-rgb), 0.12);
-}
-
-.password-meter__fill {
-    height: 100%;
-    border-radius: inherit;
-    background: var(--meter-color);
-    transition:
-        width 0.48s var(--ease-overshoot),
-        background-color var(--transition-normal);
 }
 
 .password-meter__rules {
