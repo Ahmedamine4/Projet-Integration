@@ -23,7 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function fetchProfile() { // Appelé au démarrage pour vérifier si l'utilisateur est déjà connecté (cookie valide)
         try {
-            const { data } = await api.get('/auth/profile'); // Ta route backend protégée
+            const { data } = await api.get('/auth/profile');
             user.value = normalizeUser(data.user);
         } catch (error) {
             user.value = null; // Cookie expiré ou absent
