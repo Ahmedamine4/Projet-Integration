@@ -1,5 +1,5 @@
 <script setup>
-import { CircleCheck, CircleDashed } from "lucide-vue-next";
+import { CircleCheck, CircleDashed } from 'lucide-vue-next';
 
 const props = defineProps({
   title: {
@@ -16,10 +16,10 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["action"]);
+const emit = defineEmits(['action']);
 
 function handleToggle() {
-  if (!props.done) emit("action");
+  if (!props.done) emit('action');
 }
 </script>
 

@@ -2,7 +2,7 @@
 defineProps({
   size: {
     type: String,
-    default: "md",
+    default: 'md',
   },
 });
 </script>

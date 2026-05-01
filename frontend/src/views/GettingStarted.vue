@@ -1,24 +1,24 @@
 <script setup>
-import { ref, computed, reactive } from "vue";
-import GettingStartedStep from "@/components/getting-started/GettingStartedStep.vue";
-import ProgressMeter from "@/components/common/ProgressMeter.vue";
-import SchoolPathModal from "@/components/getting-started/SchoolPathModal.vue";
+import { ref, computed, reactive } from 'vue';
+import GettingStartedStep from '@/components/getting-started/GettingStartedStep.vue';
+import ProgressMeter from '@/components/common/ProgressMeter.vue';
+import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 
 const steps = [
   {
-    key: "school",
-    title: "Build your academic path",
-    description: "Choose your current level and add your schools",
+    key: 'school',
+    title: 'Build your academic path',
+    description: 'Choose your current level and add your schools',
   },
   {
-    key: "github",
-    title: "Connect your GitHub account",
-    description: "Connect your GitHub account to your profile",
+    key: 'github',
+    title: 'Connect your GitHub account',
+    description: 'Connect your GitHub account to your profile',
   },
   {
-    key: "linkedin",
-    title: "Connect your LinkedIn account",
-    description: "Connect your LinkedIn account to your profile",
+    key: 'linkedin',
+    title: 'Connect your LinkedIn account',
+    description: 'Connect your LinkedIn account to your profile',
   },
 ];
 
@@ -45,7 +45,7 @@ function handleStepAction(key) {
 
   if (!step) return;
 
-  if (step.key === "school") {
+  if (step.key === 'school') {
     isSchoolModalOpen.value = true;
     return;
   }

@@ -1,14 +1,14 @@
 <script setup>
-import { computed } from "vue";
-import { useRoute } from "vue-router";
-import AuthLayout from "@/layouts/AuthLayout.vue";
-import AppLayout from "@/layouts/AppLayout.vue";
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 const route = useRoute();
 
-const isAuthRoute = computed(() => route.meta.layout === "auth");
+const isAuthRoute = computed(() => route.meta.layout === 'auth');
 
-const isAppRoute = computed(() => route.meta.layout === "app");
+const isAppRoute = computed(() => route.meta.layout === 'app');
 </script>
 
 <template>

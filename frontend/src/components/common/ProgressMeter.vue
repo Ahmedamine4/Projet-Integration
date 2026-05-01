@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed } from 'vue';
 
 const props = defineProps({
   value: {
@@ -14,11 +14,11 @@ const props = defineProps({
 
 const meterStyle = computed(() => {
   const completionPercentage = (props.value * 100) / props.max;
-  let background = "";
-  if (completionPercentage <= 25) background = "var(--color-error)";
-  else if (completionPercentage <= 50) background = "#e07012";
-  else if (completionPercentage <= 75) background = "#d9b20b";
-  else background = "var(--color-success)";
+  let background = '';
+  if (completionPercentage <= 25) background = 'var(--color-error)';
+  else if (completionPercentage <= 50) background = '#e07012';
+  else if (completionPercentage <= 75) background = '#d9b20b';
+  else background = 'var(--color-success)';
   return {
     width: `${completionPercentage}%`,
     background,

@@ -2,7 +2,7 @@
 defineProps({
   title: {
     type: String,
-    default: "",
+    default: '',
   },
   fullWidth: {
     type: Boolean,
@@ -10,7 +10,7 @@ defineProps({
   },
   size: {
     type: String,
-    default: "md",
+    default: 'md',
   },
 });
 </script>

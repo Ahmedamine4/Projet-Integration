@@ -1,25 +1,25 @@
 @font-face {
-  font-family: "Inter";
-  src: url("../fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+  font-family: 'Inter';
+  src: url('../fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
-  font-family: "Inter";
-  src: url("../fonts/Inter-Italic-VariableFont_opsz,wght.ttf")
-    format("truetype");
+  font-family: 'Inter';
+  src: url('../fonts/Inter-Italic-VariableFont_opsz,wght.ttf')
+    format('truetype');
   font-weight: 100 900;
   font-style: italic;
 }
 @font-face {
-  font-family: "Norman";
-  src: url("../fonts/fonnts.com-Norman-.otf") format("opentype");
+  font-family: 'Norman';
+  src: url('../fonts/fonnts.com-Norman-.otf') format('opentype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
-  font-family: "Norman_Stencil";
-  src: url("../fonts/fonnts.com-Norman-Stencil-.otf") format("opentype");
+  font-family: 'Norman_Stencil';
+  src: url('../fonts/fonnts.com-Norman-Stencil-.otf') format('opentype');
   font-weight: 100 900;
   font-style: normal;
 }
@@ -43,9 +43,9 @@
 
   /* Typography */
   /* Fonts */
-  --font-ui: "Inter", sans-serif;
-  --font-display: "Norman", serif;
-  --font-stencil: "Norman_Stencil", serif;
+  --font-ui: 'Inter', sans-serif;
+  --font-display: 'Norman', serif;
+  --font-stencil: 'Norman_Stencil', serif;
   /* size */
   --font-size-xxs: 0.65rem;
   --font-size-xs: 0.75rem;

@@ -1,25 +1,25 @@
 <script setup>
-import { ref, reactive } from "vue";
-import { useAuthStore } from "@/stores/auth";
-import { useRouter } from "vue-router";
-import Card from "@/components/common/Card.vue";
-import Input from "@/components/common/Input.vue";
-import Button from "@/components/common/Button.vue";
-import AuthFooter from "@/components/auth/AuthFooter.vue";
-import Divider from "@/components/common/Divider.vue";
-import Error from "@/components/common/Error.vue";
+import { ref, reactive } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
+import Card from '@/components/common/Card.vue';
+import Input from '@/components/common/Input.vue';
+import Button from '@/components/common/Button.vue';
+import AuthFooter from '@/components/auth/AuthFooter.vue';
+import Divider from '@/components/common/Divider.vue';
+import Error from '@/components/common/Error.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
 
-const email = ref("");
-const password = ref("");
+const email = ref('');
+const password = ref('');
 
 const isLoggingIn = ref(false);
 const isGoogleLoading = ref(false);
 
-const serverError = ref("");
-const errors = reactive({ email: "" });
+const serverError = ref('');
+const errors = reactive({ email: '' });
 
 const isValidEmail = (email) => {
   const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -27,12 +27,12 @@ const isValidEmail = (email) => {
 };
 
 const login = async () => {
-  errors.email = "";
-  serverError.value = "";
+  errors.email = '';
+  serverError.value = '';
 
   const trimmedEmail = email.value.trim();
   if (!isValidEmail(trimmedEmail)) {
-    errors.email = "Invalid email address";
+    errors.email = 'Invalid email address';
     return;
   }
 
@@ -40,11 +40,11 @@ const login = async () => {
 
   try {
     await authStore.login(email.value, password.value);
-    await router.push("/getting-started");
+    await router.push('/getting-started');
   } catch (err) {
-    if (!err.response) serverError.value = "Network error. Please try again.";
+    if (!err.response) serverError.value = 'Network error. Please try again.';
     else {
-      serverError.value = err.response.data?.error || "Something went wrong";
+      serverError.value = err.response.data?.error || 'Something went wrong';
     }
   } finally {
     isLoggingIn.value = false;
@@ -52,7 +52,7 @@ const login = async () => {
 };
 
 const loginWithGoogle = async () => {
-  serverError.value = "";
+  serverError.value = '';
   isGoogleLoading.value = true;
   try {
     await authStore.startGoogleAuth();

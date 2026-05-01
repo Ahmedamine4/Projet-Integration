@@ -1,33 +1,33 @@
 <script setup>
-import { ref, reactive } from "vue";
-import { useAuthStore } from "@/stores/auth";
-import { useRouter } from "vue-router";
-import Button from "@/components/common/Button.vue";
-import Card from "@/components/common/Card.vue";
-import Input from "@/components/common/Input.vue";
-import AuthFooter from "@/components/auth/AuthFooter.vue";
-import Divider from "@/components/common/Divider.vue";
-import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter.vue";
-import Error from "@/components/common/Error.vue";
+import { ref, reactive } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
+import Button from '@/components/common/Button.vue';
+import Card from '@/components/common/Card.vue';
+import Input from '@/components/common/Input.vue';
+import AuthFooter from '@/components/auth/AuthFooter.vue';
+import Divider from '@/components/common/Divider.vue';
+import PasswordStrengthMeter from '@/components/auth/PasswordStrengthMeter.vue';
+import Error from '@/components/common/Error.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
-const firstName = ref("");
-const lastName = ref("");
-const email = ref("");
-const password = ref("");
-const confirm = ref("");
+const firstName = ref('');
+const lastName = ref('');
+const email = ref('');
+const password = ref('');
+const confirm = ref('');
 
 const isRegistering = ref(false);
 const isGoogleLoading = ref(false);
 
-const serverError = ref("");
+const serverError = ref('');
 const errors = reactive({
-  firstName: "",
-  lastName: "",
-  email: "",
-  password: "",
-  confirm: "",
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  confirm: '',
 });
 
 const isValidName = (name) => {
@@ -46,28 +46,28 @@ const isValidPassword = (password) => {
 };
 
 const register = async () => {
-  errors.firstName = "";
-  errors.lastName = "";
-  errors.email = "";
-  errors.password = "";
-  errors.confirm = "";
+  errors.firstName = '';
+  errors.lastName = '';
+  errors.email = '';
+  errors.password = '';
+  errors.confirm = '';
 
-  serverError.value = "";
+  serverError.value = '';
   const trimmedFirstName = firstName.value.trim();
   const trimmedLastName = lastName.value.trim();
   const trimmedEmail = email.value.trim();
 
-  if (!isValidName(trimmedFirstName)) errors.firstName = "Invalid first name";
+  if (!isValidName(trimmedFirstName)) errors.firstName = 'Invalid first name';
 
-  if (!isValidName(trimmedLastName)) errors.lastName = "Invalid last name";
+  if (!isValidName(trimmedLastName)) errors.lastName = 'Invalid last name';
 
-  if (!isValidEmail(trimmedEmail)) errors.email = "Invalid email address";
+  if (!isValidEmail(trimmedEmail)) errors.email = 'Invalid email address';
 
   if (!isValidPassword(password.value))
-    errors.password = "Password is not strong enouth";
+    errors.password = 'Password is not strong enouth';
 
   if (password.value !== confirm.value)
-    errors.confirm = "Passwords do not match";
+    errors.confirm = 'Passwords do not match';
 
   if (
     errors.firstName ||
@@ -87,17 +87,17 @@ const register = async () => {
       email: trimmedEmail,
       password: password.value,
     });
-    await router.push("/getting-started");
+    await router.push('/getting-started');
   } catch (err) {
-    if (!err.response) serverError.value = "Network error. Please try again.";
-    else serverError.value = err.response.data?.error || "Something went wrong";
+    if (!err.response) serverError.value = 'Network error. Please try again.';
+    else serverError.value = err.response.data?.error || 'Something went wrong';
   } finally {
     isRegistering.value = false;
   }
 };
 
 const registerWithGoogle = async () => {
-  serverError.value = "";
+  serverError.value = '';
   isGoogleLoading.value = true;
   try {
     await authStore.startGoogleAuth();

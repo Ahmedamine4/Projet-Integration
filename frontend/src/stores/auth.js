@@ -1,7 +1,7 @@
-import { defineStore } from "pinia";
-import api from "@/services/api";
-import { supabase } from "@/services/supabase";
-import { ref, computed } from "vue";
+import { defineStore } from 'pinia';
+import api from '@/services/api';
+import { supabase } from '@/services/supabase';
+import { ref, computed } from 'vue';
 
 function normalizeUser(user) {
   if (!user) return null;
@@ -10,19 +10,19 @@ function normalizeUser(user) {
 
   return {
     ...rest,
-    firstName: user.firstName || prenom || "",
-    lastName: user.lastName || nom || "",
+    firstName: user.firstName || prenom || '',
+    lastName: user.lastName || nom || '',
   };
 }
 
-export const useAuthStore = defineStore("auth", () => {
+export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
   const token = ref(null);
 
   const isAuthenticated = computed(() => Boolean(user.value && token.value));
 
   async function login(email, password) {
-    const { data } = await api.post("/auth/login", {
+    const { data } = await api.post('/auth/login', {
       email,
       password,
     });
@@ -33,7 +33,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   async function register(userData) {
     const { firstName, lastName, email, password } = userData;
-    const { data } = await api.post("/auth/register", {
+    const { data } = await api.post('/auth/register', {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email,
@@ -46,11 +46,11 @@ export const useAuthStore = defineStore("auth", () => {
 
   async function startGoogleAuth() {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
         queryParams: {
-          prompt: "select_account",
+          prompt: 'select_account',
         },
       },
     });
@@ -61,12 +61,12 @@ export const useAuthStore = defineStore("auth", () => {
     const { data, error } = await supabase.auth.getSession();
     if (error) throw error;
     if (!data || !data.session) {
-      throw new Error("Aucune session Google/Supabase trouvée");
+      throw new Error('Aucune session Google/Supabase trouvée');
     }
 
     const supabaseToken = data.session.access_token;
 
-    const response = await api.post("/auth/google", {
+    const response = await api.post('/auth/google', {
       access_token: supabaseToken,
     });
 

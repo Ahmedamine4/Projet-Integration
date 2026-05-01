@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from "vue";
-import FolioCraftLogo from "@/assets/icons/FolioCraft.svg";
+import { ref, computed } from 'vue';
+import FolioCraftLogo from '@/assets/icons/FolioCraft.svg';
 import {
   LayoutDashboard,
   PanelLeftOpen,
@@ -12,9 +12,9 @@ import {
   Bell,
   Settings,
   LogOut,
-} from "lucide-vue-next";
-import { useAuthStore } from "@/stores/auth";
-import { useRouter } from "vue-router";
+} from 'lucide-vue-next';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -24,9 +24,9 @@ defineProps({
     type: Object,
     default: () => ({
       id: 1,
-      firstName: "User",
-      lastName: "",
-      role: "Student",
+      firstName: 'User',
+      lastName: '',
+      role: 'Student',
     }),
   },
 });
@@ -34,15 +34,15 @@ defineProps({
 const collapsed = ref(true);
 
 const sidebarItems = [
-  { label: "Dashboard", icon: LayoutDashboard },
-  { label: "Profile", icon: UserRound },
-  { label: "Projects", icon: FolderKanban },
-  { label: "Activities", icon: CalendarDays },
-  { label: "Portfolio", icon: FolderOpen },
-  { label: "Settings", icon: Settings },
+  { label: 'Dashboard', icon: LayoutDashboard },
+  { label: 'Profile', icon: UserRound },
+  { label: 'Projects', icon: FolderKanban },
+  { label: 'Activities', icon: CalendarDays },
+  { label: 'Portfolio', icon: FolderOpen },
+  { label: 'Settings', icon: Settings },
 ];
 
-const selected = ref("Dashboard");
+const selected = ref('Dashboard');
 
 const activeIndex = computed(() => {
   const index = sidebarItems.findIndex((item) => item.label === selected.value);
@@ -51,7 +51,7 @@ const activeIndex = computed(() => {
 
 const thumbStyle = computed(() => {
   return {
-    "--active-index": activeIndex.value,
+    '--active-index': activeIndex.value,
   };
 });
 
@@ -59,7 +59,7 @@ async function handleLogout() {
   try {
     await authStore.logout();
   } finally {
-    router.replace("/login");
+    router.replace('/login');
   }
 }
 </script>
@@ -95,10 +95,10 @@ async function handleLogout() {
       <footer>
         <div class="sidebar__account">
           <span class="sidebar__avatar">
-            {{ user?.firstName?.[0] || "U" }}
+            {{ user?.firstName?.[0] || 'U' }}
           </span>
           <span class="sidebar__user">
-            {{ user.firstName || "User" }}
+            {{ user.firstName || 'User' }}
           </span>
           <button class="sidebar__notification">
             <Bell />

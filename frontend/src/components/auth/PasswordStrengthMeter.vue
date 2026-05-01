@@ -1,29 +1,29 @@
 <script setup>
-import { computed } from "vue";
-import ProgressMeter from "@/components/common/ProgressMeter.vue";
+import { computed } from 'vue';
+import ProgressMeter from '@/components/common/ProgressMeter.vue';
 
 const props = defineProps({
   password: {
     type: String,
-    default: "",
+    default: '',
   },
 });
 
 const rules = computed(() => [
   {
-    label: "8+ characters",
+    label: '8+ characters',
     passed: props.password.length >= 8,
   },
   {
-    label: "Alphabetic letter",
+    label: 'Alphabetic letter',
     passed: /[A-Za-z]/.test(props.password),
   },
   {
-    label: "Number",
+    label: 'Number',
     passed: /\d/.test(props.password),
   },
   {
-    label: "Symbol",
+    label: 'Symbol',
     passed: /[^A-Za-z0-9]/.test(props.password),
   },
 ]);
@@ -32,27 +32,27 @@ const strength = computed(() => {
   const score = rules.value.filter((rule) => rule.passed).length;
   if (score <= 1)
     return {
-      label: "Weak",
+      label: 'Weak',
       score,
-      color: "var(--color-error)",
+      color: 'var(--color-error)',
     };
   if (score === 2)
     return {
-      label: "Fair",
+      label: 'Fair',
       score,
-      color: "#e07012",
+      color: '#e07012',
     };
   if (score === 3)
     return {
-      label: "Good",
+      label: 'Good',
       score,
-      color: "#d9b20b",
+      color: '#d9b20b',
     };
 
   return {
-    label: "Strong",
+    label: 'Strong',
     score,
-    color: "var(--color-success)",
+    color: 'var(--color-success)',
   };
 });
 

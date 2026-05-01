@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, useAttrs } from "vue";
-import { Eye, EyeOff } from "lucide-vue-next";
+import { ref, computed, useAttrs } from 'vue';
+import { Eye, EyeOff } from 'lucide-vue-next';
 
 defineOptions({
   inheritAttrs: false,
@@ -8,29 +8,29 @@ defineOptions({
 
 const model = defineModel({
   type: [String, Number],
-  default: "",
+  default: '',
 });
 
 const props = defineProps({
   label: {
     type: String,
-    default: "",
+    default: '',
   },
   size: {
     type: String,
-    default: "sm",
+    default: 'sm',
   },
 });
 
 const attrs = useAttrs();
-const isPasswordInput = computed(() => attrs.type === "password");
+const isPasswordInput = computed(() => attrs.type === 'password');
 const isPasswordVisible = ref(false);
 const inputType = computed(() => {
   if (!isPasswordInput.value) return attrs.type;
-  return isPasswordVisible.value ? "text" : "password";
+  return isPasswordVisible.value ? 'text' : 'password';
 });
 
-const classes = computed(() => ["input", `input--${props.size}`]);
+const classes = computed(() => ['input', `input--${props.size}`]);
 </script>
 
 <template>

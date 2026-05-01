@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed } from 'vue';
 
 const model = defineModel({
   type: String,
@@ -19,8 +19,8 @@ const activeIndex = computed(() =>
 
 const thumbStyle = computed(() => {
   return {
-    "--active-index": activeIndex.value >= 0 ? activeIndex.value : 0,
-    "--option-count": props.options.length || 1,
+    '--active-index': activeIndex.value >= 0 ? activeIndex.value : 0,
+    '--option-count': props.options.length || 1,
   };
 });
 </script>

@@ -1,48 +1,48 @@
 <script setup>
-import { ref, reactive, computed } from "vue";
-import ProgressMeter from "@/components/common/ProgressMeter.vue";
-import Button from "@/components/common/Button.vue";
-import { schools } from "@/data/schools";
+import { ref, reactive, computed } from 'vue';
+import ProgressMeter from '@/components/common/ProgressMeter.vue';
+import Button from '@/components/common/Button.vue';
+import { schools } from '@/data/schools';
 
 const academicLevels = [
   {
-    key: "bachelor",
-    title: "Bachelor / Licence",
-    description: "I am building a path for a Bachelor or Licence degree.",
-    fields: ["bachelorSchool"],
+    key: 'bachelor',
+    title: 'Bachelor / Licence',
+    description: 'I am building a path for a Bachelor or Licence degree.',
+    fields: ['bachelorSchool'],
   },
   {
-    key: "master",
-    title: "Master",
-    description: "I am building a path that includes a Master degree.",
-    fields: ["bachelorSchool", "masterSchool"],
+    key: 'master',
+    title: 'Master',
+    description: 'I am building a path that includes a Master degree.',
+    fields: ['bachelorSchool', 'masterSchool'],
   },
   {
-    key: "phd",
-    title: "PhD",
-    description: "I am building a path that includes doctoral studies.",
-    fields: ["bachelorSchool", "masterSchool", "phdInstitution"],
+    key: 'phd',
+    title: 'PhD',
+    description: 'I am building a path that includes doctoral studies.',
+    fields: ['bachelorSchool', 'masterSchool', 'phdInstitution'],
   },
 ];
 
 const schoolFields = {
   bachelorSchool: {
-    title: "Bachelor / Licence school",
+    title: 'Bachelor / Licence school',
     description:
-      "Choose the school or university where you studied for your Bachelor or Licence.",
-    placeholder: "Search Bachelor / Licence school",
+      'Choose the school or university where you studied for your Bachelor or Licence.',
+    placeholder: 'Search Bachelor / Licence school',
   },
   masterSchool: {
-    title: "Master school",
+    title: 'Master school',
     description:
-      "Choose the school or university where you studied for your Master.",
-    placeholder: "Search Master school",
+      'Choose the school or university where you studied for your Master.',
+    placeholder: 'Search Master school',
   },
   phdInstitution: {
-    title: "PhD institution",
+    title: 'PhD institution',
     description:
-      "Choose the institution where you are doing or completed your PhD.",
-    placeholder: "Search PhD institution",
+      'Choose the institution where you are doing or completed your PhD.',
+    placeholder: 'Search PhD institution',
   },
 };
 
@@ -53,9 +53,9 @@ defineProps({
   },
 });
 
-const emit = defineEmits(["close", "complete"]);
+const emit = defineEmits(['close', 'complete']);
 
-const selectedLevelKey = ref("");
+const selectedLevelKey = ref('');
 
 function selectLevel(key) {
   selectedLevelKey.value = key;
