@@ -32,17 +32,17 @@ onMounted(async () => {
         class="loading"
         v-if="!error"
     >
-        <Spinner
-            size="lg"
-            class="spinner"
-        />
+        <Spinner size="lg" />
         <span>Signing you in...</span>
     </div>
     <Error v-else>{{ error }}</Error>
 </template>
 
 <style scoped>
-.spinner {
-    margin-right: 1rem;
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 1rem;
 }
 </style>

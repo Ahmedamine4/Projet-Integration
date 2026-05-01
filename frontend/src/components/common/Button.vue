@@ -41,10 +41,7 @@ const classes = computed(() => [
         :class="classes"
         :disabled="disabled || loading"
     >
-        <Spinner
-            v-if="loading"
-            class="spinner"
-        />
+        <Spinner v-if="loading" />
         <img
             v-else-if="props.variant === 'google'"
             :src="googleIcon"
@@ -61,6 +58,7 @@ const classes = computed(() => [
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    column-gap: 0.5rem;
     border: none;
     cursor: pointer;
     color: var(--color-primary);
@@ -149,11 +147,6 @@ const classes = computed(() => [
 .google-icon {
     height: 1rem;
     width: 1rem;
-    margin-right: 0.5rem;
-}
-
-.spinner {
-    margin-right: 0.5rem;
 }
 
 @media (max-width: 768px) {
