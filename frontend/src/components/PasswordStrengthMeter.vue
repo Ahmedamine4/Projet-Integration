@@ -5,7 +5,7 @@ const props = defineProps({
         type: String,
         default: '',
     }
-})
+});
 
 const rules = computed(() => [
     {
@@ -32,7 +32,7 @@ const strength = computed(() => {
     if (score === 3) return { label: 'Good', score };
 
     return { label: 'Strong', score };
-})
+});
 
 const meterStyle = computed(() => ({
     width: `${strength.value.score * 25}%`
@@ -57,7 +57,7 @@ const meterStyle = computed(() => ({
         </div>
 
         <div class="password-meter__track">
-            <span
+            <div
                 class="password-meter__fill"
                 :style="meterStyle"
             />
@@ -144,7 +144,6 @@ const meterStyle = computed(() => ({
 }
 
 .password-meter__fill {
-    display: block;
     height: 100%;
     border-radius: inherit;
     background: var(--meter-color);
