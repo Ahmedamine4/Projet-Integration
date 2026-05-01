@@ -65,7 +65,10 @@ router.beforeEach((to) => {
   const authStore = useAuthStore();
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return '/login';
+    return {
+      path: '/login',
+      query: { redirect: to.fullPath } //pour sauvegarder la destination et y revenir après login
+    };
   }
   
   return true;
