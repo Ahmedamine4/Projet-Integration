@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue';
-import FolioCraftLogo from '@/assets/icons/FolioCraft.svg';
+import { ref, computed } from "vue";
+import FolioCraftLogo from "@/assets/icons/FolioCraft.svg";
 import {
   LayoutDashboard,
   PanelLeftOpen,
@@ -11,10 +11,10 @@ import {
   FolderOpen,
   Bell,
   Settings,
-  LogOut
-} from 'lucide-vue-next';
-import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
+  LogOut,
+} from "lucide-vue-next";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -24,75 +24,62 @@ defineProps({
     type: Object,
     default: () => ({
       id: 1,
-      firstName: 'User',
-      lastName: '',
-      role: 'Student'
-    })
-  }
+      firstName: "User",
+      lastName: "",
+      role: "Student",
+    }),
+  },
 });
 
 const collapsed = ref(true);
 
 const sidebarItems = [
-  { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Profile', icon: UserRound },
-  { label: 'Projects', icon: FolderKanban },
-  { label: 'Activities', icon: CalendarDays },
-  { label: 'Portfolio', icon: FolderOpen },
-  { label: 'Settings', icon: Settings }
+  { label: "Dashboard", icon: LayoutDashboard },
+  { label: "Profile", icon: UserRound },
+  { label: "Projects", icon: FolderKanban },
+  { label: "Activities", icon: CalendarDays },
+  { label: "Portfolio", icon: FolderOpen },
+  { label: "Settings", icon: Settings },
 ];
 
-const selected = ref('Dashboard');
+const selected = ref("Dashboard");
 
 const activeIndex = computed(() => {
-  const index = sidebarItems.findIndex(item => item.label === selected.value);
+  const index = sidebarItems.findIndex((item) => item.label === selected.value);
   return index >= 0 ? index : 0;
 });
 
 const thumbStyle = computed(() => {
   return {
-    '--active-index': activeIndex.value
+    "--active-index": activeIndex.value,
   };
 });
 
 async function handleLogout() {
   try {
     await authStore.logout();
-  }
-  finally {
-    router.replace('/login');
+  } finally {
+    router.replace("/login");
   }
 }
 </script>
 
 <template>
-  <div
-    class="sidebar-space"
-    :class="{ collapsed }"
-  >
+  <div class="sidebar-space" :class="{ collapsed }">
     <aside class="sidebar">
       <header>
         <div class="brand">
-          <img
-            :src="FolioCraftLogo"
-          >
+          <img :src="FolioCraftLogo" />
         </div>
 
-        <button
-          class="sidebar__toggle"
-          @click="collapsed = !collapsed"
-        >
+        <button class="sidebar__toggle" @click="collapsed = !collapsed">
           <PanelLeftOpen v-if="collapsed" />
           <PanelLeftClose v-else />
         </button>
       </header>
 
       <nav>
-        <span
-          class="sidebar__thumb"
-          :style="thumbStyle"
-        >
-        </span>
+        <span class="sidebar__thumb" :style="thumbStyle"> </span>
         <button
           class="sidebar__item"
           v-for="item in sidebarItems"
@@ -108,19 +95,16 @@ async function handleLogout() {
       <footer>
         <div class="sidebar__account">
           <span class="sidebar__avatar">
-            {{ user?.firstName?.[0] || 'U' }}
+            {{ user?.firstName?.[0] || "U" }}
           </span>
           <span class="sidebar__user">
-            {{ user.firstName || 'User' }}
+            {{ user.firstName || "User" }}
           </span>
           <button class="sidebar__notification">
             <Bell />
           </button>
         </div>
-        <button
-          class="sidebar__item"
-          @click="handleLogout"
-        >
+        <button class="sidebar__item" @click="handleLogout">
           <LogOut />
           <span>Log out</span>
         </button>
@@ -138,8 +122,7 @@ async function handleLogout() {
   z-index: 800;
   width: 208px;
   height: 100vh;
-  transition:
-    width var(--transition-normal);
+  transition: width var(--transition-normal);
 }
 
 .sidebar {

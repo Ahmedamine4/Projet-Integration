@@ -22,8 +22,16 @@
   min-height: 100vh;
   padding: clamp(0.9rem, 2vw, 1.5rem);
   background:
-    linear-gradient(165deg, rgba(var(--color-secondary-rgb), 0.34), transparent 45%),
-    linear-gradient(180deg, rgba(var(--color-background-rgb), 0.95), var(--color-surface));
+    linear-gradient(
+      165deg,
+      rgba(var(--color-secondary-rgb), 0.34),
+      transparent 45%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(var(--color-background-rgb), 0.95),
+      var(--color-surface)
+    );
 }
 
 .auth-panel {

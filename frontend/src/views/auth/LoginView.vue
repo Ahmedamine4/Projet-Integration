@@ -1,35 +1,34 @@
 <script setup>
-import { ref, reactive } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
-import Card from '@/components/common/Card.vue';
-import Input from '@/components/common/Input.vue';
-import Button from '@/components/common/Button.vue';
-import AuthFooter from '@/components/auth/AuthFooter.vue';
-import Divider from '@/components/common/Divider.vue';
-import Error from '@/components/common/Error.vue';
+import { ref, reactive } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
+import Card from "@/components/common/Card.vue";
+import Input from "@/components/common/Input.vue";
+import Button from "@/components/common/Button.vue";
+import AuthFooter from "@/components/auth/AuthFooter.vue";
+import Divider from "@/components/common/Divider.vue";
+import Error from "@/components/common/Error.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
 
-const email = ref('');
-const password = ref('');
+const email = ref("");
+const password = ref("");
 
 const isLoggingIn = ref(false);
 const isGoogleLoading = ref(false);
 
-const serverError = ref('');
-const errors = reactive({ email: '' });
+const serverError = ref("");
+const errors = reactive({ email: "" });
 
 const isValidEmail = (email) => {
   const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return regex.test(email);
 };
 
-
 const login = async () => {
-  errors.email = '';
-  serverError.value = '';
+  errors.email = "";
+  serverError.value = "";
 
   const trimmedEmail = email.value.trim();
   if (!isValidEmail(trimmedEmail)) {
@@ -41,40 +40,32 @@ const login = async () => {
 
   try {
     await authStore.login(email.value, password.value);
-    await router.push('/getting-started');
-  }
-  catch(err) {
-    if (!err.response)
-      serverError.value = "Network error. Please try again.";
+    await router.push("/getting-started");
+  } catch (err) {
+    if (!err.response) serverError.value = "Network error. Please try again.";
     else {
-      serverError.value =
-        err.response.data?.error ||
-        "Something went wrong";
+      serverError.value = err.response.data?.error || "Something went wrong";
     }
-  }
-  finally {
+  } finally {
     isLoggingIn.value = false;
   }
 };
 
 const loginWithGoogle = async () => {
-  serverError.value = '';
+  serverError.value = "";
   isGoogleLoading.value = true;
   try {
     await authStore.startGoogleAuth();
-  }
-  catch(err) {
+  } catch (err) {
     serverError.value = err.message;
     isGoogleLoading.value = false;
-  } 
+  }
 };
 </script>
 
 <template>
   <Card title="Welcome back" size="sm">
-    <p class="auth-subtitle">
-      Sign in to your account to continue
-    </p>
+    <p class="auth-subtitle">Sign in to your account to continue</p>
 
     <form class="auth-form" @submit.prevent="login">
       <div class="field">
@@ -85,10 +76,7 @@ const loginWithGoogle = async () => {
           autocomplete="email"
         />
 
-        <Error
-          v-if="errors.email"
-          variant="field"
-        >
+        <Error v-if="errors.email" variant="field">
           {{ errors.email }}
         </Error>
       </div>
@@ -106,16 +94,12 @@ const loginWithGoogle = async () => {
           block
           variant="submit"
           :loading="isLoggingIn"
-          :disabled="
-            isLoggingIn ||
-            isGoogleLoading ||
-            !email ||
-            !password"
+          :disabled="isLoggingIn || isGoogleLoading || !email || !password"
         >
           Sign In
         </Button>
       </div>
-      
+
       <Divider>Or continue with Google</Divider>
 
       <Button
@@ -132,7 +116,6 @@ const loginWithGoogle = async () => {
       <Error v-if="serverError">
         {{ serverError }}
       </Error>
-      
     </form>
     <AuthFooter
       message="Don't have an account?"

@@ -2,16 +2,13 @@
 defineProps({
   size: {
     type: String,
-    default: 'md'
-  }
+    default: "md",
+  },
 });
 </script>
 
 <template>
-  <div
-    :class="`spinner--${size}`"
-    class="spinner"
-  />
+  <div :class="`spinner--${size}`" class="spinner" />
 </template>
 
 <style scoped>

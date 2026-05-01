@@ -2,7 +2,7 @@
 defineProps({
   title: {
     type: String,
-    default: '',
+    default: "",
   },
   fullWidth: {
     type: Boolean,
@@ -10,20 +10,13 @@ defineProps({
   },
   size: {
     type: String,
-    default: 'md'
-  }
+    default: "md",
+  },
 });
 </script>
 
 <template>
-  <div
-    :class="[
-      'card',
-      `card--${size}`,
-      { 'card--full-width': fullWidth }
-    ]"
-  >
-
+  <div :class="['card', `card--${size}`, { 'card--full-width': fullWidth }]">
     <h2 v-if="title">
       {{ title }}
     </h2>

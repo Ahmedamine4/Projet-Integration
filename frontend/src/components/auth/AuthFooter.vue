@@ -2,16 +2,16 @@
 defineProps({
   message: {
     type: String,
-    default: ''
+    default: "",
   },
   linkText: {
     type: String,
-    default: ''
+    default: "",
   },
   to: {
     type: String,
-    default: ''
-  }
+    default: "",
+  },
 });
 </script>
 
@@ -43,5 +43,4 @@ defineProps({
   text-decoration: underline;
   outline: none;
 }
-
 </style>

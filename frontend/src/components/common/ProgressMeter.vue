@@ -1,37 +1,34 @@
 <script setup>
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const props = defineProps({
   value: {
     type: Number,
-    default: 0
+    default: 0,
   },
   max: {
     type: Number,
-    default: 4
-  }
+    default: 4,
+  },
 });
 
 const meterStyle = computed(() => {
-  const completionPercentage = props.value * 100 / props.max;
-  let background = '';
-  if (completionPercentage <= 25) background = 'var(--color-error)';
-  else if (completionPercentage <= 50) background = '#e07012';
-  else if (completionPercentage <= 75) background = '#d9b20b';
-  else background = 'var(--color-success)';
+  const completionPercentage = (props.value * 100) / props.max;
+  let background = "";
+  if (completionPercentage <= 25) background = "var(--color-error)";
+  else if (completionPercentage <= 50) background = "#e07012";
+  else if (completionPercentage <= 75) background = "#d9b20b";
+  else background = "var(--color-success)";
   return {
-    width : `${completionPercentage}%`,
-    background
+    width: `${completionPercentage}%`,
+    background,
   };
 });
 </script>
 
 <template>
   <div class="progress-meter__bar">
-    <div
-      class="progress-meter__fill"
-      :style="meterStyle"
-    />
+    <div class="progress-meter__fill" :style="meterStyle" />
   </div>
 </template>
 

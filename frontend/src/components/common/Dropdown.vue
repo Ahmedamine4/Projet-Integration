@@ -1,10 +1,10 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import Input from '@/components/common/Input.vue';
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import Input from "@/components/common/Input.vue";
 
 const model = defineModel({
   type: String,
-  default: '',
+  default: "",
 });
 
 const props = defineProps({
@@ -14,7 +14,7 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: '',
+    default: "",
   },
   visibleOptions: {
     type: Number,
@@ -30,7 +30,7 @@ const filteredOptions = computed(() => {
   const search = model.value.trim().toLowerCase();
   if (!search) return props.options;
 
-  return props.options.filter(option => {
+  return props.options.filter((option) => {
     return option.toLowerCase().includes(search);
   });
 });
@@ -45,16 +45,15 @@ function selectOption(option) {
 }
 
 function closeOnOutsideClick(event) {
-  if (!dropdownElement.value?.contains(event.target))
-    isOpen.value = false;
+  if (!dropdownElement.value?.contains(event.target)) isOpen.value = false;
 }
 
 onMounted(() => {
-  document.addEventListener('click', closeOnOutsideClick);
+  document.addEventListener("click", closeOnOutsideClick);
 });
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', closeOnOutsideClick);
+  document.removeEventListener("click", closeOnOutsideClick);
 });
 </script>
 

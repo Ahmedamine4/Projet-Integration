@@ -1,6 +1,6 @@
 <script setup>
-import { useRouter } from 'vue-router';
-import Button from '@/components/common/Button.vue';
+import { useRouter } from "vue-router";
+import Button from "@/components/common/Button.vue";
 
 const router = useRouter();
 </script>
@@ -13,18 +13,10 @@ const router = useRouter();
       This page does not have a certified place in your portfolio.
     </p>
     <div class="not-found__actions">
-      <Button
-        variant="pill"
-        size="xs"
-        @click="router.push('/')"
-      >
+      <Button variant="pill" size="xs" @click="router.push('/')">
         Back home
       </Button>
-      <Button
-        variant="ghost"
-        size="xs"
-        @click="router.push('/login')"
-      >
+      <Button variant="ghost" size="xs" @click="router.push('/login')">
         Sign in
       </Button>
     </div>
@@ -41,9 +33,22 @@ const router = useRouter();
   text-align: center;
   padding: var(--space-xl) var(--space-md);
   background:
-    linear-gradient(225deg, rgba(var(--color-secondary-rgb), 0.22), transparent 38%),
-    linear-gradient(140deg, rgba(var(--color-primary-rgb), 0.05), transparent 42%),
-    linear-gradient(200deg, var(--color-background), var(--color-background) 48%, var(--color-surface) 100%);
+    linear-gradient(
+      225deg,
+      rgba(var(--color-secondary-rgb), 0.22),
+      transparent 38%
+    ),
+    linear-gradient(
+      140deg,
+      rgba(var(--color-primary-rgb), 0.05),
+      transparent 42%
+    ),
+    linear-gradient(
+      200deg,
+      var(--color-background),
+      var(--color-background) 48%,
+      var(--color-surface) 100%
+    );
   color: var(--color-primary);
 }
 

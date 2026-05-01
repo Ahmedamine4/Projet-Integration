@@ -1,33 +1,33 @@
 <script setup>
-import { ref, reactive } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
-import Button from '@/components/common/Button.vue';
-import Card from '@/components/common/Card.vue';
-import Input from '@/components/common/Input.vue';
-import AuthFooter from '@/components/auth/AuthFooter.vue';
-import Divider from '@/components/common/Divider.vue';
-import PasswordStrengthMeter from '@/components/auth/PasswordStrengthMeter.vue';
-import Error from '@/components/common/Error.vue';
+import { ref, reactive } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
+import Button from "@/components/common/Button.vue";
+import Card from "@/components/common/Card.vue";
+import Input from "@/components/common/Input.vue";
+import AuthFooter from "@/components/auth/AuthFooter.vue";
+import Divider from "@/components/common/Divider.vue";
+import PasswordStrengthMeter from "@/components/auth/PasswordStrengthMeter.vue";
+import Error from "@/components/common/Error.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
-const firstName = ref('');
-const lastName = ref('');
-const email = ref('');
-const password = ref('');
-const confirm = ref('');
+const firstName = ref("");
+const lastName = ref("");
+const email = ref("");
+const password = ref("");
+const confirm = ref("");
 
 const isRegistering = ref(false);
 const isGoogleLoading = ref(false);
 
-const serverError = ref('');
+const serverError = ref("");
 const errors = reactive({
-  firstName: '',
-  lastName: '',
-  email: '',
-  password: '',
-  confirm: ''
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  confirm: "",
 });
 
 const isValidName = (name) => {
@@ -46,25 +46,22 @@ const isValidPassword = (password) => {
 };
 
 const register = async () => {
-  errors.firstName = '';
-  errors.lastName = '';
-  errors.email = '';
-  errors.password = '';
-  errors.confirm = '';
+  errors.firstName = "";
+  errors.lastName = "";
+  errors.email = "";
+  errors.password = "";
+  errors.confirm = "";
 
-  serverError.value = '';
+  serverError.value = "";
   const trimmedFirstName = firstName.value.trim();
   const trimmedLastName = lastName.value.trim();
   const trimmedEmail = email.value.trim();
 
-  if (!isValidName(trimmedFirstName))
-    errors.firstName = "Invalid first name";
+  if (!isValidName(trimmedFirstName)) errors.firstName = "Invalid first name";
 
-  if (!isValidName(trimmedLastName))
-    errors.lastName = "Invalid last name";
+  if (!isValidName(trimmedLastName)) errors.lastName = "Invalid last name";
 
-  if (!isValidEmail(trimmedEmail))
-    errors.email = "Invalid email address";
+  if (!isValidEmail(trimmedEmail)) errors.email = "Invalid email address";
 
   if (!isValidPassword(password.value))
     errors.password = "Password is not strong enouth";
@@ -78,7 +75,8 @@ const register = async () => {
     errors.email ||
     errors.password ||
     errors.confirm
-  ) return;
+  )
+    return;
 
   isRegistering.value = true;
 
@@ -87,41 +85,32 @@ const register = async () => {
       firstName: trimmedFirstName,
       lastName: trimmedLastName,
       email: trimmedEmail,
-      password: password.value
+      password: password.value,
     });
-    await router.push('/getting-started');
-  }
-  catch (err) {
-    if (!err.response)
-      serverError.value = "Network error. Please try again.";
-    else
-      serverError.value =
-        err.response.data?.error ||
-        "Something went wrong";
-  }
-  finally {
+    await router.push("/getting-started");
+  } catch (err) {
+    if (!err.response) serverError.value = "Network error. Please try again.";
+    else serverError.value = err.response.data?.error || "Something went wrong";
+  } finally {
     isRegistering.value = false;
   }
 };
 
 const registerWithGoogle = async () => {
-  serverError.value = '';
+  serverError.value = "";
   isGoogleLoading.value = true;
   try {
     await authStore.startGoogleAuth();
-  }
-  catch(err) {
+  } catch (err) {
     serverError.value = err.message;
     isGoogleLoading.value = false;
-  } 
+  }
 };
 </script>
 
 <template>
   <Card title="Register" size="sm">
-    <p class="auth-subtitle">
-       Create an account to get started
-    </p>
+    <p class="auth-subtitle">Create an account to get started</p>
     <form class="auth-form" @submit.prevent="register">
       <div class="field">
         <Input
@@ -130,10 +119,7 @@ const registerWithGoogle = async () => {
           placeholder="First name"
           autocomplete="given-name"
         />
-        <Error
-          v-if="errors.firstName"
-          variant="field"
-        >
+        <Error v-if="errors.firstName" variant="field">
           {{ errors.firstName }}
         </Error>
       </div>
@@ -146,25 +132,15 @@ const registerWithGoogle = async () => {
           autocomplete="family-name"
         />
 
-        <Error
-          v-if="errors.lastName"
-          variant="field"
-        >
-          {{ errors.lastName }} 
+        <Error v-if="errors.lastName" variant="field">
+          {{ errors.lastName }}
         </Error>
       </div>
 
       <div class="field">
-        <Input
-          v-model="email"
-          label="Email"
-          placeholder="email"
-        />
+        <Input v-model="email" label="Email" placeholder="email" />
 
-        <Error
-          v-if="errors.email"
-          variant="field"
-        >
+        <Error v-if="errors.email" variant="field">
           {{ errors.email }}
         </Error>
       </div>
@@ -178,10 +154,7 @@ const registerWithGoogle = async () => {
             placeholder="password"
           />
 
-          <Error
-            v-if="errors.password"
-            variant="field"
-          >
+          <Error v-if="errors.password" variant="field">
             {{ errors.password }}
           </Error>
 
@@ -196,10 +169,7 @@ const registerWithGoogle = async () => {
             placeholder="confirm password"
           />
 
-          <Error
-            v-if="errors.confirm"
-            variant="field"
-          >
+          <Error v-if="errors.confirm" variant="field">
             {{ errors.confirm }}
           </Error>
         </div>
@@ -217,7 +187,8 @@ const registerWithGoogle = async () => {
             !lastName ||
             !email ||
             !password ||
-            !confirm"
+            !confirm
+          "
         >
           Register
         </Button>
@@ -239,7 +210,6 @@ const registerWithGoogle = async () => {
       <Error v-if="serverError">
         {{ serverError }}
       </Error>
-
     </form>
     <AuthFooter
       message="Already have an account?"

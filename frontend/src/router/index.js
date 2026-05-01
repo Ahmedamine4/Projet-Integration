@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from "../stores/auth";
 import HomeView from "../views/HomeView.vue";
 import LoginView from "../views/auth/LoginView.vue";
 import RegisterView from "../views/auth/RegisterView.vue";
@@ -10,65 +10,65 @@ import GettingStarted from "@/views/GettingStarted.vue";
 
 const routes = [
   {
-  path: "/",
-  name: "home",
-  component: HomeView
+    path: "/",
+    name: "home",
+    component: HomeView,
   },
   {
-  path: "/login",
-  name: "login",
-  component: LoginView,
-  meta: { layout: 'auth' }
+    path: "/login",
+    name: "login",
+    component: LoginView,
+    meta: { layout: "auth" },
   },
   {
-  path: "/register",
-  name: "register",
-  component: RegisterView,
-  meta: { layout: 'auth' }
+    path: "/register",
+    name: "register",
+    component: RegisterView,
+    meta: { layout: "auth" },
   },
   {
-  path: "/dashboard",
-  name: "dashboard",
-  component: DashboardView,
-  meta: {
-    requiresAuth: true,
-    layout: 'app',
-  }
+    path: "/dashboard",
+    name: "dashboard",
+    component: DashboardView,
+    meta: {
+      requiresAuth: true,
+      layout: "app",
+    },
   },
   {
-  path: "/getting-started",
-  name: "getting-started",
-  component: GettingStarted,
-  meta: {
-    requiresAuth: false, // pour test uniquement !
-    layout: 'app',
-  }
+    path: "/getting-started",
+    name: "getting-started",
+    component: GettingStarted,
+    meta: {
+      requiresAuth: false, // pour test uniquement !
+      layout: "app",
+    },
   },
   {
-  path: "/auth/callback",
-  name: "auth-callback",
-  component: AuthCallbackView,
-  meta: { layout: 'auth' }
+    path: "/auth/callback",
+    name: "auth-callback",
+    component: AuthCallbackView,
+    meta: { layout: "auth" },
   },
   {
-  path: "/:pathMatch(.*)*",
-  name: "not-found",
-  component: NotFound
-  }
-]
+    path: "/:pathMatch(.*)*",
+    name: "not-found",
+    component: NotFound,
+  },
+];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 });
 router.beforeEach((to) => {
   const authStore = useAuthStore();
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-  return '/login';
+    return "/login";
   }
-  
-  return true;
-})
 
-export default router
+  return true;
+});
+
+export default router;

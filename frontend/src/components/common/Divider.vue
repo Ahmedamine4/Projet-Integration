@@ -18,7 +18,7 @@
 
 .divider::before,
 .divider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: rgba(var(--color-primary-rgb), 0.18);

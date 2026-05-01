@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const model = defineModel({
   type: String,
@@ -10,36 +10,32 @@ const props = defineProps({
   options: {
     type: Array,
     required: true,
-  }
+  },
 });
 
-const activeIndex = computed(() => props.options.findIndex((option) => option.value === model.value));
+const activeIndex = computed(() =>
+  props.options.findIndex((option) => option.value === model.value),
+);
 
 const thumbStyle = computed(() => {
   return {
-    '--active-index': activeIndex.value >= 0 ? activeIndex.value : 0,
-    '--option-count': props.options.length || 1,
+    "--active-index": activeIndex.value >= 0 ? activeIndex.value : 0,
+    "--option-count": props.options.length || 1,
   };
 });
 </script>
 
 <template>
   <div class="switcher">
-    <span
-      class="switcher__thumb"
-      :style="thumbStyle"
-    />
+    <span class="switcher__thumb" :style="thumbStyle" />
 
-    <template
-      v-for="option in options"
-      :key="option.value"
-    >
+    <template v-for="option in options" :key="option.value">
       <input
         :id="`switcher-${option.value}`"
         v-model="model"
         :value="option.value"
         type="radio"
-      >
+      />
       <label
         :for="`switcher-${option.value}`"
         :class="{ selected: model === option.value }"
@@ -71,17 +67,15 @@ const thumbStyle = computed(() => {
 
 .switcher__thumb {
   --switcher__thumb-width: calc(
-    (100% - 2 * var(--space-xs) - (var(--option-count) - 1) * var(--space-xs)) / var(--option-count)
+    (100% - 2 * var(--space-xs) - (var(--option-count) - 1) * var(--space-xs)) /
+      var(--option-count)
   );
   position: absolute;
   top: 0.2rem;
   bottom: 0.2rem;
   left: calc(
-    var(--space-xs) +
-    var(--active-index) * (
-      var(--switcher__thumb-width) +
-      var(--space-xs)
-    )
+    var(--space-xs) + var(--active-index) *
+      (var(--switcher__thumb-width) + var(--space-xs))
   );
   width: var(--switcher__thumb-width);
   border-radius: 999px;

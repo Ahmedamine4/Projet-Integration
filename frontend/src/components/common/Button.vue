@@ -1,16 +1,16 @@
 <script setup>
-import { computed } from 'vue';
-import googleIcon from '@/assets/icons/google.svg'
-import Spinner from '@/components/common/Spinner.vue';
+import { computed } from "vue";
+import googleIcon from "@/assets/icons/google.svg";
+import Spinner from "@/components/common/Spinner.vue";
 
 const props = defineProps({
   variant: {
     type: String,
-    default: 'pill',
+    default: "pill",
   },
   size: {
     type: String,
-    default: 'sm',
+    default: "sm",
   },
   block: {
     type: Boolean,
@@ -23,24 +23,21 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
 const classes = computed(() => [
-  'button',
+  "button",
   `button--${props.variant}`,
   `button--${props.size}`,
   {
-    'button--block': props.block,
+    "button--block": props.block,
   },
 ]);
 </script>
 
 <template>
-  <button
-    :class="classes"
-    :disabled="disabled || loading"
-  >
+  <button :class="classes" :disabled="disabled || loading">
     <Spinner v-if="loading" />
     <img
       v-else-if="props.variant === 'google'"

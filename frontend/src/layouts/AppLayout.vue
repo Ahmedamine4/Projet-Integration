@@ -1,7 +1,7 @@
 <script setup>
-import { storeToRefs } from 'pinia';
-import Sidebar from '@/components/layout/Sidebar.vue';
-import { useAuthStore } from '@/stores/auth';
+import { storeToRefs } from "pinia";
+import Sidebar from "@/components/layout/Sidebar.vue";
+import { useAuthStore } from "@/stores/auth";
 
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);

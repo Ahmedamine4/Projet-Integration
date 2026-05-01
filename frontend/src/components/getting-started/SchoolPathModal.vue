@@ -1,58 +1,61 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
-import ProgressMeter from '@/components/common/ProgressMeter.vue';
-import Button from '@/components/common/Button.vue';
-import { schools } from '@/data/schools';
+import { ref, reactive, computed } from "vue";
+import ProgressMeter from "@/components/common/ProgressMeter.vue";
+import Button from "@/components/common/Button.vue";
+import { schools } from "@/data/schools";
 
 const academicLevels = [
   {
-    key: 'bachelor',
-    title: 'Bachelor / Licence',
-    description: 'I am building a path for a Bachelor or Licence degree.',
-    fields : ['bachelorSchool']
+    key: "bachelor",
+    title: "Bachelor / Licence",
+    description: "I am building a path for a Bachelor or Licence degree.",
+    fields: ["bachelorSchool"],
   },
   {
-    key: 'master',
-    title: 'Master',
-    description: 'I am building a path that includes a Master degree.',
-    fields : ['bachelorSchool', 'masterSchool']
+    key: "master",
+    title: "Master",
+    description: "I am building a path that includes a Master degree.",
+    fields: ["bachelorSchool", "masterSchool"],
   },
   {
-    key: 'phd',
-    title: 'PhD',
-    description: 'I am building a path that includes doctoral studies.',
-    fields : ['bachelorSchool', 'masterSchool', 'phdInstitution']
-  }
+    key: "phd",
+    title: "PhD",
+    description: "I am building a path that includes doctoral studies.",
+    fields: ["bachelorSchool", "masterSchool", "phdInstitution"],
+  },
 ];
 
 const schoolFields = {
   bachelorSchool: {
-    title: 'Bachelor / Licence school',
-    description: 'Choose the school or university where you studied for your Bachelor or Licence.',
-    placeholder: 'Search Bachelor / Licence school'
+    title: "Bachelor / Licence school",
+    description:
+      "Choose the school or university where you studied for your Bachelor or Licence.",
+    placeholder: "Search Bachelor / Licence school",
   },
   masterSchool: {
-    title: 'Master school',
-    description: 'Choose the school or university where you studied for your Master.',
-    placeholder: 'Search Master school'
+    title: "Master school",
+    description:
+      "Choose the school or university where you studied for your Master.",
+    placeholder: "Search Master school",
   },
   phdInstitution: {
-    title: 'PhD institution',
-    description: 'Choose the institution where you are doing or completed your PhD.',
-    placeholder: 'Search PhD institution'
-  }
+    title: "PhD institution",
+    description:
+      "Choose the institution where you are doing or completed your PhD.",
+    placeholder: "Search PhD institution",
+  },
 };
 
 defineProps({
   open: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
-const emit = defineEmits(['close', 'complete']);
+const emit = defineEmits(["close", "complete"]);
 
-const selectedLevelKey = ref('');
+const selectedLevelKey = ref("");
 
 function selectLevel(key) {
   selectedLevelKey.value = key;
@@ -77,18 +80,12 @@ function goNext() {
 
           <div class="step-meter__track">
             <span>0 / 4</span>
-            <ProgressMeter
-              :value="0"
-              :max="4"
-            />
+            <ProgressMeter :value="0" :max="4" />
           </div>
         </div>
         <div class="modal__body">
-          <div
-            class="level-picker"
-            v-if="!showSchoolStep"
-          >
-            <button 
+          <div class="level-picker" v-if="!showSchoolStep">
+            <button
               v-for="level in academicLevels"
               :key="level.key"
               class="level-option"
@@ -107,11 +104,7 @@ function goNext() {
           </div>
         </div>
         <div class="modal__footer">
-          <Button
-            variant="ghost"
-            class="back-button"
-            @click="emit('close')"
-          >
+          <Button variant="ghost" class="back-button" @click="emit('close')">
             Back
           </Button>
 
@@ -238,7 +231,6 @@ h3 {
   background: rgba(var(--color-secondary-rgb), 0.08);
   transform: scale(1);
 }
-
 
 .level-option__title {
   font-size: var(--font-size-sm);

@@ -1,5 +1,5 @@
 <script setup>
-import { CircleCheck, CircleDashed } from 'lucide-vue-next';
+import { CircleCheck, CircleDashed } from "lucide-vue-next";
 
 const props = defineProps({
   title: {
@@ -16,28 +16,18 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['action']);
+const emit = defineEmits(["action"]);
 
 function handleToggle() {
-  if (!props.done) emit('action');
+  if (!props.done) emit("action");
 }
 </script>
 
 <template>
-  <div 
-    class="step"
-    :class="{ done }"
-    @click="handleToggle"
-  >
+  <div class="step" :class="{ done }" @click="handleToggle">
     <div class="left">
-      <CircleCheck
-        v-if="done"
-        class="step-icon"
-      />
-      <CircleDashed
-        v-else
-        class="step-icon loading"
-      />
+      <CircleCheck v-if="done" class="step-icon" />
+      <CircleDashed v-else class="step-icon loading" />
       <div class="description">
         <h3>{{ title }}</h3>
         <p>{{ description }}</p>

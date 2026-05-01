@@ -2,8 +2,8 @@
 defineProps({
   variant: {
     type: String,
-    default: 'global'
-  }
+    default: "global",
+  },
 });
 </script>
 

@@ -1,24 +1,24 @@
 <script setup>
-import { ref, computed, reactive } from 'vue';
-import GettingStartedStep from '@/components/getting-started/GettingStartedStep.vue';
-import ProgressMeter from '@/components/common/ProgressMeter.vue';
-import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
+import { ref, computed, reactive } from "vue";
+import GettingStartedStep from "@/components/getting-started/GettingStartedStep.vue";
+import ProgressMeter from "@/components/common/ProgressMeter.vue";
+import SchoolPathModal from "@/components/getting-started/SchoolPathModal.vue";
 
 const steps = [
   {
-    key: 'school',
-    title: 'Build your academic path',
-    description: 'Choose your current level and add your schools',
+    key: "school",
+    title: "Build your academic path",
+    description: "Choose your current level and add your schools",
   },
   {
-    key: 'github',
-    title: 'Connect your GitHub account',
-    description: 'Connect your GitHub account to your profile',
+    key: "github",
+    title: "Connect your GitHub account",
+    description: "Connect your GitHub account to your profile",
   },
   {
-    key: 'linkedin',
-    title: 'Connect your LinkedIn account',
-    description: 'Connect your LinkedIn account to your profile',
+    key: "linkedin",
+    title: "Connect your LinkedIn account",
+    description: "Connect your LinkedIn account to your profile",
   },
 ];
 
@@ -28,9 +28,11 @@ const stepData = reactive({
   linkedin: { done: false },
 });
 
-const doneCount = computed(() => steps.reduce((acc, step) => {
-  return stepData[step.key].done ? acc + 1 : acc;
-}, 0));
+const doneCount = computed(() =>
+  steps.reduce((acc, step) => {
+    return stepData[step.key].done ? acc + 1 : acc;
+  }, 0),
+);
 
 const isSchoolModalOpen = ref(false);
 
@@ -39,11 +41,11 @@ function isDone(key) {
 }
 
 function handleStepAction(key) {
-  const step = steps.find(step => step.key === key);
+  const step = steps.find((step) => step.key === key);
 
   if (!step) return;
 
-  if (step.key === 'school') {
+  if (step.key === "school") {
     isSchoolModalOpen.value = true;
     return;
   }
@@ -53,13 +55,13 @@ function handleStepAction(key) {
 
 function completeSchoolStep() {
   stepData.school.done = true;
-  isSchoolModalOpen.value= false;
+  isSchoolModalOpen.value = false;
 }
 </script>
 
 <template>
   <div class="page-content">
-    <h1>Let's get you set up,  </h1>
+    <h1>Let's get you set up,</h1>
     <div class="wrapper-getting-started">
       <div class="wrapper-header">
         <h2>Getting Started</h2>
@@ -68,14 +70,10 @@ function completeSchoolStep() {
           <span>
             {{ `${doneCount} / ${steps.length}` }}
           </span>
-          <ProgressMeter
-            :value="doneCount"
-            :max="steps.length"
-          />
+          <ProgressMeter :value="doneCount" :max="steps.length" />
         </div>
       </div>
       <div class="wrapper-steps">
-
         <GettingStartedStep
           v-for="step in steps"
           :key="step.key"
