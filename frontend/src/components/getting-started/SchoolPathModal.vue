@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
+import Dropdown from '@/components/common/Dropdown.vue';
 import Button from '@/components/common/Button.vue';
 import { schools } from '@/data/schools';
 
@@ -65,10 +66,97 @@ function selected(key) {
   return selectedLevelKey.value === key;
 }
 
-const showSchoolStep = ref(false);
+const selectedLevel = computed(() => {
+  return academicLevels.find((level) => {
+    return level.key === selectedLevelKey.value;
+  });
+});
+
+const schoolFieldsInputs = reactive({
+  bachelorSchool: '',
+  masterSchool: '',
+  phdInstitution: '',
+});
+
+const schoolPath = computed(() => {
+  const bachelorSchool =
+    schools.includes(schoolFieldsInputs.bachelorSchool)
+      ? schoolFieldsInputs.bachelorSchool
+      : '';
+  const masterSchool = 
+    schools.includes(schoolFieldsInputs.masterSchool)
+      ? schoolFieldsInputs.masterSchool
+      : '';
+  const phdInstitution = 
+    schools.includes(schoolFieldsInputs.phdInstitution)
+      ? schoolFieldsInputs.phdInstitution
+      : '';
+  return { bachelorSchool, masterSchool, phdInstitution };
+});
+
+const completedStepsCount = computed(() => {
+  if (!selectedLevelKey.value) return 0;
+  return Object.values(schoolPath.value).reduce((acc, school) => {
+    return school ? acc + 1 : acc;
+  }, 1);
+});
+
+const currentStepIndex = ref(0);
+
+const numOfSteps = computed(() => {
+  if (!selectedLevel.value) return 1;
+  return selectedLevel.value.fields.length + 1;
+});
+
+const currentSchoolFieldKey = computed(() => {
+  if (currentStepIndex.value === 0) return '';
+  return selectedLevel.value.fields[currentStepIndex.value - 1];
+});
+
+const currentSchoolField = computed(() => {
+  return schoolFields[currentSchoolFieldKey.value];
+});
+
+function resetCurrentStep() {
+  if (currentStepIndex.value === 0) {
+    selectedLevelKey.value = '';
+  } else {
+    schoolFieldsInputs[currentSchoolFieldKey.value] = '';
+  }
+}
+
+function resetSchoolPath() {
+  selectedLevelKey.value = '';
+
+  schoolFieldsInputs.bachelorSchool = '';
+  schoolFieldsInputs.masterSchool = '';
+  schoolFieldsInputs.phdInstitution = '';
+
+  currentStepIndex.value = 0;
+}
+
+const stepDirection = ref('forward');
+
+function goBack() {
+  if (currentStepIndex.value === 0) {
+    resetSchoolPath();
+    emit('close');
+    return;
+  }
+  resetCurrentStep();
+  stepDirection.value = 'backward';
+  currentStepIndex.value--;
+}
 
 function goNext() {
-  if (selectedLevelKey.value) showSchoolStep.value = true;
+  if (!selectedLevelKey.value) return;
+  if (completedStepsCount.value === numOfSteps.value) {
+    emit('complete', schoolPath.value);
+    resetSchoolPath();
+    return;
+  }
+  stepDirection.value = 'forward';
+  currentStepIndex.value++;
 }
 </script>
 <template>
@@ -79,42 +167,78 @@ function goNext() {
           <h3>Build your academic path</h3>
 
           <div class="step-meter__track">
-            <span>0 / 4</span>
-            <ProgressMeter :value="0" :max="4" />
+            <span>
+              {{ completedStepsCount }} / {{ numOfSteps }}
+            </span>
+            <ProgressMeter
+              :value="completedStepsCount"
+              :max="numOfSteps"
+            />
           </div>
         </div>
-        <div class="modal__body">
-          <div class="level-picker" v-if="!showSchoolStep">
-            <button
-              v-for="level in academicLevels"
-              :key="level.key"
-              class="level-option"
-              :class="{ selected: selected(level.key) }"
-              type="button"
-              @click="selectLevel(level.key)"
-            >
-              <span class="level-option__title">
-                {{ level.title }}
-              </span>
 
-              <span class="level-option__description">
-                {{ level.description }}
-              </span>
-            </button>
-          </div>
+        <div class="modal__body">
+          <Transition :name="`step-${stepDirection}`" mode="out-in">
+            <div :key="currentStepIndex">
+              <div class="level-picker" v-if="currentStepIndex === 0">
+                <h3 class="step-title">Academic level</h3>
+                <span class="step-description">
+                  Choose the highest academic level you want to include in your path.
+                </span>
+                <button
+                  v-for="level in academicLevels"
+                  :key="level.key"
+                  class="level-option"
+                  :class="{ selected: selected(level.key) }"
+                  type="button"
+                  @click="selectLevel(level.key)"
+                >
+                  <span class="level-option__title">
+                    {{ level.title }}
+                  </span>
+
+                  <span class="level-option__description">
+                    {{ level.description }}
+                  </span>
+                </button>
+              </div>
+
+              <div class="school-step" v-else>
+                <h3 class="step-title">
+                  {{ currentSchoolField.title }}
+                </h3>
+                <span class="step-description">
+                  {{ currentSchoolField.description }}
+                </span>
+                <Dropdown
+                  :options="schools"
+                  :placeholder="currentSchoolField.placeholder"
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey]"
+                />
+              </div>
+            </div>
+          </Transition>
         </div>
+
         <div class="modal__footer">
-          <Button variant="ghost" class="back-button" @click="emit('close')">
-            Back
+          <Button
+            variant="ghost"
+            class="back-button"
+            @click="goBack"
+          >
+            {{ currentStepIndex > 0 ? 'Back' : 'Close' }}
           </Button>
 
           <Button
             variant="submit"
             class="next-button"
-            :disabled="!selectedLevelKey"
+            :disabled="
+              !selectedLevelKey ||
+              currentStepIndex > 0 &&
+              !schoolPath[currentSchoolFieldKey]"
             @click="goNext"
           >
-            Next
+            {{ completedStepsCount < numOfSteps ? 'Next' : 'Complete'}}
           </Button>
         </div>
       </div>
@@ -139,7 +263,7 @@ function goNext() {
   flex-direction: column;
   background: var(--color-background);
   max-height: min(32rem, 90vh);
-  width: min(34rem, 100%);
+  width: min(36rem, 100%);
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -171,7 +295,7 @@ function goNext() {
 
 .modal__body {
   padding: 0.75rem 1.8rem;
-  min-height: 15rem;
+  min-height: 20rem;
   overflow: auto;
 }
 
@@ -189,7 +313,7 @@ function goNext() {
   min-width: 6rem;
 }
 
-h3 {
+.modal__header > h3 {
   font-size: var(--font-size-lg);
   font-weight: var(--font-medium);
   margin: 0;
@@ -242,6 +366,25 @@ h3 {
   color: rgba(var(--color-primary-rgb), 0.62);
 }
 
+.school-step {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.step-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-medium);
+  color: var(--color);
+}
+
+.step-description {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: rgba(var(--color-primary-rgb), 0.65);
+  line-height: 1.5;
+}
+
 .pop-up-enter-from,
 .pop-up-leave-to {
   opacity: 0;
@@ -270,5 +413,34 @@ h3 {
 .pop-up-enter-to .modal,
 .pop-up-leave-from .modal {
   transform: scale(1);
+}
+
+.step-forward-enter-from,
+.step-backward-leave-to {
+  opacity: 0;
+  transform: translateX(1rem);
+}
+
+.step-forward-leave-to,
+.step-backward-enter-from {
+  opacity: 0;
+  transform: translateX(-1rem);
+}
+
+.step-forward-enter-to,
+.step-forward-leave-from,
+.step-backward-enter-to,
+.step-backward-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.step-forward-enter-active,
+.step-forward-leave-active,
+.step-backward-enter-active,
+.step-backward-leave-active {
+  transition:
+    opacity var(--transition-normal),
+    transform 0.4s var(--ease-overshoot);
 }
 </style>

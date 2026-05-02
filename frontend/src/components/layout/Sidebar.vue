@@ -232,6 +232,10 @@ async function handleLogout() {
   place-self: center;
 }
 
+.sidebar__item svg {
+  transform: translateX(-1px);
+}
+
 .sidebar__toggle svg {
   opacity: 0.7;
 }
@@ -315,7 +319,7 @@ async function handleLogout() {
 }
 
 .collapsed .sidebar__toggle {
-  transform: translateX(-0.67rem);
+  transform: translateX(-0.75rem);
 }
 
 .collapsed .sidebar__user,

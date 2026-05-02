@@ -92,7 +92,7 @@ onBeforeUnmount(() => {
 .dropdown__list {
   position: absolute;
   z-index: 100;
-  top: calc(100% + var(--space-xs));
+  top: calc(100% + var(--space-sm));
   left: 0;
   right: 0;
   display: grid;
@@ -100,13 +100,13 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-md);
   background: var(--color-background);
   box-shadow: var(--shadow-md);
-  max-height: calc(2.75rem * var(--visible-options));
+  max-height: calc(2.5rem * var(--visible-options));
   overflow: auto;
 }
 
 .dropdown__option {
   width: 100%;
-  height: 2.75rem;
+  height: 2.5rem;
   padding: 0.65rem 0.75rem;
   border: 0;
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
