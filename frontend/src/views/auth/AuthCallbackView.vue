@@ -12,7 +12,10 @@ const error = ref('');
 onMounted(async () => {
   try {
     await authStore.completeGoogleAuth();
-    router.replace('/getting-started');
+    const redirectPath = sessionStorage.getItem('auth_redirect') || '/getting-started';
+    sessionStorage.removeItem('auth_redirect');
+
+    router.replace(redirectPath);
   } catch (err) {
     if (!err.response) error.value = 'Network error. Please try again.';
     else {

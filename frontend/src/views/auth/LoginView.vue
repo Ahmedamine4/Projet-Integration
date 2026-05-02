@@ -61,6 +61,13 @@ const loginWithGoogle = async () => {
   serverError.value = '';
   isGoogleLoading.value = true;
   try {
+    const redirectPath =
+      typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
+        ? route.query.redirect
+        : '/getting-started';
+
+    sessionStorage.setItem('auth_redirect', redirectPath);
+
     await authStore.startGoogleAuth();
   } catch (err) {
     serverError.value = err.message;
