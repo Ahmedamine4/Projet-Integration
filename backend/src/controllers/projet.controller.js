@@ -1,11 +1,11 @@
-import { createProjet } from '../services/projet.js';
+import { createPersonalProjet } from '../services/projet.service.js';
 
 export const addProjet = async (req, res) => {
   try {
-    const userId = "cmohi6r330000uxpsulloqrot" ;
+    const userId = req.user.id;
     const data = req.body;
 
-    const result = await createProjet(data, userId);
+    const result = await createPersonalProjet(data, userId);
 
     res.status(201).json({
       success: true,

@@ -1,7 +1,7 @@
 import prisma from '../config/prisma.js';
 import { TypeExperience } from '@prisma/client';
 
-export const createProjet = async (data, userId) => {
+export const createPersonalProjet = async (data, userId) => {
   return await prisma.$transaction(async (tx) => {
 
     const experience = await tx.experience.create({
