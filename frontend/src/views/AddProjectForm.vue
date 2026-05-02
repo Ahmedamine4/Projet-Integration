@@ -10,7 +10,7 @@ const emit = defineEmits(['close', 'submit']);
 const projectTitle = ref('');
 const description = ref('');
 const projectImage = ref(null);
-const projectImageName = ref('');
+const projectImageName = ref('No file selected');
 const technologies = ref([]);
 const projectType = ref('personal');
 const teacherEmail = ref('');
@@ -21,10 +21,15 @@ const githubLink = ref('');
 const handleFileChange = (event) => {
   const file = event.target.files[0];
 
-  if (!file) return;
+   if (!file) {
+    projectImage.value = null;
+    projectImageName.value = 'No file selected';
+    return;
+  }
 
   projectImage.value = file;
   projectImageName.value = file.name;
+  
 };
 
 const handleDrop = (event) => {
@@ -83,24 +88,27 @@ const submitProject = () => {
             placeholder="Enter your project title"
           />
 
-          <div
-            class="drop-zone"
-            @dragover.prevent
-            @drop.prevent="handleDrop"
-          >
-            <p>Drag and drop your project screenshot here</p>
-            <span>or click to upload</span>
+          <label
+  class="drop-zone"
+  for="projectImage"
+  @dragover.prevent
+  @drop.prevent="handleDrop"
+>
+  <p>Drag and drop your project screenshot here</p>
+  <span>or click to upload</span>
 
-            <input
-              type="file"
-              accept="image/*"
-              @change="handleFileChange"
-            />
+  <input
+    id="projectImage"
+    type="file"
+    accept="image/*"
+    class="hidden-input"
+    @change="handleFileChange"
+  />
 
-            <p v-if="projectImageName" class="file-name">
-              {{ projectImageName }}
-            </p>
-          </div>
+  <p class="file-name">
+    {{ projectImageName }}
+  </p>
+</label>
 
           <div class="form-group">
             <label for="description">Description</label>
@@ -435,5 +443,8 @@ input[type="radio"] {
   justify-content: flex-end;
   gap: var(--space-sm);
   margin-top: var(--space-sm);
+}
+.hidden-input {
+  display: none !important;
 }
 </style>
