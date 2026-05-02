@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import Card from '@/components/common/Card.vue';
 import Input from '@/components/common/Input.vue';
 import Button from '@/components/common/Button.vue';
@@ -11,6 +11,7 @@ import Error from '@/components/common/Error.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const email = ref('');
 const password = ref('');
@@ -39,8 +40,13 @@ const login = async () => {
   isLoggingIn.value = true;
 
   try {
-    await authStore.login(email.value, password.value);
-    await router.push('/getting-started');
+    await authStore.login(trimmedEmail, password.value);
+
+    const redirectPath =
+      typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
+        ? route.query.redirect
+        : '/getting-started';
+    await router.push(redirectPath);
   } catch (err) {
     if (!err.response) serverError.value = 'Network error. Please try again.';
     else {

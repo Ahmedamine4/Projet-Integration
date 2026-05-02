@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
     const { data, error } = await supabase.auth.getSession();
     if (error) throw error;
     if (!data || !data.session) {
-      throw new Error('Aucune session Google/Supabase trouvée');
+      throw new Error('No Google/Supabase session found');
     }
 
     const supabaseToken = data.session.access_token;
