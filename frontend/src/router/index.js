@@ -7,6 +7,7 @@ import DashboardView from "../views/DashboardView.vue";
 import AuthCallbackView from "@/views/AuthCallbackView.vue";
 import NotFound from "@/views/NotFound.vue";
 import GettingStarted from "@/views/GettingStarted.vue";
+import AddProjectForm from '@/views/AddProjectForm.vue';
 
 const routes = [
   {
@@ -47,7 +48,15 @@ const routes = [
     path: "/:pathMatch(.*)*",
     name: "not-found",
     component: NotFound
+  },
+  {
+  path: '/add-project-form',
+  name: 'AddProjectForm',
+  component: AddProjectForm,
+  meta: {
+    requiresAuth: false
   }
+}
 ]
 
 const router = createRouter({

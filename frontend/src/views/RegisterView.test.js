@@ -94,7 +94,6 @@ describe('RegisterView', () => {
         await wrapper.find('input[placeholder="email"]').setValue('wrong-email');
         await wrapper.find('input[placeholder="password"]').setValue('weak');
         await wrapper.find('input[placeholder="confirm password"]').setValue('different');
-
         await wrapper.find('form').trigger('submit.prevent');
 
         expect(wrapper.text()).toContain('Invalid first name');

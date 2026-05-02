@@ -215,9 +215,9 @@ const submitProject = () => {
 
 <style scoped>
 .modal-overlay {
-   position: relative;
-  inset: 200px;
-  background: rgba(var(--color-surface-rgb), 0.75);
+   position: fixed;
+  inset: 0;
+  background: transparent;
    /*background: var(--color-background);*/
   display: flex;
   align-items: center;
@@ -266,7 +266,7 @@ const submitProject = () => {
   display: grid;
   gap: var(--space-md);
 }
-
+ 
 .form-subtitle {
   margin: 0 0 var(--space-lg);
   font-size: var(--font-size-xs);
