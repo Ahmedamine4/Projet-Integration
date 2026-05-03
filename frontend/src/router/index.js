@@ -55,6 +55,11 @@ const routes = [
     name: 'not-found',
     component: NotFound,
   },
+{
+  path: '/add-project',
+  name: 'AddProject',
+  component: () => import('@/views/AddProject.vue')
+}
 ];
 
 const router = createRouter({
