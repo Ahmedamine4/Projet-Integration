@@ -179,7 +179,7 @@ function complete() {
   emit('complete', {
     isCurrentlyStudying: isCurrentlyStudying.value,
     academicLevel: selectedLevelKey.value,
-    ... schoolPath.value,
+    schoolPath: schoolPath.value,
   });
   resetSchoolPath();
 }
