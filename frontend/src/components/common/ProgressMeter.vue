@@ -35,7 +35,7 @@ const meterStyle = computed(() => {
 <style scoped>
 .progress-meter__bar {
   flex: 1;
-  min-width: 6rem;
+  min-width: 4rem;
   overflow: hidden;
   height: 0.38rem;
   border-radius: 999px;

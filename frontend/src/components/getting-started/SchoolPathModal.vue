@@ -3,6 +3,7 @@ import { ref, reactive, computed } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import Button from '@/components/common/Button.vue';
+import { X } from 'lucide-vue-next';
 import { schools } from '@/data/schools';
 
 const academicLevels = [
@@ -170,10 +171,22 @@ function resetSchoolPath() {
 
 const stepDirection = ref('forward');
 
+function close() {
+  resetSchoolPath();
+  emit('close');
+}
+
+function complete() {
+  emit('complete', {
+    isCurrentlyStudying: isCurrentlyStudying.value,
+    ... schoolPath.value,
+  });
+  resetSchoolPath();
+}
+
 function goBack() {
   if (currentStepIndex.value === 0) {
-    resetSchoolPath();
-    emit('close');
+    close();
     return;
   }
   resetCurrentStep();
@@ -183,11 +196,7 @@ function goBack() {
 
 function goNext() {
   if (completedStepsCount.value === numOfSteps.value) {
-    emit('complete', {
-      isCurrentlyStudying: isCurrentlyStudying.value,
-      ... schoolPath.value,
-    });
-    resetSchoolPath();
+    complete();
     return;
   }
   stepDirection.value = 'forward';
@@ -199,6 +208,13 @@ function goNext() {
     <div class="modal-overlay" v-if="open">
       <div class="modal">
         <div class="modal__header">
+          <button
+            type="button"
+            class="x-button"
+            @click="close"
+          >
+            <X />
+          </button>
           <h3>Build your academic path</h3>
 
           <div class="step-meter__track">
@@ -327,6 +343,8 @@ function goNext() {
   position: fixed;
   inset: 0;
   background: rgba(var(--color-primary-rgb), 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -339,7 +357,7 @@ function goNext() {
   flex-direction: column;
   background: var(--color-background);
   max-height: min(32rem, 90vh);
-  width: min(36rem, 100%);
+  width: min(32rem, 100%);
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -347,6 +365,7 @@ function goNext() {
 }
 
 .modal__header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -361,12 +380,41 @@ function goNext() {
   gap: 0.75rem;
   width: 12rem;
   max-width: 45%;
+  margin-inline: var(--space-md);
 }
 
 .step-meter__track > span {
   flex-shrink: 0;
   font-size: var(--font-size-sm);
   color: rgba(var(--color-primary-rgb), 0.72);
+}
+
+.x-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  color: rgba(var(--color-primary-rgb), 0.7);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.x-button svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.x-button:hover {
+  color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), 0.08);
 }
 
 .modal__body {
@@ -519,5 +567,16 @@ function goNext() {
   transition:
     opacity var(--transition-normal),
     transform 0.4s var(--ease-overshoot);
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0;
+  }
+  .modal {
+    width: 100%;
+    align-self: end;
+    border-radius: 0;
+  }
 }
 </style>
