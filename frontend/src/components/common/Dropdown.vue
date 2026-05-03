@@ -106,12 +106,11 @@ onBeforeUnmount(() => {
 
 .dropdown__option {
   width: 100%;
-  height: 2.5rem;
+  min-height: 2.5rem;
   padding: 0.65rem 0.75rem;
   border: 0;
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
   background: transparent;
-  white-space: nowrap;
   color: var(--color-primary);
   font: inherit;
   font-size: var(--font-size-sm);
