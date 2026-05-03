@@ -5,10 +5,10 @@ import cookieParser from 'cookie-parser';
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173', // ton front
+  origin: true, // Autorise les requêtes
   credentials: true
 }));
-app.use(cors());
+// app.use(cors());
 
 // Middlewares
 app.use(express.json()); 
