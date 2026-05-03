@@ -297,7 +297,8 @@ async function handleLogout() {
   color: var(--color-background);
   font-size: var(--font-size-xs);
   font-weight: var(--font-bold);
-  margin-left: var(--space-sm);
+  margin-left:
+    calc((var(--collapsed-sidebar-width) - 24px) / 2 - var(--space-sm));
 }
 
 .sidebar-space.collapsed,
