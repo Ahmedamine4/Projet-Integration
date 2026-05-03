@@ -17,9 +17,18 @@ function normalizeUser(user) {
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref(null);
-    const token = ref(null);
+    // const token = ref(null);
 
-    const isAuthenticated = computed(() => Boolean(user.value && token.value));
+    const isAuthenticated = computed(() => Boolean(user.value /*&& token.value*/));
+
+    async function fetchProfile() { // Appelé au démarrage pour vérifier si l'utilisateur est déjà connecté (cookie valide)
+        try {
+            const { data } = await api.get('/auth/profile');
+            user.value = normalizeUser(data.user);
+        } catch (error) {
+            user.value = null; // Cookie expiré ou absent
+        }
+    }
 
     async function login(email, password) {
         const { data } = await api.post('/auth/login', {
@@ -28,7 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
         });
 
         user.value = normalizeUser(data.user);
-        token.value = data.token;
+        //token.value = data.token;
     }
 
     async function register(userData) {
@@ -41,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
         });
 
         user.value = normalizeUser(data.user);
-        token.value = data.token;
+        //token.value = data.token;
     }
 
     async function startGoogleAuth() {
@@ -72,25 +81,26 @@ export const useAuthStore = defineStore('auth', () => {
         );
         
         user.value = normalizeUser(response.data.user);
-        token.value = response.data.token;
+        //token.value = response.data.token;
     }
 
     async function logout() {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
+        await api.post('/auth/logout'); // Demande au backend de vider les httpOnly cookies
 
         user.value = null;
-        token.value = null;
+        //token.value = null;
     }
     return {
         user,
-        token,
         isAuthenticated,
         login,
         register,
         startGoogleAuth,
         completeGoogleAuth,
         logout,
+        fetchProfile
     };
 });
 

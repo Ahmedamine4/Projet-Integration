@@ -15,14 +15,20 @@ export const ROLES = {
 };
 
 // Récupérer le token depuis : Authorization: Bearer TOKEN
+// function getToken(req) {
+//   const authHeader = req.headers.authorization;
+
+//   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+//     return null;
+//   }
+
+//   return authHeader.split(' ')[1];
+// }
+
+// Récupérer le token depuis les cookies
 function getToken(req) {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  return authHeader.split(' ')[1];
+  // Le token n'est plus dans le header, il est dans le cookie !
+  return req.cookies?.accessToken || null; 
 }
 
 // Middleware hybride : local + Google

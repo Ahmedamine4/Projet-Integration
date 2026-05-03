@@ -5,6 +5,7 @@ import {
   googleAuth,
   login,
   register,
+  refreshAccessToken,
 } from '../controllers/auth.controller.js';
 import {
   authMiddleware,
@@ -18,6 +19,7 @@ const router = express.Router();
 router.post('/register', register);
 router.post('/login', login);
 router.post('/google', googleAuth);
+router.post('/refresh-token', refreshAccessToken);
 
 // Routes protegees par le middleware hybride.
 router.get('/me', authMiddleware, getProfile);
