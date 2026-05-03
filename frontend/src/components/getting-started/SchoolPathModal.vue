@@ -4,7 +4,6 @@ import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import Button from '@/components/common/Button.vue';
 import { X } from 'lucide-vue-next';
-import { schools } from '@/data/schools';
 
 const academicLevels = [
   {
@@ -60,10 +59,14 @@ const completedSchoolDescriptions = {
     'Choose the institution where you completed your PhD.',
 };
 
-defineProps({
+const props = defineProps({
   open: {
     type: Boolean,
     default: false,
+  },
+  schools: {
+    type: Array,
+    default: () => [],
   },
 });
 
@@ -94,13 +97,13 @@ const schoolFieldsInputs = reactive({
 });
 
 const schoolPath = computed(() => {
-  const bachelorSchool = schools.find((school) => {
+  const bachelorSchool = props.schools.find((school) => {
     return school.toLowerCase() === schoolFieldsInputs.bachelorSchool.toLowerCase();
   }) || '';
-  const masterSchool = schools.find((school) => {
+  const masterSchool = props.schools.find((school) => {
     return school.toLowerCase() === schoolFieldsInputs.masterSchool.toLowerCase();
   }) || '';
-  const phdInstitution = schools.find((school) => {
+  const phdInstitution = props.schools.find((school) => {
     return school.toLowerCase() === schoolFieldsInputs.phdInstitution.toLowerCase();
   }) || '';
   return { bachelorSchool, masterSchool, phdInstitution };

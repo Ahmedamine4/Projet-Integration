@@ -3,6 +3,7 @@ import { ref, computed, reactive } from 'vue';
 import GettingStartedStep from '@/components/getting-started/GettingStartedStep.vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
+import { schools } from '@/data/schools';
 
 const steps = [
   {
@@ -87,6 +88,7 @@ function completeSchoolStep() {
   </div>
   <SchoolPathModal
     :open="isSchoolModalOpen"
+    :schools
     @close="isSchoolModalOpen = false"
     @complete="completeSchoolStep"
   />
