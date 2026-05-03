@@ -3,10 +3,11 @@ import { useAuthStore } from '@/stores/auth';
 import HomeView from '@/views/HomeView.vue';
 import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
-import DashboardView from '@/views/DashboardView.vue';
 import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
-import NotFound from '@/views/NotFound.vue';
-import GettingStarted from '@/views/GettingStarted.vue';
+import DashboardView from '@/views/app/DashboardView.vue';
+import GettingStartedView from '@/views/app/GettingStartedView.vue';
+import PortfolioView from '@/views/app/PortfolioView.vue';
+import NotFoundView from '@/views/NotFoundView.vue';
 
 const routes = [
   {
@@ -27,6 +28,12 @@ const routes = [
     meta: { layout: 'auth' },
   },
   {
+    path: '/auth/callback',
+    name: 'auth-callback',
+    component: AuthCallbackView,
+    meta: { layout: 'auth' },
+  },
+  {
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView,
@@ -38,22 +45,25 @@ const routes = [
   {
     path: '/getting-started',
     name: 'getting-started',
-    component: GettingStarted,
+    component: GettingStartedView,
     meta: {
       requiresAuth: false, // pour test uniquement !
       layout: 'app',
     },
   },
   {
-    path: '/auth/callback',
-    name: 'auth-callback',
-    component: AuthCallbackView,
-    meta: { layout: 'auth' },
+    path: '/portfolio',
+    name: 'portfolio',
+    component: PortfolioView,
+    meta: {
+      requiresAuth: false, // pour test uniquement !
+      layout: 'app',
+    },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
-    component: NotFound,
+    component: NotFoundView,
   },
 ];
 
