@@ -337,5 +337,15 @@ async function handleLogout() {
   .sidebar {
     position: fixed;
   }
+  .sidebar::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(var(--color-primary-rgb), 0.3);
+    z-index: -1;
+  }
+  .collapsed .sidebar::before {
+    display: none;
+  }
 }
 </style>

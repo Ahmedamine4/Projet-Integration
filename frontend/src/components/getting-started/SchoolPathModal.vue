@@ -413,8 +413,8 @@ function goNext() {
 }
 
 .x-button:hover {
-  color: var(--color-primary);
-  background: rgba(var(--color-primary-rgb), 0.08);
+  color: var(--color-error);
+  background: rgba(var(--color-error-rgb), 0.06);
 }
 
 .modal__body {

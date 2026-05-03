@@ -14,14 +14,14 @@ const props = defineProps({
 
 const meterStyle = computed(() => {
   const completionPercentage = (props.value * 100) / props.max;
-  let background = '';
-  if (completionPercentage <= 25) background = 'var(--color-error)';
-  else if (completionPercentage <= 50) background = '#e07012';
-  else if (completionPercentage <= 75) background = '#d9b20b';
-  else background = 'var(--color-success)';
+  let backgroundColor = '';
+  if (completionPercentage <= 25) backgroundColor = 'var(--color-error)';
+  else if (completionPercentage <= 50) backgroundColor = '#e07012';
+  else if (completionPercentage <= 75) backgroundColor = '#d9b20b';
+  else backgroundColor = 'var(--color-success)';
   return {
     width: `${completionPercentage}%`,
-    background,
+    backgroundColor,
   };
 });
 </script>
@@ -45,9 +45,9 @@ const meterStyle = computed(() => {
 .progress-meter__fill {
   height: 100%;
   border-radius: inherit;
-  background: var(--color-success);
+  background-color: var(--color-success);
   transition:
     width 0.48s var(--ease-overshoot),
-    background var(--transition-normal);
+    background-color var(--transition-normal);
 }
 </style>
