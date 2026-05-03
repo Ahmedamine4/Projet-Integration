@@ -54,7 +54,8 @@ function handleStepAction(key) {
   stepData[key].done = true;
 }
 
-function completeSchoolStep() {
+function completeSchoolStep(parcours) {
+  console.log(parcours);
   stepData.school.done = true;
   isSchoolModalOpen.value = false;
 }

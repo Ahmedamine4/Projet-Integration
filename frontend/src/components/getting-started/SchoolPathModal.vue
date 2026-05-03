@@ -178,6 +178,7 @@ function close() {
 function complete() {
   emit('complete', {
     isCurrentlyStudying: isCurrentlyStudying.value,
+    academicLevel: selectedLevelKey.value,
     ... schoolPath.value,
   });
   resetSchoolPath();
