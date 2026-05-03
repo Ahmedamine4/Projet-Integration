@@ -94,19 +94,15 @@ const schoolFieldsInputs = reactive({
 });
 
 const schoolPath = computed(() => {
-  const normalizedSchools = schools.map((school) => school.toLowerCase());
-  const bachelorSchool =
-    normalizedSchools.includes(schoolFieldsInputs.bachelorSchool.toLowerCase())
-      ? schoolFieldsInputs.bachelorSchool
-      : '';
-  const masterSchool = 
-    normalizedSchools.includes(schoolFieldsInputs.masterSchool.toLowerCase())
-      ? schoolFieldsInputs.masterSchool
-      : '';
-  const phdInstitution = 
-    normalizedSchools.includes(schoolFieldsInputs.phdInstitution.toLowerCase())
-      ? schoolFieldsInputs.phdInstitution
-      : '';
+  const bachelorSchool = schools.find((school) => {
+    return school.toLowerCase() === schoolFieldsInputs.bachelorSchool.toLowerCase();
+  }) || '';
+  const masterSchool = schools.find((school) => {
+    return school.toLowerCase() === schoolFieldsInputs.masterSchool.toLowerCase();
+  }) || '';
+  const phdInstitution = schools.find((school) => {
+    return school.toLowerCase() === schoolFieldsInputs.phdInstitution.toLowerCase();
+  }) || '';
   return { bachelorSchool, masterSchool, phdInstitution };
 });
 
