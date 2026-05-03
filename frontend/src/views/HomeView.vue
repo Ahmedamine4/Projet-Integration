@@ -126,8 +126,8 @@ const router = useRouter();
 
 @media (max-width: 480px) {
   .home-hero__nav {
-    gap: var(--space-sm);
-    padding-top: var(--space-md);
+    gap: var(--space-lg);
+    padding-top: var(--space-lg);
   }
 
   .home-hero__content {

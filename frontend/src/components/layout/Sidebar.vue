@@ -66,6 +66,7 @@ async function handleLogout() {
 
 <template>
   <div class="sidebar-space" :class="{ collapsed }">
+    <div class="sidebar-overlay" @click="collapsed = true" />
     <aside class="sidebar">
       <header>
         <div class="brand">
@@ -336,16 +337,20 @@ async function handleLogout() {
   }
   .sidebar {
     position: fixed;
+    z-index: 1;
   }
-  .sidebar::before {
+  .sidebar-overlay {
     content: '';
     position: fixed;
     inset: 0;
-    background: rgba(var(--color-primary-rgb), 0.3);
-    z-index: -1;
+    background-color: rgba(var(--color-primary-rgb), 0.3);
+    z-index: 0;
+    pointer-events: auto;
+    transition: background-color var(--transition-normal);
   }
-  .collapsed .sidebar::before {
-    display: none;
+  .collapsed .sidebar-overlay {
+    background-color: transparent;
+    pointer-events: none;
   }
 }
 </style>
