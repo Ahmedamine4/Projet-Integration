@@ -116,6 +116,7 @@ async function handleLogout() {
 
 <style scoped>
 .sidebar-space {
+  --collapsed-sidebar-width: calc(38px + 2 * var(--space-sm));
   position: sticky;
   top: 0;
   left: 0;
@@ -301,7 +302,7 @@ async function handleLogout() {
 
 .sidebar-space.collapsed,
 .sidebar-space.collapsed .sidebar {
-  width: 56px;
+  width: var(--collapsed-sidebar-width);
 }
 
 .collapsed .brand img,
@@ -333,14 +334,13 @@ async function handleLogout() {
 @media (max-width: 768px) {
   .sidebar-space {
     position: relative;
-    width: 56px;
+    width: var(--collapsed-sidebar-width);
   }
   .sidebar {
     position: fixed;
     z-index: 1;
   }
   .sidebar-overlay {
-    content: '';
     position: fixed;
     inset: 0;
     background-color: rgba(var(--color-primary-rgb), 0.3);
