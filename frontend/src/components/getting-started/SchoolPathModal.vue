@@ -393,8 +393,8 @@ function goNext() {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 22px;
-  height: 22px;
+  width: 1.38rem;
+  aspect-ratio: 1;
   padding: 0;
   border: none;
   background: transparent;
@@ -408,8 +408,8 @@ function goNext() {
 }
 
 .x-button svg {
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 70%;
+  height: 70%;
 }
 
 .x-button:hover {
@@ -577,6 +577,23 @@ function goNext() {
     width: 100%;
     align-self: end;
     border-radius: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .x-button {
+    width: 1.82rem;
+  }
+
+  .step-meter__track {
+    width: 98%;
+    max-width: none;
+    margin-inline: 0;
   }
 }
 </style>

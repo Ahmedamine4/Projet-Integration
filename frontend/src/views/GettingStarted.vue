@@ -146,4 +146,16 @@ function completeSchoolStep() {
   font-size: var(--font-size-sm);
   color: rgba(var(--color-primary-rgb), 0.72);
 }
+
+@media (max-width: 480px) {
+  .wrapper-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .step-meter__track {
+    width: 98%;
+    max-width: none;
+    margin-inline: 0;
+  }
+}
 </style>
