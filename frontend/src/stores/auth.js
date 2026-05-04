@@ -17,9 +17,17 @@ function normalizeUser(user) {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
-  const token = ref(null);
 
-  const isAuthenticated = computed(() => Boolean(user.value && token.value));
+  const isAuthenticated = computed(() => Boolean(user.value));
+
+  async function fetchProfile() {
+    try {
+      const { data } = await api.get('/auth/profile');
+      user.value = normalizeUser(data.user);
+    } catch (error) {
+      user.value = null;
+    }
+  }
 
   async function login(email, password) {
     const { data } = await api.post('/auth/login', {
@@ -28,11 +36,11 @@ export const useAuthStore = defineStore('auth', () => {
     });
 
     user.value = normalizeUser(data.user);
-    token.value = data.token;
   }
 
   async function register(userData) {
     const { firstName, lastName, email, password } = userData;
+
     const { data } = await api.post('/auth/register', {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -41,7 +49,6 @@ export const useAuthStore = defineStore('auth', () => {
     });
 
     user.value = normalizeUser(data.user);
-    token.value = data.token;
   }
 
   async function startGoogleAuth() {
@@ -54,12 +61,15 @@ export const useAuthStore = defineStore('auth', () => {
         },
       },
     });
+
     if (error) throw error;
   }
 
   async function completeGoogleAuth() {
     const { data, error } = await supabase.auth.getSession();
+
     if (error) throw error;
+
     if (!data || !data.session) {
       throw new Error('No Google/Supabase session found');
     }
@@ -71,20 +81,22 @@ export const useAuthStore = defineStore('auth', () => {
     });
 
     user.value = normalizeUser(response.data.user);
-    token.value = response.data.token;
   }
 
   async function logout() {
     const { error } = await supabase.auth.signOut();
+
     if (error) throw error;
 
+    await api.post('/auth/logout');
+
     user.value = null;
-    token.value = null;
   }
+
   return {
     user,
-    token,
     isAuthenticated,
+    fetchProfile,
     login,
     register,
     startGoogleAuth,

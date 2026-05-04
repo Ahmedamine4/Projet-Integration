@@ -72,12 +72,12 @@ router.beforeEach((to) => {
     return record.meta.requiresAuth;
   });
 
-  if (requiresAuth && !authStore.isAuthenticated) {
-    return {
-      name: 'login',
-      query: { redirect: to.fullPath },
-    };
-  }
+if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  return {
+    path: '/login',
+    query: { redirect: to.fullPath }
+  };
+}
 
   return true;
 });

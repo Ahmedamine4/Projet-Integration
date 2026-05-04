@@ -1,0 +1,17 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all installed packages
+  apt:
+    upgrade: dist
+
+- name: Install essential tools
+  apt:
+    name:
+      - curl
+      - git
+      - net-tools
+    state: present
