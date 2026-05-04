@@ -1,133 +1,106 @@
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia';
 import api from '@/services/api';
-import { supabase } from "@/services/supabase";
+import { supabase } from '@/services/supabase';
 import { ref, computed } from 'vue';
 
-function getStoredUser() {
-    const storedUser = localStorage.getItem('current_user');
-    return storedUser ? JSON.parse(storedUser) : null;
-}
+function normalizeUser(user) {
+  if (!user) return null;
 
-function getStoredToken() {
-    return localStorage.getItem('token');
-}
+  const { prenom, nom, ...rest } = user;
 
-function persistSession(user, token) {
-    localStorage.setItem('current_user', JSON.stringify(user));
-    localStorage.setItem('token', token);
-}
-
-function clearSession() {
-    localStorage.removeItem('current_user');
-    localStorage.removeItem('token');
+  return {
+    ...rest,
+    firstName: user.firstName || prenom || '',
+    lastName: user.lastName || nom || '',
+  };
 }
 
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref(getStoredUser());
-    const token = ref(getStoredToken());
+  const user = ref(null);
 
-    const isAuthenticated = computed(() => Boolean(user.value && token.value));
+  const isAuthenticated = computed(() => Boolean(user.value));
 
-    async function login(email, password) {
-        const { data } = await api.post('/auth/login', {
-            email,
-            password
-        });
+  async function fetchProfile() {
+    try {
+      const { data } = await api.get('/auth/profile');
+      user.value = normalizeUser(data.user);
+    } catch (error) {
+      user.value = null;
+    }
+  }
 
-        user.value = data.user;
-        token.value = data.token;
+  async function login(email, password) {
+    const { data } = await api.post('/auth/login', {
+      email,
+      password,
+    });
 
-        persistSession(data.user, data.token);
+    user.value = normalizeUser(data.user);
+  }
+
+  async function register(userData) {
+    const { firstName, lastName, email, password } = userData;
+
+    const { data } = await api.post('/auth/register', {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email,
+      password,
+    });
+
+    user.value = normalizeUser(data.user);
+  }
+
+  async function startGoogleAuth() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
+      },
+    });
+
+    if (error) throw error;
+  }
+
+  async function completeGoogleAuth() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) throw error;
+
+    if (!data || !data.session) {
+      throw new Error('No Google/Supabase session found');
     }
 
-    async function register(userData) {
-        const {firstName, lastName, email, password} = userData;
-        const { data } = await api.post('/auth/register', {
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            email,
-            password
-        });
+    const supabaseToken = data.session.access_token;
 
-        user.value = data.user;
-        token.value = data.token;
+    const response = await api.post('/auth/google', {
+      access_token: supabaseToken,
+    });
 
-        persistSession(data.user, data.token);
-    }
+    user.value = normalizeUser(response.data.user);
+  }
 
-    async function startGoogleAuth() {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-                queryParams: {
-                    prompt: 'select_account'
-                }
-            }
-        });
-        if (error) throw error;
-    }
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
 
-    async function completeGoogleAuth() {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
+    if (error) throw error;
 
-        const supabaseToken = data.session?.access_token;
-        if (!supabaseToken) throw new Error('Missing Supabase session');
+    await api.post('/auth/logout');
 
-        const response = await api.post(
-            '/auth/google',
-            {},
-            {
-                headers: {
-                    Authorization: `Bearer ${supabaseToken}`
-                }
-            }
-        );
-        
-        user.value = response.data.user;
-        token.value = response.data.token;
+    user.value = null;
+  }
 
-        persistSession(response.data.user, response.data.token);
-    }
-
-    async function logout() {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-
-        user.value = null;
-        token.value = null;
-
-        clearSession();
-    }
-
-    function restoreSession() {
-        user.value = getStoredUser();
-        token.value = getStoredToken();
-    }
-    return {
-        user,
-        token,
-        isAuthenticated,
-        login,
-        register,
-        startGoogleAuth,
-        completeGoogleAuth,
-        logout,
-        restoreSession
-    };
+  return {
+    user,
+    isAuthenticated,
+    fetchProfile,
+    login,
+    register,
+    startGoogleAuth,
+    completeGoogleAuth,
+    logout,
+  };
 });
-
-
-/*
-{
-  "user": {
-    "id": 1,
-    "firstName": "Moussa",
-    "lastName": "El Moussaoui",
-    "email": "moussa@example.com",
-    "role": "student"
-  },
-  "token": "abc123"
-}
-*/

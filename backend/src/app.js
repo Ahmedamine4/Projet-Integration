@@ -1,8 +1,28 @@
-const express = require('express')
-const app = express();
+import express from 'express';
+import cors from 'cors';
+import authRoutes from './routes/auth.routes.js';
+import cookieParser from 'cookie-parser';
+import aiRoutes from './routes/ai.route.js';
 
-//test route , affichage apres le lancement
-app.get("/",(req,res) => {
-    res.send('<h1> Hello, API is running maintenant l! <h1>');
+const app = express();
+app.use(cors({
+  origin: true, // Autorise les requêtes
+  credentials: true
+}));
+// app.use(cors());
+
+// Middlewares
+app.use(express.json()); 
+app.use(cookieParser());
+
+// Branchement des routes d'authentification
+app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes);
+
+// Route de test
+app.get("/", (req, res) => {
+    res.send('<h1> Hello, API is running maintenant ! </h1>');
 });
-module.exports = app;  // export de l'app pour l'utilise dans sderver.js
+
+// Exportation aux normes ES Modules
+export default app;

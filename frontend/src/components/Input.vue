@@ -44,6 +44,7 @@ const classes = computed(() => [
 .input {
     display: block;
     width: 100%;
+    margin-bottom: var(--space-md);
 }
 
 .input__label {

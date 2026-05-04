@@ -11,7 +11,8 @@ const pinia = createPinia();
 app.use(pinia);
 
 const authStore = useAuthStore();
-authStore.restoreSession();
 
-app.use(router);
-app.mount("#app");
+authStore.fetchProfile().finally(() => {
+  app.use(router);
+  app.mount("#app");
+});
