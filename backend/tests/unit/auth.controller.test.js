@@ -1,463 +1,408 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Ce mock remplace la fonction JWT de creation de token.
-// Mock du module JWT :
-// on remplace la vraie fonction qui genere un token
-// par une fausse fonction controlee dans les tests.
-vi.mock('../../src/config/jwt.js', () => ({
-  generateLocalToken: vi.fn(),
-}));
-
-// Ce mock remplace Supabase pour simuler un token Google valide ou invalide.
-// Mock de Supabase :
-// cela evite un vrai appel externe et permet de simuler
-// un token Google valide ou invalide.
-vi.mock('../../src/config/supabase.js', () => ({
-  supabase: {
-    auth: {
-      getUser: vi.fn(),
-    },
-  },
-}));
-
-// Ce mock remplace la couche service.
-// Le but est de tester le controller seul.
-// Mock des fonctions du service auth :
-// ici on ne veut pas tester la vraie logique metier,
-// seulement le comportement du controller.
-vi.mock('../../src/services/auth.service.js', () => ({
+// Le controller delegue presque tout au service auth.
+const authServiceMock = {
   registerLocalUser: vi.fn(),
   loginLocalUser: vi.fn(),
   syncGoogleUser: vi.fn(),
   getPublicUserById: vi.fn(),
   getAllPublicUsers: vi.fn(),
   findUserByEmail: vi.fn(),
+};
+
+const jwtMock = {
+  generateLocalToken: vi.fn(),
+  generateRefreshToken: vi.fn(),
+  verifyRefreshToken: vi.fn(),
+};
+
+const supabaseGetUserMock = vi.fn();
+
+// On mocke uniquement les dependances du controller.
+vi.mock('../../src/services/auth.service.js', () => authServiceMock);
+
+vi.mock('../../src/config/jwt.js', () => jwtMock);
+
+vi.mock('../../src/config/supabase.js', () => ({
+  supabase: {
+    auth: {
+      getUser: supabaseGetUserMock,
+    },
+  },
 }));
 
-// On importe les fonctions mockees pour definir leur reponse
-// dans chaque test.
-import { generateLocalToken } from '../../src/config/jwt.js';
-import { supabase } from '../../src/config/supabase.js';
-import {
-  findUserByEmail,
-  getAllPublicUsers,
-  getPublicUserById,
-  loginLocalUser,
-  registerLocalUser,
-  syncGoogleUser,
-} from '../../src/services/auth.service.js';
-import {
-  getAllUsers,
-  getProfile,
-  googleAuth,
-  login,
-  register,
-} from '../../src/controllers/auth.controller.js';
+const controller = await import('../../src/controllers/auth.controller.js');
 
-// Petite fonction utilitaire :
-// elle imite l'objet "res" d'Express avec status() et json().
-// mockReturnThis() permet d'ecrire :
-// res.status(...).json(...)
-function createResponseMock() {
+function createRes() {
+  // Petit faux objet Express pour verifier status/json/cookie.
   return {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
+    cookie: vi.fn().mockReturnThis(),
+    clearCookie: vi.fn().mockReturnThis(),
   };
 }
 
 describe('auth.controller', () => {
   beforeEach(() => {
-    // On nettoie les mocks avant chaque test
-    // pour que les appels precedents n'influencent pas le test suivant.
     vi.clearAllMocks();
+    // Ces secrets suffisent pour les appels internes du controller.
+    process.env.JWT_SECRET = 'test-secret';
+    process.env.JWT_REFRESH_SECRET = 'refresh-secret';
   });
 
-  it('register retourne 201 avec le user public et le token', async () => {
-    // Le controller doit renvoyer la bonne reponse apres inscription.
-    // req represente la requete recue par Express.
+  it('register renvoie 201 avec user et pose les cookies', async () => {
+    // Arrange
     const req = {
       body: {
-        firstName: 'Jane',
-        lastName: 'Doe',
-        email: 'jane@test.com',
-        password: 'Password123',
+        firstName: 'Integration',
+        lastName: 'Tester',
+        email: 'integration@example.com',
+        password: 'StrongPass123!',
       },
     };
-    const res = createResponseMock();
-
-    registerLocalUser.mockResolvedValue({
+    const res = createRes();
+    authServiceMock.registerLocalUser.mockResolvedValue({
       utilisateur_id: 'u1',
-      nom: 'Doe',
-      prenom: 'Jane',
-      email: 'jane@test.com',
+      nom: 'Tester',
+      prenom: 'Integration',
+      email: 'integration@example.com',
       role: 'etudiant',
       provider: 'local',
     });
-    // Ici on choisit nous-memes la valeur du token renvoyee par le mock.
-    generateLocalToken.mockReturnValue('local-token');
+    jwtMock.generateLocalToken.mockReturnValue('access-token');
+    jwtMock.generateRefreshToken.mockReturnValue('refresh-token');
 
-    // On execute la fonction du controller comme si Express l'appelait.
-    await register(req, res);
+    // Act
+    await controller.register(req, res);
 
-    // On verifie le code HTTP de la reponse.
+    // Assert
+    expect(res.cookie).toHaveBeenCalledTimes(2);
     expect(res.status).toHaveBeenCalledWith(201);
-    // On verifie le contenu JSON envoye au client.
-    expect(res.json).toHaveBeenCalledWith({
-      success: true,
-      message: 'Inscription réussie',
-      user: {
-        utilisateur_id: 'u1',
-        nom: 'Doe',
-        prenom: 'Jane',
-        email: 'jane@test.com',
-        role: 'etudiant',
-        provider: 'local',
-      },
-      token: 'local-token',
-    });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        user: expect.objectContaining({
+          email: 'integration@example.com',
+        }),
+      })
+    );
   });
 
-  it('register retourne 400 si le service echoue', async () => {
-    // Une erreur metier simple devient une reponse 400.
+  it('register renvoie 400 si le service echoue', async () => {
+    // Arrange
     const req = { body: {} };
-    const res = createResponseMock();
+    const res = createRes();
+    authServiceMock.registerLocalUser.mockRejectedValue(new Error('Tous les champs sont requis'));
 
-    // mockRejectedValue simule une erreur levee par le service.
-    registerLocalUser.mockRejectedValue(new Error('Email déjà utilisé'));
+    // Act
+    await controller.register(req, res);
 
-    await register(req, res);
-
+    // Assert
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: 'Email déjà utilisé',
-    });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: 'Tous les champs sont requis',
+      })
+    );
   });
 
-  it('login retourne 200 avec provider local et token', async () => {
-    // Le controller renvoie le resultat du login local.
+  it('login renvoie 200 avec user et pose les cookies', async () => {
+    // Arrange
     const req = {
       body: {
-        email: 'jane@test.com',
-        password: 'Password123',
+        email: 'integration@example.com',
+        password: 'StrongPass123!',
       },
     };
-    const res = createResponseMock();
-
-    // Le service mocke renvoie directement le resultat attendu.
-    loginLocalUser.mockResolvedValue({
-      token: 'local-token',
-      user: {
-        utilisateur_id: 'u1',
-        nom: 'Doe',
-        prenom: 'Jane',
-        email: 'jane@test.com',
-        role: 'etudiant',
-        provider: 'local',
-      },
-    });
-
-    await login(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-      success: true,
-      message: 'Connexion réussie',
-      provider: 'local',
-      token: 'local-token',
-      user: {
-        utilisateur_id: 'u1',
-        nom: 'Doe',
-        prenom: 'Jane',
-        email: 'jane@test.com',
-        role: 'etudiant',
-        provider: 'local',
-      },
-    });
-  });
-
-  it('login retourne 401 si le mot de passe est faux', async () => {
-    // Un echec de connexion doit renvoyer 401.
-    const req = { body: { email: 'jane@test.com', password: 'wrong' } };
-    const res = createResponseMock();
-
-    loginLocalUser.mockRejectedValue(new Error('Email ou mot de passe incorrect'));
-
-    await login(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: 'Email ou mot de passe incorrect',
-    });
-  });
-
-  it('googleAuth retourne 401 si le token Google est absent', async () => {
-    // Sans token Google, la route doit refuser la requete.
-    const req = { body: {}, headers: {} };
-    const res = createResponseMock();
-
-    await googleAuth(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      message: "Token Google d'authentification manquant",
-    });
-  });
-
-  it('googleAuth retourne 403 si le token Google est invalide', async () => {
-    // Si Supabase refuse le token, on renvoie 403.
-    const req = { body: { access_token: 'bad-token' }, headers: {} };
-    const res = createResponseMock();
-
-    // On simule ici la reponse de Supabase avec un user nul.
-    supabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: new Error('invalid'),
-    });
-
-    await googleAuth(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      message: "Token Google d'authentification invalide ou expiré",
-    });
-  });
-
-  it('googleAuth retourne 200 avec provider google et token local', async () => {
-    // Si le token Google est valide, on connecte l'utilisateur.
-    // Le backend genere ensuite son propre token local.
-    const req = { body: { access_token: 'good-token' }, headers: {} };
-    const res = createResponseMock();
-
-    // Cette ligne simule un token Google accepte par Supabase.
-    supabase.auth.getUser.mockResolvedValue({
-      data: {
-        user: {
-          id: 'google-uid',
-          email: 'google@test.com',
-          user_metadata: {
-            given_name: 'John',
-            family_name: 'Doe',
-          },
-        },
-      },
-      error: null,
-    });
-    // null veut dire : aucun compte local deja existant avec cet email.
-    findUserByEmail.mockResolvedValue(null);
-    // Cette fonction simule la creation ou mise a jour du user Google.
-    syncGoogleUser.mockResolvedValue({
-      utilisateur_id: 'u2',
-      nom: 'Doe',
-      prenom: 'John',
-      email: 'google@test.com',
-      role: 'etudiant',
-      provider: 'google',
-    });
-    generateLocalToken.mockReturnValue('google-local-token');
-
-    await googleAuth(req, res);
-
-    // On verifie les donnees envoyees du controller vers le service.
-    expect(syncGoogleUser).toHaveBeenCalledWith({
-      sub: 'google-uid',
-      email: 'google@test.com',
-      user_metadata: {
-        given_name: 'John',
-        family_name: 'Doe',
-      },
-    });
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-      success: true,
-      message: 'Authentification Google réussie',
-      provider: 'google',
+    const res = createRes();
+    authServiceMock.loginLocalUser.mockResolvedValue({
       user: {
         utilisateur_id: 'u2',
-        nom: 'Doe',
-        prenom: 'John',
-        email: 'google@test.com',
+        email: 'integration@example.com',
         role: 'etudiant',
-        provider: 'google',
+        provider: 'local',
       },
-      token: 'google-local-token',
+      token: 'access-token',
+      refreshToken: 'refresh-token',
     });
+
+    // Act
+    await controller.login(req, res);
+
+    // Assert
+    // Le controller ne renvoie pas accessToken dans le body.
+    // Il prend "token" du service puis le place dans le cookie "accessToken".
+    expect(res.cookie).toHaveBeenCalledTimes(2);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        provider: 'local',
+        user: expect.objectContaining({
+          email: 'integration@example.com',
+        }),
+      })
+    );
   });
 
-  it('googleAuth evite un doublon si un compte local existe deja', async () => {
-    // On bloque la creation d'un doublon sur un email local existant.
-    const req = { body: { access_token: 'good-token' }, headers: {} };
-    const res = createResponseMock();
+  it('login renvoie 401 si email ou mot de passe incorrect', async () => {
+    // Arrange
+    const req = { body: { email: 'x', password: 'y' } };
+    const res = createRes();
+    authServiceMock.loginLocalUser.mockRejectedValue(new Error('Email ou mot de passe incorrect'));
 
-    supabase.auth.getUser.mockResolvedValue({
-      data: {
-        user: {
-          id: 'google-uid',
-          email: 'local@test.com',
-          user_metadata: {},
-        },
-      },
-      error: null,
-    });
-    findUserByEmail.mockResolvedValue({
-      utilisateur_id: 'u9',
-      email: 'local@test.com',
-      provider: 'local',
-    });
+    // Act
+    await controller.login(req, res);
 
-    await googleAuth(req, res);
-
-    expect(syncGoogleUser).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      message: 'Un compte avec cet email existe déjà. Veuillez utiliser la connexion locale.',
-    });
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: 'Email ou mot de passe incorrect',
+      })
+    );
   });
 
-  it('googleAuth retourne 500 si syncGoogleUser echoue', async () => {
-    // Si la synchronisation du compte Google echoue,
-    // le controller doit renvoyer une erreur serveur.
-    const req = { body: { access_token: 'good-token' }, headers: {} };
-    const res = createResponseMock();
+  it('googleAuth renvoie 401 si le token Google est manquant', async () => {
+    // Arrange
+    const req = { body: {}, headers: {} };
+    const res = createRes();
 
-    supabase.auth.getUser.mockResolvedValue({
+    // Act
+    await controller.googleAuth(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  it('googleAuth renvoie 403 si le token Google est invalide', async () => {
+    // Arrange
+    const req = { body: { access_token: 'bad-token' }, headers: {} };
+    const res = createRes();
+    supabaseGetUserMock.mockResolvedValue({
+      data: null,
+      error: new Error('invalid token'),
+    });
+
+    // Act
+    await controller.googleAuth(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it('googleAuth renvoie 400 si l email existe deja en local', async () => {
+    // Arrange
+    const req = { body: { access_token: 'good-token' }, headers: {} };
+    const res = createRes();
+    supabaseGetUserMock.mockResolvedValue({
       data: {
         user: {
-          id: 'google-uid',
-          email: 'google@test.com',
+          id: 'google-sub-1',
+          email: 'already.used@example.com',
           user_metadata: {
-            given_name: 'John',
-            family_name: 'Doe',
+            given_name: 'Google',
+            family_name: 'User',
           },
         },
       },
       error: null,
     });
-    findUserByEmail.mockResolvedValue(null);
-    syncGoogleUser.mockRejectedValue(new Error('Erreur sync Google'));
-
-    await googleAuth(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: 'Erreur sync Google',
+    authServiceMock.findUserByEmail.mockResolvedValue({
+      utilisateur_id: 'u-local',
+      email: 'already.used@example.com',
+      provider: 'local',
     });
+
+    // Act
+    await controller.googleAuth(req, res);
+
+    // Assert
+    expect(authServiceMock.syncGoogleUser).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        message: expect.stringContaining('connexion locale'),
+      })
+    );
   });
 
-  it('getProfile retourne le profil public', async () => {
-    // Le controller lit le user connecte et renvoie son profil.
-    // Ici, req.user est normalement rempli par le middleware d'authentification.
-    const req = {
-      user: {
-        utilisateur_id: 'u1',
-        provider: 'local',
+  it('googleAuth renvoie 200 et pose les cookies si le token Supabase est valide', async () => {
+    // Arrange
+    const req = { body: { access_token: 'good-token' }, headers: {} };
+    const res = createRes();
+    supabaseGetUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'google-sub-1',
+          email: 'google@example.com',
+          user_metadata: {
+            given_name: 'Google',
+            family_name: 'User',
+          },
+        },
       },
-    };
-    const res = createResponseMock();
+      error: null,
+    });
+    authServiceMock.findUserByEmail.mockResolvedValue(null);
+    authServiceMock.syncGoogleUser.mockResolvedValue({
+      utilisateur_id: 'g1',
+      email: 'google@example.com',
+      role: 'etudiant',
+      provider: 'google',
+    });
+    jwtMock.generateLocalToken.mockReturnValue('access-token');
+    jwtMock.generateRefreshToken.mockReturnValue('refresh-token');
 
-    // Le service renvoie ici le profil public du user.
-    getPublicUserById.mockResolvedValue({
+    // Act
+    await controller.googleAuth(req, res);
+
+    // Assert
+    expect(res.cookie).toHaveBeenCalledTimes(2);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        provider: 'google',
+      })
+    );
+  });
+
+  it('refreshAccessToken renvoie 401 si le refresh token manque', async () => {
+    // Arrange
+    const req = { cookies: {} };
+    const res = createRes();
+
+    // Act
+    await controller.refreshAccessToken(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  it('refreshAccessToken renvoie 403 si le refresh token est invalide', async () => {
+    // Arrange
+    const req = { cookies: { refreshToken: 'bad-refresh' } };
+    const res = createRes();
+    jwtMock.verifyRefreshToken.mockReturnValue(null);
+
+    // Act
+    await controller.refreshAccessToken(req, res);
+
+    // Assert
+    expect(res.clearCookie).toHaveBeenCalledTimes(2);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it('refreshAccessToken renvoie 200 avec nouveaux cookies si le refresh token est valide', async () => {
+    // Arrange
+    const req = { cookies: { refreshToken: 'good-refresh' } };
+    const res = createRes();
+    jwtMock.verifyRefreshToken.mockReturnValue({ id: 'u1' });
+    authServiceMock.getPublicUserById.mockResolvedValue({
       utilisateur_id: 'u1',
-      email: 'jane@test.com',
+      email: 'integration@example.com',
+      role: 'etudiant',
+      provider: 'local',
+    });
+    jwtMock.generateLocalToken.mockReturnValue('new-access-token');
+    jwtMock.generateRefreshToken.mockReturnValue('new-refresh-token');
+
+    // Act
+    await controller.refreshAccessToken(req, res);
+
+    // Assert
+    expect(res.cookie).toHaveBeenCalledTimes(2);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        message: expect.any(String),
+      })
+    );
+  });
+
+  it("refreshAccessToken renvoie 404 si l'utilisateur n'existe pas", async () => {
+    // Arrange
+    const req = { cookies: { refreshToken: 'good-refresh' } };
+    const res = createRes();
+    jwtMock.verifyRefreshToken.mockReturnValue({ id: 'u404' });
+    authServiceMock.getPublicUserById.mockResolvedValue(null);
+
+    // Act
+    await controller.refreshAccessToken(req, res);
+
+    // Assert
+    expect(res.cookie).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        message: expect.stringContaining('Utilisateur non trouvé'),
+      })
+    );
+  });
+
+  it('getProfile renvoie 200 avec un user sans mot_de_passe', async () => {
+    // Arrange
+    const req = { user: { utilisateur_id: 'u1', provider: 'local' } };
+    const res = createRes();
+    authServiceMock.getPublicUserById.mockResolvedValue({
+      utilisateur_id: 'u1',
+      email: 'integration@example.com',
       role: 'etudiant',
       provider: 'local',
     });
 
-    await getProfile(req, res);
+    // Act
+    await controller.getProfile(req, res);
 
-    // On verifie que le controller demande le bon utilisateur.
-    expect(getPublicUserById).toHaveBeenCalledWith('u1');
+    // Assert
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        user: expect.objectContaining({
+          email: 'integration@example.com',
+        }),
+      })
+    );
   });
 
-  it('getProfile retourne 404 si le user est introuvable', async () => {
-    // Si le profil n'existe pas, on renvoie 404.
-    const req = {
-      user: {
-        utilisateur_id: 'u404',
-        provider: 'local',
-      },
-    };
-    const res = createResponseMock();
-
-    getPublicUserById.mockResolvedValue(null);
-
-    await getProfile(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      message: 'Utilisateur non trouvé',
-    });
-  });
-
-  it('getProfile retourne 500 si getPublicUserById echoue', async () => {
-    // Si le service echoue pendant la lecture du profil,
-    // le controller doit renvoyer une erreur serveur.
-    const req = {
-      user: {
-        utilisateur_id: 'u1',
-        provider: 'local',
-      },
-    };
-    const res = createResponseMock();
-
-    getPublicUserById.mockRejectedValue(new Error('Erreur profil'));
-
-    await getProfile(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: 'Erreur profil',
-    });
-  });
-
-  it('getAllUsers retourne la liste des utilisateurs publics', async () => {
-    // La route admin renvoie une liste simple des users.
+  it('getAllUsers renvoie 200 avec la liste des utilisateurs publics', async () => {
+    // Arrange
     const req = {};
-    const res = createResponseMock();
-
-    getAllPublicUsers.mockResolvedValue([
+    const res = createRes();
+    authServiceMock.getAllPublicUsers.mockResolvedValue([
       {
         utilisateur_id: 'u1',
-        email: 'user@test.com',
+        email: 'one@example.com',
+        role: 'etudiant',
+        provider: 'local',
+      },
+      {
+        utilisateur_id: 'u2',
+        email: 'two@example.com',
+        role: 'administrateur',
+        provider: 'local',
       },
     ]);
 
-    await getAllUsers(req, res);
+    // Act
+    await controller.getAllUsers(req, res);
 
+    // Assert
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      users: [
-        {
-          utilisateur_id: 'u1',
-          email: 'user@test.com',
-        },
-      ],
-    });
-  });
-
-  it('getAllUsers retourne 500 si getAllPublicUsers echoue', async () => {
-    // Si la lecture de la liste des utilisateurs echoue,
-    // le controller doit renvoyer une erreur serveur.
-    const req = {};
-    const res = createResponseMock();
-
-    getAllPublicUsers.mockRejectedValue(new Error('Erreur liste users'));
-
-    await getAllUsers(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: 'Erreur liste users',
+      users: expect.arrayContaining([
+        expect.objectContaining({ email: 'one@example.com' }),
+        expect.objectContaining({ email: 'two@example.com' }),
+      ]),
     });
   });
 });

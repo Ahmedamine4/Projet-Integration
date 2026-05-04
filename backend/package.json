@@ -11,7 +11,10 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "cross-env NODE_ENV=test vitest",
+    "test:ui": "vitest --ui",
+    "prisma:generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

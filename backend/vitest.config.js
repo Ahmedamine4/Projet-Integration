@@ -1,6 +1,12 @@
-export default {
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
   test: {
-    include: ["test/**/*.test.js"],
-    pool: "vmThreads",
+    environment: 'node',
+    include: ['tests/**/*.test.js'],
+    setupFiles: ['./test/setup/test-env.setup.js'],
+    fileParallelism: false,
+    hookTimeout: 30000,
+    testTimeout: 30000,
   },
-};
+});
