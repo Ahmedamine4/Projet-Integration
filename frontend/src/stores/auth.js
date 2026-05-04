@@ -89,6 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     isAuthenticated,
+    fetchProfile,
     login,
     register,
     startGoogleAuth,
