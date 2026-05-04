@@ -1,5 +1,5 @@
 <script setup>
-import { CircleCheck, CircleDashed } from 'lucide-vue-next';
+import { CircleCheck, CircleDashed, ClockFading } from 'lucide-vue-next';
 
 const props = defineProps({
   title: {
@@ -10,24 +10,39 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  done: {
-    type: Boolean,
-    default: false,
+  status: {
+    type: String,
+    default: 'todo',
+    validator: (value) => ['todo', 'pending', 'done'].includes(value),
   },
 });
 
 const emit = defineEmits(['action']);
 
 function handleToggle() {
-  if (!props.done) emit('action');
+  if (props.status === 'todo') emit('action');
 }
 </script>
 
 <template>
-  <div class="step" :class="{ done }" @click="handleToggle">
+  <div
+    class="step"
+    :class="status"
+    @click="handleToggle"
+  >
     <div class="left">
-      <CircleCheck v-if="done" class="step-icon" />
-      <CircleDashed v-else class="step-icon loading" />
+      <CircleCheck
+        v-if="status === 'done'"
+        class="step-icon"
+      />
+      <ClockFading
+        v-else-if="status === 'pending'"
+        class="step-icon"
+      />
+      <CircleDashed
+        v-else
+        class="step-icon"
+      />
       <div class="description">
         <h3>{{ title }}</h3>
         <p>{{ description }}</p>
@@ -78,24 +93,31 @@ p {
   width: 1.8rem;
   height: 1.8rem;
   color: var(--color-background);
+}
+
+.done .step-icon {
   fill: var(--color-success);
 }
 
-.step-icon.loading {
+.todo .step-icon {
   scale: 0.8;
   color: rgba(var(--color-primary-rgb), 0.3);
-  fill: var(--color-primary);
+}
+
+.pending .step-icon {
+  scale: 0.8;
+  color: #d9b20b;
 }
 
 .step-field {
   flex: 1;
 }
 
-.step.done {
+.step:is(.done, .pending) {
   cursor: default;
 }
 
-.step:hover:not(.done) {
+.step:hover:not(.done, .pending) {
   background-color: rgba(var(--color-surface-rgb), 0.3);
 }
 </style>

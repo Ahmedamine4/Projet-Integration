@@ -23,23 +23,19 @@ const steps = [
   },
 ];
 
-const stepData = reactive({
-  school: { done: false },
-  github: { done: false },
-  linkedin: { done: false },
+const stepStatus = reactive({
+  school: 'todo',
+  github: 'todo',
+  linkedin: 'todo',
 });
 
 const doneCount = computed(() =>
   steps.reduce((acc, step) => {
-    return stepData[step.key].done ? acc + 1 : acc;
+    return stepStatus[step.key] !== 'todo' ? acc + 1 : acc;
   }, 0),
 );
 
 const isSchoolModalOpen = ref(false);
-
-function isDone(key) {
-  return stepData[key].done;
-}
 
 function handleStepAction(key) {
   const step = steps.find((step) => step.key === key);
@@ -51,12 +47,12 @@ function handleStepAction(key) {
     return;
   }
 
-  stepData[key].done = true;
+  stepStatus[key] = 'done';
 }
 
-function completeSchoolStep(parcours) {
-  console.log(parcours);
-  stepData.school.done = true;
+function completeSchoolStep(schoolData) {
+  console.log(schoolData);
+  stepStatus.school = 'pending';
   isSchoolModalOpen.value = false;
 }
 </script>
@@ -81,7 +77,7 @@ function completeSchoolStep(parcours) {
           :key="step.key"
           :title="step.title"
           :description="step.description"
-          :done="isDone(step.key)"
+          :status="stepStatus[step.key]"
           @action="handleStepAction(step.key)"
         />
       </div>
