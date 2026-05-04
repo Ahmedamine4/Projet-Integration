@@ -4,16 +4,18 @@ import authRoutes from './routes/auth.routes.js';
 import LinkInstitutionsToEtudiantRoutes from './routes/link_institutions_etudiant.routes.js';
 import getInstitutionRoutes from './routes/institution.routes.js';
 import ValidationEtudiantRoutes from './routes/validation_etudiant.routes.js';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173', // ton front
+  origin: true, // Autorise les requêtes
   credentials: true
 }));
-app.use(cors());
+// app.use(cors());
 
 // Middlewares
 app.use(express.json()); 
+app.use(cookieParser());
 
 // Branchement des routes d'authentification
 app.use('/api/auth', authRoutes);
