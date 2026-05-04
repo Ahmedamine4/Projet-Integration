@@ -1,9 +1,19 @@
 <script setup>
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, onMounted } from 'vue';
+import api from '@/services/api';
 import GettingStartedStep from '@/components/getting-started/GettingStartedStep.vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
-import { schools } from '@/data/schools';
+import { schools as institutions } from '@/data/schools';
+
+const schools = ref([]);
+
+onMounted(async () => {
+  const response = await api.get('/getInstitutions');
+  schools.value = response.data?.length > 0
+    ? response.data.map((school) => school.nom)
+    : institutions;
+});
 
 const steps = [
   {
