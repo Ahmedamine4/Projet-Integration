@@ -1,4 +1,5 @@
 import axios from "axios";
+import router from "../router";
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -26,7 +27,7 @@ api.interceptors.response.use(
                 //relance la requête originale échouée
                 return api(originalRequest);
             } catch (refreshError) {
-                window.location.href = '/login';
+                router.push('/login');
                 return Promise.reject(refreshError);
             }
         }
