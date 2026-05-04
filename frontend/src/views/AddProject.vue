@@ -9,6 +9,7 @@ import Dropdown from '@/components/common/Dropdown.vue';
 import Labels from '@/components/common/Labels.vue';
 import ToggleSwitch from '@/components/common/ToggleSwitch.vue';
 import ImageDropzone from '@/components/common/ImageDropzone.vue';
+import { analyzeProjectDescription } from '@/services/aiApi';
 
 const emit = defineEmits(['close', 'submit']);
 const domainColorRgb = '245, 158, 11';
@@ -41,13 +42,8 @@ const createSelectableItems = (items = []) =>
     selected: true
   }));
 
-const technologies = ref(
-  createSelectableItems(['Vue.js', 'Express.js', 'PostgreSQL', 'Docker'])
-);
-
-const domains = ref(
-  createSelectableItems(['Web Development', 'DevOps', 'Cybersecurity', 'Data Science'])
-);
+const technologies = ref([]);
+const domains = ref([]);
 
 let descriptionTypingTimer = null;
 
@@ -63,19 +59,27 @@ const resetDetectedTags = () => {
   domains.value = [];
 };
 
-const analyzeDescription = () => {
-  technologies.value = createSelectableItems([
-    'Vue.js',
-    'Express.js',
-    'PostgreSQL',
-    'Docker'
-  ]);
+const isAnalyzingDescription = ref(false);
+const analysisError = ref('');
 
-  domains.value = createSelectableItems([
-    'Web Development',
-    'DevOps'
-  ]);
+const analyzeDescription = async () => {
+  if (!form.description.trim()) return;
+
+  isAnalyzingDescription.value = true;
+  analysisError.value = '';
+
+  try {
+    const data = await analyzeProjectDescription(form.description);
+
+    technologies.value = createSelectableItems(data.technologies || []);
+    domains.value = createSelectableItems(data.domains || []);
+  } catch (error) {
+    analysisError.value = error.message;
+  } finally {
+    isAnalyzingDescription.value = false;
+  }
 };
+
 
 watch(
   () => form.description,
@@ -105,8 +109,8 @@ const submitProject = () => {
     domains: getSelectedNames(domains.value),
     githubLink: form.githubLink,
     projectType: form.isCertified ? 'certified' : 'personal',
-    institution: form.isCertified ? form.value.institution : '',
-    teacherEmail: form.isCertified ? form.value.teacherEmail : '',
+    institution: form.isCertified ? form.institution : '',
+    teacherEmail: form.isCertified ? form.teacherEmail : '',
     visibleToEveryone: form.visibleToEveryone
   });
 };
