@@ -1,0 +1,15 @@
+---
+
+- name: Configure VM2 — basic tools
+  hosts: all
+  become: true
+  roles:
+    - role: vm2_basic
+      when: vm_role == "vm2"
+
+- name: Configure VM3 — PostgreSQL + firewall
+  hosts: all
+  become: true
+  roles:
+    - role: vm3_db_secure
+      when: vm_role == "vm3"
