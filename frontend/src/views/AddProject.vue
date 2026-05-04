@@ -71,15 +71,16 @@ const analyzeDescription = async () => {
   try {
     const data = await analyzeProjectDescription(form.description);
 
-    technologies.value = createSelectableItems(data.technologies || []);
-    domains.value = createSelectableItems(data.domains || []);
+    console.log('Mapped AI data:', data);
+
+    technologies.value = createSelectableItems(data.technologies);
+    domains.value = createSelectableItems(data.domains);
   } catch (error) {
     analysisError.value = error.message;
   } finally {
     isAnalyzingDescription.value = false;
   }
 };
-
 
 watch(
   () => form.description,

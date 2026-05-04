@@ -1,22 +1,14 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import api from '@/services/api';
 
 export const analyzeProjectDescription = async (description) => {
-  const response = await fetch(`${API_BASE_URL}/analyze-project`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ description })
+  const { data } = await api.post('/ai/predict', {
+    text: description
   });
 
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Could not analyze the project description');
-  }
+  console.log('AI raw response:', data);
 
   return {
-    technologies: data.technologies || [],
-    domains: data.domains || []
+    technologies: data.message?.technologies || [],
+    domains: data.message?.domains || []
   };
 };
