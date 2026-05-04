@@ -1,113 +1,113 @@
 <script setup>
-import { ref, watch } from 'vue';
-import{ X } from 'lucide-vue-next';
+import { ref,reactive, watch, onUnmounted } from 'vue';
+import { X } from 'lucide-vue-next';
 
 import Button from '@/components/Button.vue';
 import Card from '@/components/Card.vue';
 import Input from '@/components/Input.vue';
+import Dropdown from '@/components/common/Dropdown.vue';
+import Labels from '@/components/common/Labels.vue';
+import ToggleSwitch from '@/components/common/ToggleSwitch.vue';
+import ImageDropzone from '@/components/common/ImageDropzone.vue';
 
 const emit = defineEmits(['close', 'submit']);
+const domainColorRgb = '245, 158, 11';
 
-const projectTitle = ref('');
-const description = ref('');
-const projectImage = ref(null);
-const projectImageName = ref('No file selected');
-/*const technologies = ref([]);*/
-const makeSelectableItems = (items = []) => {
-  return items.map((item) => ({
-    name: item,
+const schoolOptions = [
+  'ENSA Tanger',
+  'ENSA Tétouan',
+  'ENSA Al Hoceima',
+  'FST Tanger',
+  'FS Tanger',
+  'ENCG Tanger',
+  'Other'
+];
+
+const form = reactive({
+  title: '',
+  date: '',
+  description: '',
+  image: null,
+  githubLink: '',
+  isCertified: false,
+  institution: '',
+  teacherEmail: '',
+  visibleToEveryone: true
+});
+
+const createSelectableItems = (items = []) =>
+  items.map((name) => ({
+    name,
     selected: true
   }));
-};
 
 const technologies = ref(
-  makeSelectableItems(['Vue.js', 'Express.js', 'PostgreSQL', 'Docker'])
+  createSelectableItems(['Vue.js', 'Express.js', 'PostgreSQL', 'Docker'])
 );
 
 const domains = ref(
-  makeSelectableItems(['Web Development', 'DevOps', 'Cybersecurity', 'Data Science'])
+  createSelectableItems(['Web Development', 'DevOps', 'Cybersecurity', 'Data Science'])
 );
-
-const isCertifiedProject = ref(false);
-const teacherEmail = ref('');
-const visibleToEveryone = ref(true);
-const githubLink = ref('');
-
-const toggleTechnology = (index) => {
-  technologies.value[index].selected = !technologies.value[index].selected;
-};
-
-const toggleDomain = (index) => {
-  domains.value[index].selected = !domains.value[index].selected;
-};
-const isAnalyzingDescription = ref(false);
-const analysisError = ref('');
 
 let descriptionTypingTimer = null;
 
-const handleFileChange = (event) => {
-  const file = event.target.files[0];
+const toggleLabel = (item) => {
+  item.selected = !item.selected;
+};
 
-   if (!file) {
-    projectImage.value = null;
-    projectImageName.value = 'No file selected';
-    return;
+const getSelectedNames = (items) =>
+  items.filter((item) => item.selected).map((item) => item.name);
+
+const resetDetectedTags = () => {
+  technologies.value = [];
+  domains.value = [];
+};
+
+const analyzeDescription = () => {
+  technologies.value = createSelectableItems([
+    'Vue.js',
+    'Express.js',
+    'PostgreSQL',
+    'Docker'
+  ]);
+
+  domains.value = createSelectableItems([
+    'Web Development',
+    'DevOps'
+  ]);
+};
+
+watch(
+  () => form.description,
+  (description) => {
+    clearTimeout(descriptionTypingTimer);
+
+    if (!description.trim()) {
+      resetDetectedTags();
+      return;
+    }
+
+    descriptionTypingTimer = setTimeout(analyzeDescription, 1000);
   }
+);
 
-  projectImage.value = file;
-  projectImageName.value = file.name;
-  
-};
-
-const handleDrop = (event) => {
-  const file = event.dataTransfer.files[0];
-
-  if (!file) return;
-
-  projectImage.value = file;
-  projectImageName.value = file.name;
-};
-
-watch(description, () => {
+onUnmounted(() => {
   clearTimeout(descriptionTypingTimer);
-
-  if (!description.value.trim()) {
-    technologies.value = [];
-    domains.value = [];
-    analysisError.value = '';
-    return;
-  }
-
-  descriptionTypingTimer = setTimeout(() => {
-    analyzeDescription();
-  }, 1000);
 });
 
-const analyzeDescription = async () => {
-  technologies.value = makeSelectableItems(['Vue.js', 'Express.js', 'PostgreSQL', 'Docker']);
-  domains.value = makeSelectableItems(['Web Development', 'DevOps']);
-};
- 
-
 const submitProject = () => {
-  const selectedTechnologies = technologies.value
-    .filter((technology) => technology.selected)
-    .map((technology) => technology.name);
-
-  const selectedDomains = domains.value
-    .filter((domain) => domain.selected)
-    .map((domain) => domain.name);
-
   emit('submit', {
-    projectTitle: projectTitle.value,
-    projectImage: projectImage.value,
-    description: description.value,
-    technologies: selectedTechnologies,
-    domains: selectedDomains,
-    githubLink: githubLink.value,
-    projectType: isCertifiedProject.value ? 'certified' : 'personal',
-    teacherEmail: isCertifiedProject.value ? teacherEmail.value : '',
-    visibleToEveryone: visibleToEveryone.value
+    projectTitle: form.title,
+    projectDate: form.date,
+    projectImage: form.image,
+    description: form.description,
+    technologies: getSelectedNames(technologies.value),
+    domains: getSelectedNames(domains.value),
+    githubLink: form.githubLink,
+    projectType: form.isCertified ? 'certified' : 'personal',
+    institution: form.isCertified ? form.value.institution : '',
+    teacherEmail: form.isCertified ? form.value.teacherEmail : '',
+    visibleToEveryone: form.visibleToEveryone
   });
 };
 </script>
@@ -123,39 +123,24 @@ const submitProject = () => {
         
         <form class="project-form" @submit.prevent="submitProject">
           <Input
-            v-model="projectTitle"
+            v-model="form.title"
             label="Project title"
             placeholder="Enter your project title"
           />
+        <Input
+  v-model="form.date"
+  label="Project date"
+  type="date"
+/>
 
-          <label
-  class="drop-zone"
-  for="projectImage"
-  @dragover.prevent
-  @drop.prevent="handleDrop"
->
-  <p>Drag and drop your project screenshot here</p>
-  <span>or click to upload</span>
-
-  <input
-    id="projectImage"
-    type="file"
-    accept="image/*"
-    class="hidden-input"
-    @change="handleFileChange"
-  />
-
-  <p class="file-name">
-    {{ projectImageName }}
-  </p>
-</label>
+          <ImageDropzone v-model="form.image" />
 
           <div class="form-group">
             <label for="description">Description</label>
 
             <textarea
               id="description"
-              v-model="description"
+              v-model="form.description"
               placeholder="Describe your project, its goal, features, and tools used..."
             ></textarea>
           </div>
@@ -165,82 +150,54 @@ const submitProject = () => {
           </p>
 
           <div class="labels-section">
-  <div v-if="domains.length" class="label-group">
-    <p class="label-title">Detected domains</p>
+  <Labels
+    title="Detected domains"
+    :items="domains"
+    :color-rgb="domainColorRgb"
+    @toggle="toggleLabel"
+  />
 
-    <div class="technology-tags">
-      <span
-        v-for="(domain, index) in domains"
-        :key="`domain-${domain.name}-${index}`"
-        class="technology-tag domain-tag"
-        :class="{ inactive: !domain.selected }"
-      >
-        {{ domain.name }}
-
-        <button type="button" @click="toggleDomain(index)">
-          {{ domain.selected ? 'x' : '+' }}
-        </button>
-      </span>
-    </div>
-  </div>
-
-  <div v-if="technologies.length" class="label-group">
-    <p class="label-title">Detected technologies</p>
-
-    <div class="technology-tags">
-      <span
-        v-for="(technology, index) in technologies"
-        :key="`technology-${technology.name}-${index}`"
-        class="technology-tag"
-        :class="{ inactive: !technology.selected }"
-      >
-        {{ technology.name }}
-
-        <button type="button" @click="toggleTechnology(index)">
-          {{ technology.selected ? 'x' : '+' }}
-        </button>
-      </span>
-    </div>
-  </div>
+  <Labels
+    title="Detected technologies"
+    :items="technologies"
+    @toggle="toggleLabel"
+  />
 </div>
           <Input
-             v-model="githubLink"
+             v-model="form.githubLink"
              label="GitHub link"
              type="url"
              placeholder="https://github.com/username/project-name"
              />
 
-          <div class="visibility-row">
-          <span>Certified project</span>
+          <ToggleSwitch
+  v-model="form.isCertified"
+  label="Certified project"
+/>
 
-            <label class="visibility-toggle">
-             <input
-             v-model="isCertifiedProject"
-             type="checkbox"
-              />
-             <span></span>
-           </label>
-           </div>
+<div v-if="form.isCertified" class="form-group">
+  <label>Institution</label>
 
-          <Input
-           v-if="isCertifiedProject"
-           v-model="teacherEmail"
-           label="Teacher email"
-           type="email"
-           placeholder="teacher@school.com"
-           />
+  <Dropdown
+    v-model="form.institution"
+    :options="schoolOptions"
+    placeholder="Select the institution"
+    :visible-options="4"
+  />
+</div>
 
-          <div class="visibility-row">
-            <span>Visible to everyone</span>
+<Input
+  v-if="form.isCertified"
+  v-model="form.teacherEmail"
+  label="Teacher email"
+  type="email"
+  placeholder="teacher@school.com"
+/>
 
-            <label class="visibility-toggle">
-              <input
-                v-model="visibleToEveryone"
-                type="checkbox"
-              />
-              <span></span>
-            </label>
-          </div>
+          <ToggleSwitch
+  v-model="form.visibleToEveryone"
+  label="Visible to everyone"
+/>
 
           <div class="form-actions">
             <Button type="button" class="cancel-button" @click="$emit('close')">
@@ -311,42 +268,18 @@ const submitProject = () => {
   gap: 22px;
 }
  
-.form-subtitle {
-  margin: 0 0 var(--space-lg);
-  font-size: var(--font-size-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-primary-hover);
-}
-
-.drop-zone {
-  border: 1.5px dashed rgba(var(--color-primary-rgb), 0.35);
-  border-radius: var(--radius-md);
-  padding: var(--space-xl);
-  text-align: center;
-  background: var(--color-surface);
-}
-
-.drop-zone p {
-  margin: 0;
+.file-name {
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-medium);
 }
 
-.drop-zone span {
-  display: block;
-  margin-top: var(--space-sm);
-  color: var(--color-primary-hover);
-  font-size: var(--font-size-sm);
+.file-name--empty {
+  color: var(--color-error);
 }
 
-.drop-zone input {
-  margin-top: var(--space-md);
-}
-
-.file-name {
-  margin-top: var(--space-sm);
+.file-name--selected {
   color: var(--color-success);
-  font-size: var(--font-size-sm);
 }
 
 .form-group {
@@ -394,132 +327,6 @@ textarea:focus {
   display: grid;
   gap: 12px;
 }
-
-.label-group {
-  display: grid;
-  gap: 8px;
-}
-
-.label-title {
-  margin: 0;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-medium);
-  color: var(--color-primary-hover);
-}
-
-.technology-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.technology-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.35);
-  background: rgba(var(--color-secondary-rgb), 0.1);
-  color: var(--color-primary);
-  border-radius: 999px;
-  padding: 5px 9px;
-  font-size: 0.75rem;
-  font-weight: var(--font-medium);
-}
-
-.domain-tag {
-   border-color: rgba(245, 158, 11, 0.45);
-  background: rgba(245, 158, 11, 0.14);
-  color: var(--color-primary);
-}
-
-.technology-tag.inactive {
-  background: #eeeeee;
-  border-color: #dddddd;
-  color: #777777;
-}
-
-.technology-tag button {
-  border: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font-weight: var(--font-bold);
-  font-size: 0.8rem;
-  padding: 0;
-}
-
-.project-type-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-sm);
-}
-
-.option-card {
-  border: 1px solid var(--color-surface);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  cursor: pointer;
-  font-weight: var(--font-medium);
-}
-
-.option-card:hover {
-  border-color: var(--color-secondary);
-  background: rgba(var(--color-secondary-rgb), 0.08);
-}
-
-input[type="radio"] {
-  accent-color: var(--color-secondary);
-}
-
-.visibility-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: var(--font-medium);
-  margin-top: 4px;
-  margin-bottom: 4px;
-}
-
-
-
-.visibility-toggle input {
-  display: none;
-}
-
-.visibility-toggle span {
-  display: block;
-  width: 46px;
-  height: 24px;
-  border-radius: 999px;
-  background: var(--color-surface);
-  position: relative;
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.visibility-toggle span::before {
-  content: "";
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  top: 3px;
-  left: 3px;
-  border-radius: 50%;
-  background: var(--color-background);
-  transition: var(--transition-fast);
-}
-
-.visibility-toggle input:checked + span {
-  background: var(--color-secondary);
-}
-
-.visibility-toggle input:checked + span::before {
-  transform: translateX(22px);
-}
-
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -535,8 +342,14 @@ input[type="radio"] {
   box-shadow: none !important;
   border: none !important;
 }
+
 @media (max-width: 600px) {
   .modal-overlay {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    overflow: hidden;
+
     align-items: flex-end;
     padding: 0;
   }
@@ -544,35 +357,72 @@ input[type="radio"] {
   .modal-card {
     width: 100%;
     max-width: 100%;
-    max-height: 92vh;
+    height: 92dvh;
+    max-height: 92dvh;
+
     border-radius: 24px 24px 0 0;
     padding: 18px;
+
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.add-project-card) {
+    height: 100%;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+    :deep(.add-project-card > h2) {
+    text-align: left !important;
+    margin: 0 48px 18px 0 !important;
+    padding-left: 0 !important;
+
+    min-height: 34px;
+    line-height: 34px;
   }
 
   .project-form {
-    gap: var(--space-sm);
+    flex: 1;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-right: 4px;
+    gap: 20px;
   }
 
-  .drop-zone {
-    padding: var(--space-md);
+  .helper-text {
+    font-size: 0.68rem;
+    line-height: 1.3;
+    margin-top: -4px;
   }
-
   textarea {
-    min-height: 80px;
+    min-height: 90px;
   }
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 
-  .form-actions {
-    flex-direction: column-reverse;
+  flex-shrink: 0;
+  margin-top: 12px;
+}
+.form-actions button {
+  width: 100%;
+}
+ .close-button {
+    top: 18px;
+    right: 18px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-
-  .form-actions button {
-    width: 100%;
-  }
-
-  .close-button {
-    top: 12px;
-    right: 12px;
-  }
-  
 }
 </style>
