@@ -1,6 +1,10 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, useAttrs } from 'vue';
 import Input from '@/components/common/Input.vue';
+
+defineOptions({
+  inheritAttrs: false,
+});
 
 const model = defineModel({
   type: String,
@@ -65,26 +69,28 @@ onBeforeUnmount(() => {
   <div ref="dropdownElement" class="dropdown">
     <Input
       v-model="model"
+      v-bind="$attrs"
       :label
       :placeholder
       @focus="isOpen = options.length > 0"
     />
-
-    <div
-      class="dropdown__list"
-      v-if="shouldShowOptions"
-      :style="{ '--visible-options': visibleOptions }"
-    >
-      <button
-        class="dropdown__option"
-        v-for="option in filteredOptions"
-        :key="option"
-        type="button"
-        @click="selectOption(option)"
+    <Transition name="popover">
+      <div
+        class="dropdown__list"
+        v-if="shouldShowOptions"
+        :style="{ '--visible-options': visibleOptions }"
       >
-        {{ option }}
-      </button>
-    </div>
+        <button
+          class="dropdown__option"
+          v-for="option in filteredOptions"
+          :key="option"
+          type="button"
+          @click="selectOption(option)"
+        >
+          {{ option }}
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -128,5 +134,18 @@ onBeforeUnmount(() => {
 
 .dropdown__option:hover {
   background: rgba(var(--color-surface-rgb), 0.55);
+}
+
+.popover-enter-active,
+.popover-leave-active {
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.popover-enter-from,
+.popover-leave-to {
+  opacity: 0;
+  transform: translateY(-0.25rem);
 }
 </style>

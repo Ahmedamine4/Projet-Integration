@@ -1,16 +1,29 @@
 <script setup>
-import { ref,reactive, watch, onUnmounted } from 'vue';
+import { ref, reactive, watch, onUnmounted } from 'vue';
 import { analyzeProjectDescription } from '@/services/aiApi';
 import Button from '@/components/common/Button.vue';
 import Card from '@/components/common/Card.vue';
 import Input from '@/components/common/Input.vue';
+import DatePicker from '@/components/common/DatePicker.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import Labels from '@/components/common/Labels.vue';
 import ToggleSwitch from '@/components/common/ToggleSwitch.vue';
 import ImageDropzone from '@/components/common/ImageDropzone.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
+import Select from '@/components/common/Select.vue';
+import Error from '@/components/common/Error.vue';
 
 const emit = defineEmits(['close', 'submit']);
+
+const errors = reactive({
+  title: '',
+  date: '',
+  description: '',
+  githubLink: '',
+  institution: '',
+  teacherEmail: '',
+});
+
 const domainColorRgb = '245, 158, 11';
 
 const schoolOptions = [
@@ -69,6 +82,35 @@ const resetDetectedTags = () => {
   domains.value = [];
 };
 
+const resetErrors = () => {
+  errors.title = '';
+  errors.date = '';
+  errors.description = '';
+  errors.githubLink = '';
+  errors.institution = '';
+  errors.teacherEmail = '';
+};
+
+const hasErrors = () => {
+  return (
+    errors.title ||
+    errors.date ||
+    errors.description ||
+    errors.githubLink ||
+    errors.institution ||
+    errors.teacherEmail
+  );
+};
+
+const isValidGithubLink = (link) => {
+  try {
+    const url = new URL(link);
+    return url.protocol === 'https:' && url.hostname === 'github.com';
+  } catch {
+    return false;
+  }
+};
+
 const isAnalyzingDescription = ref(false);
 const analysisError = ref('');
 
@@ -111,17 +153,48 @@ onUnmounted(() => {
 });
 
 const submitProject = () => {
+  resetErrors();
+
+  const trimmedTitle = form.title.trim();
+  const trimmedDescription = form.description.trim();
+  const trimmedGithubLink = form.githubLink.trim();
+  const trimmedTeacherEmail = form.teacherEmail.trim();
+
+  if (!trimmedTitle) errors.title = 'Project title is required';
+
+  if (!form.date) errors.date = 'Project date is required';
+
+  if (trimmedDescription.length < 20)
+    errors.description = 'Description must be at least 20 characters';
+
+  if (!trimmedGithubLink) errors.githubLink = 'GitHub link is required';
+  else if (!isValidGithubLink(trimmedGithubLink))
+    errors.githubLink = 'Enter a valid GitHub project URL';
+
+  if (form.isCertified && !form.institution)
+    errors.institution = 'Institution is required for certified projects';
+
+  if (form.isCertified && !trimmedTeacherEmail)
+    errors.teacherEmail = 'Teacher email is required for certified projects';
+  else if (
+    form.isCertified &&
+    !professorEmails.includes(trimmedTeacherEmail)
+  )
+    errors.teacherEmail = 'Select a valid teacher email';
+
+  if (hasErrors()) return;
+
   emit('submit', {
-    projectTitle: form.title,
+    projectTitle: trimmedTitle,
     projectDate: form.date,
     projectImage: form.image,
-    description: form.description,
+    description: trimmedDescription,
     technologies: getSelectedNames(technologies.value),
     domains: getSelectedNames(domains.value),
-    githubLink: form.githubLink,
+    githubLink: trimmedGithubLink,
     projectType: form.isCertified ? 'certified' : 'personal',
     institution: form.isCertified ? form.institution : '',
-    teacherEmail: form.isCertified ? form.teacherEmail : '',
+    teacherEmail: form.isCertified ? trimmedTeacherEmail : '',
     visibleToEveryone: form.visibleToEveryone
   });
 };
@@ -129,38 +202,54 @@ const submitProject = () => {
 
 <template>
   <div class="modal-overlay">
-    <div class="modal-card">
+    <Card
+      class="add-project-card"
+      title="Create a new project"
+      size="xxl"
+      variant="modal"
+    >
       <div class="close-button">
         <CloseButton size="lg" @click="emit('close')" />
       </div>
 
-      <Card
-        class="add-project-card"
-        title="Create a new project"
-        size="xxl"
-      >
-        <form class="project-form" @submit.prevent="submitProject">
-          <Input
-            v-model="form.title"
-            label="Project title"
-            placeholder="Enter your project title"
-          />
-          <Input
-            v-model="form.date"
-            label="Project date"
-            type="date"
-          />
+      <form class="project-form" @submit.prevent="submitProject">
+          <div class="field">
+            <Input
+              v-model="form.title"
+              label="Project title"
+              placeholder="Enter your project title"
+            />
+            <Error v-if="errors.title" variant="field">
+              {{ errors.title }}
+            </Error>
+          </div>
+
+          <div class="field">
+            <DatePicker
+              v-model="form.date"
+              label="Project date"
+              placeholder="Select project date"
+            />
+            <Error v-if="errors.date" variant="field">
+              {{ errors.date }}
+            </Error>
+          </div>
 
           <ImageDropzone v-model="form.image" />
 
-          <div class="form-group">
-            <label for="description">Description</label>
+          <div class="field">
+            <div class="form-group">
+              <label for="description">Description</label>
 
-            <textarea
-              id="description"
-              v-model="form.description"
-              placeholder="Describe your project, its goal, features, and tools used..."
-            />
+              <textarea
+                id="description"
+                v-model="form.description"
+                placeholder="Describe your project, its goal, features, and tools used..."
+              />
+            </div>
+            <Error v-if="errors.description" variant="field">
+              {{ errors.description }}
+            </Error>
           </div>
 
           <p class="helper-text">
@@ -181,12 +270,17 @@ const submitProject = () => {
               @toggle="toggleLabel"
             />
           </div>
-          <Input
-             v-model="form.githubLink"
-             label="GitHub link"
-             type="url"
-             placeholder="https://github.com/username/project-name"
-             />
+          <div class="field">
+            <Input
+              v-model="form.githubLink"
+              label="GitHub link"
+              type="url"
+              placeholder="https://github.com/username/project-name"
+            />
+            <Error v-if="errors.githubLink" variant="field">
+              {{ errors.githubLink }}
+            </Error>
+          </div>
           <div class="certified-project-section">
             <ToggleSwitch
               v-model="form.isCertified"
@@ -195,19 +289,28 @@ const submitProject = () => {
             <Transition name="field-reveal">
               <div v-if="form.isCertified" class="form-group">
                 <div class="institution-field">
-                  <Dropdown
+                  <Select
                     v-model="form.institution"
                     :options="schoolOptions"
                     label="Institution"
                     placeholder="Select the institution"
                   />
+                  <Error v-if="errors.institution" variant="field">
+                    {{ errors.institution }}
+                  </Error>
                 </div>
-                <Dropdown
-                  v-model="form.teacherEmail"
-                  :options="professorEmails"
-                  label="Teacher email"
-                  placeholder="teacher@school.com"
-                />
+                <div class="field">
+                  <Dropdown
+                    v-model="form.teacherEmail"
+                    :options="professorEmails"
+                    label="Teacher email"
+                    placeholder="teacher@school.com"
+                    autocomplete="nope"
+                  />
+                  <Error v-if="errors.teacherEmail" variant="field">
+                    {{ errors.teacherEmail }}
+                  </Error>
+                </div>
               </div>
             </Transition>
           </div>
@@ -229,9 +332,8 @@ const submitProject = () => {
               Submit project
             </Button>
           </div>
-        </form>
-      </Card>
-    </div>
+      </form>
+    </Card>
   </div>
 </template>
 
@@ -245,24 +347,6 @@ const submitProject = () => {
   padding: var(--space-lg);
 }
 
-:deep(.add-project-card > h2) {
-  font-size: clamp(1.2rem, 1.2vw, 1.2rem) !important;
-  line-height: 1.1;
-  margin-bottom: 30px !important;
-}
-
-.modal-card {
-  position: relative;
-  width: 680px;
-  max-width: calc(100vw - 48px);
-  background: var(--color-background);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-xl);
-  overflow: visible;
-}
-
 .close-button {
   position: absolute;
   top: var(--space-md);
@@ -272,6 +356,11 @@ const submitProject = () => {
 .project-form {
   display: grid;
   gap: 22px;
+}
+
+.field {
+  display: grid;
+  gap: var(--space-xs);
 }
  
 .file-name {
@@ -363,9 +452,9 @@ textarea:focus {
 .field-reveal-leave-active {
   overflow: hidden;
   transition:
-    opacity var(--transition-normal),
-    max-height var(--transition-normal),
-    margin-top var(--transition-normal);
+    opacity var(--transition-fast),
+    max-height var(--transition-fast),
+    margin-top var(--transition-fast);
 }
 
 .field-reveal-enter-to,
@@ -384,33 +473,6 @@ textarea:focus {
 
     align-items: flex-end;
     padding: 0;
-  }
-
-  .modal-card {
-    width: 100%;
-    max-width: 100%;
-    height: 92dvh;
-    max-height: 92dvh;
-    border-radius: 24px 24px 0 0;
-    padding: 18px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  :deep(.add-project-card) {
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  :deep(.add-project-card > h2) {
-    text-align: left !important;
-    margin: 0 48px 18px 0 !important;
-    padding-left: 0 !important;
-    min-height: 34px;
-    line-height: 34px;
   }
 
   .project-form {
