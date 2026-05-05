@@ -3,7 +3,7 @@ import { ref, reactive, computed } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import Button from '@/components/common/Button.vue';
-import { X } from 'lucide-vue-next';
+import CloseButton from '@/components/common/CloseButton.vue';
 
 const academicLevels = [
   {
@@ -208,13 +208,9 @@ function goNext() {
     <div class="modal-overlay" v-if="open">
       <div class="modal">
         <div class="modal__header">
-          <button
-            type="button"
-            class="x-button"
-            @click="close"
-          >
-            <X />
-          </button>
+          <div class="close-button">
+            <CloseButton @click="close" />
+          </div>
           <h3>Build your academic path</h3>
 
           <div class="step-meter__track">
@@ -374,6 +370,12 @@ function goNext() {
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }
 
+.close-button {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+}
+
 .step-meter__track {
   display: flex;
   align-items: center;
@@ -387,34 +389,6 @@ function goNext() {
   flex-shrink: 0;
   font-size: var(--font-size-sm);
   color: rgba(var(--color-primary-rgb), 0.72);
-}
-
-.x-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 1.38rem;
-  aspect-ratio: 1;
-  padding: 0;
-  border: none;
-  background: transparent;
-  border-radius: 999px;
-  position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
-  color: rgba(var(--color-primary-rgb), 0.7);
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.x-button svg {
-  width: 70%;
-  height: 70%;
-}
-
-.x-button:hover {
-  color: var(--color-error);
-  background: rgba(var(--color-error-rgb), 0.06);
 }
 
 .modal__body {
@@ -584,10 +558,6 @@ function goNext() {
   .modal__header {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .x-button {
-    width: 1.82rem;
   }
 
   .step-meter__track {

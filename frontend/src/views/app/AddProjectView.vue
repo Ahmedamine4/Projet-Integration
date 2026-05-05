@@ -1,7 +1,6 @@
 <script setup>
 import { ref,reactive, watch, onUnmounted } from 'vue';
-import { X } from 'lucide-vue-next';
-
+import { analyzeProjectDescription } from '@/services/aiApi';
 import Button from '@/components/common/Button.vue';
 import Card from '@/components/common/Card.vue';
 import Input from '@/components/common/Input.vue';
@@ -9,7 +8,7 @@ import Dropdown from '@/components/common/Dropdown.vue';
 import Labels from '@/components/common/Labels.vue';
 import ToggleSwitch from '@/components/common/ToggleSwitch.vue';
 import ImageDropzone from '@/components/common/ImageDropzone.vue';
-import { analyzeProjectDescription } from '@/services/aiApi';
+import CloseButton from '@/components/common/CloseButton.vue';
 
 const emit = defineEmits(['close', 'submit']);
 const domainColorRgb = '245, 158, 11';
@@ -120,23 +119,26 @@ const submitProject = () => {
 <template>
   <div class="modal-overlay">
     <div class="modal-card">
-      <button type="button" class="close-button" @click="$emit('close')">
-        <X :size="18" :stroke-width="2.5" />
-      </button>
+      <div class="close-button">
+        <CloseButton size="lg" @click="emit('close')" />
+      </div>
 
-      <Card class="add-project-card" title="Create a new project" size="xxl">
-        
+      <Card
+        class="add-project-card"
+        title="Create a new project"
+        size="xxl"
+      >
         <form class="project-form" @submit.prevent="submitProject">
           <Input
             v-model="form.title"
             label="Project title"
             placeholder="Enter your project title"
           />
-        <Input
-  v-model="form.date"
-  label="Project date"
-  type="date"
-/>
+          <Input
+            v-model="form.date"
+            label="Project date"
+            type="date"
+          />
 
           <ImageDropzone v-model="form.image" />
 
@@ -147,7 +149,7 @@ const submitProject = () => {
               id="description"
               v-model="form.description"
               placeholder="Describe your project, its goal, features, and tools used..."
-            ></textarea>
+            />
           </div>
 
           <p class="helper-text">
@@ -155,19 +157,19 @@ const submitProject = () => {
           </p>
 
           <div class="labels-section">
-  <Labels
-    title="Detected domains"
-    :items="domains"
-    :color-rgb="domainColorRgb"
-    @toggle="toggleLabel"
-  />
+            <Labels
+              title="Detected domains"
+              :items="domains"
+              :color-rgb="domainColorRgb"
+              @toggle="toggleLabel"
+            />
 
-  <Labels
-    title="Detected technologies"
-    :items="technologies"
-    @toggle="toggleLabel"
-  />
-</div>
+            <Labels
+              title="Detected technologies"
+              :items="technologies"
+              @toggle="toggleLabel"
+            />
+          </div>
           <Input
              v-model="form.githubLink"
              label="GitHub link"
@@ -176,36 +178,39 @@ const submitProject = () => {
              />
 
           <ToggleSwitch
-  v-model="form.isCertified"
-  label="Certified project"
-/>
-
-<div v-if="form.isCertified" class="form-group">
-  <label>Institution</label>
-
-  <Dropdown
-    v-model="form.institution"
-    :options="schoolOptions"
-    placeholder="Select the institution"
-    :visible-options="4"
-  />
-</div>
-
-<Input
-  v-if="form.isCertified"
-  v-model="form.teacherEmail"
-  label="Teacher email"
-  type="email"
-  placeholder="teacher@school.com"
-/>
-
+            v-model="form.isCertified"
+            label="Certified project"
+          />
+          <Transition name="field-reveal">
+            <div v-if="form.isCertified" class="form-group">
+              <div class="institution-field">
+                <label>Institution</label>
+                <Dropdown
+                  v-model="form.institution"
+                  :options="schoolOptions"
+                  placeholder="Select the institution"
+                  :visible-options="4"
+                />
+              </div>
+              <Input
+                v-model="form.teacherEmail"
+                label="Teacher email"
+                type="email"
+                placeholder="teacher@school.com"
+              />
+            </div>
+          </Transition>
           <ToggleSwitch
-  v-model="form.visibleToEveryone"
-  label="Visible to everyone"
-/>
+            v-model="form.visibleToEveryone"
+            label="Visible to everyone"
+          />
 
           <div class="form-actions">
-            <Button type="button" class="cancel-button" @click="$emit('close')">
+            <Button
+              type="button"
+              class="cancel-button"
+              @click="$emit('close')"
+            >
               Cancel
             </Button>
 
@@ -221,18 +226,20 @@ const submitProject = () => {
 
 <style scoped>
 .modal-overlay {
-   min-height: 100vh;
+  min-height: 100vh;
   background: transparent !important;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding: var(--space-lg);
 }
+
 :deep(.add-project-card > h2) {
   font-size: clamp(1.2rem, 1.2vw, 1.2rem) !important;
   line-height: 1.1;
   margin-bottom: 30px !important;
 }
+
 .modal-card {
     position: relative;
   width: 680px;
@@ -251,21 +258,6 @@ const submitProject = () => {
   position: absolute;
   top: var(--space-md);
   right: var(--space-md);
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-weight: var(--font-bold);
-  
-  z-index: 2;
-}
-
-.close-button:hover {
-  background: var(--color-primary);
-  color: var(--color-background);
 }
 
 .project-form {
@@ -287,9 +279,14 @@ const submitProject = () => {
   color: var(--color-success);
 }
 
+.institution-field {
+  display: grid;
+  gap: var(--space-xs);
+}
+
 .form-group {
   display: grid;
-  gap:  8px;
+  gap: 22px;
 }
 
 .form-group label {
@@ -320,8 +317,8 @@ textarea:focus {
 }
 
 .helper-text {
-  /*margin: -8px 0 0;*/
-  /*margin-top: -10px;
+  /*margin: -8px 0 0;
+  margin-top: -10px;
   margin-bottom: 8px;*/
   margin: 0;
   color: var(--color-primary-hover);
@@ -332,6 +329,7 @@ textarea:focus {
   display: grid;
   gap: 12px;
 }
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -339,14 +337,36 @@ textarea:focus {
   gap: 14px;
 
 }
+
 .hidden-input {
   display: none !important;
 }
+
 .cancel-button {
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
 }
+
+.field-reveal-enter-from,
+.field-reveal-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.field-reveal-enter-active,
+.field-reveal-leave-active {
+  transition:
+    opacity var(--transition-normal),
+    transform var(--transition-normal);
+}
+
+.field-reveal-enter-to,
+.field-reveal-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 @media (max-width: 600px) {
   .modal-overlay {
@@ -381,11 +401,10 @@ textarea:focus {
     flex-direction: column;
   }
 
-    :deep(.add-project-card > h2) {
+  :deep(.add-project-card > h2) {
     text-align: left !important;
     margin: 0 48px 18px 0 !important;
     padding-left: 0 !important;
-
     min-height: 34px;
     line-height: 34px;
   }
@@ -393,10 +412,8 @@ textarea:focus {
   .project-form {
     flex: 1;
     min-height: 0;
-
     overflow-y: auto;
     overflow-x: hidden;
-
     padding-right: 4px;
     gap: 20px;
   }
@@ -406,28 +423,21 @@ textarea:focus {
     line-height: 1.3;
     margin-top: -4px;
   }
+
   textarea {
     min-height: 90px;
   }
-.form-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
 
-  flex-shrink: 0;
-  margin-top: 12px;
-}
-.form-actions button {
-  width: 100%;
-}
- .close-button {
-    top: 18px;
-    right: 18px;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex-shrink: 0;
+    margin-top: 12px;
+  }
+
+  .form-actions button {
+    width: 100%;
   }
 }
 </style>
