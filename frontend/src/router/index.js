@@ -4,9 +4,6 @@ import HomeView from '@/views/HomeView.vue';
 import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
 import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
-import DashboardView from '@/views/app/DashboardView.vue';
-import GettingStartedView from '@/views/app/GettingStartedView.vue';
-import PortfolioView from '@/views/app/PortfolioView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
 
 const routes = [
@@ -36,7 +33,7 @@ const routes = [
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: DashboardView,
+    component: () => import('@/views/app/DashboardView.vue'),
     meta: {
       requiresAuth: true,
       layout: 'app',
@@ -45,18 +42,27 @@ const routes = [
   {
     path: '/getting-started',
     name: 'getting-started',
-    component: GettingStartedView,
+    component: () => import('@/views/app/GettingStartedView.vue'),
     meta: {
-      requiresAuth: false, // pour test uniquement !
+      requiresAuth: true,
       layout: 'app',
     },
   },
   {
     path: '/portfolio',
     name: 'portfolio',
-    component: PortfolioView,
+    component: () => import('@/views/app/PortfolioView.vue'),
     meta: {
-      requiresAuth: false, // pour test uniquement !
+      requiresAuth: true,
+      layout: 'app',
+    },
+  },
+  {
+    path: '/add-project',
+    name: 'AddProject',
+    component: () => import('@/views/app/AddProjectView.vue'),
+    meta: {
+      requiresAuth: true,
       layout: 'app',
     },
   },

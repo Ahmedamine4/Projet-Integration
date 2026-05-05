@@ -40,6 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function register(userData) {
     const { firstName, lastName, email, password } = userData;
+
     const { data } = await api.post('/auth/register', {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -60,12 +61,15 @@ export const useAuthStore = defineStore('auth', () => {
         },
       },
     });
+
     if (error) throw error;
   }
 
   async function completeGoogleAuth() {
     const { data, error } = await supabase.auth.getSession();
+
     if (error) throw error;
+
     if (!data || !data.session) {
       throw new Error('No Google/Supabase session found');
     }
@@ -81,11 +85,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     const { error } = await supabase.auth.signOut();
+
     if (error) throw error;
     await api.post('/auth/logout');
 
     user.value = null;
   }
+
   return {
     user,
     isAuthenticated,
