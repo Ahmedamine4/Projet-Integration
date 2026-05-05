@@ -1,15 +1,17 @@
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base  
+#modification de la version node de 20 --> 24
 WORKDIR /app
 COPY package*.json .
 
 FROM base AS development
-RUN npm install
+RUN npm ci 
+# POUR PROD ET DEV : npm ci est utilisé à la place de npm install pour assurer une installation rapide, propre et reproductible dans un environnement Docker
 COPY . .
 EXPOSE 5173
 CMD ["npm", "run", "dev"]
 
 FROM base AS production
-RUN npm install
+RUN npm ci
 COPY . .
 RUN npm run build
 FROM nginx:alpine

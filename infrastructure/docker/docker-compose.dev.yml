@@ -20,7 +20,8 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    
+      - CHOKIDAR_USEPOLLING=true ## Activé uniquement en développement pour garantir le hot-reload avec Docker
+
   ai:
     build:
       context: ../../ai
