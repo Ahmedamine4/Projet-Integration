@@ -1,8 +1,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import GoogleCallbackView from '@/views/AuthCallbackView.vue';
+import GoogleCallbackView from '@/views/auth/AuthCallbackView.vue';
+import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
 import { mount, flushPromises } from '@vue/test-utils';
-import AuthCallbackView from '@/views/AuthCallbackView.vue';
 
 const mocks = vi.hoisted(() => ({
     replace: vi.fn(),

@@ -1,8 +1,19 @@
 <script setup>
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, onMounted } from 'vue';
+import api from '@/services/api';
 import GettingStartedStep from '@/components/getting-started/GettingStartedStep.vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
+import { schools as institutions } from '@/data/schools';
+
+const schools = ref([]);
+
+onMounted(async () => {
+  const response = await api.get('/getInstitutions');
+  schools.value = response.data?.length > 0
+    ? response.data.map((school) => school.nom)
+    : institutions;
+});
 
 const steps = [
   {
@@ -22,23 +33,19 @@ const steps = [
   },
 ];
 
-const stepData = reactive({
-  school: { done: false },
-  github: { done: false },
-  linkedin: { done: false },
+const stepStatus = reactive({
+  school: 'todo',
+  github: 'todo',
+  linkedin: 'todo',
 });
 
 const doneCount = computed(() =>
   steps.reduce((acc, step) => {
-    return stepData[step.key].done ? acc + 1 : acc;
+    return stepStatus[step.key] !== 'todo' ? acc + 1 : acc;
   }, 0),
 );
 
 const isSchoolModalOpen = ref(false);
-
-function isDone(key) {
-  return stepData[key].done;
-}
 
 function handleStepAction(key) {
   const step = steps.find((step) => step.key === key);
@@ -50,11 +57,12 @@ function handleStepAction(key) {
     return;
   }
 
-  stepData[key].done = true;
+  stepStatus[key] = 'done';
 }
 
-function completeSchoolStep() {
-  stepData.school.done = true;
+function completeSchoolStep(schoolData) {
+  console.log(schoolData);
+  stepStatus.school = 'pending';
   isSchoolModalOpen.value = false;
 }
 </script>
@@ -79,7 +87,7 @@ function completeSchoolStep() {
           :key="step.key"
           :title="step.title"
           :description="step.description"
-          :done="isDone(step.key)"
+          :status="stepStatus[step.key]"
           @action="handleStepAction(step.key)"
         />
       </div>
@@ -87,6 +95,7 @@ function completeSchoolStep() {
   </div>
   <SchoolPathModal
     :open="isSchoolModalOpen"
+    :schools
     @close="isSchoolModalOpen = false"
     @complete="completeSchoolStep"
   />
@@ -145,5 +154,17 @@ function completeSchoolStep() {
   flex-shrink: 0;
   font-size: var(--font-size-sm);
   color: rgba(var(--color-primary-rgb), 0.72);
+}
+
+@media (max-width: 480px) {
+  .wrapper-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .step-meter__track {
+    width: 98%;
+    max-width: none;
+    margin-inline: 0;
+  }
 }
 </style>

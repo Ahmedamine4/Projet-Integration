@@ -1,6 +1,6 @@
 import { mount, flushPromises } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import LoginView from '@/views/LoginView.vue';
+import LoginView from '@/views/auth/LoginView.vue';
 
 const mocks = vi.hoisted(() => ({
     push: vi.fn(),

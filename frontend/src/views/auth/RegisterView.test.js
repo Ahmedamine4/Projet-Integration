@@ -1,6 +1,6 @@
 import { mount, flushPromises } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import RegisterView from '@/views/RegisterView.vue';
+import RegisterView from '@/views/auth/RegisterView.vue';
 
 const mocks = vi.hoisted(() => ({
     push: vi.fn(),

@@ -1,13 +1,10 @@
-import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from '../stores/auth';
-import HomeView from "../views/HomeView.vue";
-import LoginView from "../views/LoginView.vue";
-import RegisterView from "../views/RegisterView.vue";
-import DashboardView from "../views/DashboardView.vue";
-import AuthCallbackView from "@/views/AuthCallbackView.vue";
-import NotFound from "@/views/NotFound.vue";
-import GettingStarted from "@/views/GettingStarted.vue";
-import AddProjectForm from '@/views/AddProjectForm.vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import HomeView from '@/views/HomeView.vue';
+import LoginView from '@/views/auth/LoginView.vue';
+import RegisterView from '@/views/auth/RegisterView.vue';
+import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
+import NotFoundView from '@/views/NotFoundView.vue';
 
 const routes = [
   {
@@ -28,9 +25,15 @@ const routes = [
     meta: { layout: 'auth' },
   },
   {
+    path: '/auth/callback',
+    name: 'auth-callback',
+    component: AuthCallbackView,
+    meta: { layout: 'auth' },
+  },
+  {
     path: '/dashboard',
     name: 'dashboard',
-    component: DashboardView,
+    component: () => import('@/views/app/DashboardView.vue'),
     meta: {
       requiresAuth: true,
       layout: 'app',
@@ -39,35 +42,39 @@ const routes = [
   {
     path: '/getting-started',
     name: 'getting-started',
-    component: GettingStarted,
+    component: () => import('@/views/app/GettingStartedView.vue'),
     meta: {
-      requiresAuth: false, // pour test uniquement !
+      requiresAuth: true,
       layout: 'app',
     },
   },
   {
-    path: '/auth/callback',
-    name: 'auth-callback',
-    component: AuthCallbackView,
-    meta: { layout: 'auth' },
+    path: '/portfolio',
+    name: 'portfolio',
+    component: () => import('@/views/app/PortfolioView.vue'),
+    meta: {
+      requiresAuth: true,
+      layout: 'app',
+    },
   },
   {
-    path: "/:pathMatch(.*)*",
-    name: "not-found",
-    component: NotFound
+    path: '/add-project',
+    name: 'AddProject',
+    component: () => import('@/views/app/AddProjectView.vue'),
+    meta: {
+      requiresAuth: true,
+      layout: 'app',
+    },
   },
   {
-  path: '/add-project-form',
-  name: 'AddProjectForm',
-  component: AddProjectForm,
-  meta: {
-    requiresAuth: false
-  }
-}
-]
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: NotFoundView,
+  },
+];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
 router.beforeEach((to) => {
@@ -76,12 +83,12 @@ router.beforeEach((to) => {
     return record.meta.requiresAuth;
   });
 
-if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-  return {
-    path: '/login',
-    query: { redirect: to.fullPath }
-  };
-}
+  if (requiresAuth && !authStore.isAuthenticated) {
+    return {
+      name: 'login',
+      query: { redirect: to.fullPath },
+    };
+  }
 
   return true;
 });

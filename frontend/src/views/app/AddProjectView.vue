@@ -2,9 +2,9 @@
 import { ref,reactive, watch, onUnmounted } from 'vue';
 import { X } from 'lucide-vue-next';
 
-import Button from '@/components/Button.vue';
-import Card from '@/components/Card.vue';
-import Input from '@/components/Input.vue';
+import Button from '@/components/common/Button.vue';
+import Card from '@/components/common/Card.vue';
+import Input from '@/components/common/Input.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import Labels from '@/components/common/Labels.vue';
 import ToggleSwitch from '@/components/common/ToggleSwitch.vue';
@@ -16,7 +16,7 @@ const domainColorRgb = '245, 158, 11';
 
 const schoolOptions = [
   'ENSA Tanger',
-  'ENSA Tétouan',
+  'ENSA Tetouan',
   'ENSA Al Hoceima',
   'FST Tanger',
   'FS Tanger',

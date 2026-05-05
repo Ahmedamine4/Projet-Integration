@@ -48,6 +48,10 @@ defineProps({
   width: min(100%, 28rem);
 }
 
+.card--xxl {
+  width: min(100%, 38rem);
+}
+
 .card--full-width {
   width: 100%;
 }

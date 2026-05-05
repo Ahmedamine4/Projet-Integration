@@ -3,7 +3,7 @@ import { ref, reactive, computed } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import Button from '@/components/common/Button.vue';
-import { schools } from '@/data/schools';
+import { X } from 'lucide-vue-next';
 
 const academicLevels = [
   {
@@ -29,32 +29,50 @@ const academicLevels = [
 const schoolFields = {
   bachelorSchool: {
     title: 'Bachelor / Licence school',
-    description:
-      'Choose the school or university where you studied for your Bachelor or Licence.',
     placeholder: 'Search Bachelor / Licence school',
   },
   masterSchool: {
     title: 'Master school',
-    description:
-      'Choose the school or university where you studied for your Master.',
     placeholder: 'Search Master school',
   },
   phdInstitution: {
     title: 'PhD institution',
-    description:
-      'Choose the institution where you are doing or completed your PhD.',
     placeholder: 'Search PhD institution',
   },
 };
 
-defineProps({
+const studyingSchoolDescriptions = {
+  bachelorSchool:
+    'Choose the school or university where you are currently studying for your Bachelor or Licence.',
+  masterSchool:
+    'Choose the school or university where you are currently studying for your Master.',
+  phdInstitution:
+    'Choose the institution where you are currently studying for your PhD.',
+};
+
+const completedSchoolDescriptions = {
+  bachelorSchool:
+    'Choose the school or university where you studied for your Bachelor or Licence.',
+  masterSchool:
+    'Choose the school or university where you studied for your Master.',
+  phdInstitution:
+    'Choose the institution where you completed your PhD.',
+};
+
+const props = defineProps({
   open: {
     type: Boolean,
     default: false,
   },
+  schools: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['close', 'complete']);
+
+const isCurrentlyStudying = ref(null);
 
 const selectedLevelKey = ref('');
 
@@ -62,7 +80,7 @@ function selectLevel(key) {
   selectedLevelKey.value = key;
 }
 
-function selected(key) {
+function isLevelSelected(key) {
   return selectedLevelKey.value === key;
 }
 
@@ -79,53 +97,68 @@ const schoolFieldsInputs = reactive({
 });
 
 const schoolPath = computed(() => {
-  const bachelorSchool =
-    schools.includes(schoolFieldsInputs.bachelorSchool)
-      ? schoolFieldsInputs.bachelorSchool
-      : '';
-  const masterSchool = 
-    schools.includes(schoolFieldsInputs.masterSchool)
-      ? schoolFieldsInputs.masterSchool
-      : '';
-  const phdInstitution = 
-    schools.includes(schoolFieldsInputs.phdInstitution)
-      ? schoolFieldsInputs.phdInstitution
-      : '';
+  const bachelorSchool = props.schools.find((school) => {
+    return school.toLowerCase() === schoolFieldsInputs.bachelorSchool.toLowerCase();
+  }) || '';
+  const masterSchool = props.schools.find((school) => {
+    return school.toLowerCase() === schoolFieldsInputs.masterSchool.toLowerCase();
+  }) || '';
+  const phdInstitution = props.schools.find((school) => {
+    return school.toLowerCase() === schoolFieldsInputs.phdInstitution.toLowerCase();
+  }) || '';
   return { bachelorSchool, masterSchool, phdInstitution };
 });
 
 const completedStepsCount = computed(() => {
-  if (!selectedLevelKey.value) return 0;
+  if (isCurrentlyStudying.value === null) return 0;
+  if (!selectedLevelKey.value) return 1;
   return Object.values(schoolPath.value).reduce((acc, school) => {
     return school ? acc + 1 : acc;
-  }, 1);
+  }, 2);
 });
 
 const currentStepIndex = ref(0);
 
 const numOfSteps = computed(() => {
-  if (!selectedLevel.value) return 1;
-  return selectedLevel.value.fields.length + 1;
+  if (!selectedLevel.value) return 2;
+  return selectedLevel.value.fields.length + 2;
 });
 
 const currentSchoolFieldKey = computed(() => {
-  if (currentStepIndex.value === 0) return '';
-  return selectedLevel.value.fields[currentStepIndex.value - 1];
+  if (currentStepIndex.value <= 1) return '';
+  return selectedLevel.value.fields[currentStepIndex.value - 2];
 });
 
 const currentSchoolField = computed(() => {
   return schoolFields[currentSchoolFieldKey.value];
 });
 
+const currentSchoolFieldDescription = computed(() => {
+  const highestLevelFieldKey = selectedLevel.value.fields.at(-1);
+
+  if (
+    isCurrentlyStudying.value === true &&
+    currentSchoolFieldKey.value === highestLevelFieldKey
+  ) {
+    return studyingSchoolDescriptions[currentSchoolFieldKey.value];
+  }
+  return completedSchoolDescriptions[currentSchoolFieldKey.value];
+});
+
 function resetCurrentStep() {
   if (currentStepIndex.value === 0) {
-    selectedLevelKey.value = '';
-  } else {
-    schoolFieldsInputs[currentSchoolFieldKey.value] = '';
+    isCurrentlyStudying.value = null;
+    return;
   }
+  if (currentStepIndex.value === 1) {
+    selectedLevelKey.value = '';
+    return;
+  }
+  schoolFieldsInputs[currentSchoolFieldKey.value] = '';
 }
 
 function resetSchoolPath() {
+  isCurrentlyStudying.value = null;
   selectedLevelKey.value = '';
 
   schoolFieldsInputs.bachelorSchool = '';
@@ -137,10 +170,23 @@ function resetSchoolPath() {
 
 const stepDirection = ref('forward');
 
+function close() {
+  resetSchoolPath();
+  emit('close');
+}
+
+function complete() {
+  emit('complete', {
+    isCurrentlyStudying: isCurrentlyStudying.value,
+    academicLevel: selectedLevelKey.value,
+    schoolPath: schoolPath.value,
+  });
+  resetSchoolPath();
+}
+
 function goBack() {
   if (currentStepIndex.value === 0) {
-    resetSchoolPath();
-    emit('close');
+    close();
     return;
   }
   resetCurrentStep();
@@ -149,10 +195,8 @@ function goBack() {
 }
 
 function goNext() {
-  if (!selectedLevelKey.value) return;
   if (completedStepsCount.value === numOfSteps.value) {
-    emit('complete', schoolPath.value);
-    resetSchoolPath();
+    complete();
     return;
   }
   stepDirection.value = 'forward';
@@ -164,6 +208,13 @@ function goNext() {
     <div class="modal-overlay" v-if="open">
       <div class="modal">
         <div class="modal__header">
+          <button
+            type="button"
+            class="x-button"
+            @click="close"
+          >
+            <X />
+          </button>
           <h3>Build your academic path</h3>
 
           <div class="step-meter__track">
@@ -180,24 +231,63 @@ function goNext() {
         <div class="modal__body">
           <Transition :name="`step-${stepDirection}`" mode="out-in">
             <div :key="currentStepIndex">
-              <div class="level-picker" v-if="currentStepIndex === 0">
+              <div class="study-status-picker" v-if="currentStepIndex === 0">
+                <h3 class="step-title">Study status</h3>
+                <span class="step-description">
+                  Tell us whether you are currently studying so we can shape your academic path around your situation.
+                </span>
+                <button
+                  class="option"
+                  :class="{ selected: isCurrentlyStudying === true }"
+                  type="button"
+                  @click="isCurrentlyStudying = true"
+                >
+                  <span class="option__title">
+                    I am currently studying
+                  </span>
+
+                  <span class="option__description">
+                    Use this if you are enrolled in a program right now.
+                  </span>
+                </button>
+
+                <button
+                  class="option"
+                  :class="{ selected: isCurrentlyStudying === false }"
+                  type="button"
+                  @click="isCurrentlyStudying = false"
+                >
+                  <span class="option__title">
+                    I am not currently studying
+                  </span>
+
+                  <span class="option__description">
+                    Use this if you have completed your studies or are not enrolled right now.
+                  </span>
+                </button>
+              </div>
+
+              <div class="level-picker" v-else-if="currentStepIndex === 1">
                 <h3 class="step-title">Academic level</h3>
                 <span class="step-description">
-                  Choose the highest academic level you want to include in your path.
+                  {{ isCurrentlyStudying
+                      ? 'Choose the academic level you are currently working toward.'
+                      : 'Select the highest academic level you have completed.'
+                  }}
                 </span>
                 <button
                   v-for="level in academicLevels"
                   :key="level.key"
-                  class="level-option"
-                  :class="{ selected: selected(level.key) }"
+                  class="option"
+                  :class="{ selected: isLevelSelected(level.key) }"
                   type="button"
                   @click="selectLevel(level.key)"
                 >
-                  <span class="level-option__title">
+                  <span class="option__title">
                     {{ level.title }}
                   </span>
 
-                  <span class="level-option__description">
+                  <span class="option__description">
                     {{ level.description }}
                   </span>
                 </button>
@@ -208,7 +298,7 @@ function goNext() {
                   {{ currentSchoolField.title }}
                 </h3>
                 <span class="step-description">
-                  {{ currentSchoolField.description }}
+                  {{ currentSchoolFieldDescription }}
                 </span>
                 <Dropdown
                   :options="schools"
@@ -233,8 +323,10 @@ function goNext() {
             variant="submit"
             class="next-button"
             :disabled="
+              isCurrentlyStudying === null ||
+              currentStepIndex &&
               !selectedLevelKey ||
-              currentStepIndex > 0 &&
+              currentStepIndex > 1 &&
               !schoolPath[currentSchoolFieldKey]"
             @click="goNext"
           >
@@ -251,6 +343,8 @@ function goNext() {
   position: fixed;
   inset: 0;
   background: rgba(var(--color-primary-rgb), 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -263,7 +357,7 @@ function goNext() {
   flex-direction: column;
   background: var(--color-background);
   max-height: min(32rem, 90vh);
-  width: min(36rem, 100%);
+  width: min(32rem, 100%);
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -271,6 +365,7 @@ function goNext() {
 }
 
 .modal__header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -285,12 +380,41 @@ function goNext() {
   gap: 0.75rem;
   width: 12rem;
   max-width: 45%;
+  margin-inline: var(--space-md);
 }
 
 .step-meter__track > span {
   flex-shrink: 0;
   font-size: var(--font-size-sm);
   color: rgba(var(--color-primary-rgb), 0.72);
+}
+
+.x-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1.38rem;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  color: rgba(var(--color-primary-rgb), 0.7);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.x-button svg {
+  width: 70%;
+  height: 70%;
+}
+
+.x-button:hover {
+  color: var(--color-error);
+  background: rgba(var(--color-error-rgb), 0.06);
 }
 
 .modal__body {
@@ -319,12 +443,13 @@ function goNext() {
   margin: 0;
 }
 
-.level-picker {
+.level-picker,
+.study-status-picker {
   display: grid;
   gap: 0.75rem;
 }
 
-.level-option {
+.option {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -344,24 +469,24 @@ function goNext() {
     transform var(--transition-fast);
 }
 
-.level-option:hover {
+.option:hover {
   border-color: rgba(var(--color-secondary-rgb), 0.45);
   background: rgba(var(--color-surface-rgb), 0.38);
   transform: scale(1.01);
 }
 
-.level-option.selected {
+.option.selected {
   border-color: rgba(var(--color-secondary-rgb), 0.75);
   background: rgba(var(--color-secondary-rgb), 0.08);
   transform: scale(1);
 }
 
-.level-option__title {
+.option__title {
   font-size: var(--font-size-sm);
   font-weight: var(--font-medium);
 }
 
-.level-option__description {
+.option__description {
   font-size: var(--font-size-xs);
   color: rgba(var(--color-primary-rgb), 0.62);
 }
@@ -442,5 +567,33 @@ function goNext() {
   transition:
     opacity var(--transition-normal),
     transform 0.4s var(--ease-overshoot);
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0;
+  }
+  .modal {
+    width: 100%;
+    align-self: end;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .x-button {
+    width: 1.82rem;
+  }
+
+  .step-meter__track {
+    width: 98%;
+    max-width: none;
+    margin-inline: 0;
+  }
 }
 </style>

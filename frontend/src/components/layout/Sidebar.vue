@@ -66,6 +66,7 @@ async function handleLogout() {
 
 <template>
   <div class="sidebar-space" :class="{ collapsed }">
+    <div class="sidebar-overlay" @click="collapsed = true" />
     <aside class="sidebar">
       <header>
         <div class="brand">
@@ -115,6 +116,7 @@ async function handleLogout() {
 
 <style scoped>
 .sidebar-space {
+  --collapsed-sidebar-width: calc(38px + 2 * var(--space-sm));
   position: sticky;
   top: 0;
   left: 0;
@@ -295,12 +297,13 @@ async function handleLogout() {
   color: var(--color-background);
   font-size: var(--font-size-xs);
   font-weight: var(--font-bold);
-  margin-left: var(--space-sm);
+  margin-left:
+    calc((var(--collapsed-sidebar-width) - 24px) / 2 - var(--space-sm));
 }
 
 .sidebar-space.collapsed,
 .sidebar-space.collapsed .sidebar {
-  width: 56px;
+  width: var(--collapsed-sidebar-width);
 }
 
 .collapsed .brand img,
@@ -332,10 +335,23 @@ async function handleLogout() {
 @media (max-width: 768px) {
   .sidebar-space {
     position: relative;
-    width: 56px;
+    width: var(--collapsed-sidebar-width);
   }
   .sidebar {
     position: fixed;
+    z-index: 1;
+  }
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(var(--color-primary-rgb), 0.3);
+    z-index: 0;
+    pointer-events: auto;
+    transition: background-color var(--transition-normal);
+  }
+  .collapsed .sidebar-overlay {
+    background-color: transparent;
+    pointer-events: none;
   }
 }
 </style>

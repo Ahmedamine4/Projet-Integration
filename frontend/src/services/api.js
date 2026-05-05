@@ -1,13 +1,17 @@
 import axios from "axios";
+import router from "../router";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true,
+  withCredentials: true, // pour envoyer les cookies avec les requêtes
   headers: {
-    "Content-Type": "application/json"
+      'Content-Type': 'application/json'
   }
 });
 
+// Intercepteur pour gérer l'expiration du token
+// 🛡️ Capture les erreurs 401 (token expiré) pour rafraîchir silencieusement la session en arrière-plan.
+// Si le rafraîchissement réussit, rejoue la requête initiale de manière transparente, sinon redirige vers le login.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {

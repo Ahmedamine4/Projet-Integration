@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import NotFoundView from '@/views/NotFound.vue';
+import NotFoundView from '@/views/NotFoundView.vue';
 
 const mocks = vi.hoisted(() => ({
     push: vi.fn()
