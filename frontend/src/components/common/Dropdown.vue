@@ -12,6 +12,10 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  label: {
+    type: String,
+    default: '',
+  },
   placeholder: {
     type: String,
     default: '',
@@ -61,7 +65,7 @@ onBeforeUnmount(() => {
   <div ref="dropdownElement" class="dropdown">
     <Input
       v-model="model"
-      label=""
+      :label
       :placeholder
       @focus="isOpen = options.length > 0"
     />

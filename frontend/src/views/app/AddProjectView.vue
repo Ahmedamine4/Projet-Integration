@@ -18,10 +18,21 @@ const schoolOptions = [
   'ENSA Tetouan',
   'ENSA Al Hoceima',
   'FST Tanger',
-  'FS Tanger',
-  'ENCG Tanger',
-  'Other'
 ];
+
+const professorEmails = [
+  'ahmed.elamrani@ensat.ac.ma',
+  'fatima.zahra@ensat.ac.ma',
+  'youssef.bennani@uae.ac.ma',
+  'sara.lahlou@fstt.ac.ma',
+  'nour.chaoui@encgt.ac.ma',
+  'karim.boukhari@ensate.uae.ac.ma',
+  'amina.tazi@fs-tanger.ac.ma',
+  'mehdi.elidrissi@ensah.ma',
+  'salma.aitali@fstt.ac.ma',
+  'omar.benali@uae.ac.ma'
+];
+
 
 const form = reactive({
   title: '',
@@ -176,30 +187,30 @@ const submitProject = () => {
              type="url"
              placeholder="https://github.com/username/project-name"
              />
-
-          <ToggleSwitch
-            v-model="form.isCertified"
-            label="Certified project"
-          />
-          <Transition name="field-reveal">
-            <div v-if="form.isCertified" class="form-group">
-              <div class="institution-field">
-                <label>Institution</label>
+          <div class="certified-project-section">
+            <ToggleSwitch
+              v-model="form.isCertified"
+              label="Certified project"
+            />
+            <Transition name="field-reveal">
+              <div v-if="form.isCertified" class="form-group">
+                <div class="institution-field">
+                  <Dropdown
+                    v-model="form.institution"
+                    :options="schoolOptions"
+                    label="Institution"
+                    placeholder="Select the institution"
+                  />
+                </div>
                 <Dropdown
-                  v-model="form.institution"
-                  :options="schoolOptions"
-                  placeholder="Select the institution"
-                  :visible-options="4"
+                  v-model="form.teacherEmail"
+                  :options="professorEmails"
+                  label="Teacher email"
+                  placeholder="teacher@school.com"
                 />
               </div>
-              <Input
-                v-model="form.teacherEmail"
-                label="Teacher email"
-                type="email"
-                placeholder="teacher@school.com"
-              />
-            </div>
-          </Transition>
+            </Transition>
+          </div>
           <ToggleSwitch
             v-model="form.visibleToEveryone"
             label="Visible to everyone"
@@ -208,7 +219,7 @@ const submitProject = () => {
           <div class="form-actions">
             <Button
               type="button"
-              class="cancel-button"
+              variant="ghost"
               @click="$emit('close')"
             >
               Cancel
@@ -241,15 +252,13 @@ const submitProject = () => {
 }
 
 .modal-card {
-    position: relative;
+  position: relative;
   width: 680px;
   max-width: calc(100vw - 48px);
-
   background: var(--color-background);
   border: 1px solid rgba(var(--color-primary-rgb), 0.12);
   border-radius: var(--radius-lg);
-  box-shadow: 0 24px 70px rgba(var(--color-primary-rgb), 0.22);
-
+  box-shadow: var(--shadow-md);
   padding: var(--space-xl);
   overflow: visible;
 }
@@ -284,7 +293,12 @@ const submitProject = () => {
   gap: var(--space-xs);
 }
 
+.certified-project-section {
+  display: grid;
+}
+
 .form-group {
+  margin-top: 22px;
   display: grid;
   gap: 22px;
 }
@@ -301,10 +315,10 @@ textarea {
   width: 100%;
   min-height: 110px;
   resize: vertical;
-  border: 1px solid var(--color-surface);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.18);
   border-radius: var(--radius-md);
   padding: 12px 14px;
-  background: transparent;
+  background: rgba(var(--color-surface-rgb), 0.32);
   color: var(--color-primary);
   font-family: var(--font-ui);
   font-size: var(--font-size-md);
@@ -338,33 +352,26 @@ textarea:focus {
 
 }
 
-.hidden-input {
-  display: none !important;
-}
-
-.cancel-button {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
 .field-reveal-enter-from,
 .field-reveal-leave-to {
   opacity: 0;
-  transform: translateY(-6px);
+  margin-top: 0;
+  max-height: 0;
 }
 
 .field-reveal-enter-active,
 .field-reveal-leave-active {
+  overflow: hidden;
   transition:
     opacity var(--transition-normal),
-    transform var(--transition-normal);
+    max-height var(--transition-normal),
+    margin-top var(--transition-normal);
 }
 
 .field-reveal-enter-to,
 .field-reveal-leave-from {
   opacity: 1;
-  transform: translateY(0);
+  max-height: 8rem;
 }
 
 
@@ -384,10 +391,8 @@ textarea:focus {
     max-width: 100%;
     height: 92dvh;
     max-height: 92dvh;
-
     border-radius: 24px 24px 0 0;
     padding: 18px;
-
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -396,7 +401,6 @@ textarea:focus {
   :deep(.add-project-card) {
     height: 100%;
     overflow: hidden;
-
     display: flex;
     flex-direction: column;
   }
