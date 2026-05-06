@@ -32,6 +32,28 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
+//  AMI (CUDA PRE-INSTALLER)
+
+data "aws_ami" "deep_learning" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["Deep Learning AMI GPU PyTorch*Ubuntu 20.04*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
+}
+
 //  SUBNETS PUBLIQUES 
 
 resource "aws_subnet" "public" {
@@ -45,6 +67,85 @@ resource "aws_subnet" "public" {
     Name = "${var.project_name}-public-subnet-${count.index + 1}"
   }
 }
+
+  resource "aws_instance" "a100" {
+  ami                    = data.aws_ami.deep_learning.id
+  instance_type          = var.a100_instance_type   
+  key_name               = var.key_pair_name
+  subnet_id              = aws_subnet.public[0].id
+  vpc_security_group_ids = [aws_security_group.a100_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.a100_profile.name
+
+  dynamic "instance_market_options" {
+    for_each = var.use_spot ? [1] : []
+    content {
+      market_type = "spot"
+      spot_options {
+        instance_interruption_behavior = "terminate"
+        spot_instance_type             = "one-time"
+      }
+    }
+  }
+
+  root_block_device {
+    volume_type           = "gp3"
+    volume_size           = var.a100_volume_size_gb
+    iops                  = 3000
+    throughput            = 125
+    delete_on_termination = true
+    encrypted             = true
+
+    tags = {
+      Name = "${var.project_name}-a100-volume"
+    }
+  }
+
+  /*  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    echo "=== GPU Check ===" >> /var/log/gpu-init.log
+    nvidia-smi >> /var/log/gpu-init.log 2>&1
+    nvcc --version >> /var/log/gpu-init.log 2>&1
+    echo "=== Init complete ===" >> /var/log/gpu-init.log
+  EOF
+  )  */
+
+  tags = {
+    Name = "${var.project_name}-a100"
+    GPU  = "NVIDIA-A100"
+    Spot = tostring(var.use_spot)
+  }
+}
+
+
+//IAM
+resource "aws_iam_role" "a100_role" {
+  name = "${var.project_name}-a100-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "a100_ssm" {
+  role       = aws_iam_role.a100_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_role_policy_attachment" "a100_s3" {
+  role       = aws_iam_role.a100_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+}
+
+resource "aws_iam_instance_profile" "a100_profile" {
+  name = "${var.project_name}-a100-profile"
+  role = aws_iam_role.a100_role.name
+}
+
 
 //  SUBNETS PRIVÉES 
 
@@ -65,8 +166,8 @@ resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block      = "0.0.0.0/0"
-    gateway_id      = aws_internet_gateway.main.id
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
   }
 
   tags = {
@@ -82,7 +183,7 @@ resource "aws_route_table_association" "public" {
 
 // Elastic IPs pour les NAT Gateways          //obligatoire et necessaire pour NAT Gateway public
 resource "aws_eip" "nat" {
-  count  = length(var.public_subnet_cidrs)
+  count = length(var.public_subnet_cidrs)
 
   domain = "vpc"
 
@@ -131,3 +232,14 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }
+
+
+
+
+
+
+
+
+
+
+
