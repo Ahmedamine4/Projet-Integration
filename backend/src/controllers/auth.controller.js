@@ -15,7 +15,6 @@ export async function register(req, res) {
   try {
     const user = await registerLocalUser(req.body);
     
-    // Correction : token 
     const token = generateLocalToken(user); 
     const refreshToken = generateRefreshToken(user);
 
@@ -25,7 +24,7 @@ export async function register(req, res) {
         sameSite: 'strict', // Protection CSRF
     };
 
-    //l'Access Token (15 minutes)
+    //Access Token (15 minutes)
     res.cookie('accessToken', token, { 
         ...cookieOptions, 
         maxAge: 15 * 60 * 1000 
@@ -41,8 +40,6 @@ export async function register(req, res) {
       success: true,
       message: 'Inscription réussie',
       user,
-      //token,
-      // refreshToken,
     });
   } catch (error) {
     return res.status(400).json({
@@ -62,7 +59,7 @@ export async function login(req, res) {
         sameSite: 'strict', // Protection CSRF
     };
 
-    //l'Access Token (15 minutes)
+    //Access Token (15 minutes)
     res.cookie('accessToken', resultat.token, { 
         ...cookieOptions, 
         maxAge: 15 * 60 * 1000 
@@ -133,7 +130,7 @@ export async function googleAuth(req, res) {
         sameSite: 'strict', // Protection CSRF
     };
 
-    //l'Access Token (15 minutes)
+    //Access Token (15 minutes)
     res.cookie('accessToken', localToken, { 
         ...cookieOptions, 
         maxAge: 15 * 60 * 1000 
@@ -150,9 +147,6 @@ export async function googleAuth(req, res) {
       message: 'Authentification Google réussie',
       provider: 'google',
       user: user,
-      //token: localToken, // reponse
-      //refreshToken,
-      
     });
   }
   catch (error) {

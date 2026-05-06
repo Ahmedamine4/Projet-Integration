@@ -45,7 +45,7 @@ const login = async () => {
     const redirectPath =
       typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
         ? route.query.redirect
-        : '/getting-started';
+        : '/dashboard';
     await router.push(redirectPath);
   } catch (err) {
     if (!err.response) serverError.value = 'Network error. Please try again.';
@@ -64,7 +64,7 @@ const loginWithGoogle = async () => {
     const redirectPath =
       typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
         ? route.query.redirect
-        : '/getting-started';
+        : '/dashboard';
 
     sessionStorage.setItem('auth_redirect', redirectPath);
 
