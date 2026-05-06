@@ -129,8 +129,6 @@ const analyzeDescription = async () => {
   try {
     const data = await analyzeProjectDescription(form.description);
 
-    console.log('Mapped AI data:', data);
-
     technologies.value = createSelectableItems(data.technologies);
     domains.value = createSelectableItems(data.domains);
   } catch (error) {
@@ -243,7 +241,7 @@ const submitProject = () => {
             <ImageDropzone v-model="form.image" />
 
             <div class="field">
-              <div class="form-group">
+              <div class="form-group-description">
                 <label for="description">Description</label>
 
                 <textarea
@@ -439,12 +437,18 @@ const submitProject = () => {
 }
 
 .form-group {
-  margin-top: 22px;
+  margin-top: var(--space-md);
   display: grid;
-  gap: 22px;
+  gap: var(--space-md);
 }
 
-.form-group label {
+.form-group-description {
+  margin-top: var(--space-md);
+  display: grid;
+  gap: var(--space-xs);
+}
+
+:is(.form-group, .form-group-description) label {
   font-size: var(--font-size-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -541,5 +545,14 @@ textarea:focus {
 .pop-up-enter-to .modal-card,
 .pop-up-leave-from .modal-card {
   transform: scale(1);
+}
+
+@media (max-width: 480px) {
+  .modal-card {
+    align-self: flex-end;
+    height: 70vh;
+    margin-inline: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
 }
 </style>
