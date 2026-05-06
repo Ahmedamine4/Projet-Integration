@@ -1,5 +1,7 @@
 services:
   backend:
+   # ports: supp car j'ai ajouter studio prisma comme un service 
+    #  - "5555:5555"  # Prisma Studio seulement en dev , sinn N'importe qui pourrait acceder a toutes tes donnees !!
     build:
       context: ../../backend
       target: development
@@ -9,6 +11,23 @@ services:
     environment:
       - NODE_ENV=development
 
+    #  NOUVEAU SERVICE !! , POUR ACCEDER A PRISMA STUDIO RAPIDEMENT, Plus besoin de la longue commande ! 
+  prisma-studio:
+    container_name: prisma-studio
+    build:
+      context: ../../backend
+      target: development
+    env_file:
+      - ../../backend/.env          #  variables chargées automatiquement
+    volumes:
+      - ../../backend:/app
+      - /app/node_modules
+    ports:
+      - "5555:5555"    #  port accessible directement
+    command: npx prisma studio --hostname 0.0.0.0
+    depends_on:
+      db:
+        condition: service_healthy
   frontend:
     build:
       context: ../../frontend

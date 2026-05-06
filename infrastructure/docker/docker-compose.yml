@@ -3,7 +3,7 @@ services:
     container_name: back-app-container
     ports:
       - "3000:3000"
-      - "5555:5555" # Port pour le WebSocket
+      #- "5555:5555" # Port pour le WebSocket
     build:
       context: ../../backend
     env_file:

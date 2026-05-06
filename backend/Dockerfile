@@ -1,35 +1,43 @@
 FROM node:24-alpine AS base
 #changement du version node
-FROM base AS development
 
 WORKDIR /app
+#hérité par toutes les stages
 
-COPY package.json .
-COPY package-lock.json .
+FROM base AS development
+
+COPY package*.json .
 COPY prisma ./prisma
-# POUR PROD ET DEV : npm ci est utilisé à la place de npm install pour assurer une installation rapide, propre et reproductible dans un environnement Docker
-RUN npm ci
-RUN npx prisma generate
 
+RUN npm install   
+ #  npm install pour dev (flexibilité)
+
+RUN npx prisma generate
+# ←interactif, crée des fichiers
 COPY . .
 
 EXPOSE 3000
 #changement du port
 
-
 CMD ["sh", "-c", "npx prisma migrate dev && npm run dev"] 
+
 
 FROM base AS production
 
-WORKDIR /app
-
 COPY package.json .
+COPY package-lock.json . 
+# nécessaire pour npm ci
+COPY prisma ./prisma
+#le schema doit être dans l'image
 
-RUN npm install --omit=dev 
+RUN npm ci --omit=dev 
 # est la version moderne et recommandée pour PROD et CI/CD (better than --only=production)
-
+# POUR PROD : npm ci est utilisé à la place de npm install pour assurer une installation rapide, propre et reproductible dans un environnement Docker
+RUN npx prisma generate
+#crée le client JS depuis le schema
 COPY . .
 
 EXPOSE 3000 
 
-CMD ["npm","start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+## "deploy" lit les fichiers dans prisma/migrations/ , npm start avec moins de dependences
