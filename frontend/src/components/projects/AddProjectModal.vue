@@ -202,17 +202,17 @@ const submitProject = () => {
 
 <template>
   <div class="modal-overlay">
-    <Card
-      class="add-project-card"
-      title="Create a new project"
-      size="xxl"
-      variant="modal"
-    >
+    <div class="modal-card">
       <div class="close-button">
         <CloseButton size="lg" @click="emit('close')" />
       </div>
 
-      <form class="project-form" @submit.prevent="submitProject">
+      <Card
+        class="add-project-card"
+        title="Create a new project"
+        size="xxl"
+      >
+        <form class="project-form" @submit.prevent="submitProject">
           <div class="field">
             <Input
               v-model="form.title"
@@ -332,8 +332,9 @@ const submitProject = () => {
               Submit project
             </Button>
           </div>
-      </form>
-    </Card>
+        </form>
+      </Card>
+    </div>
   </div>
 </template>
 
@@ -341,7 +342,6 @@ const submitProject = () => {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
   min-height: 100vh;
   z-index: 1000;
   background: transparent;
@@ -349,6 +349,24 @@ const submitProject = () => {
   justify-content: center;
   align-items: flex-start;
   padding: var(--space-lg);
+}
+
+:deep(.add-project-card > h2) {
+  font-size: 1.2rem !important;
+  line-height: 1.1;
+  margin-bottom: 30px !important;
+}
+
+.modal-card {
+  position: relative;
+  width: 680px;
+  max-width: calc(100vw - 48px);
+  background: var(--color-background);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-xl);
+  overflow: visible;
 }
 
 .close-button {
@@ -475,6 +493,30 @@ textarea:focus {
 
     align-items: flex-end;
     padding: 0;
+  }
+
+  .modal-card {
+    width: 100%;
+    max-width: 100%;
+    height: 92dvh;
+    max-height: 92dvh;
+    border-radius: 24px 24px 0 0;
+    padding: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.add-project-card) {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.add-project-card > h2) {
+    margin: 0 48px 18px 0 !important;
+    line-height: 1.78;
   }
 
   .project-form {
