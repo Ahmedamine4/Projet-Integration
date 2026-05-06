@@ -105,6 +105,7 @@ model Etudiant {
   institutions              ValideEtudiant[]
   badges                    Badge[]
   recommandations           LettresDeRecommendations[]
+  repositories              Repository[]          //ajouter par reda
 
   @@map("etudiants")
 }
@@ -414,3 +415,33 @@ model ValideEtudiant {
   @@id([utilisateur_id, institution_id])
   @@map("valide_etudiant")
 }
+
+  // ajouter par reda
+model Repository {
+  repository_id     String   @id @default(cuid())
+  github_id         Int      @unique
+  etudiant_id       String
+
+  name              String
+  full_name         String
+  description       String?
+  html_url          String
+  language          String?
+  stars             Int      @default(0)
+  forks             Int      @default(0)
+  is_private        Boolean  @default(false)
+
+  github_access_token String?   // ⚠️ À chiffrer en production
+  last_synced       DateTime   @default(now())
+
+  etudiant          Etudiant   @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
+
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+
+  @@map("repositories")
+}
+
+
+
+
