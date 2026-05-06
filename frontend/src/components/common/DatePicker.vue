@@ -303,10 +303,6 @@ onBeforeUnmount(() => {
             :key="year"
             type="button"
             class="date-picker__year"
-            :class="{
-              'date-picker__year--selected': year === visibleMonth.getFullYear(),
-              'date-picker__year--current': year === currentYear
-            }"
             @click="selectYear(year)"
           >
             {{ year }}
@@ -319,9 +315,6 @@ onBeforeUnmount(() => {
             :key="month"
             type="button"
             class="date-picker__month-option"
-            :class="{
-              'date-picker__month-option--selected': index === visibleMonth.getMonth()
-            }"
             @click="selectMonth(index)"
           >
             {{ month }}
@@ -580,24 +573,6 @@ onBeforeUnmount(() => {
   outline: none;
   border-color: rgba(var(--color-secondary-rgb), 0.34);
   background: rgba(var(--color-secondary-rgb), 0.1);
-}
-
-.date-picker__year--current {
-  border-color: rgba(var(--color-secondary-rgb), 0.36);
-  color: var(--color-secondary);
-  font-weight: var(--font-medium);
-}
-
-.date-picker__year--selected,
-.date-picker__year--selected:hover,
-.date-picker__year--selected:focus-visible,
-.date-picker__month-option--selected,
-.date-picker__month-option--selected:hover,
-.date-picker__month-option--selected:focus-visible {
-  border-color: rgba(var(--color-secondary-rgb), 0.36);
-  background: transparent;
-  color: var(--color-secondary);
-  font-weight: var(--font-medium);
 }
 
 .date-picker__footer {
