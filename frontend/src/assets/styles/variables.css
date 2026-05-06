@@ -6,7 +6,8 @@
 }
 @font-face {
   font-family: 'Inter';
-  src: url('../fonts/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  src: url('../fonts/Inter-Italic-VariableFont_opsz,wght.ttf')
+    format('truetype');
   font-weight: 100 900;
   font-style: italic;
 }
@@ -41,18 +42,18 @@
   --color-success-rgb: 35, 162, 121;
 
   /* Typography */
-    /* Fonts */
+  /* Fonts */
   --font-ui: 'Inter', sans-serif;
   --font-display: 'Norman', serif;
   --font-stencil: 'Norman_Stencil', serif;
-    /* size */
+  /* size */
   --font-size-xxs: 0.65rem;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 2rem;
-    /* weights */
+  /* weights */
   --font-light: 300;
   --font-regular: 400;
   --font-medium: 500;

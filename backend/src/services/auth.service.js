@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma.js';
-import { generateLocalToken } from '../config/jwt.js';
+import { generateLocalToken, generateRefreshToken} from '../config/jwt.js';
 
 // Champs envoyés au frontend
 const USER_SELECT = {
@@ -126,9 +126,14 @@ export async function loginLocalUser({ email, password }) {
     role: user.role,
   });
 
+  const refreshToken = generateRefreshToken({
+    id: user.utilisateur_id,
+  });
+
   return {
     user: sanitizeUser(user),
     token,
+    refreshToken,
   };
 }
 

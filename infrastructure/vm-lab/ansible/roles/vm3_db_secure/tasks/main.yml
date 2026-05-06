@@ -1,0 +1,78 @@
+---
+# System update
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all installed packages
+  apt:
+    upgrade: dist
+
+# PostgreSQL
+- name: Install PostgreSQL
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+    state: present
+
+- name: Ensure PostgreSQL is running and enabled
+  service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Locate postgresql.conf
+  find:
+    paths: /etc/postgresql
+    patterns: "postgresql.conf"
+    recurse: true
+  register: pg_conf_search
+
+- name: Set PostgreSQL config directory fact
+  set_fact:
+    pg_conf_dir: "{{ pg_conf_search.files[0].path | dirname }}"
+
+# Listen on all interfaces — UFW below enforces who can actually reach 5432
+- name: Configure listen_addresses
+  lineinfile:
+    path:   "{{ pg_conf_dir }}/postgresql.conf"
+    regexp: "^#?listen_addresses"
+    line:   "listen_addresses = '*'"
+    backup: true
+  notify: restart postgresql
+
+# Allow VM2 to authenticate; UFW blocks everyone else at the network level
+- name: Add VM2 to pg_hba.conf
+  lineinfile:
+    path:        "{{ pg_conf_dir }}/pg_hba.conf"
+    line:        "host  all  all  {{ vm2_ip }}/32  md5"
+    insertafter: "^# IPv4 local connections"
+    backup: true
+  notify: restart postgresql
+
+# Firewall (UFW)
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+
+- name: Allow SSH (keep Vagrant connection alive)
+  ufw:
+    rule:  allow
+    port:  "22"
+    proto: tcp
+
+- name: Allow PostgreSQL ONLY from VM2
+  ufw:
+    rule:  allow
+    src:   "{{ vm2_ip }}"
+    port:  "5432"
+    proto: tcp
+
+- name: Enable UFW with default-deny incoming
+  ufw:
+    state:     enabled
+    policy:    deny
+    direction: incoming

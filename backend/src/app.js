@@ -2,19 +2,35 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import projetRoutes from './routes/projet.routes.js';
+import LinkInstitutionsToEtudiantRoutes from './routes/link_institutions_etudiant.routes.js';
+import getInstitutionRoutes from './routes/institution.routes.js';
+import ValidationEtudiantRoutes from './routes/validation_etudiant.routes.js';
+import cookieParser from 'cookie-parser';
+import aiRoutes from './routes/ai.route.js';
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173', // ton front
+  origin: true, // Autorise les requêtes
   credentials: true
 }));
-app.use(cors());
+// app.use(cors());
 
 // Middlewares
 app.use(express.json()); 
+app.use(cookieParser());
 
 // Branchement des routes d'authentification
 app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes);
+
+//Getting institutions
+app.use('/api/getInstitutions', getInstitutionRoutes);
+
+//Linking institutions to students
+app.use('/api/select-institutions', LinkInstitutionsToEtudiantRoutes);
+
+//Validation Directeur - Etudiant
+app.use('/api/validation', ValidationEtudiantRoutes);
 
 // Branchement des routes d'ajout du projet
 app.use('/api/projets', projetRoutes);
