@@ -212,7 +212,7 @@ const deleteProject = (projectId) => {
     </div>
 
     <AddProjectModal
-      v-if="isAddProjectModalOpen"
+      :open="isAddProjectModalOpen"
       @close="closeAddProjectModal"
       @submit="handleProjectSubmit"
     />

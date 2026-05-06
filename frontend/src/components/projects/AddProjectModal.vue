@@ -2,7 +2,6 @@
 import { ref, reactive, watch, onUnmounted } from 'vue';
 import { analyzeProjectDescription } from '@/services/aiApi';
 import Button from '@/components/common/Button.vue';
-import Card from '@/components/common/Card.vue';
 import Input from '@/components/common/Input.vue';
 import DatePicker from '@/components/common/DatePicker.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
@@ -12,6 +11,13 @@ import ImageDropzone from '@/components/common/ImageDropzone.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
 import Select from '@/components/common/Select.vue';
 import Error from '@/components/common/Error.vue';
+
+const props = defineProps({
+  open: {
+    type: Boolean,
+    default: false,
+  },
+});
 
 const emit = defineEmits(['close', 'submit']);
 
@@ -201,125 +207,128 @@ const submitProject = () => {
 </script>
 
 <template>
-  <div class="modal-overlay">
-    <div class="modal-card">
-      <div class="close-button">
-        <CloseButton size="lg" @click="emit('close')" />
-      </div>
-
-      <Card
-        class="add-project-card"
-        title="Create a new project"
-        size="xxl"
-      >
+  <Transition name="pop-up">
+    <div class="modal-overlay" v-if="open">
+      <div class="modal-card">
+        <div class="modal-card__header">
+          <h2>Create a new project</h2>
+          <div class="close-button">
+            <CloseButton size="lg" @click="emit('close')" />
+          </div>
+        </div>
         <form class="project-form" @submit.prevent="submitProject">
-          <div class="field">
-            <Input
-              v-model="form.title"
-              label="Project title"
-              placeholder="Enter your project title"
-            />
-            <Error v-if="errors.title" variant="field">
-              {{ errors.title }}
-            </Error>
-          </div>
+          <div class="project-form__body">
+            <div class="field">
+              <Input
+                v-model="form.title"
+                label="Project title"
+                placeholder="Enter your project title"
+              />
+              <Error v-if="errors.title" variant="field">
+                {{ errors.title }}
+              </Error>
+            </div>
 
-          <div class="field">
-            <DatePicker
-              v-model="form.date"
-              label="Project date"
-              placeholder="Select project date"
-            />
-            <Error v-if="errors.date" variant="field">
-              {{ errors.date }}
-            </Error>
-          </div>
+            <div class="field">
+              <DatePicker
+                v-model="form.date"
+                label="Project date"
+                placeholder="Select project date"
+              />
+              <Error v-if="errors.date" variant="field">
+                {{ errors.date }}
+              </Error>
+            </div>
 
-          <ImageDropzone v-model="form.image" />
+            <ImageDropzone v-model="form.image" />
 
-          <div class="field">
-            <div class="form-group">
-              <label for="description">Description</label>
+            <div class="field">
+              <div class="form-group">
+                <label for="description">Description</label>
 
-              <textarea
-                id="description"
-                v-model="form.description"
-                placeholder="Describe your project, its goal, features, and tools used..."
+                <textarea
+                  id="description"
+                  v-model="form.description"
+                  placeholder="Describe your project, its goal, features, and tools used..."
+                />
+              </div>
+              <Error v-if="errors.description" variant="field">
+                {{ errors.description }}
+              </Error>
+            </div>
+
+            <p class="helper-text">
+              Missing a technology? Make sure it is clearly mentioned in the description, then try again.
+            </p>
+
+            <div class="labels-section">
+              <Labels
+                title="Detected domains"
+                :items="domains"
+                :color-rgb="domainColorRgb"
+                @toggle="toggleLabel"
+              />
+
+              <Labels
+                title="Detected technologies"
+                :items="technologies"
+                @toggle="toggleLabel"
               />
             </div>
-            <Error v-if="errors.description" variant="field">
-              {{ errors.description }}
-            </Error>
-          </div>
 
-          <p class="helper-text">
-            Missing a technology? Make sure it is clearly mentioned in the description, then try again.
-          </p>
+            <div class="field">
+              <Input
+                v-model="form.githubLink"
+                label="GitHub link"
+                type="url"
+                placeholder="https://github.com/username/project-name"
+              />
+              <Error v-if="errors.githubLink" variant="field">
+                {{ errors.githubLink }}
+              </Error>
+            </div>
 
-          <div class="labels-section">
-            <Labels
-              title="Detected domains"
-              :items="domains"
-              :color-rgb="domainColorRgb"
-              @toggle="toggleLabel"
-            />
+            <div class="certified-project-section">
+              <ToggleSwitch
+                v-model="form.isCertified"
+                label="Certified project"
+              />
+              <Transition name="field-reveal">
+                <div v-if="form.isCertified" class="form-group">
+                  <div class="institution-field">
+                    <Select
+                      v-model="form.institution"
+                      :options="schoolOptions"
+                      label="Institution"
+                      placeholder="Select the institution"
+                    />
+                    <Error v-if="errors.institution" variant="field">
+                      {{ errors.institution }}
+                    </Error>
+                  </div>
+                  <div class="field">
+                    <Dropdown
+                      v-model="form.teacherEmail"
+                      :options="professorEmails"
+                      label="Teacher email"
+                      placeholder="teacher@school.com"
+                      autocomplete="nope"
+                    />
+                    <Error v-if="errors.teacherEmail" variant="field">
+                      {{ errors.teacherEmail }}
+                    </Error>
+                  </div>
+                </div>
+              </Transition>
+            </div>
 
-            <Labels
-              title="Detected technologies"
-              :items="technologies"
-              @toggle="toggleLabel"
-            />
-          </div>
-          <div class="field">
-            <Input
-              v-model="form.githubLink"
-              label="GitHub link"
-              type="url"
-              placeholder="https://github.com/username/project-name"
-            />
-            <Error v-if="errors.githubLink" variant="field">
-              {{ errors.githubLink }}
-            </Error>
-          </div>
-          <div class="certified-project-section">
             <ToggleSwitch
-              v-model="form.isCertified"
-              label="Certified project"
+              v-model="form.visibleToEveryone"
+              label="Visible to everyone"
             />
-            <Transition name="field-reveal">
-              <div v-if="form.isCertified" class="form-group">
-                <div class="institution-field">
-                  <Select
-                    v-model="form.institution"
-                    :options="schoolOptions"
-                    label="Institution"
-                    placeholder="Select the institution"
-                  />
-                  <Error v-if="errors.institution" variant="field">
-                    {{ errors.institution }}
-                  </Error>
-                </div>
-                <div class="field">
-                  <Dropdown
-                    v-model="form.teacherEmail"
-                    :options="professorEmails"
-                    label="Teacher email"
-                    placeholder="teacher@school.com"
-                    autocomplete="nope"
-                  />
-                  <Error v-if="errors.teacherEmail" variant="field">
-                    {{ errors.teacherEmail }}
-                  </Error>
-                </div>
-              </div>
-            </Transition>
           </div>
-          <ToggleSwitch
-            v-model="form.visibleToEveryone"
-            label="Visible to everyone"
-          />
 
-          <div class="form-actions">
+          <div class="project-form__footer">
             <Button
               type="button"
               variant="ghost"
@@ -333,51 +342,72 @@ const submitProject = () => {
             </Button>
           </div>
         </form>
-      </Card>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style scoped>
 .modal-overlay {
   position: fixed;
   inset: 0;
-  min-height: 100vh;
   z-index: 1000;
-  background: transparent;
+  background: rgba(var(--color-primary-rgb), 0.3);
+  backdrop-filter: blur(3px);
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: var(--space-lg);
-}
-
-:deep(.add-project-card > h2) {
-  font-size: 1.2rem !important;
-  line-height: 1.1;
-  margin-bottom: 30px !important;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .modal-card {
   position: relative;
-  width: 680px;
-  max-width: calc(100vw - 48px);
-  background: var(--color-background);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-xl);
-  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  width: clamp(34rem, 42vw, 46rem);
+  max-width: 100vw;
+  background-color: var(--color-background);
+  height: calc(100vh - 2 * var(--space-sm));
+  border-radius: var(--radius-md);
+  margin-inline: var(--space-sm);
+  overflow: hidden;
+}
+
+.modal-card__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+}
+
+.modal-card__header h2 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1.2rem;
+  line-height: 1.2;
 }
 
 .close-button {
-  position: absolute;
-  top: var(--space-md);
-  right: var(--space-md);
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .project-form {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-form__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: grid;
-  gap: 22px;
+  gap: 1.2rem;
+  padding: var(--space-lg);
 }
 
 .field {
@@ -442,9 +472,6 @@ textarea:focus {
 }
 
 .helper-text {
-  /*margin: -8px 0 0;
-  margin-top: -10px;
-  margin-bottom: 8px;*/
   margin: 0;
   color: var(--color-primary-hover);
   font-size: var(--font-size-xs);
@@ -455,12 +482,13 @@ textarea:focus {
   gap: 12px;
 }
 
-.form-actions {
+.project-form__footer {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
   gap: 14px;
-
+  border-top: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  padding: var(--space-md);
 }
 
 .field-reveal-enter-from,
@@ -485,69 +513,33 @@ textarea:focus {
   max-height: 8rem;
 }
 
+.pop-up-enter-from,
+.pop-up-leave-to {
+  opacity: 0;
+}
 
-@media (max-width: 600px) {
-  .modal-overlay {
-    height: 100dvh;
-    overflow: hidden;
+.pop-up-enter-active,
+.pop-up-leave-active {
+  transition: opacity var(--transition-normal);
+}
 
-    align-items: flex-end;
-    padding: 0;
-  }
+.pop-up-enter-to,
+.pop-up-leave-from {
+  opacity: 1;
+}
 
-  .modal-card {
-    width: 100%;
-    max-width: 100%;
-    height: 92dvh;
-    max-height: 92dvh;
-    border-radius: 24px 24px 0 0;
-    padding: 18px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
+.pop-up-enter-from .modal-card,
+.pop-up-leave-to .modal-card {
+  transform: scale(0.97);
+}
 
-  :deep(.add-project-card) {
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
+.pop-up-enter-active .modal-card,
+.pop-up-leave-active .modal-card {
+  transition: transform 0.4s var(--ease-overshoot);
+}
 
-  :deep(.add-project-card > h2) {
-    margin: 0 48px 18px 0 !important;
-    line-height: 1.78;
-  }
-
-  .project-form {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 4px;
-    gap: 20px;
-  }
-
-  .helper-text {
-    font-size: 0.68rem;
-    line-height: 1.3;
-    margin-top: -4px;
-  }
-
-  textarea {
-    min-height: 90px;
-  }
-
-  .form-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    flex-shrink: 0;
-    margin-top: 12px;
-  }
-
-  .form-actions button {
-    width: 100%;
-  }
+.pop-up-enter-to .modal-card,
+.pop-up-leave-from .modal-card {
+  transform: scale(1);
 }
 </style>
