@@ -339,8 +339,12 @@ const submitProject = () => {
 
 <style scoped>
 .modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
   min-height: 100vh;
-  background: transparent !important;
+  z-index: 1000;
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -466,8 +470,6 @@ textarea:focus {
 
 @media (max-width: 600px) {
   .modal-overlay {
-    position: fixed;
-    inset: 0;
     height: 100dvh;
     overflow: hidden;
 

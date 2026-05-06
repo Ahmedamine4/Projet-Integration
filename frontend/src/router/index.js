@@ -58,13 +58,17 @@ const routes = [
     },
   },
   {
-    path: '/add-project',
-    name: 'AddProject',
-    component: () => import('@/views/app/AddProjectView.vue'),
+    path: '/projects',
+    name: 'projects',
+    component: () => import('@/views/app/ProjectsView.vue'),
     meta: {
       requiresAuth: true,
       layout: 'app',
     },
+  },
+  {
+    path: '/add-project',
+    redirect: '/projects',
   },
   {
     path: '/:pathMatch(.*)*',
