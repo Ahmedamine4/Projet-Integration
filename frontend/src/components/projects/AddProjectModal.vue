@@ -547,11 +547,16 @@ textarea:focus {
   transform: scale(1);
 }
 
+@media (max-width: 980px) {
+  .modal-card {
+    margin-inline: auto;
+  }
+}
+
 @media (max-width: 480px) {
   .modal-card {
     align-self: flex-end;
     height: 70vh;
-    margin-inline: 0;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
   }
 }
