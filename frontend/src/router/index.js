@@ -1,10 +1,13 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-import HomeView from '@/views/HomeView.vue';
-import LoginView from '@/views/auth/LoginView.vue';
-import RegisterView from '@/views/auth/RegisterView.vue';
-import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
-import NotFoundView from '@/views/NotFoundView.vue';
+import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from '../stores/auth';
+import HomeView from "../views/HomeView.vue";
+import LoginView from "../views/auth/LoginView.vue";
+import RegisterView from "../views/auth/RegisterView.vue";
+import DashboardView from "../views/app/DashboardView.vue";
+import AuthCallbackView from "@/views/auth/AuthCallbackView.vue";
+import NotFoundView from "@/views/NotFoundView.vue";
+import GettingStarted from "@/views/app/GettingStartedView.vue";
+import AddProjectForm from "@/views/app/AddProjectView.vue";
 
 const routes = [
   {

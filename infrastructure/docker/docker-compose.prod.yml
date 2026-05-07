@@ -3,6 +3,8 @@ services:
     build:
       context: ../../backend
       target: production
+    env_file: #toutes les variables d'env chargees
+      - ../../backend/.env 
     environment:
       - NODE_ENV=production
 

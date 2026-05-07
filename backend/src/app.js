@@ -7,21 +7,21 @@ import getInstitutionRoutes from './routes/institution.routes.js';
 import ValidationEtudiantRoutes from './routes/validation_etudiant.routes.js';
 import cookieParser from 'cookie-parser';
 import aiRoutes from './routes/ai.route.js';
+import portfolioRoutes from './routes/portfolio.routes.js';
 
 const app = express();
 app.use(cors({
   origin: true, // Autorise les requêtes
   credentials: true
 }));
-// app.use(cors());
 
 // Middlewares
 app.use(express.json()); 
 app.use(cookieParser());
 
-// Branchement des routes d'authentification
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/users', portfolioRoutes);
 
 //Getting institutions
 app.use('/api/getInstitutions', getInstitutionRoutes);
