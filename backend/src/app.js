@@ -33,7 +33,7 @@ app.use('/api/select-institutions', LinkInstitutionsToEtudiantRoutes);
 app.use('/api/validation', ValidationEtudiantRoutes);
 
 // Branchement des routes d'ajout du projet
-app.use('/api/projets', projetRoutes);
+app.use('/api', projetRoutes);
 
 // Route de test
 app.get("/", (req, res) => {

@@ -1,9 +1,10 @@
 import express from 'express';
 import { addProjet } from '../controllers/projet.controller.js';
-import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware.js';
+import { upload } from '../middlewares/upload.middleware.js';
 
 const router = express.Router();
 
-router.post('/addprojet', authMiddleware ,addProjet);
+router.post('/add-projet', authMiddleware, authorizeRoles('professionnel','etudiant'),upload.single('img'), addProjet);
 
 export default router;

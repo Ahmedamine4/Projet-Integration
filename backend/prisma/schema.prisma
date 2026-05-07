@@ -23,6 +23,11 @@ enum TypeExperience {
   activite
 }
 
+enum TypeSpecifique {
+  personnel
+  academique
+}
+
 enum RoleUtilisateur {
   etudiant
   professeur
@@ -237,6 +242,7 @@ model Experience {
   date_experience DateTime?
   visibilite      Boolean?
   type            TypeExperience
+  type_specifique      TypeSpecifique?
   description     String?
   utilisateur_id  String
 
@@ -276,11 +282,12 @@ model Documentation {
 
 model Projet {
   experience_id    String              @id
-  type_projet      String?             @db.VarChar(50)
   lien_github      String?
   lien_youtube     String?
   resultat_obtenus String?
   role             String?             @db.VarChar(50)
+  technologies     String[]
+  domains          String[]
   experience       Experience          @relation(fields: [experience_id], references: [experience_id])
   validation       ValideProjet?
 
