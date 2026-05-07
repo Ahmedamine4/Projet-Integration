@@ -94,7 +94,6 @@ const deleteProject = (projectId) => {
   <section class="projects-page">
     <header class="projects-header">
       <div>
-        <p class="projects-header__eyebrow">Workspace</p>
         <h1>Projects</h1>
       </div>
 
@@ -213,7 +212,7 @@ const deleteProject = (projectId) => {
     </div>
 
     <AddProjectModal
-      v-if="isAddProjectModalOpen"
+      :open="isAddProjectModalOpen"
       @close="closeAddProjectModal"
       @submit="handleProjectSubmit"
     />
@@ -232,14 +231,6 @@ const deleteProject = (projectId) => {
   justify-content: space-between;
   gap: var(--space-md);
   margin-bottom: var(--space-xl);
-}
-
-.projects-header__eyebrow {
-  margin: 0 0 var(--space-xs);
-  color: var(--color-primary-hover);
-  font-size: var(--font-size-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .projects-header h1 {
