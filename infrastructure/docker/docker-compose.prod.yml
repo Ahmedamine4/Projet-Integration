@@ -23,6 +23,8 @@ services:
       target: production
     environment:
       - ENV=production
+    volumes:
+      - ../../ai/models:/app/models:ro
   
   nginx:
     volumes:
