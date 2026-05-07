@@ -11,7 +11,6 @@ app = FastAPI(
 # Load model once when API starts
 model, tokenizer, device = load_model()
 
-
 class PredictionRequest(BaseModel):
     text: str
 
