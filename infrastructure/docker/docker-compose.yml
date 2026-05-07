@@ -3,15 +3,14 @@ services:
     container_name: back-app-container
     ports:
       - "3000:3000"
-      - "5555:5555" # Port pour le WebSocket
+      #- "5555:5555" # Port pour le WebSocket
     build:
       context: ../../backend
     env_file:
       - ../../backend/.env
-    volumes:
-    - ../../backend:/app
-    - /app/node_modules
-    command: npm run dev
+# Les volumes ont été retirés du fichier global pour respecter la séparation dev/prod !!
+   # command: npm run dev :  Pas de "command" ici pour éviter d'écraser le CMD du Dockerfile
+# Le CMD inclut déjà les migrations Prisma + le lancement du serveur !!
     depends_on:
       db:
         condition: service_healthy
@@ -24,11 +23,8 @@ services:
     #   - "5173:5173"  gerer au niveau de nginx pour le reverse proxy
     depends_on:
       - backend
-    volumes:
-      - ../../frontend:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+# Les volumes ont été retirés pour respecter la séparation entre développement et production , comme le backend
+#meme chose pour CHOKIDAR_USEPOLLING=true, non utilisé en production car inutile
   db:
     image: postgres:16-alpine
     container_name: postgres-db-container

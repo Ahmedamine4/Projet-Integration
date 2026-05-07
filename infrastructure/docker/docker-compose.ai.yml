@@ -5,8 +5,10 @@ services:
       target: development-ai
     volumes:
       - ../../ai/scripts:/app/scripts
-      - ../../ai/src:/app/src
+    #  - ../../ai/src:/app/src   : le dossier src n'existe pas !
+    # Si ces dossiers n'existent pas Docker les crée vides
       - ../../ai/data:/app/data
-      - ../../ai/models:/app/models
+       - ../../ai/models:/app/models:ro 
+       # the container can read the model but cannot modify it.
     ports:
       - "8000:8000"
