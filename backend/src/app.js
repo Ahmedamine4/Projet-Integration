@@ -7,6 +7,7 @@ import getInstitutionRoutes from './routes/institution.routes.js';
 import ValidationEtudiantRoutes from './routes/validation_etudiant.routes.js';
 import cookieParser from 'cookie-parser';
 import aiRoutes from './routes/ai.route.js';
+import stageRoutes from './routes/stage.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
 
 const app = express();
@@ -22,6 +23,9 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/users', portfolioRoutes);
+
+// Branchement des routes de gestion des stages
+app.use('/api/stages', stageRoutes);
 
 //Getting institutions
 app.use('/api/getInstitutions', getInstitutionRoutes);

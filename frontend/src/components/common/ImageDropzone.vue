@@ -69,11 +69,11 @@ const handleDrop = (event) => {
 
 <style scoped>
 .drop-zone {
-  border: 1.5px dashed rgba(var(--color-primary-rgb), 0.35);
+  border: 1.5px dashed rgba(var(--color-primary-rgb), 0.18);
   border-radius: var(--radius-md);
   padding: var(--space-xl);
   text-align: center;
-  background: var(--color-surface);
+  background: rgba(var(--color-surface-rgb), 0.32);
 }
 
 .drop-zone p {

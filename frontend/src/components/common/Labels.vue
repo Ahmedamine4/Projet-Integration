@@ -1,5 +1,5 @@
 <script setup>
-import { X } from 'lucide-vue-next';
+import { X, Plus } from 'lucide-vue-next';
 
 defineProps({
   title: {
@@ -40,7 +40,11 @@ const emit = defineEmits(['toggle']);
             :stroke-width="2.5"
           />
 
-          <span v-else>+</span>
+          <Plus
+            v-else
+            :size="12"
+            :stroke-width="3.2"
+          />
         </button>
       </span>
     </div>
