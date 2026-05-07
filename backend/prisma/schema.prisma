@@ -3,7 +3,6 @@
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -22,6 +21,11 @@ enum TypeExperience {
   projet
   stage
   activite
+}
+
+enum TypeSpecifique {
+  personnel
+  academique
 }
 
 enum RoleUtilisateur {
@@ -239,6 +243,7 @@ model Experience {
   date_experience DateTime?
   visibilite      Boolean?
   type            TypeExperience
+  type_specifique      TypeSpecifique?
   description     String?
   utilisateur_id  String
 
@@ -278,11 +283,12 @@ model Documentation {
 
 model Projet {
   experience_id    String              @id
-  type_projet      String?             @db.VarChar(50)
   lien_github      String?
   lien_youtube     String?
   resultat_obtenus String?
   role             String?             @db.VarChar(50)
+  technologies     String[]
+  domains          String[]
   experience       Experience          @relation(fields: [experience_id], references: [experience_id])
   validation       ValideProjet?
 

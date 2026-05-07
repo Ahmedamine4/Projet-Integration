@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import prisma from '../config/prisma.js';
 
 export const LinkInstitutionsToEtudiant = async (etudiantId, institutionNoms) => {
     // 1. Trouver les institutions correspondantes
