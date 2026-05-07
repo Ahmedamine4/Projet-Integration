@@ -30,9 +30,8 @@ COPY package-lock.json .
 COPY prisma ./prisma
 #le schema doit être dans l'image
 
-RUN npm ci --omit=dev 
+RUN npm install --omit=dev 
 # est la version moderne et recommandée pour PROD et CI/CD (better than --only=production)
-# POUR PROD : npm ci est utilisé à la place de npm install pour assurer une installation rapide, propre et reproductible dans un environnement Docker
 RUN npx prisma generate
 #crée le client JS depuis le schema
 COPY . .

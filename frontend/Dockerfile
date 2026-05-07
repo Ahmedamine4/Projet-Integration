@@ -12,8 +12,7 @@ CMD ["npm", "run", "dev"]
 
 
 FROM base AS build
-RUN npm ci
-# POUR PROD : npm ci est utilisé à la place de npm install pour assurer une installation rapide, propre et reproductible dans un environnement Docker , aussi pour CI (gitlab)
+RUN npm install
 COPY . .
 RUN npm run build
 
