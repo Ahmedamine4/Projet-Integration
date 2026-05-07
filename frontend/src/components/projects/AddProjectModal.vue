@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch, onUnmounted } from 'vue';
+import { ref, reactive, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { analyzeProjectDescription } from '@/services/aiApi';
 import Button from '@/components/common/Button.vue';
 import Input from '@/components/common/Input.vue';
@@ -29,6 +29,8 @@ const errors = reactive({
   institution: '',
   teacherEmail: '',
 });
+
+const MAX_EDIT_LEN = 1200;
 
 const domainColorRgb = '245, 158, 11';
 
@@ -202,6 +204,22 @@ const submitProject = () => {
     visibleToEveryone: form.visibleToEveryone
   });
 };
+
+const textareaElem = ref(null);
+
+function resizeTextarea() {
+  const textarea = textareaElem.value;
+  if (!textarea) return;
+
+  textarea.style.height = 'auto';
+  textarea.style.height = `${textarea.scrollHeight}px`;
+}
+
+onMounted(resizeTextarea);
+
+watch(() => props.open, (open) => {
+  if (open) nextTick(resizeTextarea);
+});
 </script>
 
 <template>
@@ -245,8 +263,10 @@ const submitProject = () => {
                 <label for="description">Description</label>
 
                 <textarea
+                  ref="textareaElem"
                   id="description"
                   v-model="form.description"
+                  @input="resizeTextarea"
                   placeholder="Describe your project, its goal, features, and tools used..."
                 />
               </div>
@@ -358,6 +378,8 @@ const submitProject = () => {
 }
 
 .modal-card {
+  --scrollbar-width: clamp(8px, 1vw, 12px);
+  --scrollbar-padding: clamp(2px, 0.25vw, 3px);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -371,13 +393,31 @@ const submitProject = () => {
 }
 
 .modal-card__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
   padding: var(--space-lg);
-  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  background-color: var(--color-background);
+}
+
+.modal-card__header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: var(--scrollbar-width);
+  top: 100%;
+  height: 18px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--color-background),
+    rgba(var(--color-background-rgb), 0)
+  );
 }
 
 .modal-card__header h2 {
@@ -407,6 +447,22 @@ const submitProject = () => {
   gap: 1.2rem;
   padding: var(--space-lg);
 }
+
+.project-form__body::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.project-form__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.project-form__body::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--color-primary-rgb), 0.22);
+  border-radius: 999px;
+  border: var(--scrollbar-padding) solid transparent;
+  background-clip: content-box;
+}
+
 
 .field {
   display: grid;
@@ -459,7 +515,7 @@ const submitProject = () => {
 textarea {
   width: 100%;
   min-height: 110px;
-  resize: vertical;
+  resize: none;
   border: 1px solid rgba(var(--color-primary-rgb), 0.18);
   border-radius: var(--radius-md);
   padding: 12px 14px;
@@ -467,6 +523,7 @@ textarea {
   color: var(--color-primary);
   font-family: var(--font-ui);
   font-size: var(--font-size-md);
+  overflow: hidden;
 }
 
 textarea:focus {
@@ -487,12 +544,29 @@ textarea:focus {
 }
 
 .project-form__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 14px;
-  border-top: 1px solid rgba(var(--color-primary-rgb), 0.08);
   padding: var(--space-md);
+}
+
+.project-form__footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: var(--scrollbar-width);
+  bottom: 100%;
+  height: 18px;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    var(--color-background),
+    rgba(var(--color-background-rgb), 0)
+  );
 }
 
 .field-reveal-enter-from,
