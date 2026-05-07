@@ -27,7 +27,6 @@ export const ROLES = {
 
 // Récupérer le token depuis les cookies
 function getToken(req) {
-  // Le token n'est plus dans le header, il est dans le cookie !
   return req.cookies?.accessToken || null; 
 }
 
@@ -42,7 +41,7 @@ export async function authMiddleware(req, res, next) {
     });
   }
   
-  // 1. Vérifier token local Express
+  // Vérifier token local Express
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -63,7 +62,7 @@ export async function authMiddleware(req, res, next) {
     // Si ce n'est pas un token local, on essaie Google
   }
 
-  // 2. Vérifier token Google / Supabase
+  // Vérifier token Google / Supabase
   try {
     const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
 
