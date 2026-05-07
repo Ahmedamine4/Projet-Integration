@@ -198,7 +198,7 @@ const submitProject = () => {
     technologies: getSelectedNames(technologies.value),
     domains: getSelectedNames(domains.value),
     githubLink: trimmedGithubLink,
-    projectType: form.isCertified ? 'certified' : 'personal',
+    projectType: form.isCertified ? 'academique' : 'personnel',
     institution: form.isCertified ? form.institution : '',
     teacherEmail: form.isCertified ? trimmedTeacherEmail : '',
     visibleToEveryone: form.visibleToEveryone
