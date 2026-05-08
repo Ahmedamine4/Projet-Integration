@@ -223,6 +223,19 @@ onMounted(resizeTextarea);
 watch(() => props.open, (open) => {
   if (open) nextTick(resizeTextarea);
 });
+
+function resetAcademicFields() {
+  errors.institution = '';
+  errors.teacherEmail = '';
+  form.institution = '';
+  form.teacherEmail = '';
+}
+
+watch(
+  () => form.isCertified,
+  (value) => {
+    if (!value) resetAcademicFields();
+});
 </script>
 
 <template>
