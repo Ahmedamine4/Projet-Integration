@@ -17,6 +17,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['close', 'submit']);
@@ -53,7 +57,6 @@ const professorEmails = [
   'salma.aitali@fstt.ac.ma',
   'omar.benali@uae.ac.ma'
 ];
-
 
 const form = reactive({
   title: '',
@@ -355,7 +358,11 @@ watch(() => props.open, (open) => {
               Cancel
             </Button>
 
-            <Button type="submit" variant="submit">
+            <Button
+              type="submit"
+              variant="submit"
+              :loading
+            >
               Submit project
             </Button>
           </div>
@@ -411,12 +418,12 @@ watch(() => props.open, (open) => {
   left: 0;
   right: var(--scrollbar-width);
   top: 100%;
-  height: 18px;
+  height: 24px;
   pointer-events: none;
   background: linear-gradient(
     to bottom,
     var(--color-background),
-    rgba(var(--color-background-rgb), 0)
+    transparent
   );
 }
 
@@ -560,12 +567,12 @@ textarea:focus {
   left: 0;
   right: var(--scrollbar-width);
   bottom: 100%;
-  height: 18px;
+  height: 24px;
   pointer-events: none;
   background: linear-gradient(
     to top,
     var(--color-background),
-    rgba(var(--color-background-rgb), 0)
+    transparent
   );
 }
 

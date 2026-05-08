@@ -1,46 +1,43 @@
 <script setup>
+import api from '@/services/api';
 import { ref } from 'vue';
-import { Edit3, Plus, Trash2 } from 'lucide-vue-next';
+import { Plus, Trash2 } from 'lucide-vue-next';
 import Button from '@/components/common/Button.vue';
 import Card from '@/components/common/Card.vue';
-import Input from '@/components/common/Input.vue';
-import DatePicker from '@/components/common/DatePicker.vue';
 import AddProjectModal from '@/components/projects/AddProjectModal.vue';
 
 const isAddProjectModalOpen = ref(false);
-const editingProjectId = ref(null);
+const isSubmittingProject = ref(false);
+const submitProjectError = ref('');
 
 const projects = ref([
   {
     id: 1,
     projectTitle: 'Student portfolio',
     projectDate: '2026-05-06',
+    projectImage: null,
+    projectImagePreview: null,
     description: 'A personal portfolio for presenting academic and web projects.',
     githubLink: 'https://github.com/student/portfolio',
     technologies: ['Vue.js', 'CSS'],
     domains: ['Web'],
-    projectType: 'personal',
+    projectType: 'personnel',
     visibleToEveryone: true,
   },
   {
     id: 2,
     projectTitle: 'Library dashboard',
     projectDate: '2026-04-18',
+    projectImage: null,
+    projectImagePreview: null,
     description: 'A simple dashboard for tracking library books and borrowing status.',
     githubLink: 'https://github.com/student/library-dashboard',
     technologies: ['Vue.js', 'API'],
     domains: ['Education'],
-    projectType: 'certified',
+    projectType: 'academique',
     visibleToEveryone: false,
   },
 ]);
-
-const editDraft = ref({
-  projectTitle: '',
-  projectDate: '',
-  description: '',
-  githubLink: '',
-});
 
 const openAddProjectModal = () => {
   isAddProjectModalOpen.value = true;
@@ -50,39 +47,48 @@ const closeAddProjectModal = () => {
   isAddProjectModalOpen.value = false;
 };
 
-const handleProjectSubmit = (project) => {
-  projects.value.unshift({
-    id: Date.now(),
-    ...project,
-  });
-  closeAddProjectModal();
-};
+const handleProjectSubmit = async (project) => {
+  submitProjectError.value = '';
+  isSubmittingProject.value = true;
 
-const startEdit = (project) => {
-  editingProjectId.value = project.id;
-  editDraft.value = {
-    projectTitle: project.projectTitle,
-    projectDate: project.projectDate,
-    description: project.description,
-    githubLink: project.githubLink,
-  };
-};
+  try {
+    const projectImagePreview = project.projectImage
+      ? URL.createObjectURL(project.projectImage)
+      : null;
+    
+    const formData = new FormData();
 
-const cancelEdit = () => {
-  editingProjectId.value = null;
-};
+    ['projectTitle', 'projectDate', 'description', 'githubLink']
+      .forEach(key => formData.append(key, project[key]));
+    formData.append('projetType', project.projectType);
+    formData.append('professorEmail', project.teacherEmail);
+    formData.append('visibleToEveryone', String(project.visibleToEveryone));
+    formData.append('technologies', JSON.stringify(project.technologies));
+    formData.append('domains', JSON.stringify(project.domains));
+    if (project.projectImage) {
+      formData.append('img', project.projectImage);
+    }
 
-const saveEdit = (projectId) => {
-  projects.value = projects.value.map((project) => {
-    if (project.id !== projectId) return project;
+    await api.post('/add-projet', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    });
 
-    return {
+    projects.value.unshift({
+      id: Date.now(),
       ...project,
-      ...editDraft.value,
-    };
-  });
+      projectImagePreview,
+    });
 
-  cancelEdit();
+    closeAddProjectModal();
+  }
+  catch(error) {
+    submitProjectError.value = error.response?.data?.message || 'Failed to create project';
+  }
+  finally {
+    isSubmittingProject.value = false;
+  }
 };
 
 const deleteProject = (projectId) => {
@@ -110,100 +116,54 @@ const deleteProject = (projectId) => {
         class="project-card"
         full-width
       >
-        <template v-if="editingProjectId === project.id">
-          <div class="project-edit">
-            <Input
-              v-model="editDraft.projectTitle"
-              label="Project title"
-              placeholder="Project title"
-            />
-
-            <DatePicker
-              v-model="editDraft.projectDate"
-              label="Project date"
-              placeholder="Select project date"
-            />
-
-            <Input
-              v-model="editDraft.githubLink"
-              label="GitHub link"
-              type="url"
-              placeholder="https://github.com/username/project-name"
-            />
-
-            <div class="project-edit__field">
-              <label for="edit-description">Description</label>
-              <textarea
-                id="edit-description"
-                v-model="editDraft.description"
-                placeholder="Describe your project"
-              />
+        <div class="project-card__main">
+          <img
+            v-if="project.projectImagePreview"
+            class="project-card__image"
+            :src="project.projectImagePreview"
+            :alt="project.projectTitle"
+          />
+          <div class="project-card__content">
+            <div class="project-card__title-row">
+              <h2>{{ project.projectTitle }}</h2>
+              <span class="project-card__type">
+                {{ project.projectType }}
+              </span>
             </div>
 
-            <div class="project-card__actions">
-              <Button variant="ghost" type="button" @click="cancelEdit">
-                Cancel
-              </Button>
-              <Button variant="submit" type="button" @click="saveEdit(project.id)">
-                Save
-              </Button>
+            <p class="project-card__date">{{ project.projectDate }}</p>
+            <p class="project-card__description">{{ project.description }}</p>
+
+            <div class="project-card__meta">
+              <a :href="project.githubLink" target="_blank" rel="noreferrer">
+                GitHub
+              </a>
+              <span>
+                {{ project.visibleToEveryone ? 'Public' : 'Private' }}
+              </span>
+            </div>
+
+            <div class="project-card__tags">
+              <span
+                v-for="technology in project.technologies"
+                :key="technology"
+              >
+                {{ technology }}
+              </span>
             </div>
           </div>
-        </template>
 
-        <template v-else>
-          <div class="project-card__main">
-            <div class="project-card__content">
-              <div class="project-card__title-row">
-                <h2>{{ project.projectTitle }}</h2>
-                <span class="project-card__type">
-                  {{ project.projectType }}
-                </span>
-              </div>
-
-              <p class="project-card__date">{{ project.projectDate }}</p>
-              <p class="project-card__description">{{ project.description }}</p>
-
-              <div class="project-card__meta">
-                <a :href="project.githubLink" target="_blank" rel="noreferrer">
-                  GitHub
-                </a>
-                <span>
-                  {{ project.visibleToEveryone ? 'Public' : 'Private' }}
-                </span>
-              </div>
-
-              <div class="project-card__tags">
-                <span
-                  v-for="technology in project.technologies"
-                  :key="technology"
-                >
-                  {{ technology }}
-                </span>
-              </div>
-            </div>
-
-            <div class="project-card__actions">
-              <button
-                class="icon-button"
-                type="button"
-                aria-label="Edit project"
-                @click="startEdit(project)"
-              >
-                <Edit3 :size="15" />
-              </button>
-
-              <button
-                class="icon-button icon-button--danger"
-                type="button"
-                aria-label="Delete project"
-                @click="deleteProject(project.id)"
-              >
-                <Trash2 :size="15" />
-              </button>
-            </div>
+          <div class="project-card__actions">
+            <button
+              class="icon-button icon-button--danger"
+              type="button"
+              aria-label="Delete project"
+              @click="deleteProject(project.id)"
+            >
+              <Trash2 :size="15" />
+            </button>
           </div>
-        </template>
+        </div>
       </Card>
 
       <div v-if="!projects.length" class="empty-state">
@@ -213,6 +173,7 @@ const deleteProject = (projectId) => {
 
     <AddProjectModal
       :open="isAddProjectModalOpen"
+      :loading="isSubmittingProject"
       @close="closeAddProjectModal"
       @submit="handleProjectSubmit"
     />
@@ -255,14 +216,23 @@ const deleteProject = (projectId) => {
 
 .project-card__main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--space-md);
+  align-items: start;
 }
 
 .project-card__content {
   display: grid;
   gap: var(--space-sm);
   min-width: 0;
+}
+
+.project-card__image {
+  width: 8rem;
+  height: 6rem;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
 }
 
 .project-card__title-row {
@@ -350,43 +320,6 @@ const deleteProject = (projectId) => {
 .icon-button--danger:focus-visible {
   background: rgba(var(--color-error-rgb), 0.08);
   color: var(--color-error);
-}
-
-.project-edit {
-  display: grid;
-  gap: var(--space-md);
-}
-
-.project-edit__field {
-  display: grid;
-  gap: var(--space-xs);
-}
-
-.project-edit__field label {
-  color: var(--color-primary-hover);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-medium);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-textarea {
-  width: 100%;
-  min-height: 6.5rem;
-  resize: vertical;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.18);
-  border-radius: 0.8rem;
-  padding: 0.75rem;
-  background: rgba(var(--color-surface-rgb), 0.32);
-  color: var(--color-primary);
-  font-family: var(--font-ui);
-  font-size: var(--font-size-sm);
-}
-
-textarea:focus {
-  outline: none;
-  border-color: var(--color-secondary);
-  box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
 .empty-state {
