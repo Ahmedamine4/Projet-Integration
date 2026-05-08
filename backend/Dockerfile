@@ -12,14 +12,12 @@ COPY prisma ./prisma
 RUN npm install   
  #  npm install pour dev (flexibilité)
 
-RUN npx prisma generate
-# ←interactif, crée des fichiers
 COPY . .
 
 EXPOSE 3000
 #changement du port
 
-CMD ["sh", "-c", "npx prisma migrate dev && npm run dev"] 
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate dev && npm run dev"]
 
 
 FROM base AS production

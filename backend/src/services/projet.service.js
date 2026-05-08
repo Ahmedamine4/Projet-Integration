@@ -11,7 +11,7 @@ export const createProjet = async (data, userId) => {
         date_experience: new Date(data.projectDate),
         description: data.description,
         visibilite: data.visibleToEveryone,
-        TypeExperience: TypeExperience.projet,
+        type: TypeExperience.projet,
         utilisateur_id: userId,
       }
     });
