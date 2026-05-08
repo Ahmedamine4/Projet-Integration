@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import { Plus, Trash2 } from 'lucide-vue-next';
 import Button from '@/components/common/Button.vue';
 import Card from '@/components/common/Card.vue';
-import AddProjectModal from '@/components/projects/AddProjectModal.vue';
+import ExperienceModal from '@/components/projects/ExperienceModal.vue';
 
 const isAddProjectModalOpen = ref(false);
 const isSubmittingProject = ref(false);
@@ -13,29 +13,51 @@ const submitProjectError = ref('');
 const projects = ref([
   {
     id: 1,
-    projectTitle: 'Student portfolio',
-    projectDate: '2026-05-06',
-    projectImage: null,
-    projectImagePreview: null,
-    description: 'A personal portfolio for presenting academic and web projects.',
+    type: 'project',
+    title: 'Student portfolio',
+    date: '2026-05-06',
+    image: null,
+    imagePreview: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=900&auto=format&fit=crop',
+    description: 'A Vue portfolio for presenting academic work, web projects, skills, and achievements in a clean student profile.',
     githubLink: 'https://github.com/student/portfolio',
-    technologies: ['Vue.js', 'CSS'],
-    domains: ['Web'],
-    projectType: 'personnel',
+    technologies: ['Vue.js', 'CSS', 'Node.js'],
+    domains: ['Web', 'Portfolio'],
+    isAcademic: false,
+    institution: '',
+    teacherEmail: '',
     visibleToEveryone: true,
   },
   {
     id: 2,
-    projectTitle: 'Library dashboard',
-    projectDate: '2026-04-18',
-    projectImage: null,
-    projectImagePreview: null,
-    description: 'A simple dashboard for tracking library books and borrowing status.',
+    type: 'project',
+    title: 'Library dashboard',
+    date: '2026-04-18',
+    image: null,
+    imagePreview: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=900&auto=format&fit=crop',
+    description: 'A dashboard for managing books, borrowers, availability, late returns, and library activity statistics.',
     githubLink: 'https://github.com/student/library-dashboard',
-    technologies: ['Vue.js', 'API'],
-    domains: ['Education'],
-    projectType: 'academique',
+    technologies: ['Vue.js', 'Express', 'PostgreSQL'],
+    domains: ['Education', 'Management'],
+    isAcademic: true,
+    institution: 'ENSA Tanger',
+    teacherEmail: 'ahmed.elamrani@ensat.ac.ma',
     visibleToEveryone: false,
+  },
+  {
+    id: 3,
+    type: 'project',
+    title: 'Internship tracker',
+    date: '2026-03-22',
+    image: null,
+    imagePreview: 'https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=900&auto=format&fit=crop',
+    description: 'A tool for tracking internship applications, interview dates, company contacts, and application progress.',
+    githubLink: 'https://github.com/student/internship-tracker',
+    technologies: ['Vue.js', 'Supabase', 'Tailwind CSS'],
+    domains: ['Productivity', 'Career'],
+    isAcademic: false,
+    institution: '',
+    teacherEmail: '',
+    visibleToEveryone: true,
   },
 ]);
 
@@ -52,21 +74,23 @@ const handleProjectSubmit = async (project) => {
   isSubmittingProject.value = true;
 
   try {
-    const projectImagePreview = project.projectImage
-      ? URL.createObjectURL(project.projectImage)
+    const projectImagePreview = project.image
+      ? URL.createObjectURL(project.image)
       : null;
     
     const formData = new FormData();
 
-    ['projectTitle', 'projectDate', 'description', 'githubLink']
-      .forEach(key => formData.append(key, project[key]));
-    formData.append('projetType', project.projectType);
+    formData.append('projectTitle', project.title);
+    formData.append('projectDate', project.date);
+    formData.append('description', project.description);
+    formData.append('githubLink', project.githubLink);
+    formData.append('projetType', project.isAcademic ? 'academique' : 'personnel');
     formData.append('professorEmail', project.teacherEmail);
     formData.append('visibleToEveryone', String(project.visibleToEveryone));
     formData.append('technologies', JSON.stringify(project.technologies));
     formData.append('domains', JSON.stringify(project.domains));
-    if (project.projectImage) {
-      formData.append('img', project.projectImage);
+    if (project.image) {
+      formData.append('img', project.image);
     }
 
     await api.post('/add-projet', formData, {
@@ -78,7 +102,7 @@ const handleProjectSubmit = async (project) => {
     projects.value.unshift({
       id: Date.now(),
       ...project,
-      projectImagePreview,
+      imagePreview: projectImagePreview,
     });
 
     closeAddProjectModal();
@@ -118,20 +142,20 @@ const deleteProject = (projectId) => {
       >
         <div class="project-card__main">
           <img
-            v-if="project.projectImagePreview"
+            v-if="project.imagePreview"
             class="project-card__image"
-            :src="project.projectImagePreview"
-            :alt="project.projectTitle"
+            :src="project.imagePreview"
+            :alt="project.title"
           />
           <div class="project-card__content">
             <div class="project-card__title-row">
-              <h2>{{ project.projectTitle }}</h2>
+              <h2>{{ project.title }}</h2>
               <span class="project-card__type">
-                {{ project.projectType }}
+                {{ project.type }}
               </span>
             </div>
 
-            <p class="project-card__date">{{ project.projectDate }}</p>
+            <p class="project-card__date">{{ project.date }}</p>
             <p class="project-card__description">{{ project.description }}</p>
 
             <div class="project-card__meta">
@@ -171,7 +195,7 @@ const deleteProject = (projectId) => {
       </div>
     </div>
 
-    <AddProjectModal
+    <ExperienceModal
       :open="isAddProjectModalOpen"
       :loading="isSubmittingProject"
       @close="closeAddProjectModal"

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { analyzeProjectDescription } from '@/services/aiApi';
 import Button from '@/components/common/Button.vue';
 import Input from '@/components/common/Input.vue';
@@ -21,9 +21,25 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  mode: {
+    type: String,
+    default: 'create',
+    validator: value => ['create', 'edit'].includes(value),
+  },
+  type: {
+    type: String,
+    default: 'project',
+    validator: value => ['project', 'internship', 'activity', 'certificate'].includes(value),
+  },
+  initialValue: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['close', 'submit']);
+
+const isEdit = computed(() => props.mode === 'edit');
 
 const errors = reactive({
   title: '',
@@ -65,11 +81,36 @@ const form = reactive({
   description: '',
   image: null,
   githubLink: '',
-  isCertified: false,
+  isAcademic: false,
   institution: '',
   teacherEmail: '',
   visibleToEveryone: true
 });
+
+function resetForm() {
+  Object.keys(form).forEach(key => {
+    if (key === 'image') form[key] = null;
+    else if (key === 'isAcademic') form[key] = false;
+    else if (key === 'visibleToEveryone') form[key] = true;
+    else form[key] = '';
+  });
+  resetDetectedTags();
+  resetErrors();
+}
+
+function fillForm() {
+  const value = props.initialValue;
+  if (!value) {
+    resetForm();
+    return;
+  }
+  Object.keys(form).forEach(key => {
+    if (value[key] !== undefined) form[key] = value[key];
+  });
+  technologies.value = createSelectableItems(value.technologies ?? []);
+  domains.value = createSelectableItems(value.domains ?? []);
+  resetErrors();
+}
 
 const createSelectableItems = (items = []) =>
   items.map((name) => ({
@@ -162,6 +203,7 @@ watch(
 
 onUnmounted(() => {
   clearTimeout(descriptionTypingTimer);
+  document.body.style.overflow = '';
 });
 
 const submitProject = () => {
@@ -176,7 +218,7 @@ const submitProject = () => {
 
   if (!form.date) errors.date = 'Project date is required';
 
-  if (!form.image) errors.image = 'Project screenshot is required';
+  if (!isEdit.value && !form.image) errors.image = 'Project screenshot is required';
 
   if (trimmedDescription.length < 20)
     errors.description = 'Description must be at least 20 characters';
@@ -187,13 +229,13 @@ const submitProject = () => {
   else if (!isValidGithubLink(trimmedGithubLink))
     errors.githubLink = 'Enter a valid GitHub project URL';
 
-  if (form.isCertified && !form.institution)
-    errors.institution = 'Institution is required for certified projects';
+  if (form.isAcademic && !form.institution)
+    errors.institution = 'Institution is required for academic projects';
 
-  if (form.isCertified && !trimmedTeacherEmail)
-    errors.teacherEmail = 'Teacher email is required for certified projects';
+  if (form.isAcademic && !trimmedTeacherEmail)
+    errors.teacherEmail = 'Teacher email is required for academic projects';
   else if (
-    form.isCertified &&
+    form.isAcademic &&
     !professorEmails.includes(trimmedTeacherEmail)
   )
     errors.teacherEmail = 'Select a valid teacher email';
@@ -201,17 +243,17 @@ const submitProject = () => {
   if (hasErrors()) return;
 
   emit('submit', {
-    projectTitle: trimmedTitle,
-    projectDate: form.date,
-    projectImage: form.image,
+    title: trimmedTitle,
+    date: form.date,
+    image: form.image,
     description: trimmedDescription,
     technologies: getSelectedNames(technologies.value),
     domains: getSelectedNames(domains.value),
     githubLink: trimmedGithubLink,
-    projectType: form.isCertified ? 'academique' : 'personnel',
-    institution: form.isCertified ? form.institution : '',
-    teacherEmail: form.isCertified ? trimmedTeacherEmail : '',
-    visibleToEveryone: form.visibleToEveryone
+    isAcademic: form.isAcademic,
+    institution: form.isAcademic ? form.institution : '',
+    teacherEmail: form.isAcademic ? trimmedTeacherEmail : '',
+    visibleToEveryone: form.visibleToEveryone,
   });
 };
 
@@ -228,7 +270,14 @@ function resizeTextarea() {
 onMounted(resizeTextarea);
 
 watch(() => props.open, (open) => {
-  if (open) nextTick(resizeTextarea);
+  document.body.style.overflow = open ? 'hidden' : '';
+
+  if (!open) return;
+
+  if (isEdit.value) fillForm();
+  else resetForm();
+
+  nextTick(resizeTextarea);
 });
 
 function resetAcademicFields() {
@@ -239,7 +288,7 @@ function resetAcademicFields() {
 }
 
 watch(
-  () => form.isCertified,
+  () => form.isAcademic,
   (value) => {
     if (!value) resetAcademicFields();
 });
@@ -250,7 +299,9 @@ watch(
     <div class="modal-overlay" v-if="open">
       <div class="modal-card">
         <div class="modal-card__header">
-          <h2>Create a new project</h2>
+          <h2>
+            {{ `${isEdit ? 'Edit' : 'Create a new'} ${props.type}` }}
+          </h2>
           <div class="close-button">
             <CloseButton size="lg" @click="emit('close')" />
           </div>
@@ -339,13 +390,13 @@ watch(
               </Error>
             </div>
 
-            <div class="certified-project-section">
+            <div class="academic-project-section">
               <ToggleSwitch
-                v-model="form.isCertified"
+                v-model="form.isAcademic"
                 label="Academic project"
               />
               <Transition name="field-reveal">
-                <div v-if="form.isCertified" class="form-group">
+                <div v-if="form.isAcademic" class="form-group">
                   <div class="institution-field">
                     <Select
                       v-model="form.institution"
@@ -393,7 +444,7 @@ watch(
               variant="submit"
               :loading
             >
-              Submit project
+              {{ isEdit ? 'Save changes' : `Submit ${props.type}` }}
             </Button>
           </div>
         </form>
@@ -525,7 +576,7 @@ watch(
   gap: var(--space-xs);
 }
 
-.certified-project-section {
+.academic-project-section {
   display: grid;
 }
 

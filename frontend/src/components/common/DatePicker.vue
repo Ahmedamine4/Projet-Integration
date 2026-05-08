@@ -244,7 +244,11 @@ onBeforeUnmount(() => {
     </button>
 
     <Transition name="date-picker-popover">
-      <div v-if="isOpen" class="date-picker__popover" @click.stop>
+      <div
+        v-if="isOpen"
+        class="date-picker__popover"
+        @click.stop
+      >
         <div class="date-picker__header">
           <button
             type="button"
@@ -398,11 +402,11 @@ onBeforeUnmount(() => {
 
 .date-picker__popover {
   position: absolute;
+  width: min(17rem, calc(100vw - 2rem));
+  padding: var(--space-sm);
   z-index: 120;
   top: calc(100% + var(--space-sm));
   left: 0;
-  width: min(20rem, calc(100vw - 2rem));
-  padding: var(--space-md);
   border: 1px solid rgba(var(--color-primary-rgb), 0.12);
   border-radius: var(--radius-md);
   background: var(--color-background);
@@ -421,9 +425,9 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
   padding: 0;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
   border-radius: 999px;
   background: transparent;
@@ -435,15 +439,15 @@ onBeforeUnmount(() => {
 }
 
 .date-picker__month {
-  padding: 0.35rem 0.7rem;
   border: none;
   border-radius: 999px;
+  font-size: var(--font-size-xs);
+  padding: 0.25rem 0.55rem;
   background: transparent;
   margin: 0;
   color: var(--color-primary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: var(--font-size-sm);
   font-weight: var(--font-medium);
   transition:
     background-color var(--transition-fast),
@@ -489,7 +493,7 @@ onBeforeUnmount(() => {
 }
 
 .date-picker__grid {
-  gap: 0.2rem;
+  gap: 0.15rem;
 }
 
 .date-picker__day {
@@ -499,11 +503,11 @@ onBeforeUnmount(() => {
   aspect-ratio: 1;
   min-width: 0;
   border: 1px solid transparent;
-  border-radius: 0.7rem;
+  border-radius: 0.55rem;
   background: transparent;
   color: var(--color-primary);
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: 0.68rem;
   cursor: pointer;
   transition:
     background-color var(--transition-fast),

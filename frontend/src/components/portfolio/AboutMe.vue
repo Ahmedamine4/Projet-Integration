@@ -21,13 +21,15 @@ const editText = ref('');
 const editorTextarea = ref(null);
 const saving = ref(false);
 
-const TRUNCATE_LEN = 300;
-const MAX_EDIT_LEN = 1200;
+const TRUNCATE_LEN = 200;
+const MAX_EDIT_LEN = 500;
 
 const isTruncated = computed(() => !!about.value && about.value.length > TRUNCATE_LEN);
 const displayText = computed(() => {
   if (!about.value) return '';
-  return showFull.value ? about.value : about.value.slice(0, TRUNCATE_LEN);
+  if (showFull.value || about.value.length <= TRUNCATE_LEN) return about.value;
+
+  return `${about.value.slice(0, TRUNCATE_LEN)}...`;
 });
 
 const lastTap = ref(0);
