@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import { analyzeProjectDescription } from '@/services/aiApi';
+import { analyzeExperienceDescription } from '@/services/aiApi';
 import Button from '@/components/common/Button.vue';
 import Input from '@/components/common/Input.vue';
 import DatePicker from '@/components/common/DatePicker.vue';
@@ -38,6 +38,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'submit']);
+
+const capitalizedType = computed(() => {
+  return props.type[0] + props.type.slice(1);
+});
 
 const isEdit = computed(() => props.mode === 'edit');
 
@@ -176,7 +180,7 @@ const analyzeDescription = async () => {
   analysisError.value = '';
 
   try {
-    const data = await analyzeProjectDescription(form.description);
+    const data = await analyzeExperienceDescription(form.description);
 
     technologies.value = createSelectableItems(data.technologies);
     domains.value = createSelectableItems(data.domains);
@@ -206,7 +210,7 @@ onUnmounted(() => {
   document.body.style.overflow = '';
 });
 
-const submitProject = () => {
+const submitExperience = () => {
   resetErrors();
 
   const trimmedTitle = form.title.trim();
@@ -214,11 +218,11 @@ const submitProject = () => {
   const trimmedGithubLink = form.githubLink.trim();
   const trimmedTeacherEmail = form.teacherEmail.trim();
 
-  if (!trimmedTitle) errors.title = 'Project title is required';
+  if (!trimmedTitle) errors.title = `${capitalizedType.value} title is required`;
 
-  if (!form.date) errors.date = 'Project date is required';
+  if (!form.date) errors.date = `${capitalizedType.value} date is required`;
 
-  if (!isEdit.value && !form.image) errors.image = 'Project screenshot is required';
+  if (!isEdit.value && !form.image) errors.image = `${capitalizedType.value} screenshot is required`;
 
   if (trimmedDescription.length < 20)
     errors.description = 'Description must be at least 20 characters';
@@ -230,10 +234,10 @@ const submitProject = () => {
     errors.githubLink = 'Enter a valid GitHub project URL';
 
   if (form.isAcademic && !form.institution)
-    errors.institution = 'Institution is required for academic projects';
+    errors.institution = `Institution is required for academic ${props.type}s`;
 
   if (form.isAcademic && !trimmedTeacherEmail)
-    errors.teacherEmail = 'Teacher email is required for academic projects';
+    errors.teacherEmail = `Teacher email is required for academic ${props.type}s`;
   else if (
     form.isAcademic &&
     !professorEmails.includes(trimmedTeacherEmail)
@@ -306,13 +310,13 @@ watch(
             <CloseButton size="lg" @click="emit('close')" />
           </div>
         </div>
-        <form class="project-form" @submit.prevent="submitProject">
-          <div class="project-form__body">
+        <form class="experience-form" @submit.prevent="submitExperience">
+          <div class="experience-form__body">
             <div class="field">
               <Input
                 v-model="form.title"
-                label="Project title"
-                placeholder="Enter your project title"
+                :label="`${capitalizedType} title`"
+                :placeholder="`Enter your ${props.type} title`"
               />
               <Error v-if="errors.title" variant="field">
                 {{ errors.title }}
@@ -322,8 +326,8 @@ watch(
             <div class="field">
               <DatePicker
                 v-model="form.date"
-                label="Project date"
-                placeholder="Select project date"
+                :label="`${capitalizedType} date`"
+                :placeholder="`Select ${props.type} date`"
               />
               <Error v-if="errors.date" variant="field">
                 {{ errors.date }}
@@ -346,7 +350,7 @@ watch(
                   id="description"
                   v-model="form.description"
                   @input="resizeTextarea"
-                  placeholder="Describe your project, its goal, features, and tools used..."
+                  :placeholder="`Describe your ${props.type}, its goal, features, and tools used...`"
                   :maxlength="MAX_EDIT_LEN"
                 />
 
@@ -390,10 +394,10 @@ watch(
               </Error>
             </div>
 
-            <div class="academic-project-section">
+            <div class="academic-experience-section">
               <ToggleSwitch
                 v-model="form.isAcademic"
-                label="Academic project"
+                :label="`Academic ${props.type}`"
               />
               <Transition name="field-reveal">
                 <div v-if="form.isAcademic" class="form-group">
@@ -430,7 +434,7 @@ watch(
             />
           </div>
 
-          <div class="project-form__footer">
+          <div class="experience-form__footer">
             <Button
               type="button"
               variant="ghost"
@@ -520,14 +524,14 @@ watch(
   flex-shrink: 0;
 }
 
-.project-form {
+.experience-form {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-.project-form__body {
+.experience-form__body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -536,15 +540,15 @@ watch(
   padding: var(--space-lg);
 }
 
-.project-form__body::-webkit-scrollbar {
+.experience-form__body::-webkit-scrollbar {
   width: var(--scrollbar-width);
 }
 
-.project-form__body::-webkit-scrollbar-track {
+.experience-form__body::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.project-form__body::-webkit-scrollbar-thumb {
+.experience-form__body::-webkit-scrollbar-thumb {
   background-color: rgba(var(--color-primary-rgb), 0.22);
   border-radius: 999px;
   border: var(--scrollbar-padding) solid transparent;
@@ -576,7 +580,7 @@ watch(
   gap: var(--space-xs);
 }
 
-.academic-project-section {
+.academic-experience-section {
   display: grid;
 }
 
@@ -639,7 +643,7 @@ textarea:focus {
   gap: 12px;
 }
 
-.project-form__footer {
+.experience-form__footer {
   position: sticky;
   bottom: 0;
   z-index: 10;
@@ -650,7 +654,7 @@ textarea:focus {
   padding: var(--space-md);
 }
 
-.project-form__footer::before {
+.experience-form__footer::before {
   content: '';
   position: absolute;
   left: 0;
