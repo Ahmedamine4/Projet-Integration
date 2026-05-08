@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 3000
 #changement du port
 
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run dev"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate dev && npm run dev"]
 
 
 FROM base AS production
@@ -30,9 +30,11 @@ COPY prisma ./prisma
 
 RUN npm install --omit=dev 
 # est la version moderne et recommandée pour PROD et CI/CD (better than --only=production)
+RUN npx prisma generate
+#crée le client JS depuis le schema
 COPY . .
 
 EXPOSE 3000 
 
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
 ## "deploy" lit les fichiers dans prisma/migrations/ , npm start avec moins de dependences
