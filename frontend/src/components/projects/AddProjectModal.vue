@@ -28,6 +28,7 @@ const emit = defineEmits(['close', 'submit']);
 const errors = reactive({
   title: '',
   date: '',
+  image: '',
   description: '',
   githubLink: '',
   institution: '',
@@ -96,6 +97,7 @@ const resetDetectedTags = () => {
 const resetErrors = () => {
   errors.title = '';
   errors.date = '';
+  errors.image = '';
   errors.description = '';
   errors.githubLink = '';
   errors.institution = '';
@@ -106,6 +108,7 @@ const hasErrors = () => {
   return (
     errors.title ||
     errors.date ||
+    errors.image ||
     errors.description ||
     errors.githubLink ||
     errors.institution ||
@@ -173,8 +176,13 @@ const submitProject = () => {
 
   if (!form.date) errors.date = 'Project date is required';
 
+  if (!form.image) errors.image = 'Project screenshot is required';
+
   if (trimmedDescription.length < 20)
     errors.description = 'Description must be at least 20 characters';
+
+  else if (trimmedDescription.length > MAX_EDIT_LEN)
+    errors.description = `Description must be ${MAX_EDIT_LEN} characters or fewer`;
 
   if (!trimmedGithubLink) errors.githubLink = 'GitHub link is required';
   else if (!isValidGithubLink(trimmedGithubLink))
@@ -272,7 +280,12 @@ watch(
               </Error>
             </div>
 
-            <ImageDropzone v-model="form.image" />
+            <div class="field">
+              <ImageDropzone v-model="form.image" />
+              <Error v-if="errors.image" variant="field">
+                {{ errors.image }}
+              </Error>
+            </div>
 
             <div class="field">
               <div class="form-group-description">
@@ -284,7 +297,12 @@ watch(
                   v-model="form.description"
                   @input="resizeTextarea"
                   placeholder="Describe your project, its goal, features, and tools used..."
+                  :maxlength="MAX_EDIT_LEN"
                 />
+
+                <span class="description-counter">
+                  {{ form.description.length }}/{{ MAX_EDIT_LEN }}
+                </span>
               </div>
               <Error v-if="errors.description" variant="field">
                 {{ errors.description }}
@@ -550,6 +568,14 @@ textarea:focus {
   outline: none;
   border-color: var(--color-secondary);
   box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
+}
+
+.description-counter {
+  display: block;
+  margin-top: var(--space-xs);
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-xs);
+  text-align: right;
 }
 
 .helper-text {
