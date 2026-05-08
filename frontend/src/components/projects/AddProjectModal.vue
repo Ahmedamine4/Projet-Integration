@@ -151,12 +151,12 @@ watch(
   (description) => {
     clearTimeout(descriptionTypingTimer);
 
-    if (!description.trim()) {
+    if (description.trim().length < 20) {
       resetDetectedTags();
       return;
     }
 
-    descriptionTypingTimer = setTimeout(analyzeDescription, 1000);
+    descriptionTypingTimer = setTimeout(analyzeDescription, 2000);
   }
 );
 
@@ -180,7 +180,6 @@ const submitProject = () => {
 
   if (trimmedDescription.length < 20)
     errors.description = 'Description must be at least 20 characters';
-
   else if (trimmedDescription.length > MAX_EDIT_LEN)
     errors.description = `Description must be ${MAX_EDIT_LEN} characters or fewer`;
 
