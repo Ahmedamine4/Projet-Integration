@@ -312,7 +312,7 @@ watch(() => props.open, (open) => {
             <div class="certified-project-section">
               <ToggleSwitch
                 v-model="form.isCertified"
-                label="Certified project"
+                label="Academic project"
               />
               <Transition name="field-reveal">
                 <div v-if="form.isCertified" class="form-group">
