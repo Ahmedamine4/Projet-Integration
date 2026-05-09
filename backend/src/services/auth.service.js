@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma.js';
-import { generateLocalToken, generateRefreshToken} from '../config/jwt.js';
+import { generateLocalToken, generateRefreshToken } from '../config/jwt.js';
 
 // Champs envoyés au frontend
 const USER_SELECT = {
@@ -49,10 +49,10 @@ export async function findUserByEmail(email) {
 // Vérifier professeur
 export async function findProfessorByEmail(email) {
   return prisma.utilisateur.findUnique({
-    where: { 
-      email: normalizeEmail(email) 
+    where: {
+      email: normalizeEmail(email)
     },
-    include: { 
+    include: {
       professeur: true // recupere les infos lie du table professeurs
     }
   });
@@ -66,7 +66,7 @@ export async function registerLocalUser(data) {
   // renommer pour eviter crash
   const normalizedEmail = email?.trim().toLowerCase();
 
-  if (!lastName || !firstName || !email || !password ) {
+  if (!lastName || !firstName || !email || !password) {
     throw new Error('Tous les champs sont requis');
   }
 
@@ -87,16 +87,26 @@ export async function registerLocalUser(data) {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const user = await prisma.utilisateur.create({
-    data: {
-      nom: lastName,    // mapping
-      prenom: firstName, // mapping
-      email: normalizedEmail,
-      mot_de_passe: hashedPassword,
-      role: 'etudiant', // minuscule pour Prisma
-      provider: 'local',
-    },
-    select: USER_SELECT,
+  const user = await prisma.$transaction(async (tx) => {
+    const createdUser = await tx.utilisateur.create({
+      data: {
+        nom: lastName,    // mapping
+        prenom: firstName, // mapping
+        email: normalizedEmail,
+        mot_de_passe: hashedPassword,
+        role: 'etudiant', // minuscule pour Prisma
+        provider: 'local',
+      },
+      select: USER_SELECT,
+    });
+
+    await tx.etudiant.create({
+      data: {
+        etudiant_utilisateur_id: createdUser.utilisateur_id,
+      },
+    });
+
+    return createdUser;
   });
 
   return user;
@@ -168,16 +178,26 @@ export async function syncGoogleUser(decoded) {
     return sanitizeUser(user);
   }
 
-  const newUser = await prisma.utilisateur.create({
-    data: {
-      nom: googleNom,
-      prenom: googlePrenom,
-      email,
-      provider: 'google',
-      supabase_uid: supabaseUid,
-      role: 'etudiant',
-    },
-    select: USER_SELECT,
+  const newUser = await prisma.$transaction(async (tx) => {
+    const createdUser = await tx.utilisateur.create({
+      data: {
+        nom: googleNom,
+        prenom: googlePrenom,
+        email,
+        provider: 'google',
+        supabase_uid: supabaseUid,
+        role: 'etudiant',
+      },
+      select: USER_SELECT,
+    });
+
+    await tx.etudiant.create({
+      data: {
+        etudiant_utilisateur_id: createdUser.utilisateur_id,
+      },
+    });
+
+    return createdUser;
   });
 
   return newUser;
