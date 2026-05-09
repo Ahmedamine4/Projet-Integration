@@ -1,9 +1,11 @@
 <script setup>
+
+const model = defineModel({
+  type: Object,
+  default: null
+});
+
 defineProps({
-  modelValue: {
-    type: Object,
-    default: null
-  },
   title: {
     type: String,
     default: 'Drag and drop your project screenshot here'
@@ -22,10 +24,8 @@ defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue']);
-
 const updateFile = (file) => {
-  emit('update:modelValue', file || null);
+  model.value = file || null;
 };
 
 const handleFileChange = (event) => {
@@ -58,11 +58,11 @@ const handleDrop = (event) => {
     <p
       class="file-name"
       :class="{
-        'file-name--empty': !modelValue,
-        'file-name--selected': modelValue
+        'file-name--empty': !model,
+        'file-name--selected': model
       }"
     >
-      {{ modelValue?.name || emptyText }}
+      {{ model?.name || emptyText }}
     </p>
   </label>
 </template>

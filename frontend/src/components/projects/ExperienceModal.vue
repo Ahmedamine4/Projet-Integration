@@ -39,8 +39,73 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'submit']);
 
+const experienceConfigs = {
+  project: {
+    label: 'Project',
+    title: 'project',
+    dateMode: 'single',
+    showImageUpload: true,
+    imageLabel: 'screenshot',
+    imageAccept: 'image/*',
+    imageRequired: true,
+    showGithub: true,
+    showAcademic: true,
+    showTags: true,
+    showMissions: false,
+    showActivityFields: false,
+    showCertificateFields: false,
+  },
+  internship: {
+    label: 'Internship',
+    title: 'internship',
+    dateMode: 'range',
+    showImageUpload: true,
+    imageLabel: 'photo',
+    imageAccept: 'image/*',
+    imageRequired: false,
+    showGithub: false,
+    showAcademic: true,
+    showTags: true,
+    showMissions: true,
+    showActivityFields: false,
+    showCertificateFields: false,
+  },
+  activity: {
+    label: 'Activity',
+    title: 'activity',
+    dateMode: 'single',
+    showImageUpload: false,
+    imageLabel: '',
+    imageAccept: '',
+    imageRequired: false,
+    showGithub: false,
+    showAcademic: false,
+    showTags: true,
+    showMissions: false,
+    showActivityFields: true,
+    showCertificateFields: false,
+  },
+  certificate: {
+    label: 'Certificate',
+    title: 'certificate',
+    dateMode: 'single',
+    showImageUpload: false,
+    imageLabel: '',
+    imageAccept: '',
+    imageRequired: false,
+    showGithub: false,
+    showAcademic: false,
+    showTags: true,
+    showMissions: false,
+    showActivityFields: false,
+    showCertificateFields: true,
+  },
+};
+
+const currentConfig = computed(() => experienceConfigs[props.type]);
+
 const capitalizedType = computed(() => {
-  return props.type[0] + props.type.slice(1);
+  return currentConfig.value.label;
 });
 
 const isEdit = computed(() => props.mode === 'edit');
@@ -48,14 +113,17 @@ const isEdit = computed(() => props.mode === 'edit');
 const errors = reactive({
   title: '',
   date: '',
+  startDate: '',
+  endDate: '',
   image: '',
   description: '',
   githubLink: '',
+  certificateURL: '',
   institution: '',
   teacherEmail: '',
 });
 
-const MAX_EDIT_LEN = 1200;
+const MAX_TEXT_LEN = 1200;
 
 const domainColorRgb = '245, 158, 11';
 
@@ -82,9 +150,18 @@ const professorEmails = [
 const form = reactive({
   title: '',
   date: '',
+  startDate: '',
+  endDate: '',
   description: '',
   image: null,
   githubLink: '',
+  certificateURL: '',
+  certificateCode: '',
+  activityType: '',
+  location: '',
+  club: '',
+  missions: '',
+  report: '',
   isAcademic: false,
   institution: '',
   teacherEmail: '',
@@ -139,29 +216,17 @@ const resetDetectedTags = () => {
   domains.value = [];
 };
 
-const resetErrors = () => {
-  errors.title = '';
-  errors.date = '';
-  errors.image = '';
-  errors.description = '';
-  errors.githubLink = '';
-  errors.institution = '';
-  errors.teacherEmail = '';
-};
+function resetErrors() {
+  Object.keys(errors).forEach((key) => {
+    errors[key] = '';
+  });
+}
 
-const hasErrors = () => {
-  return (
-    errors.title ||
-    errors.date ||
-    errors.image ||
-    errors.description ||
-    errors.githubLink ||
-    errors.institution ||
-    errors.teacherEmail
-  );
-};
+function hasErrors() {
+  return Object.values(errors).some(Boolean);
+}
 
-const isValidGithubLink = (link) => {
+function isValidGithubLink(link) {
   try {
     const url = new URL(link);
     return url.protocol === 'https:' && url.hostname === 'github.com';
@@ -169,6 +234,16 @@ const isValidGithubLink = (link) => {
     return false;
   }
 };
+
+function isValidURL(link) {
+  try {
+    const url = new URL(link);
+    return ['http:', 'https:'].includes(url.protocol);
+  }
+  catch {
+    return false;
+  }
+}
 
 const isAnalyzingDescription = ref(false);
 const analysisError = ref('');
@@ -210,65 +285,139 @@ onUnmounted(() => {
   document.body.style.overflow = '';
 });
 
+function invalidDateRange(startDate, endDate) {
+  return (
+    startDate &&
+    endDate &&
+    new Date(endDate) <= new Date(startDate)
+  );
+}
+
 const submitExperience = () => {
   resetErrors();
 
+  const config = currentConfig.value;
   const trimmedTitle = form.title.trim();
   const trimmedDescription = form.description.trim();
   const trimmedGithubLink = form.githubLink.trim();
+  const trimmedCertificateURL = form.certificateURL.trim();
+  const trimmedCertificateCode = form.certificateCode.trim();
+  const trimmedActivityType = form.activityType.trim();
+  const trimmedLocation = form.location.trim();
+  const trimmedClub = form.club.trim();
+  const trimmedMissions = form.missions.trim();
+  const trimmedReport = form.report.trim();
   const trimmedTeacherEmail = form.teacherEmail.trim();
+  const trimmedInstitution = form.institution.trim();
 
   if (!trimmedTitle) errors.title = `${capitalizedType.value} title is required`;
 
-  if (!form.date) errors.date = `${capitalizedType.value} date is required`;
+  if (config.dateMode === 'range') {
+    if (!form.startDate) errors.startDate = 'Start date is required';
+    if (!form.endDate) errors.endDate = 'End date is required';
 
-  if (!isEdit.value && !form.image) errors.image = `${capitalizedType.value} screenshot is required`;
+    if (invalidDateRange(form.startDate, form.endDate)) errors.endDate = 'End date must be after start date';
+  }
+  else if (!form.date) errors.date = `${capitalizedType.value} date is required`;
+
+  if (!isEdit.value && config.imageRequired && !form.image) errors.image = `${capitalizedType.value} ${config.imageLabel} is required`;
 
   if (trimmedDescription.length < 20)
     errors.description = 'Description must be at least 20 characters';
-  else if (trimmedDescription.length > MAX_EDIT_LEN)
-    errors.description = `Description must be ${MAX_EDIT_LEN} characters or fewer`;
+  else if (trimmedDescription.length > MAX_TEXT_LEN)
+    errors.description = `Description must be ${MAX_TEXT_LEN} characters or fewer`;
 
-  if (!trimmedGithubLink) errors.githubLink = 'GitHub link is required';
-  else if (!isValidGithubLink(trimmedGithubLink))
-    errors.githubLink = 'Enter a valid GitHub project URL';
+  if (config.showGithub) {
+    if (!trimmedGithubLink)
+      errors.githubLink = 'GitHub link is required';
+    else if (!isValidGithubLink(trimmedGithubLink))
+      errors.githubLink = 'Enter a valid GitHub project URL';
+  }
 
-  if (form.isAcademic && !form.institution)
-    errors.institution = `Institution is required for academic ${props.type}s`;
+  if (
+    config.showCertificateFields &&
+    trimmedCertificateURL &&
+    !isValidURL(trimmedCertificateURL)
+  ) errors.certificateURL = 'Enter a valid certificate URL';
 
-  if (form.isAcademic && !trimmedTeacherEmail)
-    errors.teacherEmail = `Teacher email is required for academic ${props.type}s`;
-  else if (
-    form.isAcademic &&
-    !professorEmails.includes(trimmedTeacherEmail)
-  )
-    errors.teacherEmail = 'Select a valid teacher email';
+  if (config.showAcademic) {
+    if (form.isAcademic && !form.institution)
+      errors.institution = `Institution is required for academic ${props.type}s`;
+
+    if (form.isAcademic && !trimmedTeacherEmail)
+      errors.teacherEmail = `Teacher email is required for academic ${props.type}s`;
+    else if (
+      form.isAcademic &&
+      !professorEmails.includes(trimmedTeacherEmail)
+    )
+      errors.teacherEmail = 'Select a valid teacher email';
+  }
 
   if (hasErrors()) return;
 
   emit('submit', {
     title: trimmedTitle,
-    date: form.date,
+    date: config.dateMode === 'range'
+      ? form.startDate 
+      : form.date,
+    startDate: form.startDate,
+    endDate: form.endDate,
     image: form.image,
     description: trimmedDescription,
-    technologies: getSelectedNames(technologies.value),
-    domains: getSelectedNames(domains.value),
-    githubLink: trimmedGithubLink,
-    isAcademic: form.isAcademic,
-    institution: form.isAcademic ? form.institution : '',
-    teacherEmail: form.isAcademic ? trimmedTeacherEmail : '',
+    technologies: config.showTags
+      ? getSelectedNames(technologies.value)
+      : [],
+    domains: config.showTags
+      ? getSelectedNames(domains.value)
+      : [],
+    githubLink: config.showGithub
+      ? trimmedGithubLink
+      : '',
+    certificateURL: config.showCertificateFields
+      ? trimmedCertificateURL
+      : '',
+    certificateCode: config.showCertificateFields
+      ? trimmedCertificateCode
+      : '',
+    isAcademic: config.showAcademic && form.isAcademic,
+    institution: config.showAcademic && form.isAcademic
+      ? trimmedInstitution
+      : '',
+    activityType: config.showActivityFields
+      ? trimmedActivityType
+      : '',
+    location: config.showActivityFields
+      ? trimmedLocation
+      : '',
+    club: config.showActivityFields
+      ? trimmedClub
+      : '',
+    missions: config.showMissions
+      ? trimmedMissions
+      : '',
+    report: config.showMissions
+      ? trimmedReport
+      : '',
+    teacherEmail: config.showAcademic && form.isAcademic
+      ? trimmedTeacherEmail
+      : '',
     visibleToEveryone: form.visibleToEveryone,
   });
 };
 
 const textareaElem = ref(null);
+const missionsTextareaElem = ref(null);
 
-function resizeTextarea() {
-  const textarea = textareaElem.value;
+function resizeOneTextarea(textarea) {
   if (!textarea) return;
 
   textarea.style.height = 'auto';
   textarea.style.height = `${textarea.scrollHeight}px`;
+}
+
+function resizeTextarea() {
+  resizeOneTextarea(textareaElem.value);
+  resizeOneTextarea(missionsTextareaElem.value);
 }
 
 onMounted(resizeTextarea);
@@ -323,7 +472,10 @@ watch(
               </Error>
             </div>
 
-            <div class="field">
+            <div
+              v-if="currentConfig.dateMode === 'single'"  
+              class="field"
+            >
               <DatePicker
                 v-model="form.date"
                 :label="`${capitalizedType} date`"
@@ -334,15 +486,47 @@ watch(
               </Error>
             </div>
 
-            <div class="field">
-              <ImageDropzone v-model="form.image" />
+
+            <div v-else class="form-group">
+              <div class="field">
+                <DatePicker
+                  v-model="form.startDate"
+                  label="Start date"
+                  placeholder="Select start date"
+                />
+                <Error v-if="errors.startDate" variant="field">
+                  {{ errors.startDate }}
+                </Error>
+              </div>
+
+              <div class="field">
+                <DatePicker
+                  v-model="form.endDate"
+                  label="End date"
+                  placeholder="Select end date"
+                />
+                <Error v-if="errors.endDate" variant="field">
+                  {{ errors.endDate }}
+                </Error>
+              </div>
+            </div>
+
+            <div
+              v-if="currentConfig.showImageUpload"
+              class="field"
+            >
+              <ImageDropzone
+                :title="`Drag and drop your ${props.type} ${currentConfig.imageLabel} here`"
+                :accept="currentConfig.imageAccept"
+                v-model="form.image"
+              />
               <Error v-if="errors.image" variant="field">
                 {{ errors.image }}
               </Error>
             </div>
 
             <div class="field">
-              <div class="form-group-description">
+              <div class="form-group-textarea">
                 <label for="description">Description</label>
 
                 <textarea
@@ -351,11 +535,11 @@ watch(
                   v-model="form.description"
                   @input="resizeTextarea"
                   :placeholder="`Describe your ${props.type}, its goal, features, and tools used...`"
-                  :maxlength="MAX_EDIT_LEN"
+                  :maxlength="MAX_TEXT_LEN"
                 />
 
-                <span class="description-counter">
-                  {{ form.description.length }}/{{ MAX_EDIT_LEN }}
+                <span class="textarea-counter">
+                  {{ form.description.length }}/{{ MAX_TEXT_LEN }}
                 </span>
               </div>
               <Error v-if="errors.description" variant="field">
@@ -382,7 +566,106 @@ watch(
               />
             </div>
 
-            <div class="field">
+            <div
+              v-if="currentConfig.showMissions"
+              class="field"
+            >
+              <div class="form-group-textarea">
+                <label for="missions">Completed missions</label>
+
+                <textarea
+                  ref="missionsTextareaElem"
+                  id="missions"
+                  v-model="form.missions"
+                  @input="resizeTextarea"
+                  :placeholder="`Describe the tasks, responsibilities, and work completed during the internship...`"
+                  :maxlength="MAX_TEXT_LEN"
+                />
+
+                <span class="textarea-counter">
+                  {{ form.missions.length }}/{{ MAX_TEXT_LEN }}
+                </span>
+              </div>
+            </div>
+
+            <div
+              v-if="currentConfig.showMissions"
+              class="field"
+            >
+              <Input
+                v-model="form.report"
+                label="Internship report URL"
+                type="url"
+                placeholder="https://example.com/internship-report.pdf"
+              />
+            </div>
+
+            <div
+              v-if="currentConfig.showActivityFields"
+              class="form-group"
+            >
+              <div class="field">
+                <Input
+                  v-model="form.activityType"
+                  label="Activity type"
+                  placeholder="Club event, competition, workshop..."
+                />
+              </div>
+
+              <div class="field">
+                <Input
+                  v-model="form.location"
+                  label="Location"
+                  placeholder="Where did it happen?"
+                />
+              </div>
+
+              <div class="field">
+                <Input
+                  v-model="form.club"
+                  label="Club"
+                  placeholder="Club or organization name"
+                />
+              </div>
+            </div>
+
+            <div
+              v-if="currentConfig.showCertificateFields"
+              class="form-group"
+            >
+              <div class="field">
+                <Input
+                  v-model="form.institution"
+                  label="Issuing institution"
+                  placeholder="Institution or platform name"
+                />
+              </div>
+
+              <div class="field">
+                <Input
+                  v-model="form.certificateURL"
+                  label="Certificate URL"
+                  type="url"
+                  placeholder="https://example.com/certificate"
+                />
+                <Error v-if="errors.certificateURL" variant="field">
+                  {{ errors.certificateURL }}
+                </Error>
+              </div>
+
+              <div class="field">
+                <Input
+                  v-model="form.certificateCode"
+                  label="Certificate code"
+                  placeholder="Certificate ID or verification code"
+                />
+              </div>
+            </div>
+
+            <div
+              v-if="currentConfig.showGithub"
+              class="field"
+            >
               <Input
                 v-model="form.githubLink"
                 label="GitHub link"
@@ -394,7 +677,10 @@ watch(
               </Error>
             </div>
 
-            <div class="academic-experience-section">
+            <div
+              v-if="currentConfig.showAcademic"
+              class="academic-experience-section"
+            >
               <ToggleSwitch
                 v-model="form.isAcademic"
                 :label="`Academic ${props.type}`"
@@ -590,13 +876,13 @@ watch(
   gap: var(--space-md);
 }
 
-.form-group-description {
+.form-group-textarea {
   margin-top: var(--space-md);
   display: grid;
   gap: var(--space-xs);
 }
 
-:is(.form-group, .form-group-description) label {
+:is(.form-group, .form-group-textarea) label {
   font-size: var(--font-size-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -624,7 +910,7 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
-.description-counter {
+.textarea-counter {
   display: block;
   margin-top: var(--space-xs);
   color: var(--color-primary-hover);
