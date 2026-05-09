@@ -36,18 +36,6 @@ const monthNames = [
 const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const minYear = 1980;
 
-const pickerElement = ref(null);
-const isOpen = ref(false);
-const today = new Date();
-const currentYear = today.getFullYear();
-const visibleMonth = ref(getInitialVisibleMonth());
-const pickerMode = ref('days');
-
-function getInitialVisibleMonth() {
-  const selectedDate = parseDate(model.value);
-  return selectedDate || new Date(today.getFullYear(), today.getMonth(), 1);
-}
-
 function parseDate(value) {
   if (!value) return null;
 
@@ -66,15 +54,40 @@ function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
-function isSameDay(firstDate, secondDate) {
-  return (
-    firstDate.getFullYear() === secondDate.getFullYear() &&
-    firstDate.getMonth() === secondDate.getMonth() &&
-    firstDate.getDate() === secondDate.getDate()
-  );
+const pickerElement = ref(null);
+const isOpen = ref(false);
+const selectedDate = computed(() => parseDate(model.value));
+const today = new Date();
+const currentYear = today.getFullYear();
+const visibleMonth = ref(getInitialVisibleMonth());
+const pickerMode = ref('days');
+
+function getMonthStart(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
-const selectedDate = computed(() => parseDate(model.value));
+function getInitialVisibleMonth() {
+  return selectedDate.value ? getMonthStart(selectedDate.value) : getMonthStart(today);
+}
+
+function setVisibleMonth(date) {
+  visibleMonth.value = getMonthStart(date);
+}
+
+function closePicker() {
+  isOpen.value = false;
+  pickerMode.value = 'days';
+}
+
+function isSelectedDate(date) {
+  const selected = selectedDate.value;
+  if (!date || !selected) return false;
+  return (
+    date.getFullYear() === selected.getFullYear() &&
+    date.getMonth() === selected.getMonth() &&
+    date.getDate() === selected.getDate()
+  );
+}
 
 const displayValue = computed(() => {
   if (!selectedDate.value) return props.placeholder;
@@ -86,18 +99,13 @@ const displayValue = computed(() => {
   });
 });
 
-const visibleMonthLabel = computed(() => {
-  return `${monthNames[visibleMonth.value.getMonth()]} ${visibleMonth.value.getFullYear()}`;
-});
-
-const visibleYearLabel = computed(() => {
-  return String(visibleMonth.value.getFullYear());
-});
-
 const headerLabel = computed(() => {
+  const year = visibleMonth.value.getFullYear();
+  const month = visibleMonth.value.getMonth();
+
   return pickerMode.value === 'months'
-    ? visibleYearLabel.value
-    : visibleMonthLabel.value;
+    ? String(year)
+    : `${monthNames[month]} ${year}`;
 });
 
 const years = computed(() => {
@@ -122,8 +130,7 @@ const calendarDays = computed(() => {
       value: formatDate(date),
       dayNumber: date.getDate(),
       isCurrentMonth: date.getMonth() === month,
-      isToday: isSameDay(date, today),
-      isSelected: selectedDate.value ? isSameDay(date, selectedDate.value) : false,
+      isSelected: isSelectedDate(date),
     };
   });
 });
@@ -133,31 +140,24 @@ function openPicker() {
   pickerMode.value = 'days';
 
   if (selectedDate.value) {
-    visibleMonth.value = new Date(
-      selectedDate.value.getFullYear(),
-      selectedDate.value.getMonth(),
-      1
-    );
+    setVisibleMonth(selectedDate.value);
   }
 }
 
 function selectDate(day) {
   model.value = day.value;
-  isOpen.value = false;
-  pickerMode.value = 'days';
+  closePicker();
 }
 
 function selectToday() {
-  visibleMonth.value = new Date(today.getFullYear(), today.getMonth(), 1);
+  setVisibleMonth(today);
   model.value = formatDate(today);
-  isOpen.value = false;
-  pickerMode.value = 'days';
+  closePicker();
 }
 
 function clearDate() {
   model.value = '';
-  isOpen.value = false;
-  pickerMode.value = 'days';
+  closePicker();
 }
 
 function changeVisiblePeriod(offset) {
@@ -192,15 +192,13 @@ function selectMonth(monthIndex) {
 
 function closeOnOutsideClick(event) {
   if (!pickerElement.value?.contains(event.target)) {
-    isOpen.value = false;
-    pickerMode.value = 'days';
+    closePicker();
   }
 }
 
 function closeOnEscape(event) {
   if (event.key === 'Escape') {
-    isOpen.value = false;
-    pickerMode.value = 'days';
+    closePicker();
   }
 }
 
@@ -208,11 +206,7 @@ watch(model, () => {
   const nextSelectedDate = selectedDate.value;
 
   if (nextSelectedDate) {
-    visibleMonth.value = new Date(
-      nextSelectedDate.getFullYear(),
-      nextSelectedDate.getMonth(),
-      1
-    );
+    setVisibleMonth(nextSelectedDate);
   }
 });
 
@@ -285,7 +279,10 @@ onBeforeUnmount(() => {
           </span>
         </div>
 
-        <div v-if="pickerMode === 'days'" class="date-picker__grid">
+        <div
+          v-if="pickerMode === 'days'"
+          class="date-picker__grid"
+        >
           <button
             v-for="day in calendarDays"
             :key="day.value"
@@ -454,15 +451,7 @@ onBeforeUnmount(() => {
     color var(--transition-fast);
 }
 
-.date-picker__month:hover,
-.date-picker__month:focus-visible {
-  outline: none;
-  background: rgba(var(--color-secondary-rgb), 0.1);
-  color: var(--color-secondary);
-}
-
-.date-picker__nav:hover,
-.date-picker__nav:focus-visible {
+:is(.date-picker__month, .date-picker__nav):is(:hover, :focus-visible) {
   outline: none;
   background: rgba(var(--color-secondary-rgb), 0.1);
   color: var(--color-secondary);
@@ -515,8 +504,7 @@ onBeforeUnmount(() => {
     color var(--transition-fast);
 }
 
-.date-picker__day:hover,
-.date-picker__day:focus-visible {
+.date-picker__day:is(:hover, :focus-visible) {
   outline: none;
   border-color: rgba(var(--color-secondary-rgb), 0.34);
   background: rgba(var(--color-secondary-rgb), 0.1);
@@ -570,10 +558,7 @@ onBeforeUnmount(() => {
   overflow-wrap: anywhere;
 }
 
-.date-picker__year:hover,
-.date-picker__year:focus-visible,
-.date-picker__month-option:hover,
-.date-picker__month-option:focus-visible {
+:is(.date-picker__year, .date-picker__month-option):is(:hover, :focus-visible) {
   outline: none;
   border-color: rgba(var(--color-secondary-rgb), 0.34);
   background: rgba(var(--color-secondary-rgb), 0.1);
