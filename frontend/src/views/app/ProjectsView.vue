@@ -1,4 +1,5 @@
 <script setup>
+import api from '@/services/api';
 import { computed, ref } from 'vue';
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import Button from '@/components/common/Button.vue';
@@ -18,6 +19,7 @@ const modalExperienceType = ref('project');
 const selectedExperience = ref(null);
 const isExperienceModalOpen = ref(false);
 const isSubmittingExperience = ref(false);
+const submitExperienceError = ref('');
 
 const currentTypeConfig = computed(() =>
   experienceTypes.find((type) => type.value === selectedType.value)
@@ -52,26 +54,63 @@ function closeExperienceModal() {
   modalMode.value = 'create';
 }
 
-function handleExperienceSubmit(experience) {
-  isSubmittingExperience.value = true;
+function buildProjectFormData(experience) {
+  const formData = new FormData();
 
-  const experienceToSave = {
-    ...experience,
-    id: selectedExperience.value?.id ?? Date.now(),
-    type: modalExperienceType.value,
-    imagePreview: getFilePreview(experience.image) || selectedExperience.value?.imagePreview || '',
-  };
+  formData.append('projectTitle', experience.title);
+  formData.append('projectDate', experience.date);
+  formData.append('description', experience.description);
+  formData.append('githubLink', experience.githubLink);
+  formData.append('projetType', experience.isAcademic ? 'academique' : 'personnel');
+  formData.append('professorEmail', experience.teacherEmail);
+  formData.append('visibleToEveryone', String(experience.visibleToEveryone));
+  formData.append('technologies', JSON.stringify(experience.technologies));
+  formData.append('domains', JSON.stringify(experience.domains));
 
-  if (modalMode.value === 'edit') {
-    experiences.value = experiences.value.map((item) =>
-      item.id === experienceToSave.id ? experienceToSave : item
-    );
-  } else {
-    experiences.value.unshift(experienceToSave);
+  if (experience.image) {
+    formData.append('img', experience.image);
   }
 
-  isSubmittingExperience.value = false;
-  closeExperienceModal();
+  return formData;
+}
+
+async function handleExperienceSubmit(experience) {
+  submitExperienceError.value = '';
+  isSubmittingExperience.value = true;
+
+  try {
+    const experienceToSave = {
+      ...experience,
+      id: selectedExperience.value?.id ?? Date.now(),
+      type: modalExperienceType.value,
+      imagePreview: getFilePreview(experience.image) || selectedExperience.value?.imagePreview || '',
+    };
+
+    if (modalMode.value === 'edit') {
+      experiences.value = experiences.value.map((item) =>
+        item.id === experienceToSave.id ? experienceToSave : item
+      );
+      closeExperienceModal();
+      return;
+    }
+
+    if (experienceToSave.type === 'project') {
+      await api.post('/add-projet', buildProjectFormData(experienceToSave), {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
+
+    experiences.value.unshift(experienceToSave);
+    closeExperienceModal();
+  }
+  catch(error) {
+    submitExperienceError.value = error.response?.data?.message || 'Failed to save experience';
+  }
+  finally {
+    isSubmittingExperience.value = false;
+  }
 }
 
 function deleteExperience(experienceId) {
@@ -129,6 +168,10 @@ function getDetails(experience) {
         {{ type.label }}
       </button>
     </div>
+
+    <p v-if="submitExperienceError" class="submit-error">
+      {{ submitExperienceError }}
+    </p>
 
     <div class="experience-list">
       <article
@@ -280,7 +323,7 @@ function getDetails(experience) {
 
 .experience-card {
   display: grid;
-  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 8rem) minmax(0, 1fr) auto;
   gap: var(--space-md);
   align-items: start;
   padding-bottom: var(--space-md);
@@ -289,9 +332,15 @@ function getDetails(experience) {
 
 .experience-card__image {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   border-radius: var(--radius-md);
   object-fit: cover;
+}
+
+.submit-error {
+  margin: 0 0 var(--space-md);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
 }
 
 .experience-card__body {
@@ -386,6 +435,10 @@ function getDetails(experience) {
   .projects-header,
   .experience-card {
     grid-template-columns: 1fr;
+  }
+
+  .experience-card__image {
+    max-height: 11rem;
   }
 
   .projects-header {
