@@ -1,7 +1,6 @@
 import prisma from '../config/prisma.js';
 
-// Ce include centralise les relations utiles a renvoyer apres creation,
-// lecture et validation d'une activite.
+// Include commun pour renvoyer une activite avec ses relations utiles.
 const ACTIVITY_INCLUDE = {
   experience: {
     include: {
@@ -28,19 +27,39 @@ function normalizeText(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function normalizeNullableText(value) {
+  const text = normalizeText(value);
+  return text || null;
+}
+
+function normalizeBoolean(value, fallback = false) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+
+  return fallback;
+}
+
 function normalizeArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-function isAcademicActivityData(data) {
-  return normalizeText(data?.activiteType) === 'academique';
-}
-
-// Double protection cote service: on ne depend pas uniquement du middleware.
-async function ensureStudent(user) {
+function ensureAuthenticated(user) {
   if (!user?.utilisateur_id) {
     throw createHttpError(401, 'Utilisateur non authentifie');
   }
+}
+
+async function ensureStudent(user) {
+  // On protege la logique academique avec une double verification:
+  // role utilisateur + existence reelle dans la table etudiants.
+  ensureAuthenticated(user);
 
   if (user.role !== 'etudiant') {
     throw createHttpError(403, 'Acces reserve aux etudiants');
@@ -59,87 +78,26 @@ async function ensureStudent(user) {
   return student;
 }
 
-async function ensureUserRoleRecord(user, expectedRole, modelName, idField, notFoundMessage) {
-  if (!user?.utilisateur_id) {
-    throw createHttpError(401, 'Utilisateur non authentifie');
-  }
-
-  if (user.role !== expectedRole) {
-    throw createHttpError(403, `Acces reserve aux ${expectedRole}s`);
-  }
-
-  const record = await prisma[modelName].findUnique({
-    where: {
-      [idField]: user.utilisateur_id,
-    },
-  });
-
-  if (!record) {
-    throw createHttpError(403, notFoundMessage);
-  }
-
-  return record;
-}
-
-async function ensurePersonalActivityAuthor(user) {
-  if (!user?.utilisateur_id) {
-    throw createHttpError(401, 'Utilisateur non authentifie');
-  }
-
-  if (user.role === 'etudiant') {
-    await ensureStudent(user);
-    return 'etudiant';
-  }
-
-  if (user.role === 'professionnel') {
-    await ensureUserRoleRecord(
-      user,
-      'professionnel',
-      'professionnel',
-      'professionnel_utilisateur_id',
-      'Compte professionnel introuvable'
-    );
-    return 'professionnel';
-  }
-
-  throw createHttpError(
-    403,
-    'Acces reserve aux etudiants et professionnels pour les activites personnelles'
-  );
-}
-
-// Meme principe pour la validation admin: le service reste securise
-// meme si la route ou le middleware etaient contournes.
-function ensureAdmin(user) {
-  if (!user?.utilisateur_id) {
-    throw createHttpError(401, 'Utilisateur non authentifie');
-  }
+async function ensureAdmin(user) {
+  // Meme principe pour l'admin: le service reste securise
+  // meme si la route change plus tard.
+  ensureAuthenticated(user);
 
   if (user.role !== 'administrateur') {
     throw createHttpError(403, 'Acces reserve aux administrateurs');
   }
-}
 
-async function ensureActivityOwnership(experienceId, userId) {
-  const activite = await prisma.activite.findUnique({
+  const admin = await prisma.administrateur.findUnique({
     where: {
-      experience_id: experienceId,
-    },
-    include: {
-      experience: true,
-      validation: true,
+      admin_utilisateur_id: user.utilisateur_id,
     },
   });
 
-  if (!activite) {
-    throw createHttpError(404, 'Activite introuvable');
+  if (!admin) {
+    throw createHttpError(403, 'Compte administrateur introuvable');
   }
 
-  if (activite.experience.utilisateur_id !== userId) {
-    throw createHttpError(403, "Acces refuse a cette activite");
-  }
-
-  return activite;
+  return admin;
 }
 
 async function ensureInstitutionExists(institutionId) {
@@ -157,6 +115,8 @@ async function ensureInstitutionExists(institutionId) {
 }
 
 async function ensureStudentInstitutionLink(userId, institutionId) {
+  // Une activite academique n'est autorisee que si l'etudiant
+  // est bien lie a l'institution concernee.
   const studentInstitution = await prisma.valideEtudiant.findUnique({
     where: {
       utilisateur_id_institution_id: {
@@ -167,16 +127,15 @@ async function ensureStudentInstitutionLink(userId, institutionId) {
   });
 
   if (!studentInstitution) {
-    throw createHttpError(
-      403,
-      "Cette institution n'est pas liee a l'etudiant"
-    );
+    throw createHttpError(403, "Cette institution n'est pas liee a l'etudiant");
   }
 
   return studentInstitution;
 }
 
 async function attachCompetences(tx, experienceId, competences) {
+  // On cree les competences puis on les connecte a l'experience
+  // dans la meme transaction pour garder des donnees coherentes.
   for (const item of normalizeArray(competences)) {
     const nom = typeof item === 'string'
       ? item.trim()
@@ -189,10 +148,10 @@ async function attachCompetences(tx, experienceId, competences) {
     const competence = await tx.competence.create({
       data: {
         nom,
-        type: typeof item === 'object' ? normalizeText(item.type) || null : null,
-        niveau: typeof item === 'object' ? normalizeText(item.niveau) || null : null,
+        type: typeof item === 'object' ? normalizeNullableText(item.type) : null,
+        niveau: typeof item === 'object' ? normalizeNullableText(item.niveau) : null,
         description: typeof item === 'object'
-          ? normalizeText(item.description) || null
+          ? normalizeNullableText(item.description)
           : null,
       },
     });
@@ -212,14 +171,15 @@ async function attachCompetences(tx, experienceId, competences) {
   }
 }
 
-async function attachDocumentations(tx, experienceId, documentations) {
-  const docs = normalizeArray(documentations)
-    .map((doc) => ({
-      captures: normalizeText(doc?.captures) || null,
-      pdf: normalizeText(doc?.pdf) || null,
+async function attachDocumentations(tx, experienceId, entries) {
+  // Les preuves restent optionnelles: on ignore simplement les entrees vides.
+  const docs = normalizeArray(entries)
+    .map((entry) => ({
+      captures: normalizeNullableText(entry?.captures),
+      pdf: normalizeNullableText(entry?.pdf),
       experience_id: experienceId,
     }))
-    .filter((doc) => doc.captures || doc.pdf);
+    .filter((entry) => entry.captures || entry.pdf);
 
   if (docs.length === 0) {
     return;
@@ -230,11 +190,15 @@ async function attachDocumentations(tx, experienceId, documentations) {
   });
 }
 
-async function createBaseActivity(tx, data, userId) {
+function buildBaseActivityPayload(data, userId, isAcademic) {
   const titre = normalizeText(data?.titre);
-  const description = normalizeText(data?.description);
-  const type = normalizeText(data?.type);
-  const lieu = normalizeText(data?.lieu);
+  const description = normalizeNullableText(data?.description);
+  const type = normalizeNullableText(data?.type);
+  const lieu = normalizeNullableText(data?.lieu);
+  const requestedVisibility = normalizeBoolean(
+    data?.visibilite ?? data?.visibleToEveryone,
+    false
+  );
 
   if (!titre || !type || !lieu) {
     throw createHttpError(400, 'Les champs titre, type et lieu sont obligatoires');
@@ -248,140 +212,93 @@ async function createBaseActivity(tx, data, userId) {
     throw createHttpError(400, 'date_experience invalide');
   }
 
-  const experience = await tx.experience.create({
-    data: {
+  // Une activite academique n'est jamais visible a la creation.
+  // Une activite personnelle peut suivre le choix de l'utilisateur.
+  return {
+    experience: {
       titre,
-      description: description || null,
+      description,
       date_experience: dateExperience,
-      visibilite: false,
+      visibilite: isAcademic ? false : requestedVisibility,
       type: 'activite',
       utilisateur_id: userId,
     },
-  });
-
-  await tx.activite.create({
-    data: {
-      experience_id: experience.experience_id,
+    activite: {
       type,
       lieu,
     },
-  });
-
-  await attachCompetences(tx, experience.experience_id, data?.competences);
-  await attachDocumentations(tx, experience.experience_id, data?.documentations);
-
-  return experience.experience_id;
-}
-
-export async function createPersonalActivityService(data, user) {
-  await ensurePersonalActivityAuthor(user);
-
-  return prisma.$transaction(async (tx) => {
-    const experienceId = await createBaseActivity(tx, data, user.utilisateur_id);
-
-    return tx.activite.findUnique({
-      where: {
-        experience_id: experienceId,
-      },
-      include: ACTIVITY_INCLUDE,
-    });
-  });
-}
-
-export async function createAcademicActivityService(data, user) {
-  await ensureStudent(user);
-
-  const institutionId = normalizeText(data?.institutionId);
-  if (!institutionId) {
-    throw createHttpError(400, 'institutionId est obligatoire pour une activite academique');
-  }
-
-  await ensureInstitutionExists(institutionId);
-  await ensureStudentInstitutionLink(user.utilisateur_id, institutionId);
-
-  return prisma.$transaction(async (tx) => {
-    const experienceId = await createBaseActivity(tx, data, user.utilisateur_id);
-
-    await tx.valideActivite.create({
-      data: {
-        experience_id: experienceId,
-        institution_id: institutionId,
-        statut: 'en_attente',
-        date_d_action: new Date(),
-        commentaire: normalizeText(data?.commentaire) || null,
-      },
-    });
-
-    return tx.activite.findUnique({
-      where: {
-        experience_id: experienceId,
-      },
-      include: ACTIVITY_INCLUDE,
-    });
-  });
+  };
 }
 
 export async function createActivite(data, user) {
-  if (isAcademicActivityData(data)) {
-    return createAcademicActivityService(data, user);
+  ensureAuthenticated(user);
+
+  const typeActivite = normalizeText(data?.typeActivite).toLowerCase();
+  if (!typeActivite || !['personnelle', 'academique'].includes(typeActivite)) {
+    throw createHttpError(400, 'typeActivite doit etre "personnelle" ou "academique"');
   }
 
-  return createPersonalActivityService(data, user);
-}
+  if (typeActivite === 'personnelle') {
+    // Cas personnel: etudiant ou professionnel autorise.
+    if (!['etudiant', 'professionnel'].includes(user.role)) {
+      throw createHttpError(
+        403,
+        'Acces reserve aux etudiants et professionnels pour une activite personnelle'
+      );
+    }
+  } else {
+    // Cas academique: reserve a l'etudiant et controle de l'institution.
+    await ensureStudent(user);
 
-export async function submitActivityForValidationService(experienceId, data, user) {
-  await ensureStudent(user);
+    const institutionId = normalizeText(data?.institutionId);
+    if (!institutionId) {
+      throw createHttpError(400, 'institutionId est obligatoire pour une activite academique');
+    }
 
-  if (!experienceId) {
-    throw createHttpError(400, "Identifiant d'activite manquant");
+    await ensureInstitutionExists(institutionId);
+    await ensureStudentInstitutionLink(user.utilisateur_id, institutionId);
   }
-
-  const institutionId = normalizeText(data?.institutionId);
-  if (!institutionId) {
-    throw createHttpError(400, 'institutionId est obligatoire');
-  }
-
-  await ensureInstitutionExists(institutionId);
-  await ensureStudentInstitutionLink(user.utilisateur_id, institutionId);
-  const activite = await ensureActivityOwnership(experienceId, user.utilisateur_id);
 
   return prisma.$transaction(async (tx) => {
-    if (activite.validation) {
-      await tx.valideActivite.update({
-        where: {
-          experience_id: experienceId,
-        },
-        data: {
-          institution_id: institutionId,
-          statut: 'en_attente',
-          date_d_action: new Date(),
-          commentaire: normalizeText(data?.commentaire) || null,
-        },
-      });
-    } else {
+    const isAcademic = typeActivite === 'academique';
+    const payload = buildBaseActivityPayload(data, user.utilisateur_id, isAcademic);
+    const competences = normalizeArray(data?.competences);
+    const documentations = normalizeArray(data?.documentations);
+
+    // 1. On cree d'abord l'experience mere.
+    const experience = await tx.experience.create({
+      data: payload.experience,
+    });
+
+    // 2. Puis la specialisation activite reliee a cette experience.
+    await tx.activite.create({
+      data: {
+        experience_id: experience.experience_id,
+        ...payload.activite,
+      },
+    });
+
+    // 3. Les pieces optionnelles sont rattachees ensuite.
+    await attachCompetences(tx, experience.experience_id, competences);
+    await attachDocumentations(tx, experience.experience_id, documentations);
+
+    if (isAcademic) {
+      // Une activite academique cree automatiquement une demande de validation.
       await tx.valideActivite.create({
         data: {
-          experience_id: experienceId,
-          institution_id: institutionId,
+          experience_id: experience.experience_id,
+          institution_id: normalizeText(data.institutionId),
           statut: 'en_attente',
+          commentaire: normalizeNullableText(data?.commentaire),
           date_d_action: new Date(),
-          commentaire: normalizeText(data?.commentaire) || null,
         },
       });
     }
 
-    await tx.experience.update({
-      where: {
-        experience_id: experienceId,
-      },
-      data: {
-        visibilite: false,
-      },
-    });
-
+    // 4. On relit la version finale avec les relations utiles pour la reponse API.
     return tx.activite.findUnique({
       where: {
-        experience_id: experienceId,
+        experience_id: experience.experience_id,
       },
       include: ACTIVITY_INCLUDE,
     });
@@ -389,10 +306,13 @@ export async function submitActivityForValidationService(experienceId, data, use
 }
 
 export async function getMesActivitesService(user) {
-  await ensurePersonalActivityAuthor(user);
+  ensureAuthenticated(user);
 
-  // Cette route concerne "mes activites", donc elle retourne tout pour l'etudiant
-  // ou le professionnel connecte, y compris les activites non encore visibles publiquement.
+  // Cette route sert au tableau de bord personnel, pas au portfolio public.
+  if (!['etudiant', 'professionnel'].includes(user.role)) {
+    throw createHttpError(403, 'Acces reserve aux etudiants et professionnels');
+  }
+
   return prisma.activite.findMany({
     where: {
       experience: {
@@ -409,15 +329,13 @@ export async function getMesActivitesService(user) {
 }
 
 export async function updateValidationActiviteService(experienceId, data, user) {
-  ensureAdmin(user);
+  await ensureAdmin(user);
 
   if (!experienceId) {
     throw createHttpError(400, "Identifiant d'activite manquant");
   }
 
-  const statut = normalizeText(data?.statut);
-  const commentaire = normalizeText(data?.commentaire) || null;
-
+  const statut = normalizeText(data?.statut).toLowerCase();
   if (!REVIEW_STATUSES.includes(statut)) {
     throw createHttpError(400, 'Statut de validation invalide');
   }
@@ -434,26 +352,23 @@ export async function updateValidationActiviteService(experienceId, data, user) 
   }
 
   if (!activite.validation) {
-    throw createHttpError(
-      400,
-      "Cette activite ne dispose pas d'une validation administrable"
-    );
+    throw createHttpError(400, "Cette activite ne dispose pas d'une validation administrable");
   }
 
   return prisma.$transaction(async (tx) => {
-    // Mise a jour du statut administratif de l'activite.
+    // On garde le statut, le commentaire et la date de decision au meme endroit.
     await tx.valideActivite.update({
       where: {
         experience_id: experienceId,
       },
       data: {
         statut,
-        commentaire,
+        commentaire: normalizeNullableText(data?.commentaire),
         date_d_action: new Date(),
       },
     });
 
-    // Une activite validee devient visible, une activite refusee ou en attente ne l'est pas.
+    // La visibilite publique depend directement de la decision admin.
     await tx.experience.update({
       where: {
         experience_id: experienceId,
@@ -463,7 +378,7 @@ export async function updateValidationActiviteService(experienceId, data, user) 
       },
     });
 
-    // On renvoie la version finale de l'activite apres validation.
+    // On renvoie l'activite finale apres mise a jour.
     return tx.activite.findUnique({
       where: {
         experience_id: experienceId,
@@ -487,6 +402,7 @@ export async function getPortfolioPublicActivitiesService(etudiantId) {
         type: 'activite',
         visibilite: true,
       },
+      // Une activite doit etre explicitement validee pour apparaitre dans le portfolio.
       validation: {
         is: {
           statut: 'valide',
