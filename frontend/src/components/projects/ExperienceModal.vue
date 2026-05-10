@@ -74,9 +74,9 @@ const experienceConfigs = {
     label: 'Activity',
     title: 'activity',
     dateMode: 'single',
-    showImageUpload: false,
-    imageLabel: '',
-    imageAccept: '',
+    showImageUpload: true,
+    imageLabel: 'photo',
+    imageAccept: 'image/*',
     imageRequired: false,
     showGithub: false,
     showAcademic: false,
@@ -89,9 +89,9 @@ const experienceConfigs = {
     label: 'Certificate',
     title: 'certificate',
     dateMode: 'single',
-    showImageUpload: false,
-    imageLabel: '',
-    imageAccept: '',
+    showImageUpload: true,
+    imageLabel: 'screenshot',
+    imageAccept: 'image/*',
     imageRequired: false,
     showGithub: false,
     showAcademic: false,
@@ -748,6 +748,7 @@ watch(
   z-index: 1000;
   background: rgba(var(--color-primary-rgb), 0.3);
   backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -782,6 +783,7 @@ watch(
   gap: var(--space-md);
   padding: var(--modal-edge-space);
   background-color: var(--color-background);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.12);
 }
 
 .modal-card__header::after {
@@ -789,13 +791,24 @@ watch(
   position: absolute;
   left: 0;
   right: var(--scrollbar-width);
-  top: 100%;
+  top: calc(100% + 0.5px);
   height: 24px;
   pointer-events: none;
-  background: linear-gradient(
+  backdrop-filter: blur(4px);
+  mask-image: linear-gradient(
     to bottom,
-    var(--color-background),
-    transparent
+    black 0%,
+    black 20%,
+    rgba(0, 0, 0, 0.65) 55%,
+    transparent 100%
+  );
+  -webkit-backdrop-filter: blur(4px);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 20%,
+    rgba(0, 0, 0, 0.65) 55%,
+    transparent 100%
   );
 }
 
@@ -947,6 +960,7 @@ textarea:focus {
   justify-content: flex-end;
   gap: var(--space-sm);
   padding: var(--space-md) var(--modal-edge-space);
+  border-top: 1px solid rgba(var(--color-primary-rgb), 0.12);
 }
 
 .experience-form__footer::before {
@@ -954,13 +968,24 @@ textarea:focus {
   position: absolute;
   left: 0;
   right: var(--scrollbar-width);
-  bottom: 100%;
+  bottom: calc(100% + 0.5px);
   height: 24px;
   pointer-events: none;
-  background: linear-gradient(
+  backdrop-filter: blur(4px);
+  mask-image: linear-gradient(
     to top,
-    var(--color-background),
-    transparent
+    black 0%,
+    black 20%,
+    rgba(0, 0, 0, 0.65) 55%,
+    transparent 100%
+  );
+  -webkit-backdrop-filter: blur(4px);
+  -webkit-mask-image: linear-gradient(
+    to top,
+    black 0%,
+    black 20%,
+    rgba(0, 0, 0, 0.65) 55%,
+    transparent 100%
   );
 }
 
