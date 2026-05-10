@@ -514,7 +514,7 @@ watch(
               class="field"
             >
               <ImageDropzone
-                :title="`Drag and drop your ${props.type} ${currentConfig.imageLabel} here`"
+                :title="`Upload ${props.type} ${currentConfig.imageLabel}`"
                 :accept="currentConfig.imageAccept"
                 v-model="form.image"
               />
