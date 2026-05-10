@@ -16,6 +16,14 @@ const props = defineProps({
     type: String,
     default: 'Select date',
   },
+  maxDate: {
+    type: String,
+    default: '',
+  },
+  minDate: {
+    type: String,
+    default: '',
+  },
 });
 
 const monthNames = [
@@ -54,6 +62,8 @@ function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
+const minDateValue = computed(() => parseDate(props.minDate));
+const maxDateValue = computed(() => parseDate(props.maxDate));
 const pickerElement = ref(null);
 const isOpen = ref(false);
 const selectedDate = computed(() => parseDate(model.value));
@@ -87,6 +97,57 @@ function isSelectedDate(date) {
     date.getMonth() === selected.getMonth() &&
     date.getDate() === selected.getDate()
   );
+}
+
+function isSelectedMonth(monthIndex) {
+  return (
+    selectedDate.value?.getFullYear() === visibleMonth.value.getFullYear() &&
+    selectedDate.value?.getMonth() === monthIndex
+  );
+}
+
+function isSelectedYear(year) {
+  return selectedDate.value?.getFullYear() === year;
+}
+
+function isDisabledDate(date) {
+  if (minDateValue.value && date < minDateValue.value) return true;
+  if (maxDateValue.value && date > maxDateValue.value) return true;
+
+  return false;
+}
+
+function isDisabledMonth(monthIndex) {
+  const year = visibleMonth.value.getFullYear();
+
+  if(isDisabledYear(year)) return true;
+
+  if (
+    minDateValue.value &&
+    year === minDateValue.value.getFullYear() &&
+    monthIndex < minDateValue.value.getMonth()
+  ) {
+    return true;
+  }
+  if (
+    maxDateValue.value &&
+    year === maxDateValue.value.getFullYear() &&
+    monthIndex > maxDateValue.value.getMonth()
+  ) {
+    return true;
+  }
+
+  return false
+}
+
+function isDisabledYear(year) {
+  if (minDateValue.value && year < minDateValue.value.getFullYear()) {
+    return true;
+  }
+  if (maxDateValue.value && year > maxDateValue.value.getFullYear()) {
+    return true;
+  }
+  return false;
 }
 
 const displayValue = computed(() => {
@@ -131,6 +192,7 @@ const calendarDays = computed(() => {
       dayNumber: date.getDate(),
       isCurrentMonth: date.getMonth() === month,
       isSelected: isSelectedDate(date),
+      isDisabled: isDisabledDate(date),
     };
   });
 });
@@ -145,6 +207,8 @@ function openPicker() {
 }
 
 function selectDate(day) {
+  if (day.isDisabled) return;
+
   model.value = day.value;
   closePicker();
 }
@@ -177,11 +241,15 @@ function showYears() {
 }
 
 function selectYear(year) {
+  if (isDisabledYear(year)) return;
+
   visibleMonth.value = new Date(year, visibleMonth.value.getMonth(), 1);
   pickerMode.value = 'months';
 }
 
 function selectMonth(monthIndex) {
+  if (isDisabledMonth(monthIndex)) return;
+
   visibleMonth.value = new Date(
     visibleMonth.value.getFullYear(),
     monthIndex,
@@ -273,7 +341,10 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div v-if="pickerMode === 'days'" class="date-picker__weekdays">
+        <div
+          v-if="pickerMode === 'days'"
+          class="date-picker__weekdays"
+        >
           <span v-for="day in weekDays" :key="day">
             {{ day }}
           </span>
@@ -290,21 +361,31 @@ onBeforeUnmount(() => {
             class="date-picker__day"
             :class="{
               'date-picker__day--muted': !day.isCurrentMonth,
-              'date-picker__day--selected': day.isSelected
+              'selected': day.isSelected,
+              'disabled': day.isDisabled
             }"
             @click="selectDate(day)"
+            :disabled="day.isDisabled"
           >
             {{ day.dayNumber }}
           </button>
         </div>
 
-        <div v-else-if="pickerMode === 'years'" class="date-picker__year-grid">
+        <div
+          v-else-if="pickerMode === 'years'"
+          class="date-picker__year-grid"
+        >
           <button
             v-for="year in years"
             :key="year"
             type="button"
             class="date-picker__year"
+            :class="{
+              selected: isSelectedYear(year),
+              disabled: isDisabledYear(year)
+            }"
             @click="selectYear(year)"
+            :disabled="isDisabledYear(year)"
           >
             {{ year }}
           </button>
@@ -316,7 +397,12 @@ onBeforeUnmount(() => {
             :key="month"
             type="button"
             class="date-picker__month-option"
+            :class="{
+              selected: isSelectedMonth(index),
+              disabled: isDisabledMonth(index),
+            }"
             @click="selectMonth(index)"
+            :disabled="isDisabledMonth(index)"
           >
             {{ month }}
           </button>
@@ -514,10 +600,44 @@ onBeforeUnmount(() => {
   color: rgba(var(--color-primary-rgb), 0.34);
 }
 
-.date-picker__day--selected {
+:is(.date-picker__day, .date-picker__month-option, .date-picker__year).selected {
   border-color: rgba(var(--color-secondary-rgb), 0.36);
   color: var(--color-secondary);
   font-weight: var(--font-medium);
+}
+
+:is(
+  .date-picker__day,
+  .date-picker__month-option,
+  .date-picker__year
+).disabled {
+  color: var(--color-error);
+  border-color: transparent;
+  background: transparent;
+  cursor: not-allowed;
+}
+
+:is(
+  .date-picker__day,
+  .date-picker__month-option,
+  .date-picker__year
+).disabled:is(:hover, :focus-visible) {
+  color: var(--color-error);
+  border-color: transparent;
+  background: transparent;
+}
+
+.date-picker__day--muted.disabled,
+.date-picker__day--muted.disabled:is(:hover, :focus-visible) {
+  color: rgba(var(--color-error-rgb), 0.34);
+  border-color: transparent;
+  background: transparent;
+}
+
+.date-picker__day--muted.disabled:is(:hover, :focus-visible) {
+  color: rgba(var(--color-error-rgb), 0.34);
+  border-color: transparent;
+  background: transparent;
 }
 
 .date-picker__year-grid,
@@ -531,6 +651,21 @@ onBeforeUnmount(() => {
   max-height: 13.5rem;
   overflow: auto;
   padding-right: 0.15rem;
+}
+
+.date-picker__year-grid::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.date-picker__year-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.date-picker__year-grid::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--color-primary-rgb), 0.22);
+  border-radius: 999px;
+  border: var(--scrollbar-padding) solid transparent;
+  background-clip: content-box;
 }
 
 .date-picker__month-grid {

@@ -285,11 +285,21 @@ onUnmounted(() => {
   document.body.style.overflow = '';
 });
 
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+const todayValue = computed(() => formatLocalDate(new Date()));
+
 function invalidDateRange(startDate, endDate) {
   return (
     startDate &&
     endDate &&
-    new Date(endDate) <= new Date(startDate)
+    new Date(endDate) < new Date(startDate)
   );
 }
 
@@ -316,7 +326,9 @@ const submitExperience = () => {
     if (!form.startDate) errors.startDate = 'Start date is required';
     if (!form.endDate) errors.endDate = 'End date is required';
 
-    if (invalidDateRange(form.startDate, form.endDate)) errors.endDate = 'End date must be after start date';
+    if (invalidDateRange(form.startDate, form.endDate)) {
+      errors.endDate = 'End date must be after start date';
+    }
   }
   else if (!form.date) errors.date = `${capitalizedType.value} date is required`;
 
@@ -478,6 +490,7 @@ watch(
                 v-model="form.date"
                 :label="`${capitalizedType} date`"
                 :placeholder="`Select ${props.type} date`"
+                :max-date="todayValue"
               />
               <Error v-if="errors.date" variant="field">
                 {{ errors.date }}
@@ -491,6 +504,7 @@ watch(
                   v-model="form.startDate"
                   label="Start date"
                   placeholder="Select start date"
+                  :max-date="todayValue"
                 />
                 <Error v-if="errors.startDate" variant="field">
                   {{ errors.startDate }}
@@ -502,6 +516,7 @@ watch(
                   v-model="form.endDate"
                   label="End date"
                   placeholder="Select end date"
+                  :min-date="form.startDate"
                 />
                 <Error v-if="errors.endDate" variant="field">
                   {{ errors.endDate }}

@@ -3,7 +3,7 @@ import api from '@/services/api';
 import { computed, ref } from 'vue';
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import Button from '@/components/common/Button.vue';
-import ExperienceModal from '@/components/projects/ExperienceModal.vue';
+import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
 
 const experienceTypes = [
   { value: 'project', label: 'Projects', singular: 'project' },
