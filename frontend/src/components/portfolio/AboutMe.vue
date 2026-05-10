@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, nextTick, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import Card from '@/components/common/Card.vue';
@@ -21,13 +21,15 @@ const editText = ref('');
 const editorTextarea = ref(null);
 const saving = ref(false);
 
-const TRUNCATE_LEN = 300;
-const MAX_EDIT_LEN = 1200;
+const TRUNCATE_LEN = 200;
+const MAX_EDIT_LEN = 500;
 
 const isTruncated = computed(() => !!about.value && about.value.length > TRUNCATE_LEN);
 const displayText = computed(() => {
   if (!about.value) return '';
-  return showFull.value ? about.value : about.value.slice(0, TRUNCATE_LEN);
+  if (showFull.value || about.value.length <= TRUNCATE_LEN) return about.value;
+
+  return `${about.value.slice(0, TRUNCATE_LEN)}...`;
 });
 
 const lastTap = ref(0);
@@ -89,7 +91,6 @@ function resizeEditorTextarea() {
 function openEdit() {
   editText.value = about.value || '';
   isEditing.value = true;
-  nextTick(resizeEditorTextarea);
 }
 
 function closeEdit() {
@@ -97,6 +98,7 @@ function closeEdit() {
 }
 
 async function saveEdit() {
+
   if (editText.value.length > MAX_EDIT_LEN) {
     alert(`Maximum ${MAX_EDIT_LEN} characters allowed`);
     return;
@@ -112,19 +114,18 @@ async function saveEdit() {
     } else {
       alert('Failed to save changes');
     }
-  } catch (err) {
+  }
+  catch (err) {
     console.error('Save error:', err);
     alert('Failed to save changes');
-  } finally {
+  }
+  finally {
     saving.value = false;
   }
 }
 
 onMounted(fetchAbout);
 watch(() => props.userId, () => fetchAbout());
-watch(editText, () => {
-  if (isEditing.value) nextTick(resizeEditorTextarea);
-});
 </script>
 
 <template>
@@ -135,7 +136,11 @@ watch(editText, () => {
       </div>
 
       <div class="about-me">
-        <Transition name="pop-up" mode="out-in">
+        <Transition
+          name="pop-up"
+          mode="out-in"
+          @after-enter="resizeEditorTextarea"
+        >
           <div v-if="isEditing" class="inline-editor">
             <textarea
               ref="editorTextarea"

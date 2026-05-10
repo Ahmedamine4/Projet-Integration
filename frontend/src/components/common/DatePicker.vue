@@ -16,6 +16,14 @@ const props = defineProps({
     type: String,
     default: 'Select date',
   },
+  maxDate: {
+    type: String,
+    default: '',
+  },
+  minDate: {
+    type: String,
+    default: '',
+  },
 });
 
 const monthNames = [
@@ -36,18 +44,6 @@ const monthNames = [
 const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const minYear = 1980;
 
-const pickerElement = ref(null);
-const isOpen = ref(false);
-const today = new Date();
-const currentYear = today.getFullYear();
-const visibleMonth = ref(getInitialVisibleMonth());
-const pickerMode = ref('days');
-
-function getInitialVisibleMonth() {
-  const selectedDate = parseDate(model.value);
-  return selectedDate || new Date(today.getFullYear(), today.getMonth(), 1);
-}
-
 function parseDate(value) {
   if (!value) return null;
 
@@ -66,15 +62,93 @@ function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
-function isSameDay(firstDate, secondDate) {
+const minDateValue = computed(() => parseDate(props.minDate));
+const maxDateValue = computed(() => parseDate(props.maxDate));
+const pickerElement = ref(null);
+const isOpen = ref(false);
+const selectedDate = computed(() => parseDate(model.value));
+const today = new Date();
+const currentYear = today.getFullYear();
+const visibleMonth = ref(getInitialVisibleMonth());
+const pickerMode = ref('days');
+
+function getMonthStart(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function getInitialVisibleMonth() {
+  return selectedDate.value ? getMonthStart(selectedDate.value) : getMonthStart(today);
+}
+
+function setVisibleMonth(date) {
+  visibleMonth.value = getMonthStart(date);
+}
+
+function closePicker() {
+  isOpen.value = false;
+  pickerMode.value = 'days';
+}
+
+function isSelectedDate(date) {
+  const selected = selectedDate.value;
+  if (!date || !selected) return false;
   return (
-    firstDate.getFullYear() === secondDate.getFullYear() &&
-    firstDate.getMonth() === secondDate.getMonth() &&
-    firstDate.getDate() === secondDate.getDate()
+    date.getFullYear() === selected.getFullYear() &&
+    date.getMonth() === selected.getMonth() &&
+    date.getDate() === selected.getDate()
   );
 }
 
-const selectedDate = computed(() => parseDate(model.value));
+function isSelectedMonth(monthIndex) {
+  return (
+    selectedDate.value?.getFullYear() === visibleMonth.value.getFullYear() &&
+    selectedDate.value?.getMonth() === monthIndex
+  );
+}
+
+function isSelectedYear(year) {
+  return selectedDate.value?.getFullYear() === year;
+}
+
+function isDisabledDate(date) {
+  if (minDateValue.value && date < minDateValue.value) return true;
+  if (maxDateValue.value && date > maxDateValue.value) return true;
+
+  return false;
+}
+
+function isDisabledMonth(monthIndex) {
+  const year = visibleMonth.value.getFullYear();
+
+  if(isDisabledYear(year)) return true;
+
+  if (
+    minDateValue.value &&
+    year === minDateValue.value.getFullYear() &&
+    monthIndex < minDateValue.value.getMonth()
+  ) {
+    return true;
+  }
+  if (
+    maxDateValue.value &&
+    year === maxDateValue.value.getFullYear() &&
+    monthIndex > maxDateValue.value.getMonth()
+  ) {
+    return true;
+  }
+
+  return false
+}
+
+function isDisabledYear(year) {
+  if (minDateValue.value && year < minDateValue.value.getFullYear()) {
+    return true;
+  }
+  if (maxDateValue.value && year > maxDateValue.value.getFullYear()) {
+    return true;
+  }
+  return false;
+}
 
 const displayValue = computed(() => {
   if (!selectedDate.value) return props.placeholder;
@@ -86,18 +160,13 @@ const displayValue = computed(() => {
   });
 });
 
-const visibleMonthLabel = computed(() => {
-  return `${monthNames[visibleMonth.value.getMonth()]} ${visibleMonth.value.getFullYear()}`;
-});
-
-const visibleYearLabel = computed(() => {
-  return String(visibleMonth.value.getFullYear());
-});
-
 const headerLabel = computed(() => {
+  const year = visibleMonth.value.getFullYear();
+  const month = visibleMonth.value.getMonth();
+
   return pickerMode.value === 'months'
-    ? visibleYearLabel.value
-    : visibleMonthLabel.value;
+    ? String(year)
+    : `${monthNames[month]} ${year}`;
 });
 
 const years = computed(() => {
@@ -122,8 +191,8 @@ const calendarDays = computed(() => {
       value: formatDate(date),
       dayNumber: date.getDate(),
       isCurrentMonth: date.getMonth() === month,
-      isToday: isSameDay(date, today),
-      isSelected: selectedDate.value ? isSameDay(date, selectedDate.value) : false,
+      isSelected: isSelectedDate(date),
+      isDisabled: isDisabledDate(date),
     };
   });
 });
@@ -133,31 +202,26 @@ function openPicker() {
   pickerMode.value = 'days';
 
   if (selectedDate.value) {
-    visibleMonth.value = new Date(
-      selectedDate.value.getFullYear(),
-      selectedDate.value.getMonth(),
-      1
-    );
+    setVisibleMonth(selectedDate.value);
   }
 }
 
 function selectDate(day) {
+  if (day.isDisabled) return;
+
   model.value = day.value;
-  isOpen.value = false;
-  pickerMode.value = 'days';
+  closePicker();
 }
 
 function selectToday() {
-  visibleMonth.value = new Date(today.getFullYear(), today.getMonth(), 1);
+  setVisibleMonth(today);
   model.value = formatDate(today);
-  isOpen.value = false;
-  pickerMode.value = 'days';
+  closePicker();
 }
 
 function clearDate() {
   model.value = '';
-  isOpen.value = false;
-  pickerMode.value = 'days';
+  closePicker();
 }
 
 function changeVisiblePeriod(offset) {
@@ -177,11 +241,15 @@ function showYears() {
 }
 
 function selectYear(year) {
+  if (isDisabledYear(year)) return;
+
   visibleMonth.value = new Date(year, visibleMonth.value.getMonth(), 1);
   pickerMode.value = 'months';
 }
 
 function selectMonth(monthIndex) {
+  if (isDisabledMonth(monthIndex)) return;
+
   visibleMonth.value = new Date(
     visibleMonth.value.getFullYear(),
     monthIndex,
@@ -192,15 +260,13 @@ function selectMonth(monthIndex) {
 
 function closeOnOutsideClick(event) {
   if (!pickerElement.value?.contains(event.target)) {
-    isOpen.value = false;
-    pickerMode.value = 'days';
+    closePicker();
   }
 }
 
 function closeOnEscape(event) {
   if (event.key === 'Escape') {
-    isOpen.value = false;
-    pickerMode.value = 'days';
+    closePicker();
   }
 }
 
@@ -208,11 +274,7 @@ watch(model, () => {
   const nextSelectedDate = selectedDate.value;
 
   if (nextSelectedDate) {
-    visibleMonth.value = new Date(
-      nextSelectedDate.getFullYear(),
-      nextSelectedDate.getMonth(),
-      1
-    );
+    setVisibleMonth(nextSelectedDate);
   }
 });
 
@@ -244,7 +306,11 @@ onBeforeUnmount(() => {
     </button>
 
     <Transition name="date-picker-popover">
-      <div v-if="isOpen" class="date-picker__popover" @click.stop>
+      <div
+        v-if="isOpen"
+        class="date-picker__popover"
+        @click.stop
+      >
         <div class="date-picker__header">
           <button
             type="button"
@@ -275,13 +341,19 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div v-if="pickerMode === 'days'" class="date-picker__weekdays">
+        <div
+          v-if="pickerMode === 'days'"
+          class="date-picker__weekdays"
+        >
           <span v-for="day in weekDays" :key="day">
             {{ day }}
           </span>
         </div>
 
-        <div v-if="pickerMode === 'days'" class="date-picker__grid">
+        <div
+          v-if="pickerMode === 'days'"
+          class="date-picker__grid"
+        >
           <button
             v-for="day in calendarDays"
             :key="day.value"
@@ -289,21 +361,31 @@ onBeforeUnmount(() => {
             class="date-picker__day"
             :class="{
               'date-picker__day--muted': !day.isCurrentMonth,
-              'date-picker__day--selected': day.isSelected
+              'selected': day.isSelected,
+              'disabled': day.isDisabled
             }"
             @click="selectDate(day)"
+            :disabled="day.isDisabled"
           >
             {{ day.dayNumber }}
           </button>
         </div>
 
-        <div v-else-if="pickerMode === 'years'" class="date-picker__year-grid">
+        <div
+          v-else-if="pickerMode === 'years'"
+          class="date-picker__year-grid"
+        >
           <button
             v-for="year in years"
             :key="year"
             type="button"
             class="date-picker__year"
+            :class="{
+              selected: isSelectedYear(year),
+              disabled: isDisabledYear(year)
+            }"
             @click="selectYear(year)"
+            :disabled="isDisabledYear(year)"
           >
             {{ year }}
           </button>
@@ -315,7 +397,12 @@ onBeforeUnmount(() => {
             :key="month"
             type="button"
             class="date-picker__month-option"
+            :class="{
+              selected: isSelectedMonth(index),
+              disabled: isDisabledMonth(index),
+            }"
             @click="selectMonth(index)"
+            :disabled="isDisabledMonth(index)"
           >
             {{ month }}
           </button>
@@ -398,11 +485,11 @@ onBeforeUnmount(() => {
 
 .date-picker__popover {
   position: absolute;
+  width: min(17rem, calc(100vw - 2rem));
+  padding: var(--space-sm);
   z-index: 120;
   top: calc(100% + var(--space-sm));
   left: 0;
-  width: min(20rem, calc(100vw - 2rem));
-  padding: var(--space-md);
   border: 1px solid rgba(var(--color-primary-rgb), 0.12);
   border-radius: var(--radius-md);
   background: var(--color-background);
@@ -421,9 +508,9 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
   padding: 0;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
   border-radius: 999px;
   background: transparent;
@@ -435,30 +522,22 @@ onBeforeUnmount(() => {
 }
 
 .date-picker__month {
-  padding: 0.35rem 0.7rem;
   border: none;
   border-radius: 999px;
+  font-size: var(--font-size-xs);
+  padding: 0.25rem 0.55rem;
   background: transparent;
   margin: 0;
   color: var(--color-primary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: var(--font-size-sm);
   font-weight: var(--font-medium);
   transition:
     background-color var(--transition-fast),
     color var(--transition-fast);
 }
 
-.date-picker__month:hover,
-.date-picker__month:focus-visible {
-  outline: none;
-  background: rgba(var(--color-secondary-rgb), 0.1);
-  color: var(--color-secondary);
-}
-
-.date-picker__nav:hover,
-.date-picker__nav:focus-visible {
+:is(.date-picker__month, .date-picker__nav):is(:hover, :focus-visible) {
   outline: none;
   background: rgba(var(--color-secondary-rgb), 0.1);
   color: var(--color-secondary);
@@ -489,7 +568,7 @@ onBeforeUnmount(() => {
 }
 
 .date-picker__grid {
-  gap: 0.2rem;
+  gap: 0.15rem;
 }
 
 .date-picker__day {
@@ -499,11 +578,11 @@ onBeforeUnmount(() => {
   aspect-ratio: 1;
   min-width: 0;
   border: 1px solid transparent;
-  border-radius: 0.7rem;
+  border-radius: 0.55rem;
   background: transparent;
   color: var(--color-primary);
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: 0.68rem;
   cursor: pointer;
   transition:
     background-color var(--transition-fast),
@@ -511,8 +590,7 @@ onBeforeUnmount(() => {
     color var(--transition-fast);
 }
 
-.date-picker__day:hover,
-.date-picker__day:focus-visible {
+.date-picker__day:is(:hover, :focus-visible) {
   outline: none;
   border-color: rgba(var(--color-secondary-rgb), 0.34);
   background: rgba(var(--color-secondary-rgb), 0.1);
@@ -522,10 +600,44 @@ onBeforeUnmount(() => {
   color: rgba(var(--color-primary-rgb), 0.34);
 }
 
-.date-picker__day--selected {
+:is(.date-picker__day, .date-picker__month-option, .date-picker__year).selected {
   border-color: rgba(var(--color-secondary-rgb), 0.36);
   color: var(--color-secondary);
   font-weight: var(--font-medium);
+}
+
+:is(
+  .date-picker__day,
+  .date-picker__month-option,
+  .date-picker__year
+).disabled {
+  color: var(--color-error);
+  border-color: transparent;
+  background: transparent;
+  cursor: not-allowed;
+}
+
+:is(
+  .date-picker__day,
+  .date-picker__month-option,
+  .date-picker__year
+).disabled:is(:hover, :focus-visible) {
+  color: var(--color-error);
+  border-color: transparent;
+  background: transparent;
+}
+
+.date-picker__day--muted.disabled,
+.date-picker__day--muted.disabled:is(:hover, :focus-visible) {
+  color: rgba(var(--color-error-rgb), 0.34);
+  border-color: transparent;
+  background: transparent;
+}
+
+.date-picker__day--muted.disabled:is(:hover, :focus-visible) {
+  color: rgba(var(--color-error-rgb), 0.34);
+  border-color: transparent;
+  background: transparent;
 }
 
 .date-picker__year-grid,
@@ -539,6 +651,21 @@ onBeforeUnmount(() => {
   max-height: 13.5rem;
   overflow: auto;
   padding-right: 0.15rem;
+}
+
+.date-picker__year-grid::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.date-picker__year-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.date-picker__year-grid::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--color-primary-rgb), 0.22);
+  border-radius: 999px;
+  border: var(--scrollbar-padding) solid transparent;
+  background-clip: content-box;
 }
 
 .date-picker__month-grid {
@@ -566,10 +693,7 @@ onBeforeUnmount(() => {
   overflow-wrap: anywhere;
 }
 
-.date-picker__year:hover,
-.date-picker__year:focus-visible,
-.date-picker__month-option:hover,
-.date-picker__month-option:focus-visible {
+:is(.date-picker__year, .date-picker__month-option):is(:hover, :focus-visible) {
   outline: none;
   border-color: rgba(var(--color-secondary-rgb), 0.34);
   background: rgba(var(--color-secondary-rgb), 0.1);

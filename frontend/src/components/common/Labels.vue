@@ -54,13 +54,16 @@ const emit = defineEmits(['toggle']);
 <style scoped>
 .label-group {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .label-title {
+  display: block;
   margin: 0;
   font-size: var(--font-size-xs);
   font-weight: var(--font-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--color-primary-hover);
 }
 

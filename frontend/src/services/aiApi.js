@@ -1,6 +1,6 @@
 import api from '@/services/api';
 
-export const analyzeProjectDescription = async (description) => {
+export const analyzeExperienceDescription = async (description) => {
   const { data } = await api.post('/ai/predict', {
     text: description
   });

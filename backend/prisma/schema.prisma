@@ -287,6 +287,7 @@ model Projet {
   lien_youtube     String?
   resultat_obtenus String?
   role             String?             @db.VarChar(50)
+  photo            String?
   technologies     String[]
   domains          String[]
   experience       Experience          @relation(fields: [experience_id], references: [experience_id])

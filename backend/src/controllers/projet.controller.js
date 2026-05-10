@@ -4,8 +4,12 @@ import { createProjet} from '../services/projet.service.js';
 
 export const addProjet = async (req, res) => {
   try {
-     const userId = req.user.id;
-     const data = req.body;
+    const userId = req.user.utilisateur_id;
+    const data = req.body;
+    
+    data.visibleToEveryone = data.visibleToEveryone === 'true';
+    data.technologies = JSON.parse(data.technologies || '[]');
+    data.domains = JSON.parse(data.domains || '[]');
 
     let imageUrl = null;
 
