@@ -5,8 +5,6 @@ export const analyzeProjectDescription = async (description) => {
     text: description
   });
 
-  console.log('AI raw response:', data);
-
   return {
     technologies: data.message?.technologies || [],
     domains: data.message?.domains || []

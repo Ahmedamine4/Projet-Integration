@@ -1,37 +1,34 @@
-// Done
+//Done
 import express from 'express';
 import { authMiddleware, authorizeRoles } from '../middleware/authMiddleware.js';
 import { ROLES } from '../middleware/authMiddleware.js';
 
 import {
-  githubLogin,
-  githubCallback,
-  getMyRepositories,
-  syncRepositories,
-} from '../controllers/githubController.js';
+  validateAddCertification,
+  addCertification,
+  getMyCertifications,
+} from '../controllers/certificationController.js';
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
 router.get(
-  '/login',
+  '/me',
   authorizeRoles(ROLES.ETUDIANT),
-  githubLogin
-);
-
-router.get('/callback', githubCallback);
-
-router.get(
-  '/repositories',
-  authorizeRoles(ROLES.ETUDIANT),
-  getMyRepositories
+  getMyCertifications
 );
 
 router.post(
-  '/sync',
+  '/',
   authorizeRoles(ROLES.ETUDIANT),
-  syncRepositories
+  validateAddCertification,
+  addCertification
+);
+
+router.get(
+  '/:id',
+  authorizeRoles(ROLES.ETUDIANT),
 );
 
 export default router;

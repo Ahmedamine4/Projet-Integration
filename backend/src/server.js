@@ -6,17 +6,15 @@ const PORT = process.env.PORT || 3000; // J'ai remis le port 3000
 
 async function demarrerServeur() {
   try {
-    
     await prisma.$connect();
-    console.log("🗄️  Connexion à la base de données PostgreSQL réussie !");
+    console.log("🗄️ Connexion PostgreSQL réussie !");
 
     app.listen(PORT, () => {
       console.log(`🚀 Serveur en écoute sur le port : ${PORT}`);
-      console.log("✅ SERVER STARTED ✔");
     });
 
   } catch (error) {
-    console.error("❌ Erreur critique : Impossible de se connecter à la base de données !");
+    console.error("❌ Erreur DB !");
     console.error(error);
     process.exit(1);
   }

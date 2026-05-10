@@ -1,20 +1,55 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+//Done
 
-class CertificationService {
-  async createCertification(data) {
-    return await prisma.certification.create({
-      data: {
-        userId: data.userId,
-        title: data.title,
-        issuingOrganization: data.issuingOrganization,
-        issueDate: data.issueDate ? new Date(data.issueDate) : null,
-        expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
-        credentialUrl: data.credentialUrl,
-        description: data.description,
+export const createCertification = async (data) => {
+  const { 
+    etudiantId, 
+    title, 
+    issuingOrganization, 
+    issueDate, 
+    expiryDate, 
+    credentialUrl, 
+    description, 
+    code 
+  } = data;
+
+  const certification = await prisma.certification.create({
+    data: {
+      titre: title,
+      description: description || null,
+      date_certification:  new Date(issueDate) ,
+      visibilite: true,
+      utilisateur_id: etudiantId,
+      document: credentialUrl,
+    },
+    include: {
+      certification: true,
+      validation: true
+    }
+  });
+
+  return certification;
+};
+
+export const getCertificationsByEtudiantId = async (etudiantId) => {
+  return await prisma.certification.findMany({
+    where: {
+      certification: {
+        utilisateur_id: etudiantId
+      }
+    },
+    include: {
+      certification: {
+        select: {
+          titre: true,
+          description: true,
+          date_experience: true,
+          visibilite: true
+        }
       },
-    });
-  }
-}
-
-module.exports = new CertificationService();
+      validation: true
+    },
+    orderBy: {
+      certification: { date_certification: 'desc' }
+    }
+  });
+};

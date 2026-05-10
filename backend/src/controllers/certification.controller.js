@@ -1,10 +1,11 @@
-const { body } = require('express-validator');
-const certificationService = require('../services/certificationService');
-const asyncHandler = require('../utils/asyncHandler');
-const prisma = require('../config/prisma');
+// Done 
 
-// validation (c'est ce que je faisais dans middleware)
-const validateAddCertification = [
+
+import { body } from 'express-validator';
+import * as certificationService from '../services/certificationService.js';
+import asyncHandler from '../utils/asyncHandler.js';
+
+export const validateAddCertification = [
   body('title')
     .trim()
     .isLength({ min: 3, max: 150 })
@@ -23,16 +24,23 @@ const validateAddCertification = [
   body('issueDate')
     .optional()
     .isISO8601()
-    .withMessage('La date doit être au format valide'),
+    .withMessage('La date doit être au format ISO valide'),
+
+  body('expiryDate')
+    .optional()
+    .isISO8601()
+    .withMessage('La date d\'expiration doit être au format ISO valide'),
 
   body('code')
     .optional()
     .trim(),
+
+  body('description')
+    .optional()
+    .trim(),
 ];
 
-
-// add cerif
-exports.addCertification = asyncHandler(async (req, res) => {
+export const addCertification = asyncHandler(async (req, res) => {
   const { 
     title, 
     issuingOrganization, 
@@ -43,7 +51,8 @@ exports.addCertification = asyncHandler(async (req, res) => {
     code 
   } = req.body;
 
-  const etudiantId = req.user.etudiant_utilisateur_id || req.user.id;
+// recuperation depuis token
+  const etudiantId = req.user.utilisateur_id ;
 
   const certification = await certificationService.createCertification({
     etudiantId,
@@ -63,34 +72,14 @@ exports.addCertification = asyncHandler(async (req, res) => {
   });
 });
 
-// get certif
-exports.getMyCertifications = asyncHandler(async (req, res) => {
-  const etudiantId = req.user.etudiant_utilisateur_id || req.user.id;
+export const getMyCertifications = asyncHandler(async (req, res) => {
+  const etudiantId = req.user.utilisateur_id ;
 
-  const certifications = await prisma.certification.findMany({
-    where: {
-      experience: {
-        utilisateur_id: etudiantId
-      }
-    },
-    include: {
-      experience: true,
-      validation: true
-    },
-    orderBy: {
-      experience: { date_experience: 'desc' }
-    }
-  });
+  const certifications = await certificationService.getCertificationsByEtudiantId(etudiantId);
 
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     count: certifications.length,
-    data: certifications 
+    data: certifications
   });
 });
-
-module.exports = {
-  validateAddCertification,
-  addCertification,
-  getMyCertifications
-};
