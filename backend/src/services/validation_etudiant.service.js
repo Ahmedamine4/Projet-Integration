@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import prisma from '../config/prisma.js';
 
 // Récupérer les demandes en attente pour une institution spécifique
 export const getPendingValidations = async (institutionId) => {

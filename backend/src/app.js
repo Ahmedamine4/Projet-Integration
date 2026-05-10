@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import aiRoutes from './routes/ai.route.js';
 import stageRoutes from './routes/stage.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
+import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
 
 const app = express();
 app.use(cors({
@@ -34,6 +35,9 @@ app.use('/api/select-institutions', LinkInstitutionsToEtudiantRoutes);
 
 //Validation Directeur - Etudiant
 app.use('/api/validation', ValidationEtudiantRoutes);
+
+//Modifications des infromations
+app.use('/api/users', updateUtilisateurRoutes);
 
 // Route de test
 app.get("/", (req, res) => {
