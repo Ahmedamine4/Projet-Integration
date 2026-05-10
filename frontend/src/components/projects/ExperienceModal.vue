@@ -433,17 +433,15 @@ watch(() => props.open, (open) => {
   nextTick(resizeTextarea);
 });
 
-function resetAcademicFields() {
+function resetAcademicErrors() {
   errors.institution = '';
   errors.teacherEmail = '';
-  form.institution = '';
-  form.teacherEmail = '';
 }
 
 watch(
   () => form.isAcademic,
   (value) => {
-    if (!value) resetAcademicFields();
+    if (!value) resetAcademicErrors();
 });
 </script>
 
@@ -528,7 +526,6 @@ watch(
             <div class="field">
               <div class="form-group-textarea">
                 <label for="description">Description</label>
-
                 <textarea
                   ref="textareaElem"
                   id="description"
@@ -537,21 +534,23 @@ watch(
                   :placeholder="`Describe your ${props.type}, its goal, features, and tools used...`"
                   :maxlength="MAX_TEXT_LEN"
                 />
+                <div class="textarea-meta">
+                  <Error v-if="errors.description" variant="field">
+                    {{ errors.description }}
+                  </Error>
 
-                <span class="textarea-counter">
-                  {{ form.description.length }}/{{ MAX_TEXT_LEN }}
-                </span>
+                  <span class="textarea-counter">
+                    {{ form.description.length }}/{{ MAX_TEXT_LEN }}
+                  </span>
+                </div>
               </div>
-              <Error v-if="errors.description" variant="field">
-                {{ errors.description }}
-              </Error>
             </div>
 
-            <p class="helper-text">
-              Missing a technology? Make sure it is clearly mentioned in the description, then try again.
-            </p>
-
             <div class="labels-section">
+              <p class="helper-text">
+                Missing a technology? Make sure it is clearly mentioned in the description, then try again.
+              </p>
+
               <Labels
                 title="Detected domains"
                 :items="domains"
@@ -572,7 +571,6 @@ watch(
             >
               <div class="form-group-textarea">
                 <label for="missions">Completed missions</label>
-
                 <textarea
                   ref="missionsTextareaElem"
                   id="missions"
@@ -686,7 +684,7 @@ watch(
                 :label="`Academic ${props.type}`"
               />
               <Transition name="field-reveal">
-                <div v-if="form.isAcademic" class="form-group">
+                <div v-if="form.isAcademic" class="academic-form-group">
                   <div class="institution-field">
                     <Select
                       v-model="form.institution"
@@ -756,6 +754,9 @@ watch(
 }
 
 .modal-card {
+  --modal-edge-space: var(--space-lg);
+  --modal-field-gap: var(--space-md);
+  --modal-inner-gap: var(--space-xs);
   --scrollbar-width: clamp(8px, 1vw, 12px);
   --scrollbar-padding: clamp(2px, 0.25vw, 3px);
   position: relative;
@@ -779,7 +780,7 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  padding: var(--space-lg);
+  padding: var(--modal-edge-space);
   background-color: var(--color-background);
 }
 
@@ -822,8 +823,8 @@ watch(
   min-height: 0;
   overflow-y: auto;
   display: grid;
-  gap: 1.2rem;
-  padding: var(--space-lg);
+  gap: var(--modal-field-gap);
+  padding: var(--modal-edge-space);
 }
 
 .experience-form__body::-webkit-scrollbar {
@@ -842,9 +843,10 @@ watch(
 }
 
 
-.field {
+.field,
+.institution-field {
   display: grid;
-  gap: var(--space-xs);
+  gap: var(--modal-inner-gap);
 }
  
 .file-name {
@@ -861,25 +863,19 @@ watch(
   color: var(--color-success);
 }
 
-.institution-field {
+.form-group,
+.academic-form-group {
   display: grid;
-  gap: var(--space-xs);
+  gap: var(--modal-field-gap);
 }
 
-.academic-experience-section {
-  display: grid;
-}
-
-.form-group {
+.academic-form-group {
   margin-top: var(--space-md);
-  display: grid;
-  gap: var(--space-md);
 }
 
 .form-group-textarea {
-  margin-top: var(--space-md);
   display: grid;
-  gap: var(--space-xs);
+  gap: var(--modal-inner-gap);
 }
 
 :is(.form-group, .form-group-textarea) label {
@@ -910,23 +906,36 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
+.textarea-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: 1rem;
+}
+
 .textarea-counter {
-  display: block;
-  margin-top: var(--space-xs);
+  margin: 0;
   color: var(--color-primary-hover);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-xxs);
+  margin-left: auto;
+  white-space: nowrap;
   text-align: right;
 }
 
 .helper-text {
   margin: 0;
-  color: var(--color-primary-hover);
-  font-size: var(--font-size-xs);
+  color: rgba(var(--color-primary-rgb), 0.52);
+  font-size: var(--font-size-xxs);
 }
 
 .labels-section {
   display: grid;
-  gap: 12px;
+  gap: var(--modal-field-gap);
+}
+
+.academic-experience-section {
+  display: grid;
 }
 
 .experience-form__footer {
@@ -936,8 +945,8 @@ textarea:focus {
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  gap: 14px;
-  padding: var(--space-md);
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--modal-edge-space);
 }
 
 .experience-form__footer::before {
@@ -966,9 +975,9 @@ textarea:focus {
 .field-reveal-leave-active {
   overflow: hidden;
   transition:
-    opacity var(--transition-fast),
-    max-height var(--transition-fast),
-    margin-top var(--transition-fast);
+    opacity var(--transition-normal),
+    max-height var(--transition-normal),
+    margin-top var(--transition-normal);
 }
 
 .field-reveal-enter-to,
