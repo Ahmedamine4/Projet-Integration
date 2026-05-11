@@ -2,7 +2,9 @@
 
 import * as githubService from '../services/github.service.js';
 import asyncHandler from '../utils/asyncHandler.js';
-import prisma from '../config/prisma.js';
+import prisma from '../config/prisma.js';     
+  // je vais enlever n'import qu'elle attribut lier a prismer 
+  // et je vais le faire dans git.service.js
 
 export const githubLogin = asyncHandler(async (req, res) => {
   const etudiantId = req.user.utilisateur_id ;

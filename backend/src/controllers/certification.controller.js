@@ -4,42 +4,7 @@
 import { body } from 'express-validator';
 import * as certificationService from '../services/certification.service.js';
 import asyncHandler from '../utils/asyncHandler.js';
-
-export const validateAddCertification = [
-  body('title')
-    .trim()
-    .isLength({ min: 3, max: 150 })
-    .withMessage('Le titre doit contenir entre 3 et 150 caractères'),
-
-  body('issuingOrganization')
-    .trim()
-    .notEmpty()
-    .withMessage("L'organisme émetteur est requis"),
-
-  body('credentialUrl')
-    .optional()
-    .isURL()
-    .withMessage("L'URL du certificat doit être valide"),
-
-  body('issueDate')
-    .optional()
-    .isISO8601()
-    .withMessage('La date doit être au format ISO valide'),
-
-  body('expiryDate')
-    .optional()
-    .isISO8601()
-    .withMessage('La date d\'expiration doit être au format ISO valide'),
-
-  body('code')
-    .optional()
-    .trim(),
-
-  body('description')
-    .optional()
-    .trim(),
-];
-
+// apres des discussions avec le developpeur backend Yahya, il m'a proposé d'enlever la fonction "validateaddcertif" 
 export const addCertification = asyncHandler(async (req, res) => {
   const { 
     title, 
