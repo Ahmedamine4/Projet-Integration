@@ -3,9 +3,11 @@ import { computed, onMounted, ref } from 'vue';
 import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { useInternshipStore } from '@/stores/internship';
+import { useActivityStore } from '@/stores/activity';
 
 const projectStore = useProjectStore();
 const internshipStore = useInternshipStore();
+const activityStore = useActivityStore();
 
 const experienceTypes = [
   { value: 'project', label: 'Projects' },
@@ -20,19 +22,24 @@ const modalMode = ref('create');
 const selectedExperience = ref(null);
 const pageError = ref('');
 
-const isLoading = computed(() => projectStore.loading || internshipStore.loading);
+const isLoading = computed(() => 
+  projectStore.loading ||
+  internshipStore.loading ||
+  activityStore.loading
+);
 
 const currentItems = computed(() => {
   if (selectedType.value === 'project') return projectStore.projects;
   if (selectedType.value === 'internship') return internshipStore.internships;
+  if (selectedType.value === 'activity') return activityStore.activities;
   return [];
 });
 
 function openCreateModal() {
   pageError.value = '';
 
-  if (selectedType.value === 'activity' || selectedType.value === 'certificate') {
-    pageError.value = `${selectedType.value} backend is not available yet.`;
+  if (selectedType.value === 'certificate') {
+    pageError.value = `Certificate backend is not available yet.`;
     return;
   }
 
@@ -44,8 +51,8 @@ function openCreateModal() {
 function openEditModal(experience) {
   pageError.value = '';
 
-  if (experience.type === 'project') {
-    pageError.value = 'Project edit is not available until the backend has an edit endpoint.';
+  if (experience.type === 'project' || experience.type === 'activity') {
+    pageError.value = `${experience.type} edit is not available until the backend has an edit endpoint.`;
     return;
   }
 
@@ -82,12 +89,17 @@ async function handleSubmit(experience) {
   try {
     if (selectedType.value === 'project') {
       await projectStore.createProject(experience);
-    } else if (modalMode.value === 'edit') {
+    }
+    else if (selectedType.value === 'activity') {
+      await activityStore.createActivity(experience);
+    }
+    else if (modalMode.value === 'edit') {
       await internshipStore.editInternship({
         ...selectedExperience.value,
         ...experience,
       });
-    } else {
+    }
+    else {
       await internshipStore.createInternship(experience);
     }
 
@@ -100,6 +112,9 @@ async function handleSubmit(experience) {
 onMounted(() => {
   internshipStore.fetchInternships().catch((error) => {
     pageError.value = error.response?.data?.message || 'Failed to fetch internships';
+  });
+  activityStore.fetchActivities().catch((error) => {
+    pageError.value = error.response?.data?.message || 'Failed to fetch activities';
   });
 });
 </script>
@@ -131,12 +146,20 @@ onMounted(() => {
       >
         Refresh internships
       </button>
+      <button
+        v-if="selectedType === 'activity'"
+        type="button"
+        @click="activityStore.fetchActivities()"
+      >
+        Refresh activities
+      </button>
     </div>
 
     <p v-if="isLoading">Loading...</p>
     <p v-if="pageError" class="error">{{ pageError }}</p>
     <p v-if="projectStore.error" class="error">{{ projectStore.error }}</p>
     <p v-if="internshipStore.error" class="error">{{ internshipStore.error }}</p>
+    <p v-if="activityStore.error" class="error">{{ activityStore.error }}</p>
 
     <div class="list">
       <p v-if="!currentItems.length">No {{ selectedType }} items yet.</p>
