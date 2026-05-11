@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import aiRoutes from './routes/ai.route.js';
 import stageRoutes from './routes/stage.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 const app = express();
 app.use(cors({
@@ -38,6 +39,7 @@ app.use('/api/validation', ValidationEtudiantRoutes);
 
 // Branchement des routes d'ajout du projet
 app.use('/api', projetRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Route de test
 app.get("/", (req, res) => {
