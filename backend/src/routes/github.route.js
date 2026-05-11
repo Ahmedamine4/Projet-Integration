@@ -1,7 +1,7 @@
 // Done
 import express from 'express';
-import { authMiddleware, authorizeRoles } from '../middleware/authMiddleware.js';
-import { ROLES } from '../middleware/authMiddleware.js';
+import { authMiddleware, authorizeRoles } from '../middleware/auth.middleware.js';
+import { ROLES } from '../middleware/auth.middleware.js';
 
 import {
   githubLogin,

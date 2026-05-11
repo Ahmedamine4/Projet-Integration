@@ -2,7 +2,7 @@
 
 
 import { body } from 'express-validator';
-import * as certificationService from '../services/certificationService.js';
+import * as certificationService from '../services/certification.service.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 export const validateAddCertification = [

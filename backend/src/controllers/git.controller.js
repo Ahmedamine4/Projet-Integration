@@ -1,6 +1,6 @@
 // Done
 
-import * as githubService from '../services/githubService.js';
+import * as githubService from '../services/github.service.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import prisma from '../config/prisma.js';
 
