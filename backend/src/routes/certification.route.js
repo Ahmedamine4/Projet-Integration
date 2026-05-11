@@ -1,23 +1,15 @@
-//Done
+//done
 import express from 'express';
 import { authMiddleware, authorizeRoles } from '../middleware/auth.middleware.js';
 import { ROLES } from '../middleware/auth.middleware.js';
-
 import {
-  validateAddCertification,
   addCertification,
   getMyCertifications,
-} from '../controllers/certificationController.js';
+} from '../controllers/certification.controller.js';
 
 const router = express.Router();
 
 router.use(authMiddleware);
-
-router.get(
-  '/me',
-  authorizeRoles(ROLES.ETUDIANT),
-  getMyCertifications
-);
 
 router.post(
   '/',
@@ -27,8 +19,9 @@ router.post(
 );
 
 router.get(
-  '/:id',
+  '/me',
   authorizeRoles(ROLES.ETUDIANT),
+  getMyCertifications
 );
 
 export default router;

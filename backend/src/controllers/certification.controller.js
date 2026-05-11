@@ -1,46 +1,41 @@
-// Done 
-
+//Done
 
 import { body } from 'express-validator';
 import * as certificationService from '../services/certification.service.js';
 import asyncHandler from '../utils/asyncHandler.js';
-// apres des discussions avec le developpeur backend Yahya, il m'a proposé d'enlever la fonction "validateaddcertif" 
+
 export const addCertification = asyncHandler(async (req, res) => {
   const { 
     title, 
     issuingOrganization, 
     issueDate, 
-    expiryDate, 
     credentialUrl, 
     description, 
     code 
   } = req.body;
 
-// recuperation depuis token
-  const etudiantId = req.user.utilisateur_id ;
+  const userId =  req.user.utilisateur_id ;
 
-  const certification = await certificationService.createCertification({
-    etudiantId,
+  const result = await certificationService.createCertification({
     title,
     issuingOrganization,
     issueDate,
-    expiryDate,
     credentialUrl,
     description,
     code
-  });
+  }, userId);
 
   res.status(201).json({
     success: true,
     message: "Certification ajoutée avec succès",
-    data: certification
+    data: result
   });
 });
 
 export const getMyCertifications = asyncHandler(async (req, res) => {
-  const etudiantId = req.user.utilisateur_id ;
+  const userId = req.user.etudiant_utilisateur_id || req.user.utilisateur_id || req.user.id;
 
-  const certifications = await certificationService.getCertificationsByEtudiantId(etudiantId);
+  const certifications = await certificationService.getMyCertifications(userId);
 
   res.json({
     success: true,

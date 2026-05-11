@@ -438,7 +438,7 @@ model Repository {
   forks             Int      @default(0)
   is_private        Boolean  @default(false)
 
-  github_access_token String?   // ⚠️ À chiffrer en production
+  github_access_token String?   // À chiffrer
   last_synced       DateTime   @default(now())
 
   etudiant          Etudiant   @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
