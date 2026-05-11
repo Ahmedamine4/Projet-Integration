@@ -4,14 +4,58 @@ import {
   getPortfolioPublicActivitiesService,
   updateValidationActiviteService,
 } from '../services/activite.service.js';
+import { supabase } from '../config/supabase.js';
 
 function getStatusCode(error, fallbackStatus = 500) {
   return error?.statusCode || fallbackStatus;
 }
 
+function normalizeArrayPayload(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
 export async function createActivite(req, res) {
   try {
-    const activite = await createActiviteService(req.body, req.user);
+    const data = { ...req.body };
+    data.competences = normalizeArrayPayload(data.competences);
+    data.documentations = normalizeArrayPayload(data.documentations);
+
+    if (req.file) {
+      const fileName = `${Date.now()}-${req.file.originalname}`;
+
+      const { error } = await supabase.storage
+        .from('activites')
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+        });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const { data: publicUrl } = supabase.storage
+        .from('activites')
+        .getPublicUrl(fileName);
+
+      data.documentations.push({
+        captures: publicUrl.publicUrl,
+      });
+    }
+
+    const activite = await createActiviteService(data, req.user);
 
     return res.status(201).json({
       success: true,

@@ -402,12 +402,22 @@ export async function getPortfolioPublicActivitiesService(etudiantId) {
         type: 'activite',
         visibilite: true,
       },
-      // Une activite doit etre explicitement validee pour apparaitre dans le portfolio.
-      validation: {
-        is: {
-          statut: 'valide',
+      OR: [
+        // Activite personnelle visible: pas de validation, mais deja publique.
+        {
+          validation: {
+            is: null,
+          },
         },
-      },
+        // Activite academique: visible seulement apres validation admin positive.
+        {
+          validation: {
+            is: {
+              statut: 'valide',
+            },
+          },
+        },
+      ],
     },
     include: ACTIVITY_INCLUDE,
     orderBy: {
