@@ -130,7 +130,7 @@ export const useInternshipStore = defineStore('internship', () => {
         }
       );
 
-      const updatedInternship = normalizeCreatedInternship(response.data.data);
+      const updatedInternship = normalizeInternship(response.data.data);
 
       internships.value = internships.value.map((item) =>
         item.id === updatedInternship.id ? updatedInternship : item
