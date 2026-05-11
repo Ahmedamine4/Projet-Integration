@@ -4,7 +4,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import Button from '@/components/common/Button.vue';
 import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
 
-import { getFilePreview, buildProjectFormData } from '@/utils/ExperienceUtils';
+import { getFilePreview, buildProjectFormData, buildInternshipFormData } from '@/utils/ExperienceUtils';
 import api from '@/services/api';
 
 const experienceTypes = [
@@ -155,8 +155,8 @@ async function handleExperienceSubmit(experience) {
       return;
     }
 
-    if (experienceToSave.type === 'project') {
-      await api.post('/add-projet', buildProjectFormData(experienceToSave), {
+    if (experienceToSave.type === 'internship') {
+      await api.post('/add-stage', buildInternshipFormData(experienceToSave), {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
