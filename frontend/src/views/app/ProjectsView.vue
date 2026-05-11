@@ -156,7 +156,7 @@ async function handleExperienceSubmit(experience) {
     }
 
     if (experienceToSave.type === 'internship') {
-      await api.post('/add-stage', buildInternshipFormData(experienceToSave), {
+      await api.post('/stages/add-stage', buildInternshipFormData(experienceToSave), {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

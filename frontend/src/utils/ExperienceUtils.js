@@ -26,7 +26,7 @@ export function buildProjectFormData(experience) {
 export function buildInternshipFormData(experience) {
   const formData = new FormData();
 
-  formData.append('title', experience.title);
+  formData.append('titre', experience.title);
   formData.append('date_debut', experience.startDate);
   formData.append('date_fin', experience.endDate);
   formData.append('description', experience.description);
@@ -39,7 +39,7 @@ export function buildInternshipFormData(experience) {
   formData.append('missions_realisees', experience.missions);
 
   if (experience.image) {
-    formData.append('img', experience.image);
+    formData.append('photo', experience.image);
   }
 
   return formData;
