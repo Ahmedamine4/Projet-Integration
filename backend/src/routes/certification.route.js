@@ -14,7 +14,7 @@ router.use(authMiddleware);
 router.post(
   '/',
   authorizeRoles(ROLES.ETUDIANT),
-  validateAddCertification,
+  //validateAddCertification,
   addCertification
 );
 
