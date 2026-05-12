@@ -4,13 +4,9 @@ import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { useInternshipStore } from '@/stores/internship';
 import { useActivityStore } from '@/stores/activity';
+import { useInstitutionStore } from '@/stores/institution';
 
-const schoolOptions = [
-  'ENSA Tanger',
-  'ENSA Tetouan',
-  'ENSA Al Hoceima',
-  'FST Tanger',
-];
+const institutionStore = useInstitutionStore();
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -238,8 +234,8 @@ onMounted(() => {
       :initial-value="selectedExperience"
       :open="modalOpen"
       :loading="isLoading"
-      :schoolOptions
-      :professorEmails
+      :school-options="institutionStore.selectedInstitutions"
+      :professor-emails="professorEmails"
       @close="closeModal"
       @submit="handleSubmit"
     />
