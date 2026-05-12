@@ -129,7 +129,6 @@ watch(() => props.userId, () => fetchAbout());
 </script>
 
 <template>
-  <Card>
     <div class="about-frame">
       <div class="about-header-inline">
         <h2 class="about-title">About me</h2>
@@ -183,15 +182,14 @@ watch(() => props.userId, () => fetchAbout());
         </Transition>
       </div>
     </div>
-  </Card>
 </template>
 
 <style scoped>
 .about-frame {
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  background: var(--color-background);
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
+  background: rgba(var(--color-surface-rgb), 0.78);
+  padding: var(--space-lg) var(--space-xl);
+  border-radius: var(--radius-lg);
 }
 
 .about-header-inline {
@@ -254,7 +252,7 @@ watch(() => props.userId, () => fetchAbout());
   padding: 0.6rem;
   border: 1px solid rgba(var(--color-primary-rgb), 0.18);
   border-radius: var(--radius-md);
-  background: rgba(var(--color-surface-rgb), 0.32);
+  background: transparent;
   font: inherit;
   color: inherit;
   line-height: 1.4;
