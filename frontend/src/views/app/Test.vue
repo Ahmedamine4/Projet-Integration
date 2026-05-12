@@ -5,6 +5,26 @@ import { useProjectStore } from '@/stores/project';
 import { useInternshipStore } from '@/stores/internship';
 import { useActivityStore } from '@/stores/activity';
 
+const schoolOptions = [
+  'ENSA Tanger',
+  'ENSA Tetouan',
+  'ENSA Al Hoceima',
+  'FST Tanger',
+];
+
+const professorEmails = [
+  'ahmed.elamrani@ensat.ac.ma',
+  'fatima.zahra@ensat.ac.ma',
+  'youssef.bennani@uae.ac.ma',
+  'sara.lahlou@fstt.ac.ma',
+  'nour.chaoui@encgt.ac.ma',
+  'karim.boukhari@ensate.uae.ac.ma',
+  'amina.tazi@fs-tanger.ac.ma',
+  'mehdi.elidrissi@ensah.ma',
+  'salma.aitali@fstt.ac.ma',
+  'omar.benali@uae.ac.ma'
+];
+
 const projectStore = useProjectStore();
 const internshipStore = useInternshipStore();
 const activityStore = useActivityStore();
@@ -218,6 +238,8 @@ onMounted(() => {
       :initial-value="selectedExperience"
       :open="modalOpen"
       :loading="isLoading"
+      :schoolOptions
+      :professorEmails
       @close="closeModal"
       @submit="handleSubmit"
     />

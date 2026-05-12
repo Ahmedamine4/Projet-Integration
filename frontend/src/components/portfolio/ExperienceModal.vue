@@ -35,6 +35,14 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  schoolOptions: {
+    type: Array,
+    default: () => [],
+  },
+  professorEmails: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['close', 'submit']);
@@ -126,26 +134,6 @@ const errors = reactive({
 const MAX_TEXT_LEN = 1200;
 
 const domainColorRgb = '245, 158, 11';
-
-const schoolOptions = [
-  'ENSA Tanger',
-  'ENSA Tetouan',
-  'ENSA Al Hoceima',
-  'FST Tanger',
-];
-
-const professorEmails = [
-  'ahmed.elamrani@ensat.ac.ma',
-  'fatima.zahra@ensat.ac.ma',
-  'youssef.bennani@uae.ac.ma',
-  'sara.lahlou@fstt.ac.ma',
-  'nour.chaoui@encgt.ac.ma',
-  'karim.boukhari@ensate.uae.ac.ma',
-  'amina.tazi@fs-tanger.ac.ma',
-  'mehdi.elidrissi@ensah.ma',
-  'salma.aitali@fstt.ac.ma',
-  'omar.benali@uae.ac.ma'
-];
 
 const form = reactive({
   title: '',
@@ -360,7 +348,7 @@ const submitExperience = () => {
       errors.teacherEmail = `Teacher email is required for academic ${props.type}s`;
     else if (
       form.isAcademic &&
-      !professorEmails.includes(trimmedTeacherEmail)
+      !props.professorEmails.includes(trimmedTeacherEmail)
     )
       errors.teacherEmail = 'Select a valid teacher email';
   }
@@ -1064,6 +1052,9 @@ textarea:focus {
 
 @media (max-width: 480px) {
   .modal-card {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
     align-self: flex-end;
     height: 70vh;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
