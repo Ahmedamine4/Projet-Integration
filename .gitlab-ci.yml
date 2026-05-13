@@ -2,8 +2,6 @@ stages:
   - quality
   - test
 
-variables:
-  NODE_VERSION: "24-alpine"
 
 # SONARQUBE
 
@@ -23,10 +21,11 @@ sonarqube:
       - .sonar/cache
 
   script:
-    - sonar-scanner
-      -Dsonar.projectKey=$SONAR_PROJECT_KEY
-      -Dsonar.sources=.
-      -Dsonar.host.url=$SONAR_HOST_URL
+  - sonar-scanner \
+      -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+      -Dsonar.organization=$SONAR_ORGANIZATION \
+      -Dsonar.sources=. \
+      -Dsonar.host.url=$SONAR_HOST_URL \
       -Dsonar.login=$SONAR_TOKEN
 
   rules:
@@ -36,7 +35,7 @@ sonarqube:
 
 backend-tests:
   stage: test
-  image: node:${NODE_VERSION}
+  image: node:24-alpine
 
   cache:
     key: backend-${CI_COMMIT_REF_SLUG} 
@@ -45,7 +44,7 @@ backend-tests:
 
   before_script:
     - cd backend
-    - npm install
+    - npm ci
 
   script:
     - npm run test
@@ -59,7 +58,7 @@ backend-tests:
 
 frontend-tests:
   stage: test
-  image: node:${NODE_VERSION}
+  image: node:24-alpine
 
   cache:
     key: frontend-${CI_COMMIT_REF_SLUG}
@@ -68,7 +67,7 @@ frontend-tests:
 
   before_script:
     - cd frontend
-    - npm install
+    - npm ci
 
   script:
     - npm run test
