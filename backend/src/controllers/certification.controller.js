@@ -7,7 +7,6 @@ export const addCertification = async (req, res) => {
   try {
     const { 
       title, 
-      issuingOrganization, 
       issueDate, 
       credentialUrl, 
       description, 
