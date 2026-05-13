@@ -7,7 +7,6 @@ export const addCertification = async (req, res) => {
   try {
     const { 
       title, 
-      issuingOrganization, 
       issueDate, 
       credentialUrl, 
       description, 
@@ -15,15 +14,10 @@ export const addCertification = async (req, res) => {
     } = req.body;
 
     const userId = req.user.utilisateur_id;
+    if(!title ||!issuedate || !credentialUrl || !description || !code)
+      return res.status(400).json({ success: false, message: 'Champs obligatoires manquants' });
 
-    const result = await certificationService.createCertification({
-      title,
-      issuingOrganization,
-      issueDate,
-      credentialUrl,
-      description,
-      code
-    }, userId);
+    const result = await certificationService.createCertification(req.body, userId);
 
     res.status(201).json({
       success: true,
@@ -40,7 +34,7 @@ export const addCertification = async (req, res) => {
 
 export const getMyCertifications = async (req, res) => {
   try {
-    const userId = req.user.etudiant_utilisateur_id || req.user.utilisateur_id || req.user.id;
+    const userId = req.user.utilisateur_id ;
 
     const certifications = await certificationService.getMyCertifications(userId);
 
