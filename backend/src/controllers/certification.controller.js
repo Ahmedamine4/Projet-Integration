@@ -7,7 +7,6 @@ import asyncHandler from '../utils/asyncHandler.js';
 export const addCertification = asyncHandler(async (req, res) => {
   const { 
     title, 
-    issuingOrganization, 
     issueDate, 
     credentialUrl, 
     description, 
