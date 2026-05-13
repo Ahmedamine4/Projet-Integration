@@ -10,12 +10,9 @@ import aiRoutes from './routes/ai.route.js';
 import stageRoutes from './routes/stage.routes.js';
 import activiteRoutes from './routes/activite.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
-<<<<<<< Updated upstream
 import notificationRoutes from './routes/notification.routes.js';
 import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
-=======
 import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
->>>>>>> Stashed changes
 
 const app = express();
 app.use(cors({
