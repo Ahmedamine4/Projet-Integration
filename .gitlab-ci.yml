@@ -1,29 +1,79 @@
 stages:
-  - build
+  - quality
   - test
 
-image: docker:latest
-
-services:
-  - docker:dind
-
 variables:
-  DOCKER_DRIVER: overlay2
+  NODE_VERSION: "24-alpine"
 
-before_script:
-  - docker info 
+# SONARQUBE
 
-# BUILD
-build:
-  stage: build
+sonarqube:
+  stage: quality
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""] 
+
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" 
+    GIT_DEPTH: "0"
+
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+
   script:
-    - docker compose -f infrastructure/docker/docker-compose.yml build
+    - sonar-scanner
+      -Dsonar.projectKey=$SONAR_PROJECT_KEY
+      -Dsonar.sources=.
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.login=$SONAR_TOKEN
 
-# TEST
-test:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
+# BACKEND TESTS
+
+backend-tests:
   stage: test
+  image: node:${NODE_VERSION}
+
+  cache:
+    key: backend-${CI_COMMIT_REF_SLUG} 
+    paths:
+      - backend/node_modules/
+
+  before_script:
+    - cd backend
+    - npm install
+
   script:
-    - docker compose -f infrastructure/docker/docker-compose.yml -f infrastructure/docker/docker-compose.dev.yml up -d
-    - sleep 15
-    - docker compose ps
-    - docker compose down
+    - npm run test
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - backend/**
+
+# FRONTEND TESTS
+
+frontend-tests:
+  stage: test
+  image: node:${NODE_VERSION}
+
+  cache:
+    key: frontend-${CI_COMMIT_REF_SLUG}
+    paths:
+      - frontend/node_modules/
+
+  before_script:
+    - cd frontend
+    - npm install
+
+  script:
+    - npm run test
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - frontend/**
