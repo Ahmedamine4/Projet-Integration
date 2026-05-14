@@ -6,8 +6,6 @@ import Button from '@/components/common/Button.vue';
 import { ArrowUpRight } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
-const firstName = authStore.user.firstName;
-const lastName = authStore.user.lastName;
 </script>
 
 <template>
@@ -18,7 +16,9 @@ const lastName = authStore.user.lastName;
 				<div class="profile__photo">
 					<img :src alt="photo">
 					<button class="contact-button">
-						<ArrowUpRight />
+						<div>
+							<ArrowUpRight :size="13" />
+						</div>
 						<span>Contact me</span>
 					</button>
 				</div>
@@ -40,8 +40,12 @@ const lastName = authStore.user.lastName;
 						</div>
 					</div>
 					<div class="actions">
-						<Button variant="pill" block size="xs">Follow</Button>
-						<Button variant="ghost" block size="xs">Recommend</Button>
+						<button class="follow-button">
+							Follow
+						</button>
+						<button class="recommend-button">
+							Recommend
+						</button>
 					</div>
 				</div>
 			</div>
@@ -79,22 +83,24 @@ const lastName = authStore.user.lastName;
 
 .profile {
 	display: flex;
-	gap: var(--space-lg);
+	gap: 2.5rem;
 }
 
 .profile__photo {
+	--photo-diameter: 11rem;
 	position: relative;
 	display: flex;
 	justify-content: center;
-	flex: 0 0 12rem;
-	width: 12rem;
-	height: 12rem;
+	flex: 0 0 var(--photo-diameter);
+	width: var(--photo-diameter);
+	height: var(--photo-diameter);
 	transform: translateY(calc(var(--space-lg) * -1.5));
 	background-color: var(--color-surface);
-	border-radius: calc(var(--radius-lg) * 3.5);
+	border-radius: 40%;
 }
 
 .profile__photo img {
+	border-radius: inherit;
   display: block;
   width: 100%;
   height: 100%;
@@ -106,18 +112,19 @@ const lastName = authStore.user.lastName;
 	font-family: var(--font-ui);
 	flex-direction: column;
 	gap: var(--space-sm);
-	padding: var(--space-lg) 0;
+	padding: var(--space-md) 0;
 }
 
 .name {
 	margin: 0;
-	font-size: calc(var(--font-size-lg) + 0.6rem);
+	font-size: calc(var(--font-size-lg) + 0.2rem);
 	font-weight: var(--font-bold);
 	color: var(--color-primary);
+	line-height: 1;
 }
 
 .profile__info > span {
-	font-size: var(--font-size-sm);
+	font-size: var(--font-size-xs);
 	color: rgba(var(--color-primary-rgb), 0.7);
 }
 
@@ -132,7 +139,7 @@ const lastName = authStore.user.lastName;
 	grid-template-columns: 1fr 1fr 1fr;
 	justify-content: space-between;
 	align-items: center;
-	gap: var(--space-md);
+	gap: 2.5rem;
 }
 
 .statistics > div {
@@ -144,12 +151,12 @@ const lastName = authStore.user.lastName;
 .statistics span {
 	color: rgba(var(--color-primary-rgb), 0.7);
 	font-size: var(--font-size-xxs);
-	text-transform: uppercase;
-	letter-spacing: 0.1em;
+	font-weight: var(--font-bold);
 }
 
 .statistics h2 {
 	margin: 0;
+	font-size: var(--font-size-lg);
 	font-weight: var(--font-bold);
 	color: var(--color-primary);
 }
@@ -163,7 +170,7 @@ const lastName = authStore.user.lastName;
 .actions {
 	margin-top: var(--space-xs);
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: 1fr 1.3fr;
 	gap: var(--space-lg);
 }
 
@@ -171,20 +178,101 @@ const lastName = authStore.user.lastName;
 	display: grid;
 	grid-template-columns: 0.5rem 1fr;
 	align-items: center;
-	gap: var(--space-md);
+	gap: 1.3rem;
 	position: absolute;
-	bottom: calc(var(--space-lg) * -1);
+	bottom: calc(1rem * -1);
 	border: 1.5px solid var(--color-primary);
 	border-radius: 999px;
-	padding: var(--space-xs) var(--space-md);
+	padding-block: var(--space-xs);
+	padding-inline: var(--space-xs) 1.2rem;
 	color: var(--color-primary);
-	font-size: var(--font-size-xs);
+	font-size: var(--font-size-xxs);
 	font-weight: var(--font-bold);
-	background-color: var(--color-background);
+	background: var(--color-background);
 	cursor: pointer;
+	transition: transform var(--transition-fast);
+}
+
+.contact-button:hover {
+	transform: translateY(-1px);
+}
+
+:is(.contact-button, .follow-button, .recommend-button):focus-visible {
+	outline: none;
+	border-color: var(--color-secondary);
+	box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
+}
+
+:is(.contact-button, .follow-button, .recommend-button):hover {
+	transform: translateY(-1px);
+}
+
+.contact-button > div {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--color-primary);
+	width: 1.3rem;
+	height: 1.3rem;
+	border-radius: 50%;
 }
 
 .contact-button svg {
-	width: 1rem;
+	color: var(--color-background);
+}
+
+.follow-button,
+.recommend-button {
+	font-size: var(--font-size-xs);
+	padding: 0.45rem var(--space-md);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+}
+
+.follow-button {
+	border: 1.5px solid var(--color-primary);
+	background-color: var(--color-primary);
+	color: var(--color-background);
+	box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
+	transition:
+		box-shadow var(--transition-fast),
+		transform var(--transition-fast);
+}
+
+.follow-button:hover {
+	box-shadow: 0 7px 10px rgba(0, 0, 0, 0.38);
+}
+
+.recommend-button {
+	font-weight: var(--font-bold);
+	border: 1.5px solid rgba(var(--color-primary-rgb), 0.78);
+	background-color: var(--color-background);
+	color: rgba(var(--color-primary-rgb), 0.78);
+	transition: transform var(--transition-fast);
+}
+
+@media (max-width: 768px) {
+	.profile {
+		flex-direction: column;
+		max-width: fit-content;
+		margin: 0 auto;
+		gap: 0;
+	}
+
+	.profile__photo {
+		--photo-diameter: 10rem;
+		margin: 0 auto;
+	}
+
+	.profile__info {
+		text-align: center;
+		padding-top: 0;
+	}
+
+	.about {
+		grid-template-columns: 1fr;
+		gap: var(--space-lg);
+	}
+
 }
 </style>

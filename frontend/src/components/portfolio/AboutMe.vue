@@ -1,8 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
-import Card from '@/components/common/Card.vue';
 import Button from '@/components/common/Button.vue';
 
 const props = defineProps({
@@ -91,6 +90,7 @@ function resizeEditorTextarea() {
 function openEdit() {
   editText.value = about.value || '';
   isEditing.value = true;
+  nextTick(resizeEditorTextarea);
 }
 
 function closeEdit() {
@@ -135,51 +135,45 @@ watch(() => props.userId, () => fetchAbout());
       </div>
 
       <div class="about-me">
-        <Transition
-          name="pop-up"
-          mode="out-in"
-          @after-enter="resizeEditorTextarea"
+        <div v-if="isEditing" class="inline-editor">
+          <textarea
+            ref="editorTextarea"
+            class="editor-textarea"
+            v-model="editText"
+            :maxlength="MAX_EDIT_LEN"
+            placeholder="Write something about yourself..."
+            @input="resizeEditorTextarea"
+          ></textarea>
+
+          <div class="editor-footer">
+            <div class="char-count">{{ editText.length }} / {{ MAX_EDIT_LEN }}</div>
+            <div class="editor-actions">
+              <Button variant="ghost" @click="closeEdit">Cancel</Button>
+              <Button variant="submit" :loading="saving" :disabled="saving || editText.length > MAX_EDIT_LEN" @click="saveEdit">Save</Button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-else
+          class="about-view"
+          @dblclick="handleTextDblClick"
+          @touchend.passive="handleTouchEnd"
         >
-          <div v-if="isEditing" class="inline-editor">
-            <textarea
-              ref="editorTextarea"
-              class="editor-textarea"
-              v-model="editText"
-              :maxlength="MAX_EDIT_LEN"
-              placeholder="Write something about yourself..."
-              @input="resizeEditorTextarea"
-            ></textarea>
+          <p class="about-me__text">
+            <span v-if="about">{{ displayText }}</span>
+            <span v-else class="muted">No about available.</span>
+          </p>
 
-            <div class="editor-footer">
-              <div class="char-count">{{ editText.length }} / {{ MAX_EDIT_LEN }}</div>
-              <div class="editor-actions">
-                <Button variant="ghost" @click="closeEdit">Cancel</Button>
-                <Button variant="submit" :loading="saving" :disabled="saving || editText.length > MAX_EDIT_LEN" @click="saveEdit">Save</Button>
-              </div>
+          <div class="about-controls">
+            <button v-if="isTruncated" class="link" @click="showFull = !showFull">
+              {{ showFull ? 'See less' : 'See more' }}
+            </button>
+            <div v-if="isOwner" class="edit-hint">
+              Double-click to edit
             </div>
           </div>
-
-          <div
-            v-else
-            class="about-view"
-            @dblclick="handleTextDblClick"
-            @touchend.passive="handleTouchEnd"
-          >
-            <p class="about-me__text">
-              <span v-if="about">{{ displayText }}</span>
-              <span v-else class="muted">No about available.</span>
-            </p>
-
-            <div class="about-controls">
-              <button v-if="isTruncated" class="link" @click="showFull = !showFull">
-                {{ showFull ? 'See less' : 'See more' }}
-              </button>
-              <div v-if="isOwner" class="edit-hint">
-                Double-click to edit
-              </div>
-            </div>
-          </div>
-        </Transition>
+        </div>
       </div>
     </div>
 </template>
@@ -252,7 +246,7 @@ watch(() => props.userId, () => fetchAbout());
   padding: 0.6rem;
   border: 1px solid rgba(var(--color-primary-rgb), 0.18);
   border-radius: var(--radius-md);
-  background: transparent;
+  background: var(--color-background);
   font: inherit;
   color: inherit;
   line-height: 1.4;
@@ -284,38 +278,6 @@ watch(() => props.userId, () => fetchAbout());
 .edit-hint {
   color: rgba(var(--color-primary-rgb), 0.6);
   font-size: var(--font-size-xs);
-}
-
-.pop-up-enter-from,
-.pop-up-leave-to {
-  opacity: 0;
-}
-
-.pop-up-enter-active,
-.pop-up-leave-active {
-  transition: opacity var(--transition-fast);
-}
-
-.pop-up-enter-to,
-.pop-up-leave-from {
-  opacity: 1;
-}
-
-.pop-up-enter-from,
-.pop-up-leave-to {
-  transform: scale(0.97);
-}
-
-.pop-up-enter-active,
-.pop-up-leave-active {
-  transition:
-    opacity var(--transition-fast),
-    transform 0.22s var(--ease-overshoot);
-}
-
-.pop-up-enter-to,
-.pop-up-leave-from {
-  transform: scale(1);
 }
 
 @media (max-width: 480px) {
