@@ -54,10 +54,10 @@ const currentItems = computed(() => {
 function openCreateModal() {
   pageError.value = '';
 
-  if (selectedType.value === 'certificate') {
-    pageError.value = `Certificate backend is not available yet.`;
-    return;
-  }
+  // if (selectedType.value === 'certificate') {
+  //   pageError.value = `Certificate backend is not available yet.`;
+  //   return;
+  // }
 
   modalMode.value = 'create';
   selectedExperience.value = null;
@@ -67,10 +67,10 @@ function openCreateModal() {
 function openEditModal(experience) {
   pageError.value = '';
 
-  if (experience.type === 'project' || experience.type === 'activity') {
-    pageError.value = `${experience.type} edit is not available until the backend has an edit endpoint.`;
-    return;
-  }
+  // if (experience.type === 'project' || experience.type === 'activity') {
+  //   pageError.value = `${experience.type} edit is not available until the backend has an edit endpoint.`;
+  //   return;
+  // }
 
   selectedType.value = experience.type;
   modalMode.value = 'edit';
