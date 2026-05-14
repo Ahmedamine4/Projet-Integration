@@ -33,6 +33,8 @@ export const updatePassword = async(userid,current_password,new_password) => {
     });
 };
 
+
+//email ne peut pas être changé
 export const updateEmail = async(userid,new_email) => {
     const existing = await prisma.utilisateur.findUnique({ where: {email: new_email} });
     if (existing) throw new Error("Cet email est déjà utilisé par un autre compte!");

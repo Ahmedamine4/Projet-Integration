@@ -39,7 +39,7 @@ const sidebarItems = [
   { label: 'Projects', icon: FolderKanban },
   { label: 'Activities', icon: CalendarDays },
   { label: 'Portfolio', icon: FolderOpen },
-  { label: 'Settings', icon: Settings },
+  { label: 'Settings', icon: Settings, to: '/settings' },
 ];
 
 const selected = ref('Dashboard');
@@ -62,6 +62,13 @@ async function handleLogout() {
     router.replace('/login');
   }
 }
+
+const onClick = (item) => {
+  selected.value = item.label;
+  if (item.to) {
+    router.push(item.to);
+  }
+};
 </script>
 
 <template>
@@ -86,7 +93,7 @@ async function handleLogout() {
           v-for="item in sidebarItems"
           :key="item.label"
           :class="{ selected: item.label === selected }"
-          @click="selected = item.label"
+          @click="onClick(item)"
         >
           <component :is="item.icon" />
           <span>{{ item.label }}</span>

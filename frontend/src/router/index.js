@@ -67,6 +67,15 @@ const routes = [
     },
   },
   {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/views/app/SettingsView.vue'),
+    meta: {
+      requiresAuth: true,
+      layout: 'app',
+    },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: NotFoundView,
