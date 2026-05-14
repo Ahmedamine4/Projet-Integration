@@ -1,4 +1,4 @@
-import { validerProjetService } from "../services/projet.service.js";
+import { validerProjetService } from "../services/ValideProjet.service.js";
 
 export const validerProjet = async (req, res) => {
   try {

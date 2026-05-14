@@ -1,5 +1,5 @@
 import express from "express";
-import { validerProjet } from "../controllers/projet.controller.js";
+import { validerProjet } from "../controllers/ValideProjet.controller.js";
 
 import {
   authMiddleware,
