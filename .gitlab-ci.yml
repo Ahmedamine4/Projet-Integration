@@ -22,7 +22,7 @@ sonarqube:
     - sonar-scanner -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORGANIZATION -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
 
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 # BACKEND TESTS
 backend-tests:
@@ -67,3 +67,23 @@ frontend-tests:
     - if: '$CI_COMMIT_BRANCH == "develop"'
       changes:
         - frontend/**
+
+docker-build:
+  stage: build
+
+  image: docker:latest
+
+  services:
+    - docker:dind
+
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+
+  script:
+    - docker compose
+      -f infrastructure/docker/docker-compose.yml
+      -f infrastructure/docker/docker-compose.prod.yml
+      build
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
