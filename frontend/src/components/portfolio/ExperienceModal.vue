@@ -11,6 +11,7 @@ import ImageDropzone from '@/components/common/ImageDropzone.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
 import Select from '@/components/common/Select.vue';
 import Error from '@/components/common/Error.vue';
+import ModificationRequest from '../common/ModificationRequest.vue';
 
 const props = defineProps({
   open: {
@@ -42,6 +43,10 @@ const props = defineProps({
   professorEmails: {
     type: Array,
     default: () => [],
+  },
+  message: {
+    type: Object,
+    default: () => ({teacherName: '', content: ''}),
   },
 });
 
@@ -459,6 +464,16 @@ watch(
         </div>
         <form class="experience-form" @submit.prevent="submitExperience">
           <div class="experience-form__body">
+            <ModificationRequest
+              v-if="
+                props.mode === 'edit' &&
+                form.isAcademic &&
+                message.teacherName &&
+                message.content"
+              :writer-name="message.teacherName"
+            >
+              {{ message.content }}
+            </ModificationRequest>
             <div class="field">
               <Input
                 v-model="form.title"
