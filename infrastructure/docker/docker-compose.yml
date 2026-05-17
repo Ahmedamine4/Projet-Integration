@@ -53,6 +53,8 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    security_opt:
+      - seccomp:unconfined # Permet à ONNX Runtime d'utiliser les fonctionnalités nécessaires pour l'inférence
   nginx:
     container_name: nginx-proxy
     build:
