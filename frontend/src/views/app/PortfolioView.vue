@@ -1,8 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
-import src from '@/assets/profile-photo.png'
+import src from '@/assets/images/profile-photo.png'
 import AboutMe from '@/components/portfolio/AboutMe.vue';
-import Button from '@/components/common/Button.vue';
 import { ArrowUpRight } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -23,7 +22,7 @@ const authStore = useAuthStore();
 					</button>
 				</div>
 				<div class="profile__info">
-					<h2 class="name"> Alex Thomson </h2>
+					<h2 class="name">Elon Musk</h2>
 					<span>Engineering Student at <strong>ENSAT</strong></span>
 					<div class="statistics">
 						<div>
@@ -50,7 +49,6 @@ const authStore = useAuthStore();
 				</div>
 			</div>
 			<div class="about">
-				<AboutMe :user-id="authStore.user.utilisateur_id" />
 				<AboutMe :user-id="authStore.user.utilisateur_id" />
 			</div>
 		</main>
@@ -105,6 +103,7 @@ const authStore = useAuthStore();
   width: 100%;
   height: 100%;
   object-fit: cover;
+	object-position: center top;
 }
 
 .profile__info {
@@ -235,12 +234,14 @@ const authStore = useAuthStore();
 	color: var(--color-background);
 	box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
 	transition:
+		background-color var(--transition-fast),
 		box-shadow var(--transition-fast),
 		transform var(--transition-fast);
 }
 
 .follow-button:hover {
-	box-shadow: 0 7px 10px rgba(0, 0, 0, 0.38);
+	background-color: rgba(var(--color-primary-rgb), 0.92);
+  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.34);
 }
 
 .recommend-button {
