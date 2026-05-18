@@ -29,6 +29,21 @@ export const useAuthStore = defineStore('auth', () => {
       }
   }
 
+  async function updateProfile(payload) {
+    if (!user.value?.utilisateur_id) {
+      throw new Error('User not loaded');
+    }
+
+    const { data } = await api.patch(
+      `/users/update-profile/${user.value.utilisateur_id}`,
+      payload
+    );
+
+    await fetchProfile();
+
+    return data;
+  }
+
   async function login(email, password) {
     const { data } = await api.post('/auth/login', {
       email,
@@ -96,6 +111,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isAuthenticated,
     fetchProfile,
+    updateProfile,
     login,
     register,
     startGoogleAuth,

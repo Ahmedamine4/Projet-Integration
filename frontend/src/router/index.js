@@ -58,9 +58,15 @@ const routes = [
     },
   },
   {
+<<<<<<< HEAD
     path: '/projects',
     name: 'projects',
     component: () => import('@/views/app/ProjectsView.vue'),
+=======
+    path: '/test',
+    name: 'test',
+    component: () => import('@/views/app/Test.vue'),
+>>>>>>> 7d8d9ad21b525cb7b456eecd3cff6a35f9a28f0f
     meta: {
       requiresAuth: true,
       layout: 'app',

@@ -21,13 +21,20 @@ const editText = ref('');
 const editorTextarea = ref(null);
 const saving = ref(false);
 
+<<<<<<< HEAD
 const TRUNCATE_LEN = 300;
 const MAX_EDIT_LEN = 1200;
+=======
+const TRUNCATE_LEN = 200;
+const MAX_EDIT_LEN = 500;
+>>>>>>> 7d8d9ad21b525cb7b456eecd3cff6a35f9a28f0f
 
 const isTruncated = computed(() => !!about.value && about.value.length > TRUNCATE_LEN);
 const displayText = computed(() => {
   if (!about.value) return '';
-  return showFull.value ? about.value : about.value.slice(0, TRUNCATE_LEN);
+  if (showFull.value || about.value.length <= TRUNCATE_LEN) return about.value;
+
+  return `${about.value.slice(0, TRUNCATE_LEN)}...`;
 });
 
 const lastTap = ref(0);
@@ -97,6 +104,7 @@ function closeEdit() {
 }
 
 async function saveEdit() {
+
   if (editText.value.length > MAX_EDIT_LEN) {
     alert(`Maximum ${MAX_EDIT_LEN} characters allowed`);
     return;
@@ -112,10 +120,12 @@ async function saveEdit() {
     } else {
       alert('Failed to save changes');
     }
-  } catch (err) {
+  }
+  catch (err) {
     console.error('Save error:', err);
     alert('Failed to save changes');
-  } finally {
+  }
+  finally {
     saving.value = false;
   }
 }
@@ -135,7 +145,15 @@ watch(editText, () => {
       </div>
 
       <div class="about-me">
+<<<<<<< HEAD
         <Transition name="pop-up" mode="out-in">
+=======
+        <Transition
+          name="pop-up"
+          mode="out-in"
+          @after-enter="resizeEditorTextarea"
+        >
+>>>>>>> 7d8d9ad21b525cb7b456eecd3cff6a35f9a28f0f
           <div v-if="isEditing" class="inline-editor">
             <textarea
               ref="editorTextarea"

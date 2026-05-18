@@ -29,7 +29,18 @@ const props = defineProps({
 const isOpen = ref(false);
 const selectElement = ref(null);
 
+<<<<<<< HEAD
 const displayValue = computed(() => model.value || props.placeholder);
+=======
+const shouldShowOptions = computed(() => {
+  return isOpen.value && props.options.length > 0;
+});
+
+const displayValue = computed(() => {
+  if (props.options.length === 0) return 'No options available';
+  return model.value || props.placeholder;
+});
+>>>>>>> 7d8d9ad21b525cb7b456eecd3cff6a35f9a28f0f
 
 function selectOption(option) {
   model.value = option;
@@ -68,7 +79,11 @@ onBeforeUnmount(() => {
       <ChevronDown class="select__icon" :size="16" />
     </button>
     <Transition name="popover">
+<<<<<<< HEAD
       <div v-if="isOpen" class="select__list">
+=======
+      <div v-if="shouldShowOptions" class="select__list">
+>>>>>>> 7d8d9ad21b525cb7b456eecd3cff6a35f9a28f0f
         <button
           v-for="option in options"
           :key="option"

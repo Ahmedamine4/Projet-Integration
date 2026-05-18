@@ -1,14 +1,12 @@
 import prisma from '../config/prisma.js';
 
-export const LinkInstitutionsToEtudiant = async (etudiantId, institutionNoms) => {
+export const LinkInstitutionsToEtudiant = async (etudiantId, institutionId) => {
     // 1. Trouver les institutions correspondantes
     const institutions = await prisma.institution.findMany({
         where: { 
-            nom: { 
-                in: institutionNoms, 
-                mode: 'insensitive' 
-            } 
-        }
+            institution_id: { in: institutionId }
+        },
+        select: { nom: true, institution_id: true }
     });
 
     if (institutions.length === 0) {

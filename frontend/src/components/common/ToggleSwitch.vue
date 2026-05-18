@@ -1,16 +1,15 @@
 <script setup>
+const model = defineModel({
+  type: Boolean,
+  required: true
+});
+
 defineProps({
-  modelValue: {
-    type: Boolean,
-    required: true
-  },
   label: {
     type: String,
     required: true
   }
 });
-
-const emit = defineEmits(['update:modelValue']);
 </script>
 
 <template>
@@ -20,11 +19,10 @@ const emit = defineEmits(['update:modelValue']);
     <label class="toggle-switch">
       <input
         type="checkbox"
-        :checked="modelValue"
-        @change="emit('update:modelValue', $event.target.checked)"
+        v-model="model"
       />
 
-      <span></span>
+      <span />
     </label>
   </div>
 </template>
@@ -35,8 +33,15 @@ const emit = defineEmits(['update:modelValue']);
   justify-content: space-between;
   align-items: center;
   font-weight: var(--font-medium);
-  margin-top: 4px;
-  margin-bottom: 4px;
+}
+
+.toggle-row > span {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary-hover);
 }
 
 .toggle-switch input {
