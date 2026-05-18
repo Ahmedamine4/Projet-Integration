@@ -45,8 +45,6 @@ services:
     build:
       context: ../../ai
       target: development
-    volumes:
-      - ../../ai:/app
     environment:
       - ENV=development
   
