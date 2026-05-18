@@ -2,7 +2,7 @@
 import { useAuthStore } from '@/stores/auth';
 import src from '@/assets/images/profile-photo.png'
 import AboutMe from '@/components/portfolio/AboutMe.vue';
-import { ArrowUpRight } from 'lucide-vue-next';
+import { QrCode } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 </script>
@@ -14,11 +14,9 @@ const authStore = useAuthStore();
 			<div class="profile">
 				<div class="profile__photo">
 					<img :src alt="photo">
-					<button class="contact-button">
-						<div>
-							<ArrowUpRight :size="13" />
-						</div>
-						<span>Contact me</span>
+					<button class="qr-button">
+						<QrCode :size="15" :stroke-width="2.3" />
+						<span>generate QR code</span>
 					</button>
 				</div>
 				<div class="profile__info">
@@ -76,7 +74,7 @@ const authStore = useAuthStore();
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-xl);
-	padding: 0 clamp(var(--space-md), 8vw, calc(var(--space-xl) * 5));
+	padding: 0 clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
 }
 
 .profile {
@@ -85,16 +83,16 @@ const authStore = useAuthStore();
 }
 
 .profile__photo {
-	--photo-diameter: 11rem;
+	--photo-diameter: 9.6rem;
 	position: relative;
 	display: flex;
 	justify-content: center;
 	flex: 0 0 var(--photo-diameter);
 	width: var(--photo-diameter);
 	height: var(--photo-diameter);
-	transform: translateY(calc(var(--space-lg) * -1.5));
+	transform: translateY(calc(var(--space-lg) * -1.46));
 	background-color: var(--color-surface);
-	border-radius: 40%;
+	border-radius: 42%;
 }
 
 .profile__photo img {
@@ -110,13 +108,13 @@ const authStore = useAuthStore();
 	display: flex;
 	font-family: var(--font-ui);
 	flex-direction: column;
-	gap: var(--space-sm);
-	padding: var(--space-md) 0;
+	gap: var(--space-xs);
+	padding: var(--space-sm) 0;
 }
 
 .name {
 	margin: 0;
-	font-size: calc(var(--font-size-lg) + 0.2rem);
+	font-size: calc(var(--font-size-lg));
 	font-weight: var(--font-bold);
 	color: var(--color-primary);
 	line-height: 1;
@@ -138,7 +136,7 @@ const authStore = useAuthStore();
 	grid-template-columns: 1fr 1fr 1fr;
 	justify-content: space-between;
 	align-items: center;
-	gap: 2.5rem;
+	gap: 2rem;
 }
 
 .statistics > div {
@@ -155,7 +153,7 @@ const authStore = useAuthStore();
 
 .statistics h2 {
 	margin: 0;
-	font-size: var(--font-size-lg);
+	font-size: var(--font-size-md);
 	font-weight: var(--font-bold);
 	color: var(--color-primary);
 }
@@ -173,17 +171,17 @@ const authStore = useAuthStore();
 	gap: var(--space-lg);
 }
 
-.contact-button {
+.qr-button {
 	display: grid;
 	grid-template-columns: 0.5rem 1fr;
 	align-items: center;
-	gap: 1.3rem;
+	gap: 0.7rem;
 	position: absolute;
-	bottom: calc(1rem * -1);
+	bottom: calc(0.78rem * -1);
 	border: 1.5px solid var(--color-primary);
 	border-radius: 999px;
-	padding-block: var(--space-xs);
-	padding-inline: var(--space-xs) 1.2rem;
+	padding-block: 0.34rem;
+	padding-inline: var(--space-sm) 1rem;
 	color: var(--color-primary);
 	font-size: var(--font-size-xxs);
 	font-weight: var(--font-bold);
@@ -192,37 +190,27 @@ const authStore = useAuthStore();
 	transition: transform var(--transition-fast);
 }
 
-.contact-button:hover {
+.qr-button:hover {
 	transform: translateY(-1px);
 }
 
-:is(.contact-button, .follow-button, .recommend-button):focus-visible {
+:is(.qr-button, .follow-button, .recommend-button):focus-visible {
 	outline: none;
 	border-color: var(--color-secondary);
 	box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
-:is(.contact-button, .follow-button, .recommend-button):hover {
+:is(.qr-button, .follow-button, .recommend-button):hover {
 	transform: translateY(-1px);
 }
 
-.contact-button > div {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background-color: var(--color-primary);
-	width: 1.3rem;
-	height: 1.3rem;
-	border-radius: 50%;
-}
-
-.contact-button svg {
-	color: var(--color-background);
+.qr-button svg {
+	color: var(--color-primary);
 }
 
 .follow-button,
 .recommend-button {
-	font-size: var(--font-size-xs);
+	font-size: var(--font-size-xxs);
 	padding: 0.45rem var(--space-md);
 	border-radius: var(--radius-md);
 	cursor: pointer;
@@ -253,27 +241,9 @@ const authStore = useAuthStore();
 }
 
 @media (max-width: 768px) {
-	.profile {
-		flex-direction: column;
-		max-width: fit-content;
-		margin: 0 auto;
-		gap: 0;
-	}
-
-	.profile__photo {
-		--photo-diameter: 10rem;
-		margin: 0 auto;
-	}
-
-	.profile__info {
-		text-align: center;
-		padding-top: 0;
-	}
-
 	.about {
 		grid-template-columns: 1fr;
 		gap: var(--space-lg);
 	}
-
 }
 </style>

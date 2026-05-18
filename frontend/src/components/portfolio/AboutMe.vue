@@ -3,15 +3,15 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import Button from '@/components/common/Button.vue';
-import { FileText, Pencil } from 'lucide-vue-next';
+import { FileText, ArrowDown } from 'lucide-vue-next';
 
 const props = defineProps({
   userId: { type: String, required: true },
 });
 
-const MIN_ABOUT_LEN = 150;
-const MAX_ABOUT_LEN = 600;
-const TRUNCATE_LEN = 300;
+const MIN_ABOUT_LEN = 300;
+const MAX_ABOUT_LEN = 800;
+const TRUNCATE_LEN = 500;
 
 const isEdit = ref(false);
 const loading = ref(false);
@@ -114,29 +114,17 @@ watch(() => props.userId, fetchAbout);
 <template>
   <section class="about-me">
     <header>
-      <div>
-        <span>Professional summary</span>
-        <h2>About me</h2>
-      </div>
-      <button
-        type="button"
-        class="edit-button"
-        v-if="!isEdit && isOwner"
-        @click="edit"
-      >
-        <Pencil :size="13"/>
-        <span>Edit</span>
-      </button>
+      <h2>About me</h2>
     </header>
 
-    <div class="about-me__body" :class="{ edit: isEdit }">
+    <div class="about-me__body" :class="{ edit: isEdit }" @dblclick="edit">
       <p v-if="loading && !isEdit">
         Loading professional summary...
       </p>
-      <p v-else-if="!isEdit && aboutMe" @dblclick="edit">
+      <p v-else-if="!isEdit && aboutMe">
         {{ displayedAbtMe }}
       </p>
-      <span v-else-if="!isEdit" @dblclick="edit">
+      <span v-else-if="!isEdit">
         <FileText :size="18" />
         <strong>
           No professional summary has been added yet.
@@ -150,16 +138,21 @@ watch(() => props.userId, fetchAbout);
         :maxlength="MAX_ABOUT_LEN"
         placeholder="Write a concise professional summary..."
         @input="resizeTextarea"
-      ></textarea>
+      />
     </div>
+
     <footer>
       <div class="view-footer" v-if="!isEdit">
         <button
           v-if="isTruncated"
-          class="see-more-button"
+          class="see-more"
+          :class="{ 'arrow-up': isExpanded }"
           @click="isExpanded = !isExpanded"
         >
-          {{ isExpanded ? 'See less' : 'See more' }}
+          <span>
+            {{ isExpanded ? 'See less' : 'See more' }}
+          </span>
+          <ArrowDown :size="12" />
         </button>
         <span v-if="isOwner">Double-click to edit</span>
       </div>
@@ -195,29 +188,17 @@ watch(() => props.userId, fetchAbout);
 
 <style scoped>
 .about-me {
+  display: flex;
+  flex-direction: column;
   border: 1px solid rgba(var(--color-primary-rgb), 0.2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: 0 10px 16px rgba(0, 0, 0, 0.04);
   background-color: rgba(var(--color-surface-rgb), 0.3);
 }
 
 .about-me header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.2);
   padding: var(--space-md) var(--space-xl);
-}
-
-.about-me header div span {
-  display: block;
-  font-size: var(--font-size-xxs);
-  color: rgba(var(--color-primary-rgb), 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-weight: var(--font-medium);
-  line-height: 1;
 }
 
 .about-me header h2 {
@@ -232,44 +213,10 @@ watch(() => props.userId, fetchAbout);
   gap: var(--space-xs);
 }
 
-.edit-button {
-  border: 1px solid rgba(var(--color-primary-rgb), 0.22);
-  background-color: rgba(var(--color-surface-rgb), 0.48);
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  padding: var(--space-sm) 0.68rem;
-  border-radius: 999px;
-  color: rgba(var(--color-primary-rgb), 0.7);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-medium);
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    border-color var(--transition-fast),
-    color var(--transition-fast),
-    box-shadow var(--transition-fast),
-    transform var(--transition-fast);
-}
-
-.edit-button:hover {
-  border-color: rgba(var(--color-secondary-rgb), 0.45);
-  background-color: rgba(var(--color-secondary-rgb), 0.1);
-  color: var(--color-secondary);
-  box-shadow: 0 6px 14px rgba(var(--color-secondary-rgb), 0.14);
-  transform: translateY(-1px);
-}
-
-.edit-button:focus-visible {
-	outline: none;
-	border-color: var(--color-secondary);
-	box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
-}
-
 .about-me__body {
+  flex: 1;
   padding-inline: var(--space-xl);
-  padding-block: var(--space-lg) 0;
+  padding-block: var(--space-lg) var(--space-xs);
 }
 
 .about-me__body p {
@@ -277,7 +224,8 @@ watch(() => props.userId, fetchAbout);
   white-space: pre-wrap;
   line-height: 1.5;
   font-family: var(--font-ui);
-  font-weight: var(--font-regular);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-light);
   overflow-wrap: anywhere;
 }
 
@@ -289,20 +237,36 @@ watch(() => props.userId, fetchAbout);
   padding: var(--space-md) var(--space-xl);
 }
 
-.see-more-button {
-  border: 1px solid rgba(var(--color-primary-rgb), 0.22);
-  background-color: rgba(var(--color-surface-rgb), 0.48);
-  border-radius: 999px;
+.see-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+  background-color: transparent;
+  width: 4.4rem;
   color: rgba(var(--color-primary-rgb), 0.68);
-  font-weight: var(--font-bold);
-  font-size: var(--font-size-xs);
-  padding: var(--space-xs) var(--space-md);
+  padding: 0;
   cursor: pointer;
 }
 
-.view-footer span {
+.see-more span {
+  margin: 0;
+  font-weight: var(--font-bold);
+  font-size: var(--font-size-xs);
+}
+
+.see-more svg {
+  transition: transform var(--transition-normal);
+}
+
+.see-more.arrow-up svg {
+  transform: rotate(-180deg);
+}
+
+.view-footer > span {
   font-size: var(--font-size-xs);
   color: rgba(var(--color-primary-rgb), 0.48);
+  margin-left: auto;
 }
 
 .edit-footer {
@@ -335,7 +299,7 @@ watch(() => props.userId, fetchAbout);
 
 .about-me__textarea {
   width: 100%;
-  min-height: 180px;
+  min-height: max(180px, 100%);
   resize: none;
   border: 1px solid rgba(var(--color-primary-rgb), 0.14);
   border-radius: var(--radius-md);
@@ -348,10 +312,10 @@ watch(() => props.userId, fetchAbout);
     ),
     color-mix(in srgb, var(--color-surface) 22%, var(--color-background));
   color: var(--color-primary);
+  line-height: 1.5;
   font-family: var(--font-ui);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-regular);
-  line-height: 1.6;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-light);
   overflow: hidden;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
@@ -394,6 +358,7 @@ watch(() => props.userId, fetchAbout);
 }
 
 .edit-footer__count {
+  font-family: var(--font-mono);
   color: rgba(var(--color-primary-rgb), 0.5);
   font-size: var(--font-size-xs);
   font-weight: var(--font-medium);
