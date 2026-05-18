@@ -1,6 +1,7 @@
 @font-face {
   font-family: 'Inter';
-  src: url('../fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  src: url('../fonts/Inter-VariableFont_opsz,wght.ttf')
+    format('truetype');
   font-weight: 100 900;
   font-style: normal;
 }
@@ -13,15 +14,31 @@
 }
 @font-face {
   font-family: 'Norman';
-  src: url('../fonts/fonnts.com-Norman-.otf') format('opentype');
+  src: url('../fonts/fonnts.com-Norman-.otf')
+    format('opentype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'Norman_Stencil';
-  src: url('../fonts/fonnts.com-Norman-Stencil-.otf') format('opentype');
+  src: url('../fonts/fonnts.com-Norman-Stencil-.otf')
+    format('opentype');
   font-weight: 100 900;
   font-style: normal;
+}
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('../fonts/IntelOneMono-VariableFont_wght.ttf')
+    format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url(../fonts/IntelOneMono-Italic-VariableFont_wght.ttf)
+    format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
 }
 
 :root {
@@ -46,6 +63,7 @@
   --font-ui: 'Inter', sans-serif;
   --font-display: 'Norman', serif;
   --font-stencil: 'Norman_Stencil', serif;
+  --font-mono: 'Intel One Mono', monospace;
   /* size */
   --font-size-xxs: 0.65rem;
   --font-size-xs: 0.75rem;
