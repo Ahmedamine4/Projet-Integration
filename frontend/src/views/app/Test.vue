@@ -240,7 +240,7 @@ onMounted(() => {
       :initial-value="selectedExperience"
       :open="modalOpen"
       :loading="isLoading"
-      :school-options="institutionStore.selectedInstitutions"
+      :school-options="institutionStore.selectedInstitutions.map(institution => institution.nom)"
       :professor-emails="professorEmails"
       @close="closeModal"
       @submit="handleSubmit"

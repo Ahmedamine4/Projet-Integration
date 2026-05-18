@@ -97,15 +97,16 @@ const schoolFieldsInputs = reactive({
 });
 
 const schoolPath = computed(() => {
-  const bachelorSchool = props.schools.find((school) => {
-    return school.toLowerCase() === schoolFieldsInputs.bachelorSchool.toLowerCase();
-  }) || '';
-  const masterSchool = props.schools.find((school) => {
-    return school.toLowerCase() === schoolFieldsInputs.masterSchool.toLowerCase();
-  }) || '';
-  const phdInstitution = props.schools.find((school) => {
-    return school.toLowerCase() === schoolFieldsInputs.phdInstitution.toLowerCase();
-  }) || '';
+  const schools = props.schools;
+  const bachelorSchool = schools.find((school) => {
+    return school.nom.toLowerCase() === schoolFieldsInputs.bachelorSchool.toLowerCase();
+  })?.institution_id || '';
+  const masterSchool = schools.find((school) => {
+    return school.nom.toLowerCase() === schoolFieldsInputs.masterSchool.toLowerCase();
+  })?.institution_id || '';
+  const phdInstitution = schools.find((school) => {
+    return school.nom.toLowerCase() === schoolFieldsInputs.phdInstitution.toLowerCase();
+  })?.institution_id || '';
   return { bachelorSchool, masterSchool, phdInstitution };
 });
 
@@ -297,7 +298,7 @@ function goNext() {
                   {{ currentSchoolFieldDescription }}
                 </span>
                 <Dropdown
-                  :options="schools"
+                  :options="schools.map(school => school?.nom)"
                   :placeholder="currentSchoolField.placeholder"
                   v-model="schoolFieldsInputs[currentSchoolFieldKey]"
                 />
@@ -398,6 +399,11 @@ function goNext() {
 }
 
 .modal__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  flex-shrink: 0;
+  background-color: var(--color-background);
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -550,7 +556,7 @@ function goNext() {
   .modal {
     width: 100%;
     align-self: end;
-    border-radius: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
   }
 }
 

@@ -4,6 +4,10 @@ import GettingStartedStep from '@/components/getting-started/GettingStartedStep.
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
+import { useAuthStore } from '@/stores/auth';
+import api from '@/services/api';
+
+const authStore = useAuthStore();
 
 const institutionStore = useInstitutionStore();
 
@@ -54,7 +58,11 @@ function handleStepAction(key) {
   stepStatus[key] = 'done';
 }
 
-function completeSchoolStep(schoolData) {
+async function completeSchoolStep(schoolData) {
+  await api.post('/select-institutions', {
+    etudiantId: authStore.user.utilisateur_id,
+    institutionId: Object.values(schoolData.schoolPath).filter(Boolean),
+  });
   institutionStore.setSchoolPath(schoolData.schoolPath);
   stepStatus.school = 'pending';
   isSchoolModalOpen.value = false;
@@ -100,6 +108,8 @@ function completeSchoolStep(schoolData) {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  min-width: 0;
   padding: 3rem var(--space-xl);
   gap: 3rem;
 }
@@ -107,7 +117,8 @@ function completeSchoolStep(schoolData) {
 .wrapper-getting-started {
   display: flex;
   flex-direction: column;
-  width: clamp(16rem, 75vw, 80rem);
+  width: 100%;
+  max-width: 80rem;
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: var(--radius-md);
   height: fit-content;
