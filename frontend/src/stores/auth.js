@@ -89,8 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     const { error } = await supabase.auth.signOut();
 
-    if (error) throw error;
-    await api.post('/auth/logout');
+    if (error) console.warn(error);
 
     user.value = null;
   }

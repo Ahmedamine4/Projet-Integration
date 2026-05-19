@@ -39,7 +39,7 @@ const stepStatus = reactive({
 
 const doneCount = computed(() =>
   steps.reduce((acc, step) => {
-    return stepStatus[step.key] !== 'todo' ? acc + 1 : acc;
+    return stepStatus[step.key] === 'done' ? acc + 1 : acc;
   }, 0),
 );
 
@@ -110,7 +110,7 @@ async function completeSchoolStep(schoolData) {
   align-items: center;
   width: 100%;
   min-width: 0;
-  padding: 3rem var(--space-xl);
+  padding: 3rem 12vw;
   gap: 3rem;
 }
 
@@ -161,7 +161,17 @@ async function completeSchoolStep(schoolData) {
   color: rgba(var(--color-primary-rgb), 0.72);
 }
 
+@media (max-width: 768px) {
+  .page-content {
+    padding-inline: 6vw;
+  }
+}
+
 @media (max-width: 480px) {
+  .page-content {
+    padding-inline: 1rem;
+  }
+
   .wrapper-header {
     flex-direction: column;
     align-items: flex-start;

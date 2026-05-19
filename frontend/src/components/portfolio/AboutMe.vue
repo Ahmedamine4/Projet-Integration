@@ -3,15 +3,15 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import Button from '@/components/common/Button.vue';
-import { FileText, ArrowDown } from 'lucide-vue-next';
+import { FileText, ChevronUp, ChevronDown } from 'lucide-vue-next';
 
 const props = defineProps({
   userId: { type: String, required: true },
 });
 
-const MIN_ABOUT_LEN = 300;
-const MAX_ABOUT_LEN = 800;
-const TRUNCATE_LEN = 500;
+const MIN_ABOUT_LEN = 400;
+const MAX_ABOUT_LEN = 1200;
+const TRUNCATE_LEN = 800;
 
 const isEdit = ref(false);
 const loading = ref(false);
@@ -146,13 +146,13 @@ watch(() => props.userId, fetchAbout);
         <button
           v-if="isTruncated"
           class="see-more"
-          :class="{ 'arrow-up': isExpanded }"
           @click="isExpanded = !isExpanded"
         >
           <span>
             {{ isExpanded ? 'See less' : 'See more' }}
           </span>
-          <ArrowDown :size="12" />
+          <ChevronUp v-if="isExpanded" :size="16" />
+          <ChevronDown v-else :size="16" />
         </button>
         <span v-if="isOwner">Double-click to edit</span>
       </div>
@@ -188,17 +188,18 @@ watch(() => props.userId, fetchAbout);
 
 <style scoped>
 .about-me {
+  --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+  border: var(--border);
   border-radius: var(--radius-md);
   box-shadow: 0 10px 16px rgba(0, 0, 0, 0.04);
   background-color: rgba(var(--color-surface-rgb), 0.3);
 }
 
 .about-me header {
-  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.2);
-  padding: var(--space-md) var(--space-xl);
+  border-bottom: var(--border);
+  padding: 1.38rem var(--space-xl);
 }
 
 .about-me header h2 {
@@ -206,11 +207,6 @@ watch(() => props.userId, fetchAbout);
   font-weight: var(--font-bold);
   line-height: 1;
   font-size: var(--font-size-lg);
-}
-
-.about-me header div {
-  display: grid;
-  gap: var(--space-xs);
 }
 
 .about-me__body {
@@ -223,9 +219,9 @@ watch(() => props.userId, fetchAbout);
   margin: 0;
   white-space: pre-wrap;
   line-height: 1.5;
-  font-family: var(--font-ui);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-light);
+  font-weight: var(--font-regular);
+  color: rgba(var(--color-primary-rgb), 0.76);
   overflow-wrap: anywhere;
 }
 
@@ -240,10 +236,9 @@ watch(() => props.userId, fetchAbout);
 .see-more {
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
   border: none;
+  gap: var(--space-sm);
   background-color: transparent;
-  width: 4.4rem;
   color: rgba(var(--color-primary-rgb), 0.68);
   padding: 0;
   cursor: pointer;
@@ -255,14 +250,6 @@ watch(() => props.userId, fetchAbout);
   font-size: var(--font-size-xs);
 }
 
-.see-more svg {
-  transition: transform var(--transition-normal);
-}
-
-.see-more.arrow-up svg {
-  transform: rotate(-180deg);
-}
-
 .view-footer > span {
   font-size: var(--font-size-xs);
   color: rgba(var(--color-primary-rgb), 0.48);
@@ -272,9 +259,12 @@ watch(() => props.userId, fetchAbout);
 .edit-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--space-md);
   padding: var(--space-md) var(--space-xl);
+  border-top: var(--border);
+  margin-top: var(--space-lg);
+  background: rgba(var(--color-background-rgb), 0.28);
 }
 
 .about-me__body > span {
@@ -348,13 +338,6 @@ watch(() => props.userId, fetchAbout);
   box-shadow:
     0 0 0 3px rgba(var(--color-secondary-rgb), 0.14),
     0 10px 22px rgba(0, 0, 0, 0.06);
-}
-
-.edit-footer {
-  border-top: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  justify-content: space-between;
-  margin-top: var(--space-md);
-  background: rgba(var(--color-background-rgb), 0.28);
 }
 
 .edit-footer__count {

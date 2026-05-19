@@ -1,16 +1,20 @@
 <script setup>
+import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import src from '@/assets/images/profile-photo.png'
 import AboutMe from '@/components/portfolio/AboutMe.vue';
+import Education from '@/components/portfolio/Education.vue';
+import Skills from '@/components/portfolio/Skills.vue';
 import { QrCode } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
+const userId = computed(() => authStore.user?.utilisateur_id);
 </script>
 
 <template>
 	<div class="portfolio">
 		<div class="portfolio__banner" />
-		<main>
+		<main v-if="userId">
 			<div class="profile">
 				<div class="profile__photo">
 					<img :src alt="photo">
@@ -47,7 +51,11 @@ const authStore = useAuthStore();
 				</div>
 			</div>
 			<div class="about">
-				<AboutMe :user-id="authStore.user.utilisateur_id" />
+				<AboutMe :user-id="userId" />
+				<div class="education-skills-wrapper">
+					<Education :user-id="userId" />
+					<Skills :user-id="userId" />
+				</div>
 			</div>
 		</main>
 	</div>
@@ -74,7 +82,7 @@ const authStore = useAuthStore();
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-xl);
-	padding: 0 clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
+	padding: 0 clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5)) 6rem;
 }
 
 .profile {
@@ -240,7 +248,13 @@ const authStore = useAuthStore();
 	transition: transform var(--transition-fast);
 }
 
-@media (max-width: 768px) {
+.education-skills-wrapper {
+	display: grid;
+	grid-template-rows: auto 1fr;
+	gap: var(--space-lg);
+}
+
+@media (max-width: 980px) {
 	.about {
 		grid-template-columns: 1fr;
 		gap: var(--space-lg);

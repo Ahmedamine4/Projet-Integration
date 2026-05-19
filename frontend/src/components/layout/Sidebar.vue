@@ -1,13 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import FolioCraftLogo from '@/assets/icons/FolioCraft.svg';
 import {
   LayoutDashboard,
   PanelLeftOpen,
   PanelLeftClose,
+  Compass,
   UserRound,
-  FolderKanban,
-  CalendarDays,
   FolderOpen,
   Bell,
   Settings,
@@ -23,10 +22,8 @@ defineProps({
   user: {
     type: Object,
     default: () => ({
-      id: 1,
       prenom: 'User',
       nom: '',
-      role: 'Student',
     }),
   },
 });
@@ -34,15 +31,17 @@ defineProps({
 const collapsed = ref(true);
 
 const sidebarItems = [
-  { label: 'Dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { label: 'Getting started', icon: Compass, path: '/getting-started' },
   { label: 'Profile', icon: UserRound },
-  { label: 'Projects', icon: FolderKanban },
-  { label: 'Activities', icon: CalendarDays },
-  { label: 'Portfolio', icon: FolderOpen },
+  { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
   { label: 'Settings', icon: Settings },
 ];
 
 const selected = ref('Dashboard');
+const selectedItem = computed(() => {
+  return sidebarItems.find(item => item.label === selected.value);
+});
 
 const activeIndex = computed(() => {
   const index = sidebarItems.findIndex((item) => item.label === selected.value);
@@ -62,6 +61,11 @@ async function handleLogout() {
     router.replace('/login');
   }
 }
+
+watch(selected, () => {
+  if (!selectedItem.value.path) return;
+  router.push(selectedItem.value.path);
+});
 </script>
 
 <template>
@@ -183,8 +187,7 @@ async function handleLogout() {
   cursor: pointer;
 }
 
-.sidebar > nav,
-.sidebar > footer {
+.sidebar > :is(nav, footer) {
   display: grid;
   position: relative;
   gap: var(--space-sm);
@@ -226,9 +229,11 @@ async function handleLogout() {
   color: var(--color-background);
 }
 
-.sidebar__toggle svg,
-.sidebar__item svg,
-.sidebar__notification svg {
+:is(
+  .sidebar__toggle,
+  .sidebar__item,
+  .sidebar__notification
+) svg {
   width: 15px;
   height: 15px;
   place-self: center;
@@ -255,9 +260,11 @@ async function handleLogout() {
     opacity var(--transition-fast);
 }
 
-.sidebar__notification:hover,
-.sidebar__toggle:hover,
-.sidebar__item:hover {
+:is(
+  .sidebar__notification,
+  .sidebar__toggle,
+  .sidebar__item
+):hover {
   background: rgba(var(--color-background-rgb), 0.08);
   color: var(--color-background);
   transform: translateY(-1px);
@@ -306,14 +313,15 @@ async function handleLogout() {
   width: var(--collapsed-sidebar-width);
 }
 
-.collapsed .brand img,
-.collapsed .sidebar__item span,
-.collapsed .sidebar__user {
+.collapsed :is(
+  .brand img,
+  .sidebar__item span,
+  .sidebar__user
+) {
   opacity: 0;
 }
 
-.collapsed .sidebar__account,
-.collapsed .sidebar__item {
+.collapsed :is(.sidebar__account, .sidebar__item) {
   column-gap: 0;
 }
 
@@ -325,8 +333,7 @@ async function handleLogout() {
   transform: translateX(-0.75rem);
 }
 
-.collapsed .sidebar__user,
-.collapsed .sidebar__notification {
+.collapsed :is(.sidebar__user, .sidebar__notification) {
   max-width: 0;
   opacity: 0;
   pointer-events: none;

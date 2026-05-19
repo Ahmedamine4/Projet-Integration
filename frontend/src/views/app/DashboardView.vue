@@ -7,5 +7,4 @@ const authStore = useAuthStore();
 </script>
 
 <template>
-<AboutMe :user-id="authStore.user.utilisateur_id"/>
 </template>
