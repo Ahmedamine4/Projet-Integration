@@ -82,7 +82,8 @@ const userId = computed(() => authStore.user?.utilisateur_id);
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-xl);
-	padding: 0 clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5)) 6rem;
+	padding-block: 0 6rem;
+	padding-inline: clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
 }
 
 .profile {

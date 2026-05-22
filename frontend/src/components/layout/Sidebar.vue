@@ -120,21 +120,30 @@ watch(selected, () => {
 
 <style scoped>
 .sidebar-space {
-  --collapsed-sidebar-width: calc(38px + 2 * var(--space-sm));
+  --sidebar-width: 208px;
+  --sidebar-rail-width: 38px;
+  --collapsed-sidebar-width: calc(
+    var(--sidebar-rail-width) + 2 * var(--space-sm)
+  );
   position: sticky;
   top: 0;
   left: 0;
   flex-shrink: 0;
   z-index: 800;
-  width: 208px;
+  width: var(--sidebar-width);
   height: 100vh;
   transition: width var(--transition-normal);
 }
 
 .sidebar {
+  --border-color: color-mix(
+    in srgb,
+    var(--color-primary) 92%,
+    var(--color-background)
+  );
   display: flex;
   flex-direction: column;
-  width: 208px;
+  width: var(--sidebar-width);
   height: 100%;
   padding: var(--space-sm);
   background: var(--color-primary);
@@ -144,14 +153,12 @@ watch(selected, () => {
 
 .sidebar > header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
+  grid-template-columns: minmax(0, 1fr) var(--sidebar-rail-width);
   align-items: center;
   gap: var(--space-md);
-  min-height: 64px;
   margin-top: calc(var(--space-sm) * -1);
   margin-inline: calc(var(--space-sm) * -1);
-  margin-bottom: var(--space-md);
-  border-bottom: 1px solid var(--color-primary-hover);
+  border-bottom: 1px solid var(--border-color);
   padding: var(--space-sm);
 }
 
@@ -167,6 +174,7 @@ watch(selected, () => {
   height: 24px;
   object-fit: contain;
   filter: invert(98%);
+  user-select: none;
   opacity: 1;
   margin-left: var(--space-sm);
   transition: opacity var(--transition-normal);
@@ -178,8 +186,8 @@ watch(selected, () => {
   align-items: center;
   justify-content: center;
   justify-self: end;
-  width: 38px;
-  height: 38px;
+  width: var(--sidebar-rail-width);
+  aspect-ratio: 1;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -189,9 +197,12 @@ watch(selected, () => {
 
 .sidebar > :is(nav, footer) {
   display: grid;
-  position: relative;
   gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+}
+
+.sidebar nav {
+  position: relative;
+  margin-block: var(--space-md);
 }
 
 .sidebar__thumb {
@@ -202,7 +213,9 @@ watch(selected, () => {
   height: 25px;
   border-radius: 999px;
   left: -14px;
-  top: calc(6px + var(--active-index) * (var(--space-sm) + 38px));
+  top: calc(
+    6px + var(--active-index) * (var(--space-sm) + var(--sidebar-rail-width))
+  );
   transition: top 0.4s var(--ease-overshoot);
 }
 
@@ -212,7 +225,7 @@ watch(selected, () => {
   grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
   width: 100%;
-  height: 38px;
+  height: var(--sidebar-rail-width);
   column-gap: var(--space-md);
   padding: 0 var(--space-sm);
   border: none;
@@ -279,17 +292,16 @@ watch(selected, () => {
 .sidebar > footer {
   margin-block: auto calc(var(--space-sm) * -1);
   margin-inline: calc(var(--space-sm) * -1);
-  border-top: 1px solid var(--color-primary-hover);
+  border-top: 1px solid var(--border-color);
   padding: var(--space-sm);
 }
 
 .sidebar__account {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 38px;
+  grid-template-columns: 32px minmax(0, 1fr) var(--sidebar-rail-width);
   align-items: center;
   column-gap: var(--space-md);
-  min-height: 38px;
-  overflow: hidden;
+  min-height: var(--sidebar-rail-width);
   transition: column-gap var(--transition-normal);
 }
 
@@ -313,6 +325,10 @@ watch(selected, () => {
   width: var(--collapsed-sidebar-width);
 }
 
+.collapsed .sidebar__toggle {
+  transform: translateX(-1rem);
+}
+
 .collapsed :is(
   .brand img,
   .sidebar__item span,
@@ -326,11 +342,7 @@ watch(selected, () => {
 }
 
 .collapsed .sidebar__item {
-  width: 38px;
-}
-
-.collapsed .sidebar__toggle {
-  transform: translateX(-0.75rem);
+  width: var(--sidebar-rail-width);
 }
 
 .collapsed :is(.sidebar__user, .sidebar__notification) {
