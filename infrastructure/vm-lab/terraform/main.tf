@@ -46,6 +46,11 @@ output "vm2_ip" {
 }
 
 output "vm3_ip" {
-  description = "Auto-created VM3 (PostgreSQL)"
+  description = "Auto-created VM3 (Database)"
   value       = "192.168.56.12"
+}
+
+output "vm4_ip" {
+  description = "Auto-created VM4 (AI service)"
+  value       = var.vm4_ip
 }

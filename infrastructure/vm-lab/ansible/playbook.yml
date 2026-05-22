@@ -1,15 +1,17 @@
 ---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
 
-- name: Configure VM2 — basic tools
-  hosts: all
-  become: true
-  roles:
-    - role: vm2_basic
-      when: vm_role == "vm2"
+- name: Upgrade all installed packages
+  apt:
+    upgrade: dist
 
-- name: Configure VM3 — PostgreSQL + firewall
-  hosts: all
-  become: true
-  roles:
-    - role: vm3_db_secure
-      when: vm_role == "vm3"
+- name: Install essential tools
+  apt:
+    name:
+      - curl
+      - git
+      - net-tools
+    state: present
