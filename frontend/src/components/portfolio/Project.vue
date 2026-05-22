@@ -73,6 +73,8 @@ function formatDate(date) {
 <style scoped>
 .project-card {
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  flex-shrink: 0;
+  flex-grow: 0;
   width: min(100%, 26rem);
   display: flex;
   flex-direction: column;

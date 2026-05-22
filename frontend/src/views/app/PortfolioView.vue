@@ -5,6 +5,7 @@ import src from '@/assets/images/profile-photo.png'
 import AboutMe from '@/components/portfolio/AboutMe.vue';
 import Education from '@/components/portfolio/Education.vue';
 import Skills from '@/components/portfolio/Skills.vue';
+import ProjectsSection from '@/components/portfolio/ProjectsSection.vue';
 import { QrCode } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/QRcodeModal.vue';
 import { ref } from 'vue';
@@ -17,6 +18,68 @@ function openQRModal() {
   isQRModalOpen.value = true;
 }
 
+const projects = ref([
+  {
+    id: "cmpgz1ulc0003pn3vmqh9f6l8",
+    type: "project",
+    title: "TaskFlow Board",
+    date: "2026-05-11T23:00:00.000Z",
+    description: "A collaborative project management dashboard that helps teams organize tasks, track progress, manage deadlines, and centralize project files in one visual workspace. It includes board and table views, task assignments, due dates, status labels, and progress tracking to make team coordination easier and more transparent.",
+    visibleToEveryone: true,
+    githubLink: "https://github.com/sweta-devnani/taskflow-board",
+    technologies: ["Vue.js", "Pinia", "Express", "Prisma"],
+    domains: ["Project Management", "Team Collaboration"],
+    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779457499504-54-Best-Project-Management-Tools-for-2023.webp",
+  },
+  {
+    id: "cmph6v6c90005pn3vbyk3swuf",
+    type: "project",
+    title: "OpenPlan Suite",
+    date: "2021-08-16T23:00:00.000Z",
+    description: "A secure open-source project management platform designed to help teams plan, organize, and track complex workflows. It includes task scheduling, timeline visualization, milestone tracking, collaboration tools, and progress monitoring through an intuitive Gantt-style interface.",
+    visibleToEveryone: true,
+    githubLink: "https://github.com/mcpem/openplan-suite",
+    technologies: ["Gantt"],
+    domains: ["Web Frontend", "Web Backend"],
+    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779470624965-openproject-home-5ab8cc23.jpg",
+  },
+  {
+    id: "cmph7hxhj0007pn3v91xci94u",
+    type: "project",
+    title: "MPP Project Viewer",
+    date: "2018-05-15T00:00:00.000Z",
+    description: "A project file viewer that allows users to open, browse, and manage Microsoft Project files from multiple sources. It supports recent project access, cloud storage integrations, local files, shared workspaces, and project server connections to make project planning files easier to access from anywhere.",
+    visibleToEveryone: true,
+    githubLink: "https://github.com/mcpem/mpp-project-viewer",
+    technologies: ["Microsoft Project"],
+    domains: ["Web Frontend", "Web Backend", "DevOps and Cloud Infrastructure"],
+    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779471686171-image.png",
+  },
+  {
+    id: "cmph7mvph0009pn3v2pp6qr8l",
+    type: "project",
+    title: "BitrixFlow Workspace",
+    date: "2019-05-21T00:00:00.000Z",
+    description: "A collaborative task and project management workspace that helps teams organize deadlines, track project stages, assign responsibilities, and monitor progress across Kanban-style boards. The platform supports task prioritization, team communication, mobile access, and real-time workflow visibility.",
+    visibleToEveryone: true,
+    githubLink: "https://github.com/mcpem/bitrixflow-workspace",
+    technologies: ["Kanban"],
+    domains: ["Web Backend"],
+    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779471917635-Screenshot%202026-05-22%20184412.png",
+  },
+  {
+    id: "cmphatcyz000bpn3vjzn4mly5",
+    type: "project",
+    title: "Creative Task Studio",
+    date: "2024-08-07T23:00:00.000Z",
+    description: "Creative Task Studio is a Vue.js and Pinia web application for project management and creative collaboration. It helps teams organize tasks, manage project assets, track deadlines, and monitor work progress through a clean dashboard. The backend is built with Express and PostgreSQL to support task storage, team workflows, and project data management.",
+    visibleToEveryone: true,
+    githubLink: "https://github.com/mcpem/creative-task-studio",
+    technologies: ["Vue.js", "Pinia", "Express", "PostgreSQL"],
+    domains: ["Web Frontend", "Web Backend"],
+    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779477258526-9a9cf2a5-2f09-4e63-ad2e-e1a4b893e7f0.avif",
+  },
+]);
 </script>
 
 <template>
@@ -65,6 +128,7 @@ function openQRModal() {
 					<Skills :user-id="userId" />
 				</div>
 			</div>
+			<ProjectsSection :projects />
 		</main>
 	</div>
 	<QRcodeModal
