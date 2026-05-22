@@ -13,6 +13,9 @@ import portfolioRoutes from './routes/portfolio.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
 import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
+import professeurRoutes from './routes/professeur.routes.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.js';
 
 const app = express();
 app.use(cors({
@@ -49,6 +52,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', updateUtilisateurRoutes);
 
 app.use('/api', ValidationProjetRoutes);
+app.use('/api/professeur', professeurRoutes);
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Route de test
 app.get("/", (req, res) => {
