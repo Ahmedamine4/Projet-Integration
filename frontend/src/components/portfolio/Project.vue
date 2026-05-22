@@ -83,6 +83,7 @@ function formatDate(date) {
   border: var(--border);
   box-shadow: 0 10px 16px rgba(0, 0, 0, 0.04);
   overflow: hidden;
+  user-select: none;
   transition:
     transform var(--transition-normal),
     box-shadow var(--transition-normal);

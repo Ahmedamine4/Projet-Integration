@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import Project from '@/components/portfolio/Project.vue';
 defineProps({
   projects: {
@@ -6,13 +7,51 @@ defineProps({
     default: () => [],
   },
 });
+
+const projectsRef = ref(null);
+const isDragging = ref(false);
+const startX = ref(0);
+const scrollLeft = ref(0);
+
+function handleMouseDown(event) {
+  isDragging.value = true;
+
+  const rect = projectsRef.value.getBoundingClientRect();
+  startX.value = event.clientX - rect.left;
+
+  scrollLeft.value = projectsRef.value.scrollLeft;
+}
+
+function handleMouseMove(event) {
+  if (!isDragging.value) return;
+
+  const rect = projectsRef.value.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+
+  const DeltaX = x - startX.value;
+
+  projectsRef.value.scrollLeft = scrollLeft.value - DeltaX;
+}
+
+function handleMouseUp() {
+  isDragging.value = false;
+}
 </script>
 
 <template>
   <div class="projects-shell">
-    <div class="projects">
+    <div
+      class="projects"
+      ref="projectsRef"
+      @mousedown="handleMouseDown"
+      @mousemove="handleMouseMove"
+      @mouseup="handleMouseUp"
+      @mouseleave="handleMouseUp"
+    >
       <template v-for="project in projects" :key="project.id">
-        <Project :project />
+        <Project
+          :project
+        />
       </template>
     </div>
   </div>
