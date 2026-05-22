@@ -194,6 +194,7 @@ const userId = computed(() => authStore.user?.utilisateur_id);
 	color: var(--color-primary);
 	font-size: var(--font-size-xxs);
 	font-weight: var(--font-bold);
+	white-space: nowrap;
 	background: var(--color-background);
 	cursor: pointer;
 	transition: transform var(--transition-fast);
@@ -256,6 +257,17 @@ const userId = computed(() => authStore.user?.utilisateur_id);
 }
 
 @media (max-width: 980px) {
+	.profile {
+		flex-direction: column;
+		text-align: center;
+		align-items: center;
+		gap: 0;
+	}
+
+	.profile__photo {
+		--photo-diameter: 8rem;
+	}
+
 	.about {
 		grid-template-columns: 1fr;
 		gap: var(--space-lg);

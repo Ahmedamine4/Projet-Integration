@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   PanelLeftOpen,
   PanelLeftClose,
+  Menu,
   Compass,
   UserRound,
   FolderOpen,
@@ -13,10 +14,11 @@ import {
   LogOut,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 defineProps({
   user: {
@@ -38,7 +40,11 @@ const sidebarItems = [
   { label: 'Settings', icon: Settings },
 ];
 
-const selected = ref('Dashboard');
+const selected = ref(
+  sidebarItems.find(item => item.path === route.path)?.label ||
+  'Dashboard'
+);
+
 const selectedItem = computed(() => {
   return sidebarItems.find(item => item.label === selected.value);
 });
@@ -70,6 +76,12 @@ watch(selected, () => {
 
 <template>
   <div class="sidebar-space" :class="{ collapsed }">
+    <button
+      class="mobile-toggle"
+      @click="collapsed = false"
+    >
+      <Menu :size="20" />
+    </button>
     <div class="sidebar-overlay" @click="collapsed = true" />
     <aside class="sidebar">
       <header>
@@ -160,6 +172,20 @@ watch(selected, () => {
   margin-inline: calc(var(--space-sm) * -1);
   border-bottom: 1px solid var(--border-color);
   padding: var(--space-sm);
+}
+
+.mobile-toggle {
+  position: fixed;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  background: transparent;
+  backdrop-filter: blur(4px);
+  border: none;
+  color: var(--color-primary);
+  display: none;
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
 }
 
 .brand {
@@ -371,6 +397,27 @@ watch(selected, () => {
   .collapsed .sidebar-overlay {
     background-color: transparent;
     pointer-events: none;
+  }
+}
+
+@media (max-width: 582px) {
+  .sidebar-space,
+  .sidebar-space.collapsed {
+    width: 0;
+  }
+
+  .sidebar {
+    width: var(--sidebar-width);
+    transform: translateX(0);
+    transition: var(--transition-normal);
+  }
+
+  .sidebar-space.collapsed .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .mobile-toggle {
+    display: initial;
   }
 }
 </style>

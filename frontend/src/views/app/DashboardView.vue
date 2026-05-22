@@ -1,10 +1,11 @@
 <script setup>
+import { ref } from 'vue';
 import AboutMe from '@/components/portfolio/AboutMe.vue';
-import { useAuthStore } from '@/stores/auth';
+import ProjectCard from '@/components/portfolio/ProjectCard.vue';
 
-const authStore = useAuthStore();
-
+const project = null;
 </script>
 
 <template>
+  <ProjectCard :project />
 </template>
