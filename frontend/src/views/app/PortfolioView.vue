@@ -6,9 +6,17 @@ import AboutMe from '@/components/portfolio/AboutMe.vue';
 import Education from '@/components/portfolio/Education.vue';
 import Skills from '@/components/portfolio/Skills.vue';
 import { QrCode } from 'lucide-vue-next';
+import QRcodeModal from '@/components/portfolio/QRcodeModal.vue';
+import { ref } from 'vue';
 
 const authStore = useAuthStore();
 const userId = computed(() => authStore.user?.utilisateur_id);
+
+const isQRModalOpen = ref(false);
+function openQRModal() {
+  isQRModalOpen.value = true;
+}
+
 </script>
 
 <template>
@@ -18,7 +26,7 @@ const userId = computed(() => authStore.user?.utilisateur_id);
 			<div class="profile">
 				<div class="profile__photo">
 					<img :src alt="photo">
-					<button class="qr-button">
+					<button class="qr-button" @click="openQRModal">
 						<QrCode :size="15" :stroke-width="2.3" />
 						<span>generate QR code</span>
 					</button>
@@ -59,6 +67,11 @@ const userId = computed(() => authStore.user?.utilisateur_id);
 			</div>
 		</main>
 	</div>
+	<QRcodeModal
+    :open="isQRModalOpen"
+	title="Your Portfolio QR Code"
+    @close="isQRModalOpen = false"
+  />
 </template>
 
 <style scoped>
