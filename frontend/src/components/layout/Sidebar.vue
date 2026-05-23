@@ -132,8 +132,19 @@ watch(selected, () => {
 
 <style scoped>
 .sidebar-space {
+  --sidebar-padding: var(--space-sm);
   --sidebar-width: 208px;
   --sidebar-rail-width: 38px;
+  --sidebar-icon-size: 15px;
+  --sidebar-media-size: 24px;
+  --sidebar-text-size: var(--font-size-xxs);
+  --sidebar-item-padding-inline: var(--space-sm);
+  --sidebar-item-border-radius: calc(var(--sidebar-rail-width) * 0.21);
+  --sidebar-account-gap: var(--space-lg);
+  --sidebar-thumb-height: calc(var(--sidebar-rail-width) * 25 / 38);
+  --sidebar-thumb-width: calc(var(--sidebar-thumb-height) * 0.4);
+  --sidebar-nav-gap: var(--space-sm);
+  --sidebar-nav-margin-block: var(--space-md);
   --collapsed-sidebar-width: calc(
     var(--sidebar-rail-width) + 2 * var(--space-sm)
   );
@@ -157,7 +168,7 @@ watch(selected, () => {
   flex-direction: column;
   width: var(--sidebar-width);
   height: 100%;
-  padding: var(--space-sm);
+  padding: var(--sidebar-padding);
   background: var(--color-primary);
   color: var(--color-background);
   transition: width var(--transition-normal);
@@ -168,16 +179,16 @@ watch(selected, () => {
   grid-template-columns: minmax(0, 1fr) var(--sidebar-rail-width);
   align-items: center;
   gap: var(--space-md);
-  margin-top: calc(var(--space-sm) * -1);
-  margin-inline: calc(var(--space-sm) * -1);
+  margin-top: calc(var(--sidebar-padding) * -1);
+  margin-inline: calc(var(--sidebar-padding) * -1);
   border-bottom: 1px solid var(--border-color);
-  padding: var(--space-sm);
+  padding: var(--sidebar-padding);
 }
 
 .mobile-toggle {
   position: fixed;
-  top: var(--space-sm);
-  left: var(--space-sm);
+  top: var(--sidebar-padding);
+  left: var(--sidebar-padding);
   background: transparent;
   backdrop-filter: blur(4px);
   border: none;
@@ -196,8 +207,8 @@ watch(selected, () => {
 }
 
 .brand img {
-  width: 24px;
-  height: 24px;
+  width: var(--sidebar-media-size);
+  height: var(--sidebar-media-size);
   object-fit: contain;
   filter: invert(98%);
   user-select: none;
@@ -223,24 +234,28 @@ watch(selected, () => {
 
 .sidebar > :is(nav, footer) {
   display: grid;
-  gap: var(--space-sm);
+  gap: var(--sidebar-nav-gap);
 }
 
 .sidebar nav {
   position: relative;
-  margin-block: var(--space-md);
+  margin-block: var(--sidebar-nav-margin-block);
 }
 
 .sidebar__thumb {
   position: absolute;
   background: var(--color-background);
   z-index: 1000;
-  width: 10px;
-  height: 25px;
+  width: var(--sidebar-thumb-width);
+  height: var(--sidebar-thumb-height);
   border-radius: 999px;
-  left: -14px;
+  left: calc(
+    (var(--sidebar-thumb-width) / -2)
+    - var(--sidebar-padding)
+  );
   top: calc(
-    6px + var(--active-index) * (var(--space-sm) + var(--sidebar-rail-width))
+    (var(--sidebar-rail-width) - var(--sidebar-thumb-height)) / 2
+    + var(--active-index) * (var(--sidebar-nav-gap) + var(--sidebar-rail-width))
   );
   transition: top 0.4s var(--ease-overshoot);
 }
@@ -248,14 +263,14 @@ watch(selected, () => {
 .sidebar__item {
   position: relative;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-media-size) minmax(0, 1fr);
   align-items: center;
   width: 100%;
   height: var(--sidebar-rail-width);
   column-gap: var(--space-md);
-  padding: 0 var(--space-sm);
+  padding: 0 var(--sidebar-item-padding-inline);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--sidebar-item-border-radius);
   background: transparent;
   color: rgba(var(--color-background-rgb), 0.76);
   text-align: left;
@@ -273,8 +288,8 @@ watch(selected, () => {
   .sidebar__item,
   .sidebar__notification
 ) svg {
-  width: 15px;
-  height: 15px;
+  width: var(--sidebar-icon-size);
+  height: var(--sidebar-icon-size);
   place-self: center;
 }
 
@@ -292,7 +307,7 @@ watch(selected, () => {
   max-width: 120px;
   opacity: 1;
   font: inherit;
-  font-size: var(--font-size-xxs);
+  font-size: var(--sidebar-text-size);
   white-space: nowrap;
   transition:
     max-width var(--transition-normal),
@@ -316,17 +331,17 @@ watch(selected, () => {
 }
 
 .sidebar > footer {
-  margin-block: auto calc(var(--space-sm) * -1);
-  margin-inline: calc(var(--space-sm) * -1);
+  margin-block: auto calc(var(--sidebar-padding) * -1);
+  margin-inline: calc(var(--sidebar-padding) * -1);
   border-top: 1px solid var(--border-color);
-  padding: var(--space-sm);
+  padding: var(--sidebar-padding);
 }
 
 .sidebar__account {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) var(--sidebar-rail-width);
+  grid-template-columns: var(--sidebar-media-size) minmax(0, 1fr) var(--sidebar-rail-width);
   align-items: center;
-  column-gap: var(--space-md);
+  column-gap: var(--sidebar-account-gap);
   min-height: var(--sidebar-rail-width);
   transition: column-gap var(--transition-normal);
 }
@@ -335,15 +350,18 @@ watch(selected, () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: var(--sidebar-media-size);
+  height: var(--sidebar-media-size);
   border-radius: 50%;
   background-color: var(--color-secondary);
   color: var(--color-background);
   font-size: var(--font-size-xs);
   font-weight: var(--font-bold);
   margin-left:
-    calc((var(--collapsed-sidebar-width) - 24px) / 2 - var(--space-sm));
+    calc(
+      (var(--collapsed-sidebar-width) - var(--sidebar-media-size)) / 2
+      - var(--sidebar-padding)
+    );
 }
 
 .sidebar-space.collapsed,
@@ -400,7 +418,19 @@ watch(selected, () => {
   }
 }
 
-@media (max-width: 582px) {
+@media (max-width: 480px) {
+  .sidebar-space {
+    --sidebar-padding: var(--space-md);
+    --sidebar-width: min(82vw, 20rem);
+    --sidebar-rail-width: 48px;
+    --sidebar-icon-size: 20px;
+    --sidebar-media-size: 32px;
+    --sidebar-account-gap: var(--space-xl);
+    --sidebar-text-size: var(--font-size-md);
+    --sidebar-item-padding-inline: var(--space-md);
+    --sidebar-nav-margin-block: var(--space-lg);
+  }
+
   .sidebar-space,
   .sidebar-space.collapsed {
     width: 0;
@@ -418,6 +448,10 @@ watch(selected, () => {
 
   .mobile-toggle {
     display: initial;
+  }
+
+  .sidebar__avatar {
+    margin-left: 14px;
   }
 }
 </style>
