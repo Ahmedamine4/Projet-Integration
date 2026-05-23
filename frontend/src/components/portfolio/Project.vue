@@ -23,6 +23,7 @@ function formatDate(date) {
         v-if="project.imagePreview"
         :src="project.imagePreview"
         :alt="project.title ? `${project.title} image` : 'Project image'"
+        draggable="false"
       />
     </div>
     <div class="project-content">

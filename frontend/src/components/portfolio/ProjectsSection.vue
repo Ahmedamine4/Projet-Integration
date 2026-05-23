@@ -59,12 +59,13 @@ function handleMouseUp() {
 
 <style scoped>
 .projects-shell {
+  --padding-inline: var(--space-xl);
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   position: relative;
   width: 100%;
   height: fit-content;
-  border: var(--border);
-  border-radius: var(--radius-lg);
+  border-block: var(--border);
+  border-radius: 0;
   overflow: hidden;
   background: var(--color-background);
   padding: 0;
@@ -78,14 +79,24 @@ function handleMouseUp() {
   height: fit-content;
   width: 100%;
   overflow-x: auto;
-  padding: var(--space-xl);
+  padding: var(--padding-inline);
+  scroll-behavior: smooth;
+  cursor: grab;
+}
+
+.projects:active {
+  cursor: grabbing;
+}
+
+.projects::-webkit-scrollbar {
+  display: none;
 }
 
 .projects-shell::before,
 .projects-shell::after {
   content: '';
   position: absolute;
-  width: var(--space-xl);
+  width: var(--padding-inline);
   pointer-events: none;
   z-index: 2;
 }
@@ -106,5 +117,15 @@ function handleMouseUp() {
     var(--color-background) 60%,
     transparent
   );
+}
+
+@media (max-width: 640px) {
+  .projects-shell {
+    --padding-inline: var(--space-md);
+  }
+
+  .projects {
+    gap: var(--space-md);
+  }
 }
 </style>
