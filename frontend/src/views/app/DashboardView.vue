@@ -10,7 +10,7 @@ const activity = {
   visibleToEveryone: true,
   activityType: 'Competition',
   location: 'Tanger, Morocco',
-  club: '',
+  club: 'Open Innovation Club',
   technologies: [
     'Digital Innovation',
     'Open Innovation',

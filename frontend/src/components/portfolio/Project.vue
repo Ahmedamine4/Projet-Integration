@@ -59,7 +59,7 @@ function formatDate(date) {
 
       <a
         v-if="project.githubLink"
-        class="project-link"
+        class="project-button"
         :href="project.githubLink"
         target="_blank"
         rel="noopener noreferrer"
@@ -185,30 +185,35 @@ function formatDate(date) {
   gap: var(--space-sm);
 }
 
-.project-link {
-  display: flex;
+.project-button {
+  display: inline-flex;
   width: fit-content;
   align-items: center;
-  height: 1.5rem;
   gap: var(--space-sm);
+  padding-block: var(--space-sm);
+  padding-inline: var(--space-md) 0.8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.12);
+  background-color: rgba(var(--color-secondary-rgb), 0.08);
   color: var(--color-secondary);
-  text-decoration: underline;
+  text-decoration: none;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
   transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
     color var(--transition-fast),
     transform var(--transition-fast);
 }
 
-.project-link span {
-  font-size: var(--font-size-xs);
+.project-button svg {
+  flex-shrink: 0;
 }
 
-.project-link:is(:hover, :focus-visible) {
+.project-button:is(:hover, :focus-visible) {
   outline: none;
-  color: color-mix(
-    in srgb,
-    var(--color-secondary) 58%,
-    red    
-  );
+  border-color: rgba(var(--color-secondary-rgb), 0.16);
+  background-color: rgba(var(--color-secondary-rgb), 0.14);
   transform: translateY(-1px);
 }
 </style>

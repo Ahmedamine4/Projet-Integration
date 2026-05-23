@@ -43,6 +43,10 @@ function formatDate(date) {
         </span>
       </div>
 
+      <div v-if="activity.club" class="activity-club">
+        {{ activity.club }}
+      </div>
+
       <p>{{ activity.description }}</p>
       <div class="activity-meta">
         <div v-if="activity.technologies?.length" class="activity-tags">
@@ -88,11 +92,6 @@ function formatDate(date) {
   transition:
     transform var(--transition-normal),
     box-shadow var(--transition-normal);
-}
-
-.activity-card:hover {
-  transform: scale(1.008);
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
 }
 
 .activity-preview {
@@ -167,19 +166,30 @@ function formatDate(date) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
 }
 
 .activity-type {
   width: fit-content;
-  padding: 0.35rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
-  background-color: rgba(var(--color-secondary-rgb), 0.08);
-  color: rgba(var(--color-primary-rgb), 0.62);
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-secondary);
+  color: var(--color-surface);
   font-size: var(--font-size-xxs);
   font-weight: var(--font-bold);
   line-height: 1;
+  text-transform: uppercase;
+}
+
+.activity-club {
+  width: fit-content;
+  padding-inline-start: 0.65rem;
+  border-left: 2px solid var(--color-secondary);
+  color: rgba(var(--color-primary-rgb), 0.62);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+  line-height: 1.3;
 }
 
 .activity-location {

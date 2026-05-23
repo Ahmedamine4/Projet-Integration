@@ -108,6 +108,7 @@ function applyMomentum(currentTime) {
 <style scoped>
 .projects-shell {
   --padding-inline: var(--space-xl);
+  --padding-block: calc(var(--padding-inline) * 1.5);
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   position: relative;
   width: 100%;
@@ -140,7 +141,8 @@ function applyMomentum(currentTime) {
   height: fit-content;
   width: 100%;
   overflow-x: auto;
-  padding: var(--padding-inline);
+  padding-inline: var(--padding-inline);
+  padding-block: var(--padding-block);
   overscroll-behavior-x: contain;
   cursor: grab;
 }
