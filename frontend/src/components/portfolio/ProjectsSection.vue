@@ -15,7 +15,7 @@ const lastTime = ref(0);
 const velocity = ref(0);
 const animationFrame = ref(null);
 
-const dragSpeed = 1.08;
+const dragSpeed = 1.2;
 const minReleaseVelocity = 0.05;
 const frictionPerFrame = 0.95;
 const targetFrameDuration = 16;
@@ -123,7 +123,7 @@ function applyMomentum(currentTime) {
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
   line-height: 1;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-medium);
   text-transform: uppercase;
   background-color: var(--color-background);
