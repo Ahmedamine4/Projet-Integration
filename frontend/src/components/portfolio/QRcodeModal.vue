@@ -1,5 +1,6 @@
 <script setup>
 import CloseButton from '@/components/common/CloseButton.vue';
+import { watch, onUnmounted } from 'vue';
 
 const props = defineProps({
   open: {
@@ -10,6 +11,14 @@ const props = defineProps({
     type: String,
     default: '',
   },
+});
+
+watch(() => props.open, (open) => {
+  document.body.style.overflow = open ? 'hidden' : '';
+});
+
+onUnmounted(() => {
+  document.body.style.overflow = '';
 });
 
 const emit = defineEmits(['close']);

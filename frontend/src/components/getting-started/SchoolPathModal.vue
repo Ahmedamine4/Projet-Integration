@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, watch, onUnmounted } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import Button from '@/components/common/Button.vue';
@@ -68,6 +68,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+});
+
+watch(() => props.open, (open) => {
+  document.body.style.overflow = open ? 'hidden' : '';
+});
+
+onUnmounted(() => {
+  document.body.style.overflow = '';
 });
 
 const emit = defineEmits(['close', 'complete']);
