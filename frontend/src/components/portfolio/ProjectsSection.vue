@@ -10,36 +10,84 @@ defineProps({
 
 const projectsRef = ref(null);
 const isDragging = ref(false);
-const startX = ref(0);
-const scrollLeft = ref(0);
+const lastX = ref(0);
+const lastTime = ref(0);
+const velocity = ref(0);
+const animationFrame = ref(null);
+
+const dragSpeed = 1.08;
+const minReleaseVelocity = 0.05;
+const frictionPerFrame = 0.95;
+const targetFrameDuration = 16;
 
 function handleMouseDown(event) {
   isDragging.value = true;
+  velocity.value = 0;
 
-  const rect = projectsRef.value.getBoundingClientRect();
-  startX.value = event.clientX - rect.left;
+  if (animationFrame.value) {
+    cancelAnimationFrame(animationFrame.value);
+    animationFrame.value = null;
+  }
 
-  scrollLeft.value = projectsRef.value.scrollLeft;
+  lastX.value = event.clientX;
+  lastTime.value = performance.now();
 }
 
 function handleMouseMove(event) {
   if (!isDragging.value) return;
 
-  const rect = projectsRef.value.getBoundingClientRect();
-  const x = event.clientX - rect.left;
+  event.preventDefault();
 
-  const DeltaX = x - startX.value;
+  const deltaX = event.clientX - lastX.value;
 
-  projectsRef.value.scrollLeft = scrollLeft.value - DeltaX;
+  projectsRef.value.scrollBy({
+    left: -deltaX * dragSpeed,
+  });
+
+  const now = performance.now();
+  const deltaTime = now - lastTime.value;
+
+  if (deltaTime > 0) {
+    velocity.value = deltaX / deltaTime;
+  }
+
+  lastX.value = event.clientX;
+  lastTime.value = now;
 }
 
 function handleMouseUp() {
+  if (!isDragging.value) return;
+
   isDragging.value = false;
+
+  if (Math.abs(velocity.value) < minReleaseVelocity) return;
+
+  lastTime.value = performance.now();
+  animationFrame.value = requestAnimationFrame(applyMomentum);
+}
+
+function applyMomentum(currentTime) {
+  if (Math.abs(velocity.value) < minReleaseVelocity) {
+    animationFrame.value = null;
+    return;
+  }
+
+  const deltaTime = currentTime - lastTime.value;
+
+  projectsRef.value.scrollBy({
+    left: -velocity.value * deltaTime,
+  });
+
+  velocity.value *= frictionPerFrame ** (deltaTime / targetFrameDuration);
+  lastTime.value = currentTime;
+
+  animationFrame.value = requestAnimationFrame(applyMomentum);
 }
 </script>
 
 <template>
   <div class="projects-shell">
+    <div class="title">Projects</div>
     <div
       class="projects"
       ref="projectsRef"
@@ -66,9 +114,22 @@ function handleMouseUp() {
   height: fit-content;
   border-block: var(--border);
   border-radius: 0;
-  overflow: hidden;
   background: var(--color-background);
   padding: 0;
+}
+
+.title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  line-height: 1;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  background-color: var(--color-background);
+  padding: 0 var(--space-md);
+  color: rgba(var(--color-primary-rgb), 0.48);
+  letter-spacing: 0.04em;
 }
 
 .projects {
@@ -80,7 +141,7 @@ function handleMouseUp() {
   width: 100%;
   overflow-x: auto;
   padding: var(--padding-inline);
-  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
   cursor: grab;
 }
 

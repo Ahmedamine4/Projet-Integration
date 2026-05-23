@@ -158,7 +158,7 @@ const projects = ref([
 .portfolio main {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-xl);
+	gap: calc(var(--space-xl) * 2);
 	padding-block: 0 6rem;
 	padding-inline: clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
 }

@@ -113,6 +113,8 @@ function formatDate(date) {
   height: 100%;
   display: block;
   object-fit: cover;
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 .project-content {
@@ -187,6 +189,7 @@ function formatDate(date) {
   display: flex;
   width: fit-content;
   align-items: center;
+  height: 1.5rem;
   gap: var(--space-sm);
   color: var(--color-secondary);
   text-decoration: underline;
