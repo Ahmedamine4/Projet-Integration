@@ -1,29 +1,28 @@
 // Done
 
 import * as githubService from '../services/github.service.js';
-import asyncHandler from '../utils/asyncHandler.js';
 import prisma from '../config/prisma.js';     
   // je vais enlever n'import qu'elle attribut lier a prismer 
   // et je vais le faire dans git.service.js
 
-export const githubLogin = asyncHandler(async (req, res) => {
+export const githubLogin = async (req, res) => {
   const etudiantId = req.user.utilisateur_id ;
   const authUrl = githubService.getOAuthUrl(etudiantId);
 
   res.json({
     success: true,
-    message: "Redirection vers GitHub ",
+    message: "Redirect to GitHub ",
     url: authUrl
   });
-});
+};
 
-export const githubCallback = asyncHandler(async (req, res) => {
+export const githubCallback = async (req, res) => {
   const { code, state } = req.query;
 
   if (!code) {
     return res.status(400).json({
       success: false,
-      message: "Code d'autorisation GitHub manquant"
+      message: "Code manquant"
     });
   }
 
@@ -35,7 +34,7 @@ export const githubCallback = asyncHandler(async (req, res) => {
   if (!etudiantId) {
     return res.status(400).json({
       success: false,
-      message: "Identifiant étudiant non trouvé"
+      message: "id étudiant non trouvé"
     });
   }
 
@@ -43,22 +42,21 @@ export const githubCallback = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: `${imported.length} repositories importés avec succès`,
+    message: `${imported.length} repositories importés `,
     count: imported.length,
     data: imported
   });
-});
+};
 
-export const getMyRepositories = asyncHandler(async (req, res) => {
+export const getMyRepositories = async (req, res) => {
   const etudiantId =  req.user.utilisateur_id ;
 
   const repositories = await prisma.repository.findMany({
         where: { etudiant_id: etudiantId },
         orderBy: { last_synced: 'desc' },
         select: {
-      repository_id: true,
-      name: true,
-      full_name: true,
+       repository_id: true,
+      title: true,
       description: true,
       html_url: true,
       language: true,
@@ -74,9 +72,9 @@ export const getMyRepositories = asyncHandler(async (req, res) => {
     count: repositories.length,
     data: repositories
   });
-});
+};
 
-export const syncRepositories = asyncHandler(async (req, res) => {
+export const syncRepositories = async (req, res) => {
   const etudiantId = req.user.utilisateur_id ;
 
   const repoWithToken = await prisma.repository.findFirst({
@@ -97,4 +95,4 @@ export const syncRepositories = asyncHandler(async (req, res) => {
     success: true,
     count: updated.length
   });
-});
+};

@@ -23,7 +23,6 @@ export const getAccessToken = async (code) => {
   if (response.data.error) {
     throw new Error(response.data.error_description || 'Failed to get access token');
   }
-
   return response.data.access_token;
 };
 
@@ -42,10 +41,9 @@ export const importReposToDB = async (etudiantId, repos, accessToken) => {
     return prisma.repository.upsert({
       where: { github_id: repo.id },
       update: {
-        name: repo.name,
-        full_name: repo.full_name,
+        title: repo.title,
         description: repo.description,
-        html_url: repo.html_url,
+        link: repo.link,
         language: repo.language,
         stars: repo.stargazers_count || 0,
         forks: repo.forks_count || 0,
@@ -56,10 +54,9 @@ export const importReposToDB = async (etudiantId, repos, accessToken) => {
       create: {
         github_id: repo.id,
         etudiant_id: etudiantId,
-        name: repo.name,
-        full_name: repo.full_name,
+        title: repo.title,
         description: repo.description,
-        html_url: repo.html_url,
+        link: repo.link,
         language: repo.language,
         stars: repo.stargazers_count || 0,
         forks: repo.forks_count || 0,

@@ -26,6 +26,7 @@ model Utilisateur {
   notifications    Notification[]
   professeur       Professeur?
   professionnel    Professionnel?
+  bloque           Boolean?        @default(false)
 
   @@map("utilisateurs")
 }
@@ -59,7 +60,7 @@ model Etudiant {
   experiences             Experience[]
   recommandations         LettresDeRecommendations[]
   portfolio               Portfolio?
-  repositories            repositories[]
+  repositories            Repository[]
   institutions            ValideEtudiant[]
   badges                  Badge[]                    @relation("BadgeToEtudiant")
   clubs                   Club[]                     @relation("ClubToEtudiant")
@@ -352,23 +353,24 @@ model ValideEtudiant {
   @@map("valide_etudiant")
 }
 
-model repositories {
-  repository_id       String   @id
+model Repository {
+  repository_id       String   @id @default(cuid())
   github_id           Int      @unique
   etudiant_id         String
-  name                String
-  full_name           String
+  title               String
   description         String?
-  html_url            String
+  link                String
   language            String?
   stars               Int      @default(0)
   forks               Int      @default(0)
-  is_private          Boolean  @default(false)
+  private             Boolean  @default(false)
   github_access_token String?
   last_synced         DateTime @default(now())
   created_at          DateTime @default(now())
-  updated_at          DateTime
+  updated_at          DateTime @updatedAt
   etudiants           Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
+
+  @@map("repositories")
 }
 
 enum TypeExperience {
