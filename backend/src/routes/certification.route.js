@@ -1,7 +1,7 @@
 //done
 import express from 'express';
-import { authMiddleware, authorizeRoles } from '../middleware/auth.middleware.js';
-import { ROLES } from '../middleware/auth.middleware.js';
+import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware.js';
+import { ROLES } from '../middlewares/auth.middleware.js';
 import {
   addCertification,
   getMyCertifications,
