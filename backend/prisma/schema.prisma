@@ -1,3 +1,8 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 generator client {
   provider = "prisma-client-js"
 }
@@ -47,23 +52,28 @@ model Utilisateur {
   email            String          @unique @db.VarChar(100)
   mot_de_passe     String?         @db.VarChar(255)
   telephone        String?         @db.VarChar(20)
+  a_propos         String?
   date_de_creation DateTime?       @default(now())
-  administrateur   Administrateur?
-  connexions       Connexion[]
-  directeur        Directeur?
-  etudiant         Etudiant?
-  interactions     Interaction[]
-  notifications    Notification[]
-  professeur       Professeur?
-  professionnel    Professionnel?
-  bloque           Boolean?        @default(false)
+
+  // Relations d'héritage (1-to-1)
+  administrateur Administrateur?
+  directeur      Directeur?
+  etudiant       Etudiant?
+  professeur     Professeur?
+  professionnel  Professionnel?
+
+  // Autres relations
+  notifications Notification[]
+  connexions    Connexion[]
+  interactions  Interaction[]
 
   @@map("utilisateurs")
 }
 
 model Administrateur {
-  admin_utilisateur_id   String          @id
-  niveau_acces           String?         @db.VarChar(50)
+  admin_utilisateur_id String  @id
+  niveau_acces         String? @db.VarChar(50)
+
   utilisateur            Utilisateur     @relation(fields: [admin_utilisateur_id], references: [utilisateur_id])
   professionnels_valides Professionnel[] @relation("AdminValidation")
 
@@ -71,12 +81,14 @@ model Administrateur {
 }
 
 model Directeur {
-  directeur_utilisateur_id String      @id
-  poste                    String?     @db.VarChar(100)
-  bureau                   String?     @db.VarChar(50)
-  institution_id           String      @unique
-  utilisateur              Utilisateur @relation(fields: [directeur_utilisateur_id], references: [utilisateur_id])
-  institution              Institution @relation(fields: [institution_id], references: [institution_id])
+  directeur_utilisateur_id String  @id
+  poste                    String? @db.VarChar(100)
+  bureau                   String? @db.VarChar(50)
+
+  institution_id String @unique
+
+  utilisateur Utilisateur @relation(fields: [directeur_utilisateur_id], references: [utilisateur_id])
+  institution Institution @relation(fields: [institution_id], references: [institution_id])
 
   @@map("directeurs")
 }
@@ -99,14 +111,15 @@ model Etudiant {
 }
 
 model Professeur {
-  prof_utilisateur_id     String                     @id
-  departement             String?                    @db.VarChar(50)
-  specialite              String?                    @db.VarChar(50)
-  lettres_recommandations LettresDeRecommendations[]
+  prof_utilisateur_id String  @id
+  departement         String? @db.VarChar(50)
+  specialite          String? @db.VarChar(50)
+
   utilisateur             Utilisateur                @relation(fields: [prof_utilisateur_id], references: [utilisateur_id])
+  lettres_recommandations LettresDeRecommendations[]
+  institutions            Institution[]
   projets                 ValideProjet[]
   stages                  ValideStage[]
-  institutions            Institution[]              @relation("InstitutionToProfesseur")
 
   @@map("professeurs")
 }
@@ -118,11 +131,14 @@ model Professionnel {
   email_professionnel          String?           @db.VarChar(100)
   statut                       StatutValidation?
   admin_id                     String?
-  admin                        Administrateur?   @relation("AdminValidation", fields: [admin_id], references: [admin_utilisateur_id])
-  utilisateur                  Utilisateur       @relation(fields: [professionnel_utilisateur_id], references: [utilisateur_id])
+
+  utilisateur Utilisateur     @relation(fields: [professionnel_utilisateur_id], references: [utilisateur_id])
+  admin       Administrateur? @relation("AdminValidation", fields: [admin_id], references: [admin_utilisateur_id])
 
   @@map("professionnels")
 }
+
+// ENTITÉS PRINCIPALES
 
 model Club {
   club_id       String        @id @default(cuid())
@@ -130,9 +146,9 @@ model Club {
   description   String?
   date_creation DateTime?
   responsable   String?       @db.VarChar(50)
-  activites     Activite[]    @relation("ActiviteToClub")
-  etudiants     Etudiant[]    @relation("ClubToEtudiant")
-  institutions  Institution[] @relation("ClubToInstitution")
+  etudiants     Etudiant[]
+  institutions  Institution[]
+  activites     Activite[]
 
   @@map("clubs")
 }
@@ -143,7 +159,7 @@ model Badge {
   icone       String?
   score       Int?
   description String?
-  etudiants   Etudiant[] @relation("BadgeToEtudiant")
+  etudiants   Etudiant[]
 
   @@map("badges")
 }
@@ -154,7 +170,7 @@ model Competence {
   nom           String?      @db.VarChar(50)
   description   String?
   niveau        String?      @db.VarChar(50)
-  experiences   Experience[] @relation("CompetenceToExperience")
+  experiences   Experience[]
 
   @@map("competences")
 }
@@ -167,8 +183,8 @@ model Portfolio {
   date_generation   DateTime?
   score_credibilite Int?
   utilisateur_id    String        @unique
-  interactions      Interaction[]
   etudiant          Etudiant      @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  interactions      Interaction[]
 
   @@map("portfolio")
 }
@@ -197,20 +213,23 @@ model Connexion {
 }
 
 model Institution {
-  institution_id String                @id @default(cuid())
-  nom            String                @db.VarChar(50)
-  address        String?               @db.VarChar(50)
-  email          String                @db.VarChar(255)
+  institution_id String  @id @default(cuid())
+  nom            String  @db.VarChar(50)
+  address        String? @db.VarChar(50)
+  email          String  @db.VarChar(255)
   description    String?
-  directeur      Directeur?
+
+  directeur      Directeur[]
+  clubs          Club[]
+  professeurs    Professeur[]
   activites      ValideActivite[]
-  certifications ValideCertification[]
   etudiants      ValideEtudiant[]
-  clubs          Club[]                @relation("ClubToInstitution")
-  professeurs    Professeur[]          @relation("InstitutionToProfesseur")
+  certifications ValideCertification[]
 
   @@map("institutions")
 }
+
+// EXPERIENCES ET HERITAGES
 
 model Experience {
   experience_id   String          @id @default(cuid())
@@ -218,16 +237,19 @@ model Experience {
   date_experience DateTime?
   visibilite      Boolean?
   type            TypeExperience
+  type_specifique TypeSpecifique?
   description     String?
   utilisateur_id  String
-  activite        Activite?
-  certification   Certification?
-  documentations  Documentation[]
-  etudiant        Etudiant        @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
-  interactions    Interaction[]
-  projet          Projet?
-  stage           Stage?
-  competences     Competence[]    @relation("CompetenceToExperience")
+
+  etudiant      Etudiant       @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  certification Certification?
+  projet        Projet?
+  activite      Activite?
+  stage         Stage?
+
+  documentations Documentation[]
+  interactions   Interaction[]
+  competences    Competence[]
 
   @@map("experiences")
 }
@@ -255,11 +277,13 @@ model Documentation {
 
 model Projet {
   experience_id    String        @id
-  type_projet      String?       @db.VarChar(50)
   lien_github      String?
   lien_youtube     String?
   resultat_obtenus String?
   role             String?       @db.VarChar(50)
+  photo            String?
+  technologies     String[]
+  domains          String[]
   experience       Experience    @relation(fields: [experience_id], references: [experience_id])
   validation       ValideProjet?
 
@@ -272,7 +296,7 @@ model Activite {
   lieu          String?         @db.VarChar(100)
   experience    Experience      @relation(fields: [experience_id], references: [experience_id])
   validation    ValideActivite?
-  clubs         Club[]          @relation("ActiviteToClub")
+  clubs         Club[]
 
   @@map("activites")
 }
@@ -297,12 +321,15 @@ model Interaction {
   portfolio_id     String?
   experience_id    String?
   utilisateur_id   String
-  experience       Experience?       @relation(fields: [experience_id], references: [experience_id])
-  portfolio        Portfolio?        @relation(fields: [portfolio_id], references: [portfolio_id])
-  utilisateur      Utilisateur       @relation(fields: [utilisateur_id], references: [utilisateur_id])
+
+  portfolio   Portfolio?  @relation(fields: [portfolio_id], references: [portfolio_id])
+  experience  Experience? @relation(fields: [experience_id], references: [experience_id])
+  utilisateur Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
 
   @@map("interactions")
 }
+
+// TABLES DE JONCTION (Relations Many-to-Many)
 
 model LettresDeRecommendations {
   utilisateur_id      String
@@ -312,8 +339,9 @@ model LettresDeRecommendations {
   statut              StatutValidation?
   date_lettre         DateTime?
   commentaire         String?
-  professeur          Professeur        @relation(fields: [prof_utilisateur_id], references: [prof_utilisateur_id])
-  etudiant            Etudiant          @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+
+  etudiant   Etudiant   @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  professeur Professeur @relation(fields: [prof_utilisateur_id], references: [prof_utilisateur_id])
 
   @@id([utilisateur_id, prof_utilisateur_id])
   @@map("lettres_de_recommendations")
@@ -338,8 +366,9 @@ model ValideProjet {
   statut         StatutValidation?
   date_d_action  DateTime?
   commentaire    String?
-  projet         Projet            @relation(fields: [experience_id], references: [experience_id])
-  professeur     Professeur        @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
+
+  projet     Projet     @relation(fields: [experience_id], references: [experience_id])
+  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
 
   @@id([experience_id, utilisateur_id])
   @@map("valide_projet")
@@ -351,8 +380,9 @@ model ValideStage {
   statut         StatutValidation?
   date_d_action  DateTime?
   commentaire    String?
-  stage          Stage             @relation(fields: [experience_id], references: [experience_id])
-  professeur     Professeur        @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
+
+  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
+  stage      Stage      @relation(fields: [experience_id], references: [experience_id])
 
   @@id([utilisateur_id, experience_id])
   @@map("valide_stage")
@@ -364,8 +394,9 @@ model ValideCertification {
   statut         StatutValidation?
   date_d_action  DateTime?
   commentaire    String?
-  certification  Certification     @relation(fields: [experience_id], references: [experience_id])
-  institution    Institution       @relation(fields: [institution_id], references: [institution_id])
+
+  institution   Institution   @relation(fields: [institution_id], references: [institution_id])
+  certification Certification @relation(fields: [experience_id], references: [experience_id])
 
   @@id([institution_id, experience_id])
   @@map("valide_certification")
@@ -376,8 +407,9 @@ model ValideEtudiant {
   institution_id String
   statut         StatutValidation?
   date_d_action  DateTime?
-  institution    Institution       @relation(fields: [institution_id], references: [institution_id])
-  etudiant       Etudiant          @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+
+  etudiant    Etudiant    @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  institution Institution @relation(fields: [institution_id], references: [institution_id])
 
   @@id([utilisateur_id, institution_id])
   @@map("valide_etudiant")
