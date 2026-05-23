@@ -402,3 +402,15 @@ export const traiterValidationStage = async (profId, experienceId, statut, comme
 
   return updated;
 };
+
+export const getStagesVisiblesByEtudiant = async (etudiantId) => {
+  return prisma.experience.findMany({
+    where: { utilisateur_id: etudiantId, type: 'stage', visibilite: true },
+    include: {
+      stage: { include: { validation: true } },
+      competences: true,
+      documentations: true,
+    },
+    orderBy: { date_experience: 'desc' },
+  });
+};

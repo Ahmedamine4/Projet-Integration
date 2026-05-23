@@ -54,3 +54,15 @@ export const createProjet = async (data, userId) => {
     return { experience, projet };
   });
 };
+
+export const getProjetsVisiblesByEtudiant = async (etudiantId) => {
+  return prisma.experience.findMany({
+    where: { utilisateur_id: etudiantId, type: 'projet', visibilite: true },
+    include: {
+      projet: { include: { validation: true } },
+      competences: true,
+      documentations: true,
+    },
+    orderBy: { date_experience: 'desc' },
+  });
+};
