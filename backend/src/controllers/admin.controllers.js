@@ -1,7 +1,7 @@
 import {
   assignerDirecteur,
   promouvoirProfessionnel,
-  refuserProfessionnel,
+  rejecterProfessionnel,
   bloquerUtilisateur,
   debloquerUtilisateur,
   getProfessionnelsEnAttente,
