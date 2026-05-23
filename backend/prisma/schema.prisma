@@ -12,9 +12,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 // ENUMS
-
 
 enum TypeExperience {
   certification
@@ -42,9 +40,7 @@ enum StatutValidation {
   refuse
 }
 
-
 // UTILISATEURS ET HERITAGES
-
 
 model Utilisateur {
   utilisateur_id   String          @id @default(cuid())
@@ -98,18 +94,18 @@ model Directeur {
 }
 
 model Etudiant {
-  etudiant_utilisateur_id String  @id
-  promotion               String? @db.VarChar(50)
-  niveau                  String? @db.VarChar(50)
+  etudiant_utilisateur_id String                     @id
+  promotion               String?                    @db.VarChar(50)
+  niveau                  String?                    @db.VarChar(50)
   github_API              String?
-
-  utilisateur               Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
-  portfolio                 Portfolio?
-  experiences               Experience[]
-  clubs                     Club[]
-  institutions              ValideEtudiant[]
-  badges                    Badge[]
-  recommandations           LettresDeRecommendations[]
+  repositories            Repository[]
+  utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
+  portfolio               Portfolio?
+  experiences             Experience[]
+  clubs                   Club[]
+  institutions            ValideEtudiant[]
+  badges                  Badge[]
+  recommandations         LettresDeRecommendations[]
 
   @@map("etudiants")
 }
@@ -142,9 +138,7 @@ model Professionnel {
   @@map("professionnels")
 }
 
-
 // ENTITÉS PRINCIPALES
-
 
 model Club {
   club_id       String        @id @default(cuid())
@@ -238,12 +232,12 @@ model Institution {
 // EXPERIENCES ET HERITAGES
 
 model Experience {
-  experience_id   String         @id @default(cuid())
-  titre           String?        @db.VarChar(100)
+  experience_id   String          @id @default(cuid())
+  titre           String?         @db.VarChar(100)
   date_experience DateTime?
   visibilite      Boolean?
   type            TypeExperience
-  type_specifique      TypeSpecifique?
+  type_specifique TypeSpecifique?
   description     String?
   utilisateur_id  String
 
@@ -261,11 +255,11 @@ model Experience {
 }
 
 model Certification {
-  experience_id String                   @id
+  experience_id String               @id
   document      String?
   lien_URL      String?
   code          String?
-  experience    Experience               @relation(fields: [experience_id], references: [experience_id])
+  experience    Experience           @relation(fields: [experience_id], references: [experience_id])
   validation    ValideCertification?
 
   @@map("certifications")
@@ -282,15 +276,15 @@ model Documentation {
 }
 
 model Projet {
-  experience_id    String              @id
+  experience_id    String        @id
   lien_github      String?
   lien_youtube     String?
   resultat_obtenus String?
-  role             String?             @db.VarChar(50)
+  role             String?       @db.VarChar(50)
   photo            String?
   technologies     String[]
   domains          String[]
-  experience       Experience          @relation(fields: [experience_id], references: [experience_id])
+  experience       Experience    @relation(fields: [experience_id], references: [experience_id])
   validation       ValideProjet?
 
   @@map("projets")
@@ -308,11 +302,11 @@ model Activite {
 }
 
 model Stage {
-  experience_id      String           @id
-  duree              String?          @db.VarChar(50)
+  experience_id      String       @id
+  duree              String?      @db.VarChar(50)
   missions_realisees String?
   rapport_stage      String?
-  experience         Experience       @relation(fields: [experience_id], references: [experience_id])
+  experience         Experience   @relation(fields: [experience_id], references: [experience_id])
   validation         ValideStage?
 
   @@map("stages")
@@ -335,9 +329,7 @@ model Interaction {
   @@map("interactions")
 }
 
-
 // TABLES DE JONCTION (Relations Many-to-Many)
-
 
 model LettresDeRecommendations {
   utilisateur_id      String
@@ -416,9 +408,29 @@ model ValideEtudiant {
   statut         StatutValidation?
   date_d_action  DateTime?
 
-  etudiant       Etudiant          @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
-  institution    Institution       @relation(fields: [institution_id], references: [institution_id])
+  etudiant    Etudiant    @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  institution Institution @relation(fields: [institution_id], references: [institution_id])
 
   @@id([utilisateur_id, institution_id])
   @@map("valide_etudiant")
+}
+
+model Repository {
+  repository_id       String   @id @default(cuid())
+  github_id           Int      @unique
+  etudiant_id         String
+  title               String
+  description         String?
+  link                String
+  language            String?
+  stars               Int      @default(0)
+  forks               Int      @default(0)
+  private             Boolean  @default(false)
+  github_access_token String?
+  last_synced         DateTime @default(now())
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  etudiants           Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
+
+  @@map("repositories")
 }
