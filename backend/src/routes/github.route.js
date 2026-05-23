@@ -1,7 +1,5 @@
-// Done
 import express from 'express';
-import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware.js';
-import { ROLES } from '../middlewares/auth.middleware.js';
+import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
 
 import {
   githubLogin,
@@ -12,10 +10,9 @@ import {
 
 const router = express.Router();
 
-router.use(authMiddleware);
-
 router.get(
   '/login',
+  authMiddleware,
   authorizeRoles(ROLES.ETUDIANT),
   githubLogin
 );
@@ -24,12 +21,14 @@ router.get('/callback', githubCallback);
 
 router.get(
   '/repositories',
+  authMiddleware,
   authorizeRoles(ROLES.ETUDIANT),
   getMyRepositories
 );
 
 router.post(
   '/sync',
+  authMiddleware,
   authorizeRoles(ROLES.ETUDIANT),
   syncRepositories
 );

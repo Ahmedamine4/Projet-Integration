@@ -4,10 +4,20 @@ import GettingStartedStep from '@/components/getting-started/GettingStartedStep.
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
+import { useGithubStore } from '@/stores/github';
 
 const institutionStore = useInstitutionStore();
+const githubStore = useGithubStore();
 
-onMounted(institutionStore.fetchInstitutions);
+onMounted(() => {
+  institutionStore.fetchInstitutions();
+
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('github') === 'connected') {
+    stepStatus.github = 'done';
+  }
+});
 
 const steps = [
   {
@@ -41,13 +51,17 @@ const doneCount = computed(() =>
 
 const isSchoolModalOpen = ref(false);
 
-function handleStepAction(key) {
+async function handleStepAction(key) {
   const step = steps.find((step) => step.key === key);
 
   if (!step) return;
 
   if (step.key === 'school') {
     isSchoolModalOpen.value = true;
+    return;
+  }
+  if (step.key === 'github') {
+    await githubStore.connectGithub();
     return;
   }
 

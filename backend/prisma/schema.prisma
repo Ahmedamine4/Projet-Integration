@@ -7,6 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ENUMS
+
+enum TypeExperience {
+  certification
+  projet
+  stage
+  activite
+}
+
+enum TypeSpecifique {
+  personnel
+  academique
+}
+
+enum RoleUtilisateur {
+  etudiant
+  professeur
+  administrateur
+  professionnel
+  directeur
+}
+
+enum StatutValidation {
+  en_attente
+  valide
+  refuse
+}
+
+// UTILISATEURS ET HERITAGES
+
 model Utilisateur {
   utilisateur_id   String          @id @default(cuid())
   nom              String          @db.VarChar(50)
@@ -56,14 +86,14 @@ model Etudiant {
   promotion               String?                    @db.VarChar(50)
   niveau                  String?                    @db.VarChar(50)
   github_API              String?
-  utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
-  experiences             Experience[]
-  recommandations         LettresDeRecommendations[]
-  portfolio               Portfolio?
   repositories            Repository[]
+  utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
+  portfolio               Portfolio?
+  experiences             Experience[]
+  clubs                   Club[]
   institutions            ValideEtudiant[]
-  badges                  Badge[]                    @relation("BadgeToEtudiant")
-  clubs                   Club[]                     @relation("ClubToEtudiant")
+  badges                  Badge[]
+  recommandations         LettresDeRecommendations[]
 
   @@map("etudiants")
 }
@@ -371,25 +401,4 @@ model Repository {
   etudiants           Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
 
   @@map("repositories")
-}
-
-enum TypeExperience {
-  certification
-  projet
-  stage
-  activite
-}
-
-enum RoleUtilisateur {
-  etudiant
-  professeur
-  administrateur
-  professionnel
-  directeur
-}
-
-enum StatutValidation {
-  en_attente
-  valide
-  refuse
 }

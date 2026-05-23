@@ -40,12 +40,14 @@ export const githubCallback = async (req, res) => {
 
   const imported = await githubService.importReposToDB(etudiantId, repos, accessToken);
 
-  res.json({
+  /*res.json({
     success: true,
     message: `${imported.length} repositories importés `,
     count: imported.length,
     data: imported
-  });
+  });*/
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  res.redirect(`${frontendUrl}/getting-started?github=connected`);
 };
 
 export const getMyRepositories = async (req, res) => {
@@ -55,14 +57,14 @@ export const getMyRepositories = async (req, res) => {
         where: { etudiant_id: etudiantId },
         orderBy: { last_synced: 'desc' },
         select: {
-       repository_id: true,
+      repository_id: true,
       title: true,
       description: true,
-      html_url: true,
+      link: true,
       language: true,
       stars: true,
       forks: true,
-      is_private: true,
+      private: true,
       last_synced: true,
     }
   });
@@ -72,6 +74,8 @@ export const getMyRepositories = async (req, res) => {
     count: repositories.length,
     data: repositories
   });
+//const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+//res.redirect(`${frontendUrl}/getting-started?github=connected`);
 };
 
 export const syncRepositories = async (req, res) => {
