@@ -22,8 +22,8 @@ const projects = ref([
     description: "A collaborative project management dashboard that helps teams organize tasks, track progress, manage deadlines, and centralize project files in one visual workspace. It includes board and table views, task assignments, due dates, status labels, and progress tracking to make team coordination easier and more transparent.",
     visibleToEveryone: true,
     githubLink: "https://github.com/sweta-devnani/taskflow-board",
-    technologies: ["Vue.js", "Pinia", "Express", "Prisma"],
-    domains: ["Project Management", "Team Collaboration"],
+    technologies: [],
+    domains: ["Web Frontend", "Web Backend"],
     imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779457499504-54-Best-Project-Management-Tools-for-2023.webp",
   },
   {
@@ -141,11 +141,11 @@ async function handleProjectSubmit(project) {
 
 			if (index !== -1) {
 				projects.value[index] = {
-					...project.value[index],
+					...projects.value[index],
 					...project,
 					imagePreview: project.image
 						? URL.createObjectURL(project.image)
-						: project.value[index].imagePreview
+						: projects.value[index].imagePreview
 				};
 			}
 
@@ -154,7 +154,7 @@ async function handleProjectSubmit(project) {
 		}
 
 		const createdProject = await projectStore.createProject(project);
-		project.value.unshift(createdProject);
+		projects.value.unshift(createdProject);
 		closeProjectModal();
 	}
 	catch(error) {

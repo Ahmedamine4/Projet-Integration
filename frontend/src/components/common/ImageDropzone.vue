@@ -7,7 +7,7 @@ const model = defineModel({
   default: null
 });
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: 'Upload project screenshot'
@@ -23,12 +23,22 @@ defineProps({
   accept: {
     type: String,
     default: 'image/*'
-  }
+  },
+  initialPreviewUrl: {
+    type: String,
+    default: '',
+  },
+  initialFileName: {
+    type: String,
+    default: '',
+  },
 });
 
 const isDragging = ref(false);
+const isInitialPreviewCleared = ref(false);
 
 const updateFile = (file) => {
+  isInitialPreviewCleared.value = false;
   model.value = file || null;
 };
 
@@ -43,11 +53,28 @@ const handleDrop = (event) => {
 };
 
 const clearFile = () => {
-  updateFile(null);
+  releasePreviewURL();
+  isInitialPreviewCleared.value = true;
+  model.value = null;
 };
 
 const previewURL = ref('');
-const hasPreview = computed(() => !!previewURL.value);
+
+const displayPreviewURL = computed(() => {
+  if (previewURL.value) return previewURL.value;
+  if (isInitialPreviewCleared.value) return '';
+  return props.initialPreviewUrl;
+});
+const hasPreview = computed(() => !!displayPreviewURL.value);
+
+const displayFileName = computed(() => {
+  if (model.value?.name) return model.value.name;
+  if (isInitialPreviewCleared.value) return props.emptyText;
+  return props.initialFileName || props.emptyText;
+});
+const hasDisplayedFile = computed(() => {
+  return Boolean(model.value || displayPreviewURL.value);
+});
 
 function releasePreviewURL() {
   if (!previewURL.value) return;
@@ -60,6 +87,13 @@ watch(model, (newPreview) => {
   if (newPreview instanceof Blob)
     previewURL.value = URL.createObjectURL(newPreview);
 });
+
+watch(
+  () => props.initialPreviewUrl,
+  () => {
+    isInitialPreviewCleared.value = false;
+  }
+);
 
 onUnmounted(releasePreviewURL);
 </script>
@@ -74,12 +108,12 @@ onUnmounted(releasePreviewURL);
     @drop.prevent="handleDrop"
   >
     <div class="drop-zone__preview">
-      <img v-if="hasPreview" :src="previewURL" alt="">
+      <img v-if="hasPreview" :src="displayPreviewURL" alt="">
       <ImagePlus v-else />
     </div>
     <div class="drop-zone__content">
       <button
-        v-if="model"
+        v-if="hasDisplayedFile"
         type="button"
         class="drop-zone__clear"
         @click.prevent.stop="clearFile"
@@ -108,11 +142,11 @@ onUnmounted(releasePreviewURL);
       <p
         class="file-name"
         :class="{
-          'file-name--empty': !model,
-          'file-name--selected': model
+          'file-name--empty': !hasDisplayedFile,
+          'file-name--selected': hasDisplayedFile
         }"
       >
-        {{ model?.name || emptyText }}
+        {{ displayFileName }}
       </p>
     </div>
   </label>

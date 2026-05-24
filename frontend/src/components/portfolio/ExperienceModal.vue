@@ -174,10 +174,8 @@ function resetForm() {
 
 function fillForm() {
   const value = props.initialValue;
-  if (!value) {
-    resetForm();
-    return;
-  }
+  resetForm();
+  if (!value) return;
   Object.keys(form).forEach(key => {
     if (value[key] !== undefined) form[key] = value[key];
   });
@@ -448,6 +446,23 @@ watch(
   (value) => {
     if (!value) resetAcademicErrors();
 });
+
+function getFileNameFromUrl(url) {
+  if (!url) return '';
+
+  const cleanUrl = url.split('?')[0];
+  const fileName = cleanUrl.split('/').pop();
+
+  return fileName ? decodeURIComponent(fileName) : '';
+}
+
+const existingImagePreview = computed(() => {
+  return isEdit.value ? props.initialValue?.imagePreview || '' : '';
+});
+
+const existingImageName = computed(() => {
+  return getFileNameFromUrl(existingImagePreview.value);
+});
 </script>
 
 <template>
@@ -534,6 +549,8 @@ watch(
               <ImageDropzone
                 :title="`Upload ${props.type} ${currentConfig.imageLabel}`"
                 :accept="currentConfig.imageAccept"
+                :initial-preview-url="existingImagePreview"
+                :initial-file-name="existingImageName"
                 v-model="form.image"
               />
               <Error v-if="errors.image" variant="field">
