@@ -1,17 +1,21 @@
 ---
-- name: Update apt cache
-  apt:
-    update_cache: true
-    cache_valid_time: 3600
+- name: Configure VM2 — application server
+  hosts: all
+  become: true
+  roles:
+    - role: vm2_basic
+      when: vm_role == "vm2"
 
-- name: Upgrade all installed packages
-  apt:
-    upgrade: dist
+- name: Configure VM3 — database server
+  hosts: all
+  become: true
+  roles:
+    - role: vm3_db_secure
+      when: vm_role == "vm3"
 
-- name: Install essential tools
-  apt:
-    name:
-      - curl
-      - git
-      - net-tools
-    state: present
+- name: Configure VM4 — AI service
+  hosts: all
+  become: true
+  roles:
+    - role: vm4_ai_basic
+      when: vm_role == "vm4"

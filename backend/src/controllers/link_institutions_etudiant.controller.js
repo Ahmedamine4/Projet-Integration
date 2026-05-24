@@ -2,10 +2,18 @@ import { LinkInstitutionsToEtudiant } from '../services/link_institutions_etudia
 
 export const LinkInstitutionsToEtudiantController = async (req, res) => {
     try {
-        const { etudiantId, institutionId } = req.body;
+        const etudiantId = req.user.utilisateur_id || req.user.id;
+
+        if (!etudiantId) {
+            return res.status(401).json({ 
+                error: 'Action non autorisée. Étudiant non identifié.' 
+            });
+        }
+
+        const { institutionId } = req.body;
 
         // Validation des entrées
-        if (!etudiantId || !Array.isArray(institutionId) || institutionId.length === 0) {
+        if (!Array.isArray(institutionId) || institutionId.length === 0) {
             return res.status(400).json({ 
                 error: 'etudiantId et un tableau institution Id (Ids) sont requis' 
             });
@@ -18,7 +26,9 @@ export const LinkInstitutionsToEtudiantController = async (req, res) => {
             count: result.length
         });
     } catch (error) {
-        res.status(500).json({
+        const statusCode = error.message.includes("Aucune institution") ? 404 : 500;
+        
+        res.status(statusCode).json({
             error: 'Erreur lors de la liaison',
             details: error.message
         });

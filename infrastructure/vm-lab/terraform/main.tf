@@ -32,6 +32,11 @@ resource "null_resource" "vagrant_vms" {
     interpreter = ["cmd", "/C"]
   }
 }
+variable "vm4_ip" {
+  description = "IP of VM4 (AI service)"
+  type        = string
+  default     = "192.168.56.13"
+}
 
 # Outputs
 

@@ -6,8 +6,8 @@
 VM2_IP = "192.168.56.11"
 VM3_IP = "192.168.56.12"
 VM4_IP = "192.168.56.13"
+HOST_IP = "192.168.56.1"
 
-# Shell snippet reused on both VMs
 INSTALL_ANSIBLE = <<-SHELL
   apt-get update -qq
   apt-get install -y -qq ansible
@@ -17,25 +17,27 @@ Vagrant.configure("2") do |config|
 
   config.vm.box              = "ubuntu/jammy64"
   config.vm.box_check_update = false
+  config.vm.boot_timeout     = 600
 
-  # VM2 
+  # VM2
   config.vm.define "vm2" do |vm2|
     vm2.vm.hostname = "vm2"
     vm2.vm.network "private_network", ip: VM2_IP
-    vm2.vm.network "public_network"
+    # SUPPRIMÉ : public_network — expose VM2 sur le réseau physique sans contrôle
 
     vm2.vm.provider "virtualbox" do |vb|
       vb.name   = "vm2"
-      vb.memory = 8192
+      vb.memory = 4096  # réduit — 8Go inutile
       vb.cpus   = 2
+      # SÉCURITÉ : pas de fuite de données vers l'hôte
+      vb.customize ["modifyvm", :id, "--clipboard-mode", "disabled"]
+      vb.customize ["modifyvm", :id, "--draganddrop", "disabled"]
     end
 
     vm2.vm.synced_folder "./ansible", "/ansible"
 
-    # install Ansible from Ubuntu's default repo (no PPA, no timeout)
     vm2.vm.provision "shell", inline: INSTALL_ANSIBLE
 
-    # run playbook (install: false skips the broken PPA logic)
     vm2.vm.provision "ansible_local" do |ansible|
       ansible.install    = false
       ansible.playbook   = "/ansible/playbook.yml"
@@ -46,7 +48,7 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  # VM3 
+  # VM3
   config.vm.define "vm3" do |vm3|
     vm3.vm.hostname = "vm3"
     vm3.vm.network "private_network", ip: VM3_IP
@@ -55,7 +57,9 @@ Vagrant.configure("2") do |config|
       vb.name   = "vm3"
       vb.memory = 2048
       vb.cpus   = 1
-      vb.gui = true
+      vb.gui    = false  # SÉCURITÉ : GUI désactivée sur serveur DB
+      vb.customize ["modifyvm", :id, "--clipboard-mode", "disabled"]
+      vb.customize ["modifyvm", :id, "--draganddrop", "disabled"]
     end
 
     vm3.vm.synced_folder "./ansible", "/ansible"
@@ -65,6 +69,7 @@ Vagrant.configure("2") do |config|
     vm3.vm.provision "ansible_local" do |ansible|
       ansible.install    = false
       ansible.playbook   = "/ansible/playbook.yml"
+      ansible.config_file = "/ansible/ansible.cfg"
       ansible.extra_vars = {
         vm_role: "vm3",
         vm2_ip:  VM2_IP
@@ -81,6 +86,8 @@ Vagrant.configure("2") do |config|
       vb.name   = "vm4"
       vb.memory = 4096
       vb.cpus   = 2
+      vb.customize ["modifyvm", :id, "--clipboard-mode", "disabled"]
+      vb.customize ["modifyvm", :id, "--draganddrop", "disabled"]
     end
 
     vm4.vm.synced_folder "./ansible", "/ansible"
@@ -98,6 +105,5 @@ Vagrant.configure("2") do |config|
       }
     end
   end
-
 
 end

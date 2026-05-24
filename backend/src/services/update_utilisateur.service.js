@@ -43,3 +43,22 @@ export const updateEmail = async(userid,new_email) => {
         select: {utilisateur_id: true, email: true}
     });
 };
+
+//Works only for Students and normal users
+export const deleteaccount = async (userid) => {
+    if (prisma.etudiant) {
+        await prisma.etudiant.deleteMany({
+            where: { utilisateur_id: userid }
+        });
+    }
+    return await prisma.utilisateur.delete({
+        where: {utilisateur_id: userid},
+        select: { utilisateur_id: true, nom: true ,email: true }
+    });
+};
+
+export const LogoutFromAllDevices = async(userid) => {
+    return await prisma.connexion.deleteMany({
+        where: { utilisateur_id: userid }
+    });
+};

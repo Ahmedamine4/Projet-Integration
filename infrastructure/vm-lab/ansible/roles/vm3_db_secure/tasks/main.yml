@@ -13,6 +13,7 @@
       - ufw
       - docker.io
       - docker-compose
+      - python3-docker
     state: present
 
 - name: Enable and start Docker
@@ -32,7 +33,7 @@
     dest: /home/vagrant/docker-compose.yml
     owner: vagrant
     group: vagrant
-    mode: "0644"
+    mode: "0640"
     content: |
       services:
         postgres:
@@ -49,9 +50,16 @@
       volumes:
         postgres_data:
 
-- name: Allow SSH
+# SÉCURITÉ : UFW avant tout — default deny d'abord
+- name: Set default UFW policy to deny incoming
+  ufw:
+    policy: deny
+    direction: incoming
+
+- name: Allow SSH from host only
   ufw:
     rule: allow
+    src: "192.168.56.1"
     port: "22"
     proto: tcp
 
@@ -62,13 +70,26 @@
     port: "5432"
     proto: tcp
 
-- name: Enable firewall
+- name: Enable UFW
   ufw:
     state: enabled
-    policy: deny
-    direction: incoming
+
+- name: Create VM3 .env file
+  copy:
+    dest: /home/vagrant/.env
+    owner: vagrant
+    group: vagrant
+    mode: "0600"
+    force: false
+    content: |
+      POSTGRES_DB=appdb
+      POSTGRES_USER=postgres
+      POSTGRES_PASSWORD=postgres
 
 - name: Start VM3 database container
   shell: docker-compose up -d
   args:
     chdir: /home/vagrant
+  become: true
+  become_user: vagrant
+  ignore_errors: true # .env sera créé manuellement après

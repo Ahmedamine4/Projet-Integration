@@ -12,6 +12,7 @@
       - net-tools
       - docker.io
       - docker-compose
+      - ufw
     state: present
 
 - name: Enable and start Docker
@@ -31,7 +32,7 @@
     dest: /home/vagrant/docker-compose.yml
     owner: vagrant
     group: vagrant
-    mode: "0644"
+    mode: "0640"
     content: |
       services:
         ai:
@@ -39,11 +40,37 @@
           container_name: ai-container
           restart: unless-stopped
           ports:
-            - "192.168.56.13:8000:8000"
+            - "192.168.56.13:8000:8000"  # bind sur IP privée uniquement
           environment:
             - ENV=production
+
+# SÉCURITÉ : UFW sur VM4 aussi
+- name: Set default UFW policy to deny incoming
+  ufw:
+    policy: deny
+    direction: incoming
+
+- name: Allow SSH from host only
+  ufw:
+    rule: allow
+    src: "192.168.56.1"
+    port: "22"
+    proto: tcp
+
+- name: Allow AI service only from VM2
+  ufw:
+    rule: allow
+    src: "192.168.56.11"
+    port: "8000"
+    proto: tcp
+
+- name: Enable UFW
+  ufw:
+    state: enabled
 
 - name: Start VM4 AI container
   shell: docker-compose up -d
   args:
     chdir: /home/vagrant
+  become: true
+  become_user: vagrant
