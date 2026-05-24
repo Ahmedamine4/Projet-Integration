@@ -5,16 +5,16 @@ import * as certificationService from '../services/certification.service.js';
 
 export const addCertification = async (req, res) => {
   try {
-    const { 
-      title, 
-      issueDate, 
-      credentialUrl, 
-      description, 
-      code 
+    const {
+      title,
+      issueDate,
+      credentialUrl,
+      description,
+      code
     } = req.body;
 
     const userId = req.user.utilisateur_id;
-    if(!title ||!issuedate || !credentialUrl || !description || !code)
+    if (!title || !issueDate || !credentialUrl || !description || !code)
       return res.status(400).json({ success: false, message: 'Champs obligatoires manquants' });
 
     const result = await certificationService.createCertification(req.body, userId);
@@ -34,7 +34,7 @@ export const addCertification = async (req, res) => {
 
 export const getMyCertifications = async (req, res) => {
   try {
-    const userId = req.user.utilisateur_id ;
+    const userId = req.user.utilisateur_id;
 
     const certifications = await certificationService.getMyCertifications(userId);
 
