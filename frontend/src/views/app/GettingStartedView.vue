@@ -5,6 +5,8 @@ import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
 import { useGithubStore } from '@/stores/github';
+import Button from '@/components/common/Button.vue';
+
 
 const institutionStore = useInstitutionStore();
 const githubStore = useGithubStore();
@@ -50,6 +52,7 @@ const doneCount = computed(() =>
 );
 
 const isSchoolModalOpen = ref(false);
+const selectedStep = ref(null);
 
 async function handleStepAction(key) {
   const step = steps.find((step) => step.key === key);
@@ -60,14 +63,11 @@ async function handleStepAction(key) {
     isSchoolModalOpen.value = true;
     return;
   }
-  if (step.key === 'github') {
-    await githubStore.connectGithub();
-    return;
+  selectedStep.value = selectedStep.value === key ? null : key;
   }
-
-  stepStatus[key] = 'done';
-}
-
+  async function connectGithub() {
+  await githubStore.connectGithub();
+  }
 function completeSchoolStep(schoolData) {
   institutionStore.setSchoolPath(schoolData.schoolPath);
   stepStatus.school = 'pending';
@@ -90,14 +90,34 @@ function completeSchoolStep(schoolData) {
         </div>
       </div>
       <div class="wrapper-steps">
-        <GettingStartedStep
-          v-for="step in steps"
-          :key="step.key"
-          :title="step.title"
-          :description="step.description"
-          :status="stepStatus[step.key]"
-          @action="handleStepAction(step.key)"
-        />
+        <div v-for="step in steps" :key="step.key" class="step-wrapper">
+          <GettingStartedStep
+            :title="step.title"
+            :description="step.description"
+            :status="stepStatus[step.key]"
+            @action="handleStepAction(step.key)"
+          />
+
+          <Transition name="field-reveal">
+            <div
+              v-if="selectedStep === 'github' && step.key === 'github'"
+              class="step-action-panel"
+            >
+              <p>
+                Authorize GitHub to connect your account and import your repositories.
+              </p>
+
+              <Button
+                type="button"
+                variant="submit"
+                :loading="githubStore.loading"
+                @click="connectGithub"
+              >
+                Connect with GitHub
+              </Button>
+            </div>
+          </Transition>
+        </div>
       </div>
     </div>
   </div>
@@ -174,5 +194,47 @@ function completeSchoolStep(schoolData) {
     max-width: none;
     margin-inline: 0;
   }
+}
+.step-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-action-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border-top: 1px solid rgba(var(--color-primary-rgb), 0.06);
+  text-align: center;
+}
+
+.step-action-panel p {
+  margin: 0;
+  color: rgba(var(--color-primary-rgb),0.6);
+  font-size: var(--font-size-sm);
+}
+
+.field-reveal-enter-from,
+.field-reveal-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.field-reveal-enter-active,
+.field-reveal-leave-active {
+  transition:
+    opacity var(--transition-normal),
+    transform var(--transition-normal);
+}
+
+.field-reveal-enter-to,
+.field-reveal-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+.step-action-panel button {
+  width: 20rem;
 }
 </style>
