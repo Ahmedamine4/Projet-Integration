@@ -7,6 +7,10 @@ defineProps({
     type: Array,
     default: () => [],
   },
+  canAdd: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['add-project']);
@@ -93,6 +97,7 @@ function applyMomentum(currentTime) {
     <div class="projects-header">
       <div class="title">Projects</div>
       <button
+        v-if="canAdd"
         type="button"
         class="add-project-button"
         @click="emit('add-project')"
@@ -102,6 +107,7 @@ function applyMomentum(currentTime) {
       </button>
     </div>
     <div
+      v-if="projects.length"
       class="projects"
       ref="projectsRef"
       @mousedown="handleMouseDown"
@@ -110,10 +116,12 @@ function applyMomentum(currentTime) {
       @mouseleave="handleMouseUp"
     >
       <template v-for="project in projects" :key="project.id">
-        <Project
-          :project
-        />
+        <Project :project />
       </template>
+    </div>
+
+    <div class="projects-empty" v-else>
+      No projects yet
     </div>
   </div>
 </template>
@@ -224,6 +232,18 @@ function applyMomentum(currentTime) {
     var(--color-background) 60%,
     transparent
   );
+}
+
+.projects-empty {
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+  padding-inline: var(--padding-inline);
+  padding-block: var(--padding-block);
+  color: rgba(var(--color-primary-rgb), 0.52);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  text-align: center;
 }
 
 @media (max-width: 640px) {

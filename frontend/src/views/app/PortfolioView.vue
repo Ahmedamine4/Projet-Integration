@@ -10,6 +10,8 @@ import { QrCode } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
+import Error from '@/components/common/Error.vue';
+import { useRoute } from 'vue-router';
 
 const projects = ref([
   {
@@ -77,6 +79,16 @@ const projects = ref([
 const authStore = useAuthStore();
 const userId = computed(() => authStore.user?.utilisateur_id);
 
+const route = useRoute();
+const portfolioUserId = computed(() => route.params.id ?? userId.value);
+const isOwnPortfolio = computed(() => {
+	return String(portfolioUserId.value) === String(userId.value);
+});
+
+const shouldShowProjectSection = computed(() => {
+	return isOwnPortfolio.value || projects.value.length > 0;
+});
+
 const projectStore = useProjectStore();
 
 const isProjectModalOpen = ref(false);
@@ -109,7 +121,7 @@ async function handleProjectSubmit(project) {
 
 	try {
 		const createdProject = await projectStore.createProject(project);
-		project.value.unshift(createdProject);
+		projects.value.unshift(createdProject);
 		closeProjectModal();
 	}
 	catch(error) {
@@ -172,9 +184,13 @@ function openQRModal() {
 				</div>
 			</div>
 			<ProjectsSection
+				v-if="shouldShowProjectSection"
 				:projects
+				:can-add="isOwnPortfolio"
 				@add-project="openProjectModal"
 			/>
+
+			<Error v-if="projectError">{{ projectError }}</Error>
 		</main>
 	</div>
 	<QRcodeModal
@@ -184,6 +200,7 @@ function openQRModal() {
   />
 
 	<ExperienceModal
+		v-if="isOwnPortfolio"
 		:open="isProjectModalOpen"
 		mode="create"
 		type="project"
