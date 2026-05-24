@@ -1,15 +1,12 @@
 <script setup>
 import { ref } from 'vue';
-import { Plus } from 'lucide-vue-next';
-import Project from '@/components/portfolio/Project.vue';
+import Activity from '@/components/portfolio/Activity.vue';
 defineProps({
-  projects: {
+  activities: {
     type: Array,
     default: () => [],
   },
 });
-
-const emit = defineEmits(['add-project']);
 
 const projectsRef = ref(null);
 const isDragging = ref(false);
@@ -89,29 +86,19 @@ function applyMomentum(currentTime) {
 </script>
 
 <template>
-  <div class="projects-shell">
-    <div class="projects-header">
-      <div class="title">Projects</div>
-      <button
-        type="button"
-        class="add-project-button"
-        @click="emit('add-project')"
-      >
-        <Plus :size="15" />
-        Add Project
-      </button>
-    </div>
+  <div class="activities-shell">
+    <div class="title">Activities</div>
     <div
-      class="projects"
+      class="activities"
       ref="projectsRef"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
       @mouseleave="handleMouseUp"
     >
-      <template v-for="project in projects" :key="project.id">
-        <Project
-          :project
+      <template v-for="activity in activities" :key="activity.id">
+        <Activity
+          :activity
         />
       </template>
     </div>
@@ -119,65 +106,34 @@ function applyMomentum(currentTime) {
 </template>
 
 <style scoped>
-.projects-shell {
+.activities-shell {
   --padding-inline: var(--space-xl);
   --padding-block: calc(var(--padding-inline) * 1.5);
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   position: relative;
   width: 100%;
   height: fit-content;
-  border-bottom: var(--border);
+  border-block: var(--border);
   border-radius: 0;
   background: var(--color-background);
   padding: 0;
 }
 
-.projects-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-lg);
-}
-
 .title {
-  position: relative;
-  padding-inline: var(--padding-inline);
-  background: transparent;
-  color: var(--color-primary);
-  font-family: var(--font-ui);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-medium);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
   line-height: 1;
-}
-
-.add-project-button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  border: none;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-medium);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-primary);
-  color: var(--color-background);
-  padding-block: var(--space-sm);
-  padding-inline: 0.75rem var(--space-md);
-  margin-right: var(--padding-inline);
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
-  cursor: pointer;
-	transition:
-		background-color var(--transition-fast),
-		box-shadow var(--transition-fast),
-		transform var(--transition-fast);
+  text-transform: uppercase;
+  background-color: var(--color-background);
+  padding: 0 var(--space-md);
+  color: rgba(var(--color-primary-rgb), 0.48);
+  letter-spacing: 0.04em;
 }
 
-.add-project-button:hover {
-	background-color: rgba(var(--color-primary-rgb), 0.92);
-  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.34);
-  transform: translateY(-1px);
-}
-
-.projects {
+.activities {
   display: flex;
   position: relative;
   z-index: 1;
@@ -191,16 +147,16 @@ function applyMomentum(currentTime) {
   cursor: grab;
 }
 
-.projects:active {
+.activities:active {
   cursor: grabbing;
 }
 
-.projects::-webkit-scrollbar {
+.activities::-webkit-scrollbar {
   display: none;
 }
 
-.projects-shell::before,
-.projects-shell::after {
+.activities-shell::before,
+.activities-shell::after {
   content: '';
   position: absolute;
   width: var(--padding-inline);
@@ -208,7 +164,7 @@ function applyMomentum(currentTime) {
   z-index: 2;
 }
 
-.projects-shell::before {
+.activities-shell::before {
   inset: 0 auto 0 0;
   background: linear-gradient(
     to right,
@@ -217,7 +173,7 @@ function applyMomentum(currentTime) {
   );
 }
 
-.projects-shell::after {
+.activities-shell::after {
   inset: 0 0 0 auto;
   background: linear-gradient(
     to left,
@@ -227,11 +183,11 @@ function applyMomentum(currentTime) {
 }
 
 @media (max-width: 640px) {
-  .projects-shell {
+  .activities-shell {
     --padding-inline: var(--space-md);
   }
 
-  .projects {
+  .activities {
     gap: var(--space-md);
   }
 }

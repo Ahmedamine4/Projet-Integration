@@ -189,14 +189,39 @@ watch(selected, () => {
   position: fixed;
   top: var(--sidebar-padding);
   left: var(--sidebar-padding);
-  background: transparent;
-  backdrop-filter: blur(4px);
-  border: none;
-  color: var(--color-primary);
+  width: 2.75rem;
+  height: 2.75rem;
   display: none;
-  padding: var(--space-sm);
-  border-radius: var(--radius-sm);
+  place-items: center;
+  padding: 0;
+  border-radius: var(--space-sm);
+  border: none;
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(var(--color-surface-rgb), 0.78),
+      rgba(var(--color-surface-rgb), 0)
+    );
+  color: var(--color-primary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.mobile-toggle:hover {
+  background: rgba(var(--color-surface-rgb), 0.9);
+}
+
+.mobile-toggle:active {
+  transform: scale(0.96);
+}
+
+.mobile-toggle:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 3px;
 }
 
 .brand {

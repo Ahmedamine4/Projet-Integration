@@ -107,6 +107,23 @@ async function saveEdit() {
   }
 }
 
+const lastTapAt = ref(0);
+
+function handleDoubleTap(event) {
+  if (event.pointerType === 'mouse' || isEdit.value) return;
+
+  const now = Date.now();
+
+  if (now - lastTapAt.value < 320) {
+    event.preventDefault();
+    edit();
+    lastTapAt.value = 0;
+    return;
+  }
+
+  lastTapAt.value = now;
+}
+
 onMounted(fetchAbout);
 watch(() => props.userId, fetchAbout);
 </script>
@@ -117,7 +134,12 @@ watch(() => props.userId, fetchAbout);
       <h2>About me</h2>
     </header>
 
-    <div class="about-me__body" :class="{ edit: isEdit }" @dblclick="edit">
+    <div
+      class="about-me__body"
+      :class="{ edit: isEdit }"
+      @dblclick="edit"
+      @pointerup="handleDoubleTap"
+    >
       <p v-if="loading && !isEdit">
         Loading professional summary...
       </p>
@@ -213,6 +235,7 @@ watch(() => props.userId, fetchAbout);
   flex: 1;
   padding-inline: var(--space-xl);
   padding-block: var(--space-lg) var(--space-xs);
+  touch-action: manipulation;
 }
 
 .about-me__body p {

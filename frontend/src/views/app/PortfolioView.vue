@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import src from '@/assets/images/profile-photo.png'
 import AboutMe from '@/components/portfolio/AboutMe.vue';
@@ -8,15 +8,8 @@ import Skills from '@/components/portfolio/Skills.vue';
 import ProjectsSection from '@/components/portfolio/ProjectsSection.vue';
 import { QrCode } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/QRcodeModal.vue';
-import { ref } from 'vue';
-
-const authStore = useAuthStore();
-const userId = computed(() => authStore.user?.utilisateur_id);
-
-const isQRModalOpen = ref(false);
-function openQRModal() {
-  isQRModalOpen.value = true;
-}
+import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
+import { useProjectStore } from '@/stores/project';
 
 const projects = ref([
   {
@@ -80,6 +73,56 @@ const projects = ref([
     imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779477258526-9a9cf2a5-2f09-4e63-ad2e-e1a4b893e7f0.avif",
   },
 ]);
+
+const authStore = useAuthStore();
+const userId = computed(() => authStore.user?.utilisateur_id);
+
+const projectStore = useProjectStore();
+
+const isProjectModalOpen = ref(false);
+const projectError = ref('');
+
+const professorEmails = [
+  'ahmed.elamrani@ensat.ac.ma',
+  'fatima.zahra@ensat.ac.ma',
+  'youssef.bennani@uae.ac.ma',
+  'sara.lahlou@fstt.ac.ma',
+  'nour.chaoui@encgt.ac.ma',
+  'karim.boukhari@ensate.uae.ac.ma',
+  'amina.tazi@fs-tanger.ac.ma',
+  'mehdi.elidrissi@ensah.ma',
+  'salma.aitali@fstt.ac.ma',
+  'omar.benali@uae.ac.ma'
+];
+
+function openProjectModal() {
+	projectError.value = '';
+	isProjectModalOpen.value = true;
+}
+
+function closeProjectModal() {
+	isProjectModalOpen.value = false;
+}
+
+async function handleProjectSubmit(project) {
+	projectError.value = '';
+
+	try {
+		const createdProject = await projectStore.createProject(project);
+		project.value.unshift(createdProject);
+		closeProjectModal();
+	}
+	catch(error) {
+		projectError.value = error.response?.data?.message ||
+		error.message ||
+		'Failed to create project';
+	}
+}
+
+const isQRModalOpen = ref(false);
+function openQRModal() {
+  isQRModalOpen.value = true;
+}
 </script>
 
 <template>
@@ -128,7 +171,10 @@ const projects = ref([
 					<Skills :user-id="userId" />
 				</div>
 			</div>
-			<ProjectsSection :projects />
+			<ProjectsSection
+				:projects
+				@add-project="openProjectModal"
+			/>
 		</main>
 	</div>
 	<QRcodeModal
@@ -136,6 +182,17 @@ const projects = ref([
 	title="Your Portfolio QR Code"
     @close="isQRModalOpen = false"
   />
+
+	<ExperienceModal
+		:open="isProjectModalOpen"
+		mode="create"
+		type="project"
+		:loading="projectStore.loading"
+		:school-options="[]"
+		:professor-emails="professorEmails"
+		@close="closeProjectModal"
+		@submit="handleProjectSubmit"
+	/>
 </template>
 
 <style scoped>
@@ -153,6 +210,11 @@ const projects = ref([
       rgba(var(--color-background-rgb), 0.95),
       var(--color-surface)
     );
+}
+
+.portfolio {
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .portfolio main {
@@ -179,6 +241,7 @@ const projects = ref([
 	transform: translateY(calc(var(--space-lg) * -1.46));
 	background-color: var(--color-surface);
 	border-radius: 42%;
+	border: 1px solid var(--color-background);
 }
 
 .profile__photo img {
@@ -349,5 +412,11 @@ const projects = ref([
 		grid-template-columns: 1fr;
 		gap: var(--space-lg);
 	}
+}
+
+@media (max-width: 640px) {
+  .portfolio main {
+    padding-inline: var(--space-md);
+  }
 }
 </style>
