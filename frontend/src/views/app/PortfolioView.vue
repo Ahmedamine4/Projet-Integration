@@ -94,6 +94,9 @@ const projectStore = useProjectStore();
 const isProjectModalOpen = ref(false);
 const projectError = ref('');
 
+const projectModalMode = ref('create');
+const selectedProject = ref(null);
+
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
   'fatima.zahra@ensat.ac.ma',
@@ -109,25 +112,55 @@ const professorEmails = [
 
 function openProjectModal() {
 	projectError.value = '';
+	projectModalMode.value = 'create';
+	selectedProject.value = null;
 	isProjectModalOpen.value = true;
+}
+
+function openEditProjectModal(project) {
+  projectError.value = '';
+  projectModalMode.value = 'edit';
+  selectedProject.value = project;
+  isProjectModalOpen.value = true;
 }
 
 function closeProjectModal() {
 	isProjectModalOpen.value = false;
+	selectedProject.value = null;
+	projectModalMode.value = 'create';
 }
 
 async function handleProjectSubmit(project) {
 	projectError.value = '';
 
 	try {
+		if (projectModalMode.value === 'edit') {
+			const index = projects.value.findIndex(
+				item => item.id === selectedProject.value?.id
+			);
+
+			if (index !== -1) {
+				projects.value[index] = {
+					...project.value[index],
+					...project,
+					imagePreview: project.image
+						? URL.createObjectURL(project.image)
+						: project.value[index].imagePreview
+				};
+			}
+
+			closeProjectModal();
+			return;
+		}
+
 		const createdProject = await projectStore.createProject(project);
-		projects.value.unshift(createdProject);
+		project.value.unshift(createdProject);
 		closeProjectModal();
 	}
 	catch(error) {
 		projectError.value = error.response?.data?.message ||
-		error.message ||
-		'Failed to create project';
+			error.message ||
+			'Failed to save project';
 	}
 }
 
@@ -188,6 +221,7 @@ function openQRModal() {
 				:projects
 				:can-add="isOwnPortfolio"
 				@add-project="openProjectModal"
+				@edit-project="openEditProjectModal"
 			/>
 
 			<Error v-if="projectError">{{ projectError }}</Error>
@@ -202,8 +236,9 @@ function openQRModal() {
 	<ExperienceModal
 		v-if="isOwnPortfolio"
 		:open="isProjectModalOpen"
-		mode="create"
+		:mode="projectModalMode"
 		type="project"
+		:initial-value="selectedProject"
 		:loading="projectStore.loading"
 		:school-options="[]"
 		:professor-emails="professorEmails"

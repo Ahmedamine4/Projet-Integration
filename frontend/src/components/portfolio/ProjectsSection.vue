@@ -13,7 +13,7 @@ defineProps({
   },
 });
 
-const emit = defineEmits(['add-project']);
+const emit = defineEmits(['add-project', 'edit-project']);
 
 const projectsRef = ref(null);
 const isDragging = ref(false);
@@ -116,7 +116,11 @@ function applyMomentum(currentTime) {
       @mouseleave="handleMouseUp"
     >
       <template v-for="project in projects" :key="project.id">
-        <Project :project />
+        <Project
+          :project
+          :can-edit="canAdd"
+          @edit="project => emit('edit-project', project)"
+        />
       </template>
     </div>
 

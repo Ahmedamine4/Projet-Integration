@@ -5,8 +5,14 @@ defineProps({
   project: {
     type: Object,
     required: true,
+  },
+  canEdit: {
+    type: Boolean,
+    default: false,
   }
 });
+
+const emit = defineEmits(['edit']);
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
@@ -17,7 +23,11 @@ function formatDate(date) {
 </script>
 
 <template>
-  <article class="project-card">
+  <article 
+    class="project-card"
+    :class="{ 'project-card--editable': canEdit }"
+    @dblclick="canEdit && emit('edit', project)"
+  >
     <div class="project-preview">
       <img
         v-if="project.imagePreview"
@@ -56,17 +66,25 @@ function formatDate(date) {
           </span>
         </div>
       </div>
+      <div class="project-footer">
+        <a
+          v-if="project.githubLink"
+          class="project-button"
+          :href="project.githubLink"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span>Explore project</span>
+          <ArrowUpRight :size="14" />
+        </a>
 
-      <a
-        v-if="project.githubLink"
-        class="project-button"
-        :href="project.githubLink"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span>Explore project</span>
-        <ArrowUpRight :size="14" />
-      </a>
+        <span
+          v-if="canEdit"
+          class="project-edit-hint"
+        >
+          Double-click to edit
+        </span>
+      </div>
     </div>
   </article>
 </template>
@@ -247,5 +265,21 @@ function formatDate(date) {
 .project-button:is(:hover, :focus-visible) span {
   max-width: var(--label-width);
   opacity: 1;
+}
+
+.project-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.project-edit-hint {
+  margin-left: auto;
+  color: rgba(var(--color-primary-rgb), 0.48);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-medium);
+  white-space: nowrap;
+  cursor: pointer;
 }
 </style>
