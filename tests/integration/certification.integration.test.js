@@ -8,6 +8,10 @@ import {
   assertAuthTestEnvironment,
   buildRegisterPayload,
   cleanupAuthFixtures,
+<<<<<<< HEAD
+=======
+  createAdminFixture,
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   createLocalUserFixture,
 } from '../helpers/auth.helpers.js';
 
@@ -56,6 +60,28 @@ describe('Certification integration', () => {
     expect(response.body.success).toBe(false);
   });
 
+<<<<<<< HEAD
+=======
+  it('POST /api/certifications refuse un role non autorise', async () => {
+    const admin = await createAdminFixture(`certification.admin.${Date.now()}@integration.test`);
+
+    const response = await request(app)
+      .post('/api/certifications')
+      .set('Cookie', `accessToken=${buildAccessToken(admin)}`)
+      .send({
+        title: 'AWS',
+        issueDate: '2026-05-10',
+        credentialUrl: 'https://example.com/cert',
+        description: 'Certification cloud',
+        code: 'AWS-001',
+        visibleToEveryone: true,
+      });
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+  });
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   it('POST /api/certifications refuse si issueDate manque', async () => {
     const payload = buildRegisterPayload('certification-missing');
     const user = await createLocalUserFixture(payload.email, payload.password);
@@ -140,4 +166,18 @@ describe('Certification integration', () => {
       lien_URL: 'https://example.com/cert',
     });
   });
+<<<<<<< HEAD
+=======
+
+  it('GET /api/certifications/me refuse un role non autorise', async () => {
+    const admin = await createAdminFixture(`certification.list.admin.${Date.now()}@integration.test`);
+
+    const response = await request(app)
+      .get('/api/certifications/me')
+      .set('Cookie', `accessToken=${buildAccessToken(admin)}`);
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+  });
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 });

@@ -4,10 +4,15 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it,vi } from 'vitest
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import prisma from '../../src/config/prisma.js';
+<<<<<<< HEAD
+=======
+import { supabase } from '../../src/config/supabase.js';
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 import {
   assertAuthTestEnvironment,
   buildRegisterPayload,
   cleanupAuthFixtures,
+<<<<<<< HEAD
   createLocalUserFixture,
 } from '../helpers/auth.helpers.js';
 
@@ -24,6 +29,28 @@ const supabaseMock = {
 
 vi.mock('../../src/config/supabase.js', () => ({
   supabase: supabaseMock,
+=======
+  createAdminFixture,
+  createLocalUserFixture,
+} from '../helpers/auth.helpers.js';
+vi.mock('../../src/config/supabase.js', () => ({
+  supabase: {
+    storage: {
+      from:( () => ({ 
+        upmoad: vi.fn(async () => ({ 
+          data:{path:'projets/test-image.png'},
+          error: null 
+        })),
+        getPublicUrl: vi.fn( async () => ({
+          data: {
+            publicUrl: `https://cdn.integration.test/projets/test-image.png`,
+          },
+        })),
+         })),
+    },
+  },
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 }));
 
 const { default: app } = await import('../../src/app.js');
@@ -41,12 +68,18 @@ function buildAccessToken(user) {
 }
 
 describe('Projet integration', () => {
+<<<<<<< HEAD
+=======
+  const originalStorage = supabase.storage;
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   beforeAll(async () => {
     assertAuthTestEnvironment();
     await prisma.$connect();
   });
 
   beforeEach(async () => {
+<<<<<<< HEAD
     vi.clearAllMocks();
     supabaseMock.storage.from.mockReturnValue(supabaseBucketMock);
     supabaseBucketMock.upload.mockResolvedValue({
@@ -58,11 +91,17 @@ describe('Projet integration', () => {
         publicUrl: 'https://cdn.integration.test/projets/test-image.png',
       },
     });
+=======
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
     await cleanupAuthFixtures();
   });
 
   afterAll(async () => {
     await cleanupAuthFixtures();
+<<<<<<< HEAD
+=======
+    supabase.storage = originalStorage;
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
     await prisma.$disconnect();
   });
 
@@ -83,6 +122,26 @@ describe('Projet integration', () => {
     });
   });
 
+<<<<<<< HEAD
+=======
+  it('POST /api/add-projet retourne 403 pour un role non autorise', async () => {
+    const admin = await createAdminFixture(`projet.admin.${Date.now()}@integration.test`);
+
+    const response = await request(app)
+      .post('/api/add-projet')
+      .set('Cookie', `accessToken=${buildAccessToken(admin)}`)
+      .send({
+        projectTitle: 'Projet admin',
+        projectDate: '2026-05-09',
+        description: 'Description',
+        visibleToEveryone: true,
+      });
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+  });
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   it('POST /api/add-projet retourne 400 pour un projet academique sans professeur', async () => {
     const payload = buildRegisterPayload('projet-academique');
     const user = await createLocalUserFixture(payload.email, payload.password);
@@ -259,12 +318,25 @@ describe('Projet integration', () => {
   it('POST /api/add-projet upload une image et persiste son URL publique', async () => {
     const payload = buildRegisterPayload('projet-upload');
     const user = await createLocalUserFixture(payload.email, payload.password);
+<<<<<<< HEAD
     supabaseBucketMock.upload.mockResolvedValue({ error: null });
     supabaseBucketMock.getPublicUrl.mockImplementation((fileName) => ({
       data: {
         publicUrl: `https://cdn.integration.test/projets/${fileName}`,
       },
     }));
+=======
+        supabase.storage = {
+      from: () => ({
+        upload: vi.fn(async () => ({ error: null })),
+        getPublicUrl: vi.fn((fileName) => ({
+          data: {
+            publicUrl: `https://cdn.integration.test/projets/${fileName}`,
+          },
+        })),
+      }),
+    };
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 
     const response = await request(app)
       .post('/api/add-projet')
@@ -281,6 +353,10 @@ describe('Projet integration', () => {
       });
 
     expect(response.status).toBe(201);
+<<<<<<< HEAD
+=======
+    console.log(response.status, response.body);//aussi pour voir l erreur exact
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
     expect(response.body.success).toBe(true);
     expect(response.body.data.projet.photo).toContain('https://cdn.integration.test/projets/');
   });

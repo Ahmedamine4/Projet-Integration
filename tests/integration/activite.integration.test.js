@@ -237,6 +237,20 @@ describe('Activite integration', () => {
     expect(response.body.success).toBe(false);
   });
 
+<<<<<<< HEAD
+=======
+  it('GET /api/activites/me retourne 403 pour un administrateur', async () => {
+    const admin = await createAdminFixture(`activite.me.admin.${Date.now()}@integration.test`);
+
+    const response = await request(app)
+      .get('/api/activites/me')
+      .set('Cookie', `accessToken=${buildAccessToken(admin)}`);
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+  });
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   it('PATCH /api/activites/:id/validation valide une activite academique avec un admin', async () => {
     const studentPayload = buildRegisterPayload('activite-validation');
     const student = await createLocalUserFixture(studentPayload.email, studentPayload.password);

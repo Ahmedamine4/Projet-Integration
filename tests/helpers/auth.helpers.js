@@ -314,6 +314,17 @@ export async function cleanupAuthFixtures() {
     },
   });
 
+<<<<<<< HEAD
+=======
+  await prisma.repository.deleteMany({
+    where: {
+      etudiant_id: {
+        in: studentIds,
+      },
+    },
+  });
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   await prisma.directeur.deleteMany({
     where: {
       directeur_utilisateur_id: {

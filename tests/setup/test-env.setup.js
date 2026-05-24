@@ -65,6 +65,13 @@ if (!process.env.SUPABASE_ANON_KEY) {
   process.env.SUPABASE_ANON_KEY = 'test-anon-key';
 }
 
+<<<<<<< HEAD
+=======
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+}
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 // Le middleware peut aussi verifier un token Google via ce secret.
 if (!process.env.SUPABASE_JWT_SECRET) {
   process.env.SUPABASE_JWT_SECRET = 'integration_supabase_secret';

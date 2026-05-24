@@ -341,6 +341,52 @@ describe('projet.controller', () => {
     );
   });
 
+<<<<<<< HEAD
+=======
+  it("normalise le nom du fichier avant l'upload Supabase", async () => {
+    bucketMock.upload.mockResolvedValue({ error: null });
+    bucketMock.getPublicUrl.mockReturnValue({
+      data: {
+        publicUrl: 'https://cdn.example.com/projets/ma_photo_epreuve_1.png',
+      },
+    });
+    createProjetMock.mockResolvedValue({
+      experience: { experience_id: 'exp-clean-name' },
+      projet: { experience_id: 'exp-clean-name' },
+    });
+
+    const req = {
+      user: { utilisateur_id: 'etu-clean-name' },
+      body: {
+        projectTitle: 'Projet image nettoyee',
+        projectDate: '2026-05-09',
+        description: 'Description',
+        visibleToEveryone: 'true',
+      },
+      file: {
+        originalname: '  ma photo épreuve 1.PNG  ',
+        buffer: Buffer.from('image'),
+        mimetype: 'image/png',
+      },
+    };
+    const res = createRes();
+
+    await addProjet(req, res);
+
+    expect(bucketMock.upload).toHaveBeenCalledWith(
+      expect.stringMatching(/^\d+-ma_photo_epreuve_1\.png$/),
+      expect.any(Buffer),
+      { contentType: 'image/png' }
+    );
+    expect(createProjetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        imageUrl: 'https://cdn.example.com/projets/ma_photo_epreuve_1.png',
+      }),
+      'etu-clean-name'
+    );
+  });
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   it('retourne 500 si upload Supabase echoue', async () => {
     bucketMock.upload.mockResolvedValue({
       error: { message: 'upload failed' },

@@ -47,6 +47,17 @@ describe('Notification integration', () => {
     expect(response.body.success).toBe(false);
   });
 
+<<<<<<< HEAD
+=======
+  it('PATCH /api/notifications/:notificationId/lire retourne 401 sans token', async () => {
+    const response = await request(app)
+      .patch('/api/notifications/n1/lire');
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+  });
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   it('GET /api/notifications retourne les notifications de l utilisateur connecte', async () => {
     const payload = buildRegisterPayload('notif-list');
     const user = await createLocalUserFixture(payload.email, payload.password);

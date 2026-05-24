@@ -156,6 +156,22 @@ describe('Stage integration', () => {
     });
   });
 
+<<<<<<< HEAD
+=======
+  it('GET /api/stages/stages retourne 403 pour un professeur', async () => {
+    const professor = await createProfessorFixture(
+      `stage.prof.list.${Date.now()}@integration.test`
+    );
+
+    const response = await request(app)
+      .get('/api/stages/stages')
+      .set('Cookie', `accessToken=${buildAccessToken(professor)}`);
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+  });
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   it('PUT /api/stages/stages/:experienceId modifie un stage existant', async () => {
     const payload = buildRegisterPayload('stage-edit');
     const user = await createLocalUserFixture(payload.email, payload.password);
@@ -206,6 +222,21 @@ describe('Stage integration', () => {
     expect(response.body.success).toBe(false);
   });
 
+<<<<<<< HEAD
+=======
+  it('GET /api/stages/validations retourne 403 pour un etudiant', async () => {
+    const payload = buildRegisterPayload('stage-validation-student');
+    const student = await createLocalUserFixture(payload.email, payload.password);
+
+    const response = await request(app)
+      .get('/api/stages/validations')
+      .set('Cookie', `accessToken=${buildAccessToken(student)}`);
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+  });
+
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   it('PATCH /api/stages/validations/:experienceId retourne 400 si le statut est absent', async () => {
     const professor = await createProfessorFixture(
       `stage.prof.${Date.now()}@integration.test`

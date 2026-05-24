@@ -13,6 +13,12 @@ import portfolioRoutes from './routes/portfolio.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
 import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
+<<<<<<< HEAD
+=======
+import professeurRoutes from './routes/professeur.routes.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.js';
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 
 const app = express();
 app.use(cors({
@@ -49,6 +55,11 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', updateUtilisateurRoutes);
 
 app.use('/api', ValidationProjetRoutes);
+<<<<<<< HEAD
+=======
+app.use('/api/professeur', professeurRoutes);
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 
 // Route de test
 app.get("/", (req, res) => {

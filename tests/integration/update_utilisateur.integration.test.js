@@ -66,5 +66,30 @@ describe('Update utilisateur integration', () => {
       utilisateur_id: user.utilisateur_id,
       nom: 'Nom mis a jour',
     });
+<<<<<<< HEAD
+=======
+
+    const persisted = await prisma.utilisateur.findUnique({
+      where: { utilisateur_id: user.utilisateur_id },
+      select: { nom: true },
+    });
+
+    expect(persisted.nom).toBe('Nom mis a jour');
+  });
+
+  it('PATCH /api/users/update-profile/:userId retourne 500 si le nouvel email est deja utilise', async () => {
+    const ownerPayload = buildRegisterPayload('update-owner');
+    const owner = await createLocalUserFixture(ownerPayload.email, ownerPayload.password);
+    const otherPayload = buildRegisterPayload('update-other');
+    const otherUser = await createLocalUserFixture(otherPayload.email, otherPayload.password);
+
+    const response = await request(app)
+      .patch(`/api/users/update-profile/${owner.utilisateur_id}`)
+      .set('Cookie', `accessToken=${buildAccessToken(owner)}`)
+      .send({ email: otherUser.email });
+
+    expect(response.status).toBe(500);
+    expect(response.body.error).toContain('email');
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
   });
 });

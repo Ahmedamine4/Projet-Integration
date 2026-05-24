@@ -10,6 +10,7 @@ function getStatusCode(error, fallbackStatus = 500) {
   return error?.statusCode || fallbackStatus;
 }
 
+<<<<<<< HEAD
 function normalizeFileName(fileName) {
   const trimmedName = typeof fileName === 'string' ? fileName.trim() : 'file';
   const dotIndex = trimmedName.lastIndexOf('.');
@@ -30,6 +31,8 @@ function normalizeFileName(fileName) {
   return `${normalizedBaseName || 'file'}${extension}`;
 }
 
+=======
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 function normalizeArrayPayload(value) {
   if (Array.isArray(value)) {
     return value;
@@ -54,8 +57,12 @@ export async function createActivite(req, res) {
     data.documentations = normalizeArrayPayload(data.documentations);
 
     if (req.file) {
+<<<<<<< HEAD
       const safeOriginalName = normalizeFileName(req.file.originalname);
       const fileName = `${Date.now()}-${safeOriginalName}`;
+=======
+      const fileName = `${Date.now()}-${req.file.originalname}`;
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 
       const { error } = await supabase.storage
         .from('activites')

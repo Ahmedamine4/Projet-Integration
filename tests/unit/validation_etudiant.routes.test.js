@@ -8,6 +8,20 @@ const controllerMock = {
 };
 
 vi.mock('../../src/controllers/validation_etudiant.controller.js', () => controllerMock);
+<<<<<<< HEAD
+=======
+vi.mock('../../src/middlewares/auth.middleware.js', () => ({
+  authMiddleware: (req, res, next) => next(),
+  authorizeRoles: () => (req, res, next) => next(),
+  ROLES: {
+    ADMIN: 'administrateur',
+    DIRECTEUR: 'directeur',
+    ETUDIANT: 'etudiant',
+    PROFESSEUR: 'professeur',
+    PROFESSIONNEL: 'professionnel',
+  },
+}));
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 
 const { default: router } = await import('../../src/routes/validation_etudiant.routes.js');
 

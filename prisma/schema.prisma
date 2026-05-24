@@ -291,9 +291,39 @@ model Projet {
   technologies     String[]
   domains          String[]
   experience       Experience          @relation(fields: [experience_id], references: [experience_id])
+<<<<<<< HEAD
   validation       ValideProjet?
 
   @@map("projets")
+=======
+  validation 
+  photo String?
+repository_id String? @unique
+is_draft Boolean @default(false)
+technologies_locked Boolean @default(false)
+repository Repository? @relation(fields: [repository_id], references: [repository_id])      ValideProjet?
+
+  @@map("projets")
+}model Repository {
+  repository_id        String   @id @default(cuid())
+  github_id            Int      @unique
+  etudiant_id          String
+  name                 String
+  full_name            String
+  description          String?
+  html_url             String
+  language             String?
+  stars                Int      @default(0)
+  forks                Int      @default(0)
+  is_private           Boolean  @default(false)
+  github_access_token  String
+  last_synced          DateTime @default(now())
+
+  etudiant Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
+  projets  Projet[]
+
+  @@map("repositories")
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 }
 
 model Activite {

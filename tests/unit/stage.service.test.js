@@ -177,6 +177,10 @@ describe('stage.service', () => {
         date_experience: new Date('2026-05-01'),
         visibilite: false,
         type: 'stage',
+<<<<<<< HEAD
+=======
+        type_specifique: 'academique',
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
         description: 'API interne',
         utilisateur_id: 'etu-1',
       },

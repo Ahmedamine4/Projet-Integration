@@ -9,6 +9,12 @@ const controllerMock = {
 };
 
 vi.mock('../../src/controllers/update_utilisateur.controller.js', () => controllerMock);
+<<<<<<< HEAD
+=======
+vi.mock('../../src/middlewares/auth.middleware.js', () => ({
+  authMiddleware: (req, res, next) => next(),
+}));
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 
 const { default: router } = await import('../../src/routes/update_utilisateur.routes.js');
 

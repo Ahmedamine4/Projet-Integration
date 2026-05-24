@@ -5,7 +5,11 @@ import {
   getActivitesPubliquesPortfolio,
   updateValidationActivite,
 } from '../controllers/activite.controller.js';
+<<<<<<< HEAD
 import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
+=======
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 import { upload } from '../middlewares/upload.middleware.js';
 
 const router = express.Router();
@@ -18,12 +22,16 @@ router.post('/', authMiddleware, upload.single('img'), createActivite);
 router.get('/me', authMiddleware, getMesActivites);
 
 // Validation ou refus par un administrateur.
+<<<<<<< HEAD
 router.patch(
   '/:id/validation',
   authMiddleware,
   authorizeRoles(ROLES.ADMIN),
   updateValidationActivite
 );
+=======
+router.patch('/:id/validation', authMiddleware, updateValidationActivite);
+>>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
 
 // Affichage public du portfolio:
 // activites personnelles visibles + activites academiques validees.
