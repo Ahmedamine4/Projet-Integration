@@ -280,31 +280,31 @@ model Documentation {
 
   @@map("documentations")
 }
-
 model Projet {
-  experience_id    String              @id
-  lien_github      String?
-  lien_youtube     String?
-  resultat_obtenus String?
-  role             String?             @db.VarChar(50)
-  photo            String?
-  technologies     String[]
-  domains          String[]
-  experience       Experience          @relation(fields: [experience_id], references: [experience_id])
-<<<<<<< HEAD
-  validation       ValideProjet?
+  experience_id        String      @id
+  repository_id        String?     @unique
+  lien_github          String?
+  lien_youtube         String?
+  resultat_obtenus     String?
+  role                 String?     @db.VarChar(50)
+  photo                String?
+  is_draft             Boolean     @default(false)
+  technologies_locked  Boolean     @default(false)
+  technologies         String[]
+  domains              String[]
+  experience           Experience  @relation(fields: [experience_id], references: [experience_id])
+  repository           Repository? @relation(fields: [repository_id], references: [repository_id], onDelete: SetNull)
+  validation           ValideProjet?
 
   @@map("projets")
-=======
-  validation 
-  photo String?
-repository_id String? @unique
-is_draft Boolean @default(false)
-technologies_locked Boolean @default(false)
-repository Repository? @relation(fields: [repository_id], references: [repository_id])      ValideProjet?
 
-  @@map("projets")
-}model Repository {
+
+  
+ 
+
+  
+
+model Repository {
   repository_id        String   @id @default(cuid())
   github_id            Int      @unique
   etudiant_id          String
