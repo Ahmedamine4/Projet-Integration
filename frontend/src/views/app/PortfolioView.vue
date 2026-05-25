@@ -256,10 +256,11 @@ function openQRModal() {
 		</main>
 	</div>
 	<QRcodeModal
-    :open="isQRModalOpen"
-	title="Your Portfolio QR Code"
-    @close="isQRModalOpen = false"
-  />
+		:open="isQRModalOpen"
+  		title="Share your portfolio"
+  		:username="authStore.user?.utilisateur_id"
+  		@close="isQRModalOpen = false"
+	/>
 
 	<ExperienceModal
 		v-if="isOwnPortfolio"

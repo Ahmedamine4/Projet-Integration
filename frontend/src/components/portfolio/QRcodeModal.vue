@@ -1,5 +1,8 @@
 <script setup>
+import { ref, watch } from 'vue';
 import CloseButton from '@/components/common/CloseButton.vue';
+import QRCode from 'qrcode';
+import Button from '@/components/common/Button.vue';
 import { watch, onUnmounted } from 'vue';
 
 const props = defineProps({
@@ -10,6 +13,10 @@ const props = defineProps({
   title: {
     type: String,
     default: '',
+  },
+  username: {
+    type: String,
+    required: true,
   },
 });
 
@@ -23,9 +30,21 @@ onUnmounted(() => {
 
 const emit = defineEmits(['close']);
 
+const qrCodeDataUrl = ref('');
+
 function close() {
   emit('close');
 }
+
+watch(
+  () => props.open,
+  async (isOpen) => {
+    if (!isOpen) return;
+
+    const portfolioUrl = `${window.location.origin}/portfolio/${props.username}`;
+    qrCodeDataUrl.value = await QRCode.toDataURL(portfolioUrl);
+  }
+);
 </script>
 
 <template>
@@ -37,14 +56,31 @@ function close() {
             <CloseButton @click="close" />
           </div>
           <h3>{{ title }}</h3>
+          <h5 class="modal-body-header">Scan this code to share your Portfolio in seconds.</h5>
         </div>
 
         <div class="modal__body">
-          <slot />
+          <div class="qrcode-wrapper">
+            <img :src="qrCodeDataUrl" alt="Portfolio QR Code" class="qrcode" size=20rem/>
+          </div>
         </div>
 
         <div class="modal__footer">
-          <slot name="footer" />
+          <Button
+              type="button"
+              variant="ghost"
+              @click="$emit('close')"
+            >
+              Close
+            </Button>
+
+            <Button
+              type="submit"
+              variant="submit"
+              :loading
+            >
+              {{ `Copy link` }}
+            </Button>
         </div>
       </div>
     </div>
@@ -69,7 +105,7 @@ function close() {
   display: flex;
   flex-direction: column;
   background: var(--color-background);
-  max-height: min(32rem, 90vh);
+  max-height: min(40rem, 90vh);
   width: min(32rem, 100%);
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: var(--radius-md);
@@ -80,11 +116,15 @@ function close() {
 .modal__header {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0rem;
   padding: 1.5rem;
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  flex-direction: column;
+  line-height: 10px;
+  padding-top: 2rem;
+  padding-bottom: 1rem;
 }
 
 .close-button {
@@ -103,6 +143,35 @@ function close() {
   padding: 0.75rem 1.8rem;
   min-height: 20rem;
   overflow: auto;
+  background:
+    linear-gradient(
+      165deg,
+      rgba(var(--color-secondary-rgb), 0.1),
+      transparent 45%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(var(--color-background-rgb), 0.4),
+      var(--color-surface)
+    );
+}
+.modal-body-header{
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+  color: rgba(var(--color-primary-rgb), 0.6);
+}
+.qrcode-wrapper{
+  justify-self: center;
+  height: fit-content;
+  width: fit-content;
+  margin: var(  --space-xl);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.08);
+  background-color: white;
+}
+.qrcode{
+  height: 15rem;
 }
 
 .modal__footer {
