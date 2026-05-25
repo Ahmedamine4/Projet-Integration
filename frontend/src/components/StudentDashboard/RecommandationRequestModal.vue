@@ -168,18 +168,13 @@ function submitRequest() {
   overflow: hidden;
 }
 
+
 .modal-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-lg);
+  padding: 26px 30px 24px;
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.12);
-}
-
-.modal-card__header h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  color: var(--color-primary);
 }
 
 .recommendation-form {
@@ -192,14 +187,16 @@ function submitRequest() {
 .recommendation-form__body {
   flex: 1;
   overflow-y: auto;
-  display: grid;
-  gap: var(--space-md);
-  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px 30px 30px;
 }
 
 .field {
-  display: grid;
-  gap: var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 label {
@@ -212,15 +209,16 @@ label {
 
 textarea {
   width: 100%;
-  min-height: 140px;
+  min-height: 145px;
   resize: vertical;
   border: 1px solid rgba(var(--color-primary-rgb), 0.18);
   border-radius: var(--radius-md);
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: rgba(var(--color-surface-rgb), 0.32);
   color: var(--color-primary);
   font-family: var(--font-ui);
   font-size: var(--font-size-md);
+  line-height: 1.5;
 }
 
 textarea:focus {
@@ -233,7 +231,7 @@ textarea:focus {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
+  padding: 22px 30px 24px;
   border-top: 1px solid rgba(var(--color-primary-rgb), 0.12);
 }
 

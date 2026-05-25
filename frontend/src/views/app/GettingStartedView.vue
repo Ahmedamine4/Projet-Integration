@@ -6,6 +6,7 @@ import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
 import { useGithubStore } from '@/stores/github';
 import Button from '@/components/common/Button.vue';
+import { GithubIcon } from 'lucide-vue-next';
 
 
 const institutionStore = useInstitutionStore();
@@ -32,17 +33,18 @@ const steps = [
     title: 'Connect your GitHub account',
     description: 'Connect your GitHub account to your profile',
   },
+  
   {
-    key: 'linkedin',
-    title: 'Connect your LinkedIn account',
-    description: 'Connect your LinkedIn account to your profile',
+  key: 'phone',
+  title: 'Add your phone number',
+  description: 'Add a phone number to secure your profile',
   },
 ];
 
 const stepStatus = reactive({
   school: 'todo',
   github: 'todo',
-  linkedin: 'todo',
+  phone: 'todo',
 });
 
 const doneCount = computed(() =>
@@ -53,6 +55,17 @@ const doneCount = computed(() =>
 
 const isSchoolModalOpen = ref(false);
 const selectedStep = ref(null);
+const phoneForm = reactive({
+  countryCode: '+212',
+  phoneNumber: '',
+});
+
+const countryCodes = [
+  { label: '🇲🇦 +212', value: '+212' },
+  { label: '🇫🇷 +33', value: '+33' },
+  { label: '🇪🇸 +34', value: '+34' },
+  { label: '🇺🇸 +1', value: '+1' },
+];
 
 async function handleStepAction(key) {
   const step = steps.find((step) => step.key === key);
@@ -72,6 +85,17 @@ function completeSchoolStep(schoolData) {
   institutionStore.setSchoolPath(schoolData.schoolPath);
   stepStatus.school = 'pending';
   isSchoolModalOpen.value = false;
+}
+function savePhoneNumber() {
+  if (!phoneForm.phoneNumber.trim()) return;
+
+  console.log('Phone:', {
+    countryCode: phoneForm.countryCode,
+    phoneNumber: phoneForm.phoneNumber,
+  });
+
+  stepStatus.phone = 'done';
+  selectedStep.value = null;
 }
 </script>
 
@@ -107,16 +131,49 @@ function completeSchoolStep(schoolData) {
                 Authorize GitHub to connect your account and import your repositories.
               </p>
 
-              <Button
+                              <Button
+                class="github-button"
                 type="button"
                 variant="submit"
                 :loading="githubStore.loading"
                 @click="connectGithub"
               >
+                <Github class="github-icon" />
                 Connect with GitHub
               </Button>
             </div>
           </Transition>
+          <Transition name="field-reveal">
+              <div
+                v-if="selectedStep === 'phone' && step.key === 'phone'"
+                class="step-action-panel"
+              >
+                
+
+                <div class="phone-form">
+                  
+
+<div class="phone-input-wrapper">
+  <span class="phone-prefix">+212</span>
+
+  <input
+    v-model="phoneForm.phoneNumber"
+    type="tel"
+    placeholder="Enter your phone number"
+  />
+</div>
+
+                  <Button
+                  class="phone-button"
+                    type="button"
+                    variant="submit"
+                    @click="savePhoneNumber"
+                  >
+                    Save phone number
+                  </Button>
+                </div>
+              </div>
+            </Transition>
         </div>
       </div>
     </div>
@@ -203,11 +260,11 @@ function completeSchoolStep(schoolData) {
 .step-action-panel {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-sm);
-  padding: var(--space-lg);
   border-top: 1px solid rgba(var(--color-primary-rgb), 0.06);
-  text-align: center;
+  padding: var(--space-lg) var(--space-lg) var(--space-lg) 6.4rem;
+  text-align: left;
 }
 
 .step-action-panel p {
@@ -234,7 +291,72 @@ function completeSchoolStep(schoolData) {
   opacity: 1;
   transform: translateY(0);
 }
-.step-action-panel button {
-  width: 20rem;
+
+.phone-form {
+  display: grid;
+  gap: var(--space-sm);
+  width: min(100%, 28rem);
+}
+
+.phone-form label {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: var(--font-medium);
+  color: var(--color-primary-hover);
+}
+
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 3rem;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.18);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-surface-rgb), 0.32);
+  overflow: hidden;
+}
+.phone-input-wrapper input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0 1rem;
+  color: var(--color-primary);
+  font-size: var(--font-size-md);
+}
+
+.phone-input-wrapper input:focus {
+  outline: none;
+}
+
+.phone-prefix {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 1rem;
+  border-right: 1px solid rgba(var(--color-primary-rgb), 0.12);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+}
+.github-button {
+  background: #111;
+  color: white;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.18);
+}
+
+.github-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  color:white;
+stroke:white;
+display:block;
+}
+.phone-button {
+  width: fit-content;
+  min-width: 0;
+  padding-inline: 1.25rem;
+  align-self: flex-start;
 }
 </style>
