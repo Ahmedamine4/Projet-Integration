@@ -14,10 +14,11 @@ import {
   LogOut,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 defineProps({
   user: {
@@ -33,21 +34,38 @@ defineProps({
 
 const collapsed = ref(true);
 
-const sidebarItems = [
-  { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Profile', icon: UserRound },
-  { label: 'Projects', icon: FolderKanban },
-  { label: 'Activities', icon: CalendarDays },
-  { label: 'Portfolio', icon: FolderOpen },
-  { label: 'Settings', icon: Settings },
-];
+const sidebarItems = computed(() => {
+  if (authStore.user?.role === 'professeur') {
+    return [
+      { label: 'Espace Prof', icon: LayoutDashboard, route: '/prof-dashboard' },
+      { label: 'Settings', icon: Settings },
+    ];
+  }
+
+  return [
+    { label: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
+    { label: 'Profile', icon: UserRound },
+    { label: 'Projects', icon: FolderKanban },
+    { label: 'Activities', icon: CalendarDays },
+    { label: 'Portfolio', icon: FolderOpen, route: '/portfolio' },
+    { label: 'Settings', icon: Settings },
+  ];
+});
 
 const selected = ref('Dashboard');
 
 const activeIndex = computed(() => {
-  const index = sidebarItems.findIndex((item) => item.label === selected.value);
+  const routeIndex = sidebarItems.value.findIndex((item) => item.route === route.path);
+  if (routeIndex >= 0) return routeIndex;
+  const index = sidebarItems.value.findIndex((item) => item.label === selected.value);
   return index >= 0 ? index : 0;
 });
+
+function navigate(item) {
+  if (!item.route) return;
+  selected.value = item.label;
+  router.push(item.route);
+}
 
 const thumbStyle = computed(() => {
   return {
@@ -86,7 +104,7 @@ async function handleLogout() {
           v-for="item in sidebarItems"
           :key="item.label"
           :class="{ selected: item.label === selected }"
-          @click="selected = item.label"
+          @click="navigate(item)"
         >
           <component :is="item.icon" />
           <span>{{ item.label }}</span>

@@ -14,13 +14,16 @@ export const getDemandes = async (profId) => {
       statut: true,
       date_d_action: true,
       experience_id: true,
-      experience: {
+      stage: { // On passe par stage
         select: {
-          titre: true,
-          utilisateur: {
+          experience: { // Puis par experience
             select: {
-              nom: true,
-              prenom: true,
+              titre: true,
+              etudiant: {
+                select: {
+                  utilisateur: { select: { nom: true, prenom: true } },
+                },
+              },
             },
           },
         },
@@ -38,52 +41,60 @@ export const getDemandes = async (profId) => {
       statut: true,
       date_d_action: true,
       experience_id: true,
-      experience: {
+      projet: { // On passe par 'projet' pour atteindre 'experience'
         select: {
-          titre: true,
-          utilisateur: {
+          experience: {
             select: {
-              nom: true,
-              prenom: true,
-            },
-          },
-        },
-      },
+              titre: true,
+              etudiant: {
+                select: {
+                  utilisateur: { select: { nom: true, prenom: true } }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     orderBy: { date_d_action: 'desc' },
   });
 
-  return [...stages, ...projets].map((item) => ({
+  const formattedProjets = projets.map((item) => ({
     experience_id: item.experience_id,
-    titre: item.experience?.titre,
+    titre: item.projet?.experience?.titre,
     statut: item.statut,
     date_d_action: item.date_d_action,
     etudiant: {
-      nom: item.experience?.utilisateur?.nom,
-      prenom: item.experience?.utilisateur?.prenom,
+      nom: item.projet?.experience?.etudiant?.utilisateur?.nom,
+      prenom: item.projet?.experience?.etudiant?.utilisateur?.prenom,
     },
   }));
+
+  // fusionne avec les stages (il faudra formater stages pareil)
+  return [...stages, ...formattedProjets]; 
 };
 
 export const getStagesProf = async (profId, statut, commente) => {
   const stages = await prisma.valideStage.findMany({
     where: {
       utilisateur_id: profId,
-      statut: statut
-        ? statut
-        : { in: ['en_attente', 'valide', 'refuse'] },
-      ...(commente === true  && { commentaire: { not: null } }),
+      statut: statut ? statut : { in: ['en_attente', 'valide', 'refuse'] },
+      ...(commente === true && { commentaire: { not: null } }),
       ...(commente === false && { commentaire: null }),
     },
     select: {
       statut: true,
       experience_id: true,
       date_d_action: true,
-      experience: {
+      stage: {
         select: {
-          titre: true,
-          utilisateur: {
-            select: { nom: true, prenom: true },
+          experience: {
+            select: {
+              titre: true,
+              etudiant: {
+                select: { utilisateur: { select: { nom: true, prenom: true } } },
+              },
+            },
           },
         },
       },
@@ -93,12 +104,12 @@ export const getStagesProf = async (profId, statut, commente) => {
 
   return stages.map((item) => ({
     experience_id: item.experience_id,
-    titre: item.experience?.titre ?? null,
+    titre: item.stage?.experience?.titre ?? null,
     statut: item.statut,
     date_d_action: item.date_d_action,
     etudiant: {
-      nom: item.experience?.utilisateur?.nom ?? null,
-      prenom: item.experience?.utilisateur?.prenom ?? null,
+      nom: item.stage?.experience?.etudiant?.utilisateur?.nom ?? null,
+      prenom: item.stage?.experience?.etudiant?.utilisateur?.prenom ?? null,
     },
   }));
 };
@@ -108,9 +119,7 @@ export const getProjetsProf = async (profId, statut, commente) => {
   const projets = await prisma.valideProjet.findMany({
     where: {
       utilisateur_id: profId,
-      statut: statut
-        ? statut
-        : { in: ['en_attente', 'valide', 'refuse'] },
+      statut: statut ? statut : { in: ['en_attente', 'valide', 'refuse'] },
       ...(commente === true  && { commentaire: { not: null } }),
       ...(commente === false && { commentaire: null }),
     },
@@ -118,11 +127,17 @@ export const getProjetsProf = async (profId, statut, commente) => {
       statut: true,
       experience_id: true,
       date_d_action: true,
-      experience: {
+      projet: {
         select: {
-          titre: true,
-          utilisateur: {
-            select: { nom: true, prenom: true },
+          experience: {
+            select: {
+              titre: true,
+              etudiant: {
+                select: {
+                  utilisateur: { select: { nom: true, prenom: true } },
+                },
+              },
+            },
           },
         },
       },
@@ -132,12 +147,12 @@ export const getProjetsProf = async (profId, statut, commente) => {
 
   return projets.map((item) => ({
     experience_id: item.experience_id,
-    titre: item.experience?.titre ?? null,
+    titre: item.projet?.experience?.titre ?? null,
     statut: item.statut,
     date_d_action: item.date_d_action,
     etudiant: {
-      nom: item.experience?.utilisateur?.nom ?? null,
-      prenom: item.experience?.utilisateur?.prenom ?? null,
+      nom: item.projet?.experience?.etudiant?.utilisateur?.nom ?? null,
+      prenom: item.projet?.experience?.etudiant?.utilisateur?.prenom ?? null,
     },
   }));
 };
@@ -146,14 +161,17 @@ export const getStageById = async (profId, experienceId) => {
   const stage = await prisma.valideStage.findUnique({
     where: { experience_id: experienceId },
     include: {
-      experience: {
+      stage: { // On passe par stage pour atteindre experience
         include: {
-          utilisateur: true,
-          documentations: true,
-          competences: true,
+          experience: {
+            include: {
+              etudiant: { include: { utilisateur: true } }, // Pour avoir les infos du student
+              documentations: true,
+              competences: true,
+            },
+          },
         },
       },
-      stage: true,
     },
   });
 
@@ -168,14 +186,17 @@ export const getProjetById = async (profId, experienceId) => {
   const projet = await prisma.valideProjet.findUnique({
     where: { experience_id: experienceId },
     include: {
-      experience: {
+      projet: { // On passe par projet pour atteindre experience
         include: {
-          utilisateur: true,
-          documentations: true,
-          competences: true,
+          experience: {
+            include: {
+              etudiant: { include: { utilisateur: true } },
+              documentations: true,
+              competences: true,
+            },
+          },
         },
       },
-      projet: true,
     },
   });
 
@@ -190,14 +211,20 @@ export const getProjetById = async (profId, experienceId) => {
 export const traiterValidationProjet = async (profId, experienceId, statut, commentaire) => {
   const validation = await prisma.valideProjet.findUnique({
     where: { experience_id: experienceId },
-    include: { experience: true },
+    include: { 
+      projet: { // Il faut inclure 'projet' d'abord
+        include: { experience: true } 
+      } 
+    },
   });
 
   if (!validation) throw new Error('Demande de validation non trouvée');
   if (validation.utilisateur_id !== profId) throw new Error('Accès refusé');
   if (validation.statut === 'valide' || validation.statut === 'refuse') throw new Error('Cette demande a déjà été traitée');
 
-  // juste un commentaire, sans changer le statut
+  // Utilise validation.projet.experience au lieu de validation.experience
+  const experience = validation.projet.experience;
+
   if (!statut) {
     if (!commentaire?.trim()) throw new Error('Un commentaire est requis');
 
@@ -207,15 +234,14 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
     });
 
     await creerNotification(
-      validation.experience.utilisateur_id,
-      `Votre professeur a laissé un commentaire sur votre projet "${validation.experience.titre}".`,
+      experience.utilisateur_id,
+      `Votre professeur a laissé un commentaire sur votre projet "${experience.titre}".`,
       'commentaire_projet'
     );
 
     return updated;
   }
 
-  // valide ou refuse
   if (statut === 'refuse' && !commentaire?.trim()) throw new Error('Un commentaire est requis pour un refus');
 
   const updated = await prisma.valideProjet.update({
@@ -224,25 +250,31 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
   });
 
   const msg = statut === 'valide'
-    ? `Votre projet "${validation.experience.titre}" a été validé par votre professeur.`
-    : `Votre projet "${validation.experience.titre}" a été refusé. Motif : ${commentaire}`;
-  await creerNotification(validation.experience.utilisateur_id, msg, 'validation_projet');
+    ? `Votre projet "${experience.titre}" a été validé par votre professeur.`
+    : `Votre projet "${experience.titre}" a été refusé. Motif : ${commentaire}`;
+  
+  await creerNotification(experience.utilisateur_id, msg, 'validation_projet');
 
   return updated;
 };
 
-
 export const traiterValidationStageProf = async (profId, experienceId, statut, commentaire) => {
   const validation = await prisma.valideStage.findUnique({
     where: { experience_id: experienceId },
-    include: { experience: true },
+    include: { 
+      stage: { // Il faut inclure 'stage' d'abord
+        include: { experience: true } 
+      } 
+    },
   });
 
   if (!validation) throw new Error('Demande de validation non trouvée');
   if (validation.utilisateur_id !== profId) throw new Error('Accès refusé');
   if (validation.statut === 'valide' || validation.statut === 'refuse') throw new Error('Cette demande a déjà été traitée');
 
-  //juste un commentaire, sans changer le statut
+  // Utilise validation.stage.experience au lieu de validation.experience
+  const experience = validation.stage.experience;
+
   if (!statut) {
     if (!commentaire?.trim()) throw new Error('Un commentaire est requis');
 
@@ -252,15 +284,14 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
     });
 
     await creerNotification(
-      validation.experience.utilisateur_id,
-      `Votre professeur a laissé un commentaire sur votre stage "${validation.experience.titre}".`,
+      experience.utilisateur_id,
+      `Votre professeur a laissé un commentaire sur votre stage "${experience.titre}".`,
       'commentaire_stage'
     );
 
     return updated;
   }
 
-  //valide ou refuse
   if (statut === 'refuse' && !commentaire?.trim()) throw new Error('Un commentaire est requis pour un refus');
 
   const updated = await prisma.valideStage.update({
@@ -269,9 +300,10 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
   });
 
   const msg = statut === 'valide'
-    ? `Votre stage "${validation.experience.titre}" a été validé par votre professeur.`
-    : `Votre stage "${validation.experience.titre}" a été refusé. Motif : ${commentaire}`;
-  await creerNotification(validation.experience.utilisateur_id, msg, 'validation_stage');
+    ? `Votre stage "${experience.titre}" a été validé par votre professeur.`
+    : `Votre stage "${experience.titre}" a été refusé. Motif : ${commentaire}`;
+    
+  await creerNotification(experience.utilisateur_id, msg, 'validation_stage');
 
   return updated;
 };
