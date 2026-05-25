@@ -299,7 +299,7 @@ model Projet {
   @@map("projets")
 
 
-  
+}
  
 
   
@@ -323,7 +323,7 @@ model Repository {
   projets  Projet[]
 
   @@map("repositories")
->>>>>>> ec44a4e (Ajout projet draft GitHub et les tests)
+
 }
 
 model Activite {
