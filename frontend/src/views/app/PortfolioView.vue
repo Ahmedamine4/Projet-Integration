@@ -12,6 +12,7 @@ import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
 import Error from '@/components/common/Error.vue';
 import { useRoute } from 'vue-router';
+import ActivitiesSection from '@/components/portfolio/ActivitiesSection.vue';
 
 const projects = ref([
   {
@@ -75,6 +76,31 @@ const projects = ref([
     imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779477258526-9a9cf2a5-2f09-4e63-ad2e-e1a4b893e7f0.avif",
   },
 ]);
+
+const activities = [
+  {
+    id: 'cmpinjxs9000dpn3vy78amjjl',
+    type: 'activity',
+    title: 'Territory Development Challenge',
+    date: '2024-06-12',
+    description: 'Participated in the Territory Development Challenge, an international community innovation competition focused on proposing creative solutions for territorial development in the Tanger-Tetouan-Al Hoceima region.',
+    visibleToEveryone: true,
+    activityType: 'Competition',
+    location: 'Tanger, Morocco',
+    club: 'Open Innovation Club',
+    technologies: [
+      'Digital Innovation',
+      'Open Innovation',
+    ],
+    domains: [
+      'Territorial Development',
+      'Community Innovation',
+      'Sustainable Development',
+      'Entrepreneurship',
+    ],
+    imagePreview: 'https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779559120094-maroc-Lancement-premier-concours-international-communautaire-innovation-Tanger-Tetouan-Al-Hoceima-696x385.png',
+  },
+];
 
 const authStore = useAuthStore();
 const userId = computed(() => authStore.user?.utilisateur_id);
@@ -223,6 +249,8 @@ function openQRModal() {
 				@add-project="openProjectModal"
 				@edit-project="openEditProjectModal"
 			/>
+
+			<ActivitiesSection :activities />
 
 			<Error v-if="projectError">{{ projectError }}</Error>
 		</main>

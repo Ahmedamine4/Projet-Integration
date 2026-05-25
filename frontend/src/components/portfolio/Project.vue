@@ -1,7 +1,8 @@
 <script setup>
+import { ref } from 'vue';
 import { ArrowUpRight } from 'lucide-vue-next';
 
-defineProps({
+const props = defineProps({
   project: {
     type: Object,
     required: true,
@@ -20,6 +21,23 @@ function formatDate(date) {
     year: 'numeric',
   })
 }
+
+const lastTapAt = ref(0);
+
+function handleDoubleTap(event) {
+  if (event.pointerType === 'mouse' || !props.canEdit) return;
+
+  const now = Date.now();
+
+  if (now - lastTapAt.value < 320) {
+    event.preventDefault();
+    emit('edit', props.project);
+    lastTapAt.value = 0;
+    return;
+  }
+
+  lastTapAt.value = now;
+}
 </script>
 
 <template>
@@ -27,6 +45,7 @@ function formatDate(date) {
     class="project-card"
     :class="{ 'project-card--editable': canEdit }"
     @dblclick="canEdit && emit('edit', project)"
+    @pointerup="handleDoubleTap"
   >
     <div class="project-preview">
       <img

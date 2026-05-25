@@ -1,12 +1,19 @@
 <script setup>
 import { ref } from 'vue';
+import { Plus } from 'lucide-vue-next';
 import Activity from '@/components/portfolio/Activity.vue';
 defineProps({
   activities: {
     type: Array,
     default: () => [],
   },
+  canAdd: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const emit = defineEmits(['add-activity', 'edit-activity']);
 
 const projectsRef = ref(null);
 const isDragging = ref(false);
@@ -87,8 +94,20 @@ function applyMomentum(currentTime) {
 
 <template>
   <div class="activities-shell">
-    <div class="title">Activities</div>
+    <div class="activities-header">
+      <div class="title">Activities</div>
+      <button
+        v-if="canAdd"
+        type="button"
+        class="add-activity-button"
+        @click="emit('add-activity')"
+      >
+        <Plus :size="15" />
+        Add Activity
+      </button>
+    </div>
     <div
+      v-if="activities.length"
       class="activities"
       ref="projectsRef"
       @mousedown="handleMouseDown"
@@ -99,8 +118,14 @@ function applyMomentum(currentTime) {
       <template v-for="activity in activities" :key="activity.id">
         <Activity
           :activity
+          :can-edit="canAdd"
+          @edit="activity => emit('edit-activity', activity)"
         />
       </template>
+    </div>
+
+    <div class="activities-empty" v-else>
+      No activities yet
     </div>
   </div>
 </template>
@@ -113,24 +138,55 @@ function applyMomentum(currentTime) {
   position: relative;
   width: 100%;
   height: fit-content;
-  border-block: var(--border);
+  border-bottom: var(--border);
   border-radius: 0;
   background: var(--color-background);
   padding: 0;
 }
 
+.activities-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+
 .title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%) translateY(-50%);
-  line-height: 1;
-  font-size: var(--font-size-sm);
+  position: relative;
+  padding-inline: var(--padding-inline);
+  background: transparent;
+  color: var(--color-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-medium);
-  text-transform: uppercase;
-  background-color: var(--color-background);
-  padding: 0 var(--space-md);
-  color: rgba(var(--color-primary-rgb), 0.48);
-  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.add-activity-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border: none;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  padding-block: var(--space-sm);
+  padding-inline: 0.75rem var(--space-md);
+  margin-right: var(--padding-inline);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
+  cursor: pointer;
+	transition:
+		background-color var(--transition-fast),
+		box-shadow var(--transition-fast),
+		transform var(--transition-fast);
+}
+
+.add-activity-button:hover {
+	background-color: rgba(var(--color-primary-rgb), 0.92);
+  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.34);
+  transform: translateY(-1px);
 }
 
 .activities {
@@ -180,6 +236,18 @@ function applyMomentum(currentTime) {
     var(--color-background) 60%,
     transparent
   );
+}
+
+.activities-empty {
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+  padding-inline: var(--padding-inline);
+  padding-block: var(--padding-block);
+  color: rgba(var(--color-primary-rgb), 0.52);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  text-align: center;
 }
 
 @media (max-width: 640px) {
