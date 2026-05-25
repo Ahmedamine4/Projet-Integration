@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import Activity from '@/components/portfolio/Activity.vue';
-defineProps({
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
+
+const props = defineProps({
   activities: {
     type: Array,
     default: () => [],
@@ -15,81 +16,173 @@ defineProps({
 
 const emit = defineEmits(['add-activity', 'edit-activity']);
 
-const activitesRef = ref(null);
+const activityCards = ref([...props.activities]);
 const isDragging = ref(false);
-const lastX = ref(0);
-const lastTime = ref(0);
-const velocity = ref(0);
-const animationFrame = ref(null);
+const isMovingToBack = ref(false);
+const startX = ref(0);
+const startY = ref(0);
+const currentX = ref(0);
+const currentY = ref(0);
 
-const dragSpeed = 1.2;
-const minReleaseVelocity = 0.05;
-const frictionPerFrame = 0.95;
-const targetFrameDuration = 16;
+const dragX = computed(() => currentX.value - startX.value);
+const dragY = computed(() => currentY.value - startY.value);
+const rotation = computed(() => dragX.value * 0.08);
 
-function handleMouseDown(event) {
+const swipeThreshold = 180;
+const visibleDepth = 2;
+const animationDuration = 420;
+let moveTimer = null;
+
+function startDrag(event, index) {
+  const topIndex = isMovingToBack.value ? 1 : 0;
+  if (index !== topIndex) return;
+  if (isMovingToBack.value) {
+    finishMove();
+  };
+
   isDragging.value = true;
-  velocity.value = 0;
+  startX.value = event.clientX;
+  startY.value = event.clientY;
+  currentX.value = event.clientX;
+  currentY.value = event.clientY;
 
-  if (animationFrame.value) {
-    cancelAnimationFrame(animationFrame.value);
-    animationFrame.value = null;
-  }
-
-  lastX.value = event.clientX;
-  lastTime.value = performance.now();
+  window.addEventListener('pointermove', onDrag);
+  window.addEventListener('pointerup', stopDrag);
 }
 
-function handleMouseMove(event) {
+function onDrag(event) {
   if (!isDragging.value) return;
 
-  event.preventDefault();
-
-  const deltaX = event.clientX - lastX.value;
-
-  activitesRef.value.scrollBy({
-    left: -deltaX * dragSpeed,
-  });
-
-  const now = performance.now();
-  const deltaTime = now - lastTime.value;
-
-  if (deltaTime > 0) {
-    velocity.value = deltaX / deltaTime;
-  }
-
-  lastX.value = event.clientX;
-  lastTime.value = now;
+  currentX.value = event.clientX;
+  currentY.value = event.clientY;
 }
 
-function handleMouseUp() {
-  if (!isDragging.value) return;
-
+function resetDrag() {
   isDragging.value = false;
-
-  if (Math.abs(velocity.value) < minReleaseVelocity) return;
-
-  lastTime.value = performance.now();
-  animationFrame.value = requestAnimationFrame(applyMomentum);
+  isMovingToBack.value = false;
+  startX.value = 0;
+  startY.value = 0;
+  currentX.value = 0;
+  currentY.value = 0;
 }
 
-function applyMomentum(currentTime) {
-  if (Math.abs(velocity.value) < minReleaseVelocity) {
-    animationFrame.value = null;
-    return;
+function moveTopActivityToBack() {
+  if (activityCards.value.length < 2) return;
+
+  const firstActivity = activityCards.value.shift();
+  activityCards.value.push(firstActivity);
+}
+
+function finishMove() {
+  if (moveTimer) {
+    clearTimeout(moveTimer);
+    moveTimer = null;
   }
 
-  const deltaTime = currentTime - lastTime.value;
-
-  activitesRef.value.scrollBy({
-    left: -velocity.value * deltaTime,
-  });
-
-  velocity.value *= frictionPerFrame ** (deltaTime / targetFrameDuration);
-  lastTime.value = currentTime;
-
-  animationFrame.value = requestAnimationFrame(applyMomentum);
+  if (isMovingToBack.value) {
+    moveTopActivityToBack();
+    resetDrag();
+  }
 }
+
+function stopDrag() {
+  if (!isDragging.value) return;
+
+  const shouldMove = Math.abs(dragX.value) > swipeThreshold;
+  if (shouldMove) {
+    isDragging.value = false;
+    isMovingToBack.value = true;
+
+    moveTimer = setTimeout(() => {
+      moveTopActivityToBack();
+      resetDrag();
+      moveTimer = null;
+    }, animationDuration);
+  }
+  else resetDrag();
+
+  window.removeEventListener('pointermove', onDrag);
+  window.removeEventListener('pointerup', stopDrag);
+}
+
+function getStackTransform(index) {
+  const direction = index % 2 === 0 ? 1 : -1;
+
+  return `
+    translateX(-50%)
+    translateY(${index * 20}px)
+    rotate(${direction * index * 3}deg)
+    scale(${1 - index * 0.04})
+  `;
+}
+
+function getActivityCardStyle(index) {
+  if (index === 0 && isDragging.value)
+    return {
+      zIndex: activityCards.value.length + 10,
+      transform: `
+        translateX(-50%)
+        translate(${dragX.value}px, ${dragY.value}px)
+        rotate(${rotation.value}deg)
+      `,
+      transition: 'none',
+    };
+
+  if (index === 0 && isMovingToBack.value)
+    return {
+      zIndex: activityCards.value.length - visibleDepth,
+      transform: getStackTransform(visibleDepth),
+      opacity: 1,
+      pointerEvents: 'none',
+      transition: `
+        transform ${animationDuration}ms cubic-bezier(.22, 1, .36, 1),
+        opacity 300ms ease
+      `,
+    };
+
+  const visualIndex = isMovingToBack.value ? index - 1 : index;
+  const safeIndex = Math.max(visualIndex, 0);
+
+  if (visualIndex <= visibleDepth)
+    return {
+      zIndex: activityCards.value.length - index,
+      transform: getStackTransform(safeIndex),
+      opacity: 1,
+      transition: `
+        transform ${animationDuration}ms cubic-bezier(.22, 1, .36, 1),
+        opacity 300ms ease
+      `,
+    };
+
+  return {
+    zIndex: 0,
+    transform: getStackTransform(visibleDepth),
+    opacity: 0,
+    pointerEvents: 'none',
+    transition: `
+      transform ${animationDuration}ms cubic-bezier(.22, 1, .36, 1),
+      opacity 300ms ease
+    `,
+  };
+}
+
+watch(
+  () => props.activities,
+  (activities) => {
+    if (isDragging.value || isMovingToBack.value) return;
+    activityCards.value = [...activities];
+  },
+);
+
+onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', onDrag);
+  window.removeEventListener('pointerup', stopDrag);
+
+  if (moveTimer) {
+    clearTimeout(moveTimer);
+    moveTimer = null;
+  }
+});
 </script>
 
 <template>
@@ -107,21 +200,23 @@ function applyMomentum(currentTime) {
       </button>
     </div>
     <div
-      v-if="activities.length"
+      v-if="activityCards.length"
       class="activities"
-      ref="activitiesRef"
-      @mousedown="handleMouseDown"
-      @mousemove="handleMouseMove"
-      @mouseup="handleMouseUp"
-      @mouseleave="handleMouseUp"
     >
-      <template v-for="activity in activities" :key="activity.id">
+      <article
+        v-for="(activity, index) in activityCards"
+        :key="activity.id"
+        class="activity-stack-card"
+        :class="{ 'is-dragging': isDragging && index === 0 }"
+        :style="getActivityCardStyle(index)"
+        @pointerdown="startDrag($event, index)"
+      >
         <Activity
           :activity
           :can-edit="canAdd"
           @edit="activity => emit('edit-activity', activity)"
         />
-      </template>
+      </article>
     </div>
 
     <div class="activities-empty" v-else>
@@ -132,8 +227,8 @@ function applyMomentum(currentTime) {
 
 <style scoped>
 .activities-shell {
-  --padding-inline: var(--space-xl);
-  --padding-block: calc(var(--padding-inline) * 1.5);
+  --padding-inline: var(--portfolio-section-bleed, var(--space-xl));
+  --padding-block: calc(var(--space-xl) * 1.5);
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   position: relative;
   width: 100%;
@@ -156,10 +251,11 @@ function applyMomentum(currentTime) {
   padding-inline: var(--padding-inline);
   background: transparent;
   color: var(--color-primary);
-  font-family: var(--font-ui);
-  font-size: var(--font-size-xl);
+  font-family: var(--font-editorial);
+  font-size: 2.45rem;
   font-weight: var(--font-medium);
   line-height: 1;
+  letter-spacing: 0;
 }
 
 .add-activity-button {
@@ -190,52 +286,16 @@ function applyMomentum(currentTime) {
 }
 
 .activities {
-  display: flex;
+  box-sizing: border-box;
   position: relative;
-  z-index: 1;
-  gap: var(--space-lg);
-  height: fit-content;
-  width: 100%;
-  overflow-x: auto;
+  display: grid;
+  place-items: center;
+  width: min(100%, 48rem);
+  min-height: 32rem;
+  overflow: visible;
+  margin-inline: auto;
   padding-inline: var(--padding-inline);
   padding-block: var(--padding-block);
-  overscroll-behavior-x: contain;
-  cursor: grab;
-}
-
-.activities:active {
-  cursor: grabbing;
-}
-
-.activities::-webkit-scrollbar {
-  display: none;
-}
-
-.activities-shell::before,
-.activities-shell::after {
-  content: '';
-  position: absolute;
-  width: var(--padding-inline);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.activities-shell::before {
-  inset: 0 auto 0 0;
-  background: linear-gradient(
-    to right,
-    var(--color-background) 60%,
-    transparent
-  );
-}
-
-.activities-shell::after {
-  inset: 0 0 0 auto;
-  background: linear-gradient(
-    to left,
-    var(--color-background) 60%,
-    transparent
-  );
 }
 
 .activities-empty {
@@ -250,13 +310,33 @@ function applyMomentum(currentTime) {
   text-align: center;
 }
 
-@media (max-width: 640px) {
-  .activities-shell {
-    --padding-inline: var(--space-md);
+.activity-stack-card {
+  position: absolute;
+  top: var(--padding-block);
+  left: 50%;
+  width: min(calc(100% - (var(--padding-inline) * 2)), 38rem);
+  display: flex;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  will-change: transform, opacity;
+}
+
+.activity-stack-card.is-dragging {
+  cursor: grabbing;
+}
+
+@media (max-width: 820px) {
+  .title {
+    font-size: 2.15rem;
   }
 
   .activities {
-    gap: var(--space-md);
+    min-height: 39rem;
+  }
+
+  .activity-stack-card {
+    width: min(calc(100% - 2rem), 27rem);
   }
 }
 </style>

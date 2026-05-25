@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { ArrowUpRight } from 'lucide-vue-next';
+import { ArrowUpRight, Eye, EyeOff } from 'lucide-vue-next';
 
 const props = defineProps({
   project: {
@@ -58,7 +58,17 @@ function handleDoubleTap(event) {
     <div class="project-content">
       <div class="project-header">
         <h3>{{ project.title }}</h3>
-        <span>{{ formatDate(project.date) }}</span>
+        <div class="project-header-meta">
+          <span
+            v-if="canEdit"
+            class="project-visibility"
+          >
+            <Eye v-if="project.visibleToEveryone" :size="14" />
+            <EyeOff v-else :size="14" />
+          </span>
+
+          <span class="project-date">{{ formatDate(project.date) }}</span>
+        </div>
       </div>
 
       <p>{{ project.description }}</p>
@@ -183,11 +193,30 @@ function handleDoubleTap(event) {
   overflow: hidden;
 }
 
-.project-header span {
+.project-header-meta {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.project-date {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   color: rgba(var(--color-primary-rgb), 0.68);
+}
+
+.project-visibility {
+  width: 1rem;
+  height: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(var(--color-primary-rgb), 0.56);
+}
+
+.project-visibility svg {
+  flex-shrink: 0;
 }
 
 .project-content p {

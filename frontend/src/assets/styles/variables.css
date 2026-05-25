@@ -1,44 +1,53 @@
 @font-face {
   font-family: 'Inter';
-  src: url('../fonts/Inter-VariableFont_opsz,wght.ttf')
+  src: url('../fonts/inter/Inter-VariableFont_opsz,wght.ttf')
     format('truetype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'Inter';
-  src: url('../fonts/Inter-Italic-VariableFont_opsz,wght.ttf')
+  src: url('../fonts/inter/Inter-Italic-VariableFont_opsz,wght.ttf')
     format('truetype');
   font-weight: 100 900;
   font-style: italic;
 }
 @font-face {
   font-family: 'Norman';
-  src: url('../fonts/fonnts.com-Norman-.otf')
+  src: url('../fonts/norman/fonnts.com-Norman-.otf')
     format('opentype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'Norman_Stencil';
-  src: url('../fonts/fonnts.com-Norman-Stencil-.otf')
+  src: url('../fonts/norman/fonnts.com-Norman-Stencil-.otf')
     format('opentype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'Intel One Mono';
-  src: url('../fonts/IntelOneMono-VariableFont_wght.ttf')
+  src: url('../fonts/intel-one-mono/IntelOneMono-VariableFont_wght.ttf')
     format('truetype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'Intel One Mono';
-  src: url(../fonts/IntelOneMono-Italic-VariableFont_wght.ttf)
+  src: url('../fonts/intel-one-mono/IntelOneMono-Italic-VariableFont_wght.ttf')
     format('truetype');
   font-weight: 100 900;
   font-style: italic;
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  src: url('../fonts/newsreader/Newsreader-Variable.woff2')
+    format('woff2-variations');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
 }
 
 :root {
@@ -64,6 +73,7 @@
   --font-display: 'Norman', serif;
   --font-stencil: 'Norman_Stencil', serif;
   --font-mono: 'Intel One Mono', monospace;
+  --font-editorial: 'Newsreader', Georgia, serif;
   /* size */
   --font-size-xxs: 0.65rem;
   --font-size-xs: 0.75rem;

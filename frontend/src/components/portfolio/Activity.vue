@@ -65,27 +65,27 @@ function formatDate(date) {
     <div class="activity-footer">
       <div v-if="activity.technologies?.length" class="activity-tags">
         <span
-          v-for="technology in activity.technologies.slice(0, 4)"
+          v-for="technology in activity.technologies.slice(0, 3)"
           :key="technology"
         >
           {{ technology }}
         </span>
 
-        <span v-if="activity.technologies?.length > 4">
-          +{{ activity.technologies.length - 4 }}
+        <span v-if="activity.technologies?.length > 3">
+          +{{ activity.technologies.length - 3 }}
         </span>
       </div>
 
       <div v-if="activity.domains?.length" class="activity-tags muted">
         <span
-          v-for="domain in activity.domains.slice(0, 3)"
+          v-for="domain in activity.domains.slice(0, 2)"
           :key="domain"
         >
           {{ domain }}
         </span>
 
-        <span v-if="activity.domains?.length > 3">
-          +{{ activity.domains.length - 3 }}
+        <span v-if="activity.domains?.length > 2">
+          +{{ activity.domains.length - 2 }}
         </span>
       </div>
     </div>
@@ -97,7 +97,7 @@ function formatDate(date) {
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   flex-shrink: 0;
   flex-grow: 0;
-  width: min(100%, 38rem);
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
@@ -108,7 +108,11 @@ function formatDate(date) {
       rgba(var(--color-secondary-rgb), 0.08),
       transparent 32%
     ),
-    rgba(var(--color-surface-rgb), 0.3);
+    color-mix(
+      in srgb,
+      var(--color-surface) 30%,
+      var(--color-background)    
+    );
   border: var(--border);
   border-radius: 2rem;
   box-shadow: 0 1.4rem 3.2rem rgba(0, 0, 0, 0.08);
@@ -287,8 +291,9 @@ function formatDate(date) {
 
 @media (max-width: 820px) {
   .activity-card {
-    width: min(100%, 27rem);
+    width: 100%;
     padding: 1.15rem;
+    gap: 0.85rem;
   }
 
   .activity-top {
@@ -302,6 +307,11 @@ function formatDate(date) {
 
   .activity-info h3 {
     font-size: 1.55rem;
+  }
+
+  .activity-description {
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
   }
 }
 </style>

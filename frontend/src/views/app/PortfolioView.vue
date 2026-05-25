@@ -57,7 +57,7 @@ const projects = ref([
     title: "BitrixFlow Workspace",
     date: "2019-05-21T00:00:00.000Z",
     description: "A collaborative task and project management workspace that helps teams organize deadlines, track project stages, assign responsibilities, and monitor progress across Kanban-style boards. The platform supports task prioritization, team communication, mobile access, and real-time workflow visibility.",
-    visibleToEveryone: true,
+    visibleToEveryone: false,
     githubLink: "https://github.com/mcpem/bitrixflow-workspace",
     technologies: ["Kanban"],
     domains: ["Web Backend"],
@@ -77,7 +77,7 @@ const projects = ref([
   },
 ]);
 
-const activities = [
+const activities = ref([
   {
     id: 'cmpinjxs9000dpn3vy78amjjl',
     type: 'activity',
@@ -100,7 +100,90 @@ const activities = [
     ],
     imagePreview: 'https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779559120094-maroc-Lancement-premier-concours-international-communautaire-innovation-Tanger-Tetouan-Al-Hoceima-696x385.png',
   },
-];
+	{
+		id: "cmplih13f0001nj3u0e7ftmc6",
+		type: "activity",
+		title: "Hackathon Sportech 2025-2030",
+		date: "2025-08-07",
+		description: "I participated in a SportTech hackathon for CAN 2025 where I worked on a digital sports innovation project. The project used Vue.js, React, Express.js, Node.js, PostgreSQL, Supabase, artificial intelligence, data analysis, Figma, and Blender to design and prototype a smart sports platform. The main domains were sports technology, web development, UI/UX design, artificial intelligence, event management, fan engagement, digital innovation, and entrepreneurship.",
+		visibleToEveryone: true,
+		activityType: "Hackathon",
+		location: "Cité de l'Innovation, Marrakech",
+		club: "",
+		technologies: [
+			"Vue.js",
+			"Express",
+			"Node.js",
+			"PostgreSQL",
+			"Supabase",
+			"Figma"
+		],
+		domains: [
+			"Web Frontend",
+			"Web Backend",
+			"DevOps and Cloud Infrastructure"
+		],
+		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779731984359-MAFIorhaZdSYcGV0OQ2LzP9tkCVobKpJI2irJjun.jpg"
+	},
+	{
+		id: "cmpljioa7000onj3unqh65d4n",
+		type: "activity",
+		title: "Python Coding Workshop",
+		date: "2021-08-11",
+		description: "Participated in a Python coding workshop focused on learning programming fundamentals and building practical scripts using Python. The workshop covered variables, functions, loops, data structures, problem solving, debugging, and beginner-friendly automation tasks. It helped improve skills in software development, computational thinking, and practical coding.",
+		visibleToEveryone: true,
+		activityType: "Workshop",
+		location: "Marrakech, Morocco",
+		club: "",
+		technologies: [
+			"Python"
+		],
+		domains: [
+			"High Performance and Quantum Computing"
+		],
+		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779734528830-python-coding-workshop.webp"
+	},
+	{
+		id: "cmpljsjbx000tnj3uusx5yaw7",
+		type: "activity",
+		title: "Programming Contest 2026",
+		date: "2021-05-05",
+		description: "Participated in the Programming Contest 2026 organized by CSTE Club at the Department of CSTE. The contest focused on algorithmic problem solving, competitive programming, coding challenges, debugging, data structures, and efficient solution design using programming languages such as C++, Python, and Java.",
+		visibleToEveryone: true,
+		activityType: "Competition",
+		location: "Department of CSTE",
+		club: "",
+		technologies: [
+			"C++",
+			"Python",
+			"Java"
+		],
+		domains: [
+			"Web Backend",
+			"Machine Learning and AI"
+		],
+		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779734201639-688618993_1843327400402382_5603243728201965829_n.jpg"
+	},
+	{
+		id: "cmplk9oew0011nj3u6b1ptlvp",
+		type: "activity",
+		title: "Morocco Social Tech Hackathon 2018: Smart Region",
+		date: "2018-01-01",
+		description: "Participated in the Morocco Social Tech Hackathon 2018 focused on Smart Region solutions at Technopark Casablanca. The hackathon centered on designing digital solutions for smart cities, connected regions, social innovation, IoT systems, mobile applications, web platforms, data analysis, and civic technology to improve regional services and community impact.",
+		visibleToEveryone: true,
+		activityType: "Hackathon",
+		location: "Technopark Casablanca",
+		club: "",
+		technologies: [
+			"Technopark",
+			"Casablanca"
+		],
+		domains: [
+			"Mobile Development"
+		],
+		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779735001446-maxresdefault.jpg"
+	},
+]);
 
 const authStore = useAuthStore();
 const userId = computed(() => authStore.user?.utilisateur_id);
@@ -111,8 +194,14 @@ const isOwnPortfolio = computed(() => {
 	return String(portfolioUserId.value) === String(userId.value);
 });
 
+const visibleProjects = computed(() => {
+	if (isOwnPortfolio.value) return projects.value;
+
+	return projects.value.filter(project => project.visibleToEveryone);
+});
+
 const shouldShowProjectSection = computed(() => {
-	return isOwnPortfolio.value || projects.value.length > 0;
+	return isOwnPortfolio.value || visibleProjects.value.length > 0;
 });
 
 const projectStore = useProjectStore();
@@ -199,7 +288,7 @@ function openQRModal() {
 <template>
 	<div class="portfolio">
 		<div class="portfolio__banner" />
-		<main v-if="userId">
+		<main>
 			<div class="profile">
 				<div class="profile__photo">
 					<img :src alt="photo">
@@ -242,27 +331,32 @@ function openQRModal() {
 					<Skills :user-id="userId" />
 				</div>
 			</div>
-			<ProjectsSection
-				v-if="shouldShowProjectSection"
-				:projects
-				:can-add="isOwnPortfolio"
-				@add-project="openProjectModal"
-				@edit-project="openEditProjectModal"
-			/>
+			<div class="portfolio-section-wrapper">
+				<ProjectsSection
+					v-if="shouldShowProjectSection"
+					:projects="visibleProjects"
+					:can-add="isOwnPortfolio"
+					@add-project="openProjectModal"
+					@edit-project="openEditProjectModal"
+				/>
+			</div>
 
-			<ActivitiesSection
-				:activities
-				:can-add="isOwnPortfolio"
-			/>
+			<div class="portfolio-section-wrapper">
+				<ActivitiesSection
+					:activities
+					:can-add="isOwnPortfolio"
+				/>
+			</div>
 
 			<Error v-if="projectError">{{ projectError }}</Error>
 		</main>
 	</div>
 	<QRcodeModal
-    :open="isQRModalOpen"
-	title="Your Portfolio QR Code"
-    @close="isQRModalOpen = false"
-  />
+		:open="isQRModalOpen"
+  		title="Share your portfolio"
+  		:username="authStore.user?.utilisateur_id"
+  		@close="isQRModalOpen = false"
+	/>
 
 	<ExperienceModal
 		v-if="isOwnPortfolio"
@@ -301,11 +395,13 @@ function openQRModal() {
 }
 
 .portfolio main {
+	--portfolio-padding-inline: clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
+	--portfolio-section-bleed: calc(var(--portfolio-padding-inline) / 2);
 	display: flex;
 	flex-direction: column;
-	gap: calc(var(--space-xl) * 2);
+	gap: clamp(calc(var(--space-xl) * 2), 7vw, calc(var(--space-xl) * 3));
 	padding-block: 0 6rem;
-	padding-inline: clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
+	padding-inline: var(--portfolio-padding-inline);
 }
 
 .profile {
@@ -479,6 +575,10 @@ function openQRModal() {
 	gap: var(--space-lg);
 }
 
+.portfolio-section-wrapper {
+	margin-inline: calc(var(--portfolio-section-bleed) * -1);
+}
+
 @media (max-width: 980px) {
 	.profile {
 		flex-direction: column;
@@ -499,7 +599,8 @@ function openQRModal() {
 
 @media (max-width: 640px) {
   .portfolio main {
-    padding-inline: var(--space-md);
+    --portfolio-padding-inline: var(--space-md);
+    --portfolio-section-bleed: var(--portfolio-padding-inline);
   }
 }
 </style>

@@ -132,8 +132,9 @@ function applyMomentum(currentTime) {
 
 <style scoped>
 .projects-shell {
-  --padding-inline: var(--space-xl);
-  --padding-block: calc(var(--padding-inline) * 1.5);
+  --padding-inline: var(--portfolio-section-bleed, var(--space-xl));
+  --fade-width: var(--padding-inline);
+  --padding-block: calc(var(--space-xl) * 1.5);
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   position: relative;
   width: 100%;
@@ -156,10 +157,11 @@ function applyMomentum(currentTime) {
   padding-inline: var(--padding-inline);
   background: transparent;
   color: var(--color-primary);
-  font-family: var(--font-ui);
-  font-size: var(--font-size-xl);
+  font-family: var(--font-editorial);
+  font-size: 2.45rem;
   font-weight: var(--font-medium);
   line-height: 1;
+  letter-spacing: 0;
 }
 
 .add-project-button {
@@ -190,6 +192,7 @@ function applyMomentum(currentTime) {
 }
 
 .projects {
+  box-sizing: border-box;
   display: flex;
   position: relative;
   z-index: 1;
@@ -215,7 +218,7 @@ function applyMomentum(currentTime) {
 .projects-shell::after {
   content: '';
   position: absolute;
-  width: var(--padding-inline);
+  width: var(--fade-width);
   pointer-events: none;
   z-index: 2;
 }
@@ -251,8 +254,8 @@ function applyMomentum(currentTime) {
 }
 
 @media (max-width: 640px) {
-  .projects-shell {
-    --padding-inline: var(--space-md);
+  .title {
+    font-size: 2.15rem;
   }
 
   .projects {
