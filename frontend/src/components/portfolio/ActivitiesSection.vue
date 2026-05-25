@@ -1,7 +1,7 @@
 <script setup>
 import { Plus } from 'lucide-vue-next';
 import Activity from '@/components/portfolio/Activity.vue';
-import { ref, computed, watch, onBeforeUnmount } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
   activities: {
@@ -16,6 +16,13 @@ const props = defineProps({
 
 const emit = defineEmits(['add-activity', 'edit-activity']);
 
+const swipeThreshold = 140;
+const visibleDepth = 2;
+const animationDuration = 420;
+const stackOffsetY = 20;
+const stackHeightBuffer = 96;
+let moveTimer = null;
+
 const activityCards = ref([...props.activities]);
 const isDragging = ref(false);
 const isMovingToBack = ref(false);
@@ -23,15 +30,38 @@ const startX = ref(0);
 const startY = ref(0);
 const currentX = ref(0);
 const currentY = ref(0);
+const cardRefs = ref([]);
+const maxCardHeight = ref(0);
 
 const dragX = computed(() => currentX.value - startX.value);
 const dragY = computed(() => currentY.value - startY.value);
 const rotation = computed(() => dragX.value * 0.08);
+const stackHeight = computed(() => {
+  if (!maxCardHeight.value) return null;
 
-const swipeThreshold = 180;
-const visibleDepth = 2;
-const animationDuration = 420;
-let moveTimer = null;
+  return maxCardHeight.value + (visibleDepth * stackOffsetY) + stackHeightBuffer;
+});
+
+function updateMaxCardHeight() {
+  cardRefs.value = cardRefs.value.slice(0, activityCards.value.length);
+
+  const heights = cardRefs.value.map((card) => {
+    const activityCard = card?.firstElementChild;
+
+    return activityCard?.scrollHeight ?? 0;
+  });
+
+  maxCardHeight.value = Math.max(0, ...heights);
+}
+
+function scheduleHeightUpdate() {
+  maxCardHeight.value = 0;
+  nextTick(updateMaxCardHeight);
+}
+
+function setCardRef(element, index) {
+  if (element) cardRefs.value[index] = element;
+}
 
 function startDrag(event, index) {
   const topIndex = isMovingToBack.value ? 1 : 0;
@@ -110,7 +140,7 @@ function getStackTransform(index) {
 
   return `
     translateX(-50%)
-    translateY(${index * 20}px)
+    translateY(${index * stackOffsetY}px)
     rotate(${direction * index * 3}deg)
     scale(${1 - index * 0.04})
   `;
@@ -171,12 +201,19 @@ watch(
   (activities) => {
     if (isDragging.value || isMovingToBack.value) return;
     activityCards.value = [...activities];
+    scheduleHeightUpdate();
   },
 );
+
+onMounted(() => {
+  scheduleHeightUpdate();
+  window.addEventListener('resize', scheduleHeightUpdate);
+});
 
 onBeforeUnmount(() => {
   window.removeEventListener('pointermove', onDrag);
   window.removeEventListener('pointerup', stopDrag);
+  window.removeEventListener('resize', scheduleHeightUpdate);
 
   if (moveTimer) {
     clearTimeout(moveTimer);
@@ -202,10 +239,15 @@ onBeforeUnmount(() => {
     <div
       v-if="activityCards.length"
       class="activities"
+      :style="{
+        '--activity-card-height': maxCardHeight ? `${maxCardHeight}px` : undefined,
+        '--activity-stack-height': stackHeight ? `${stackHeight}px` : undefined,
+      }"
     >
       <article
         v-for="(activity, index) in activityCards"
         :key="activity.id"
+        :ref="element => setCardRef(element, index)"
         class="activity-stack-card"
         :class="{ 'is-dragging': isDragging && index === 0 }"
         :style="getActivityCardStyle(index)"
@@ -291,7 +333,7 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   width: min(100%, 48rem);
-  min-height: 32rem;
+  min-height: var(--activity-stack-height, 32rem);
   overflow: visible;
   margin-inline: auto;
   padding-inline: var(--padding-inline);
@@ -315,6 +357,7 @@ onBeforeUnmount(() => {
   top: var(--padding-block);
   left: 50%;
   width: min(calc(100% - (var(--padding-inline) * 2)), 38rem);
+  height: var(--activity-card-height, auto);
   display: flex;
   cursor: grab;
   user-select: none;
@@ -329,10 +372,6 @@ onBeforeUnmount(() => {
 @media (max-width: 820px) {
   .title {
     font-size: 2.15rem;
-  }
-
-  .activities {
-    min-height: 39rem;
   }
 
   .activity-stack-card {
