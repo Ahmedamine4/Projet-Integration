@@ -250,7 +250,10 @@ function openQRModal() {
 				@edit-project="openEditProjectModal"
 			/>
 
-			<ActivitiesSection :activities />
+			<ActivitiesSection
+				:activities
+				:can-add="isOwnPortfolio"
+			/>
 
 			<Error v-if="projectError">{{ projectError }}</Error>
 		</main>

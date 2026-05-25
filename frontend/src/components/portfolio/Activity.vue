@@ -45,7 +45,10 @@ function formatDate(date) {
         </div>
       </div>
 
-      <div class="activity-image">
+      <div
+        class="activity-image"
+        :class="{ 'activity-image--empty' : !activity.imagePreview }"
+      >
         <img
           v-if="activity.imagePreview"
           :src="activity.imagePreview"
@@ -95,7 +98,6 @@ function formatDate(date) {
   flex-shrink: 0;
   flex-grow: 0;
   width: min(100%, 38rem);
-  aspect-ratio: 7 / 5;
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
@@ -170,15 +172,16 @@ function formatDate(date) {
 .activity-info h3 {
   margin: 0;
   color: rgba(var(--color-primary-rgb), 0.96);
-  font-size: clamp(1.45rem, 2.5vw, 2rem);
+  font-size: 1.65rem;
   font-weight: var(--font-bold);
   line-height: 1.04;
-  letter-spacing: -0.045em;
+  letter-spacing: 0;
   overflow-wrap: anywhere;
   display: -webkit-box;
-  line-clamp: 3;
-  -webkit-line-clamp: 3;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .activity-details {
@@ -229,6 +232,11 @@ function formatDate(date) {
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }
 
+.activity-image.activity-image--empty {
+  border: none;
+  background: transparent;
+}
+
 .activity-image img {
   width: 100%;
   height: 100%;
@@ -244,8 +252,8 @@ function formatDate(date) {
   font-size: var(--font-size-sm);
   line-height: 1.52;
   display: -webkit-box;
-  line-clamp: 4;
-  -webkit-line-clamp: 4;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -277,11 +285,9 @@ function formatDate(date) {
   color: rgba(var(--color-primary-rgb), 0.42);
 }
 
-@media (max-width: 520px) {
+@media (max-width: 820px) {
   .activity-card {
     width: min(100%, 27rem);
-    aspect-ratio: auto;
-    min-height: 27rem;
     padding: 1.15rem;
   }
 

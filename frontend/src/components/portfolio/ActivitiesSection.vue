@@ -15,7 +15,7 @@ defineProps({
 
 const emit = defineEmits(['add-activity', 'edit-activity']);
 
-const projectsRef = ref(null);
+const activitesRef = ref(null);
 const isDragging = ref(false);
 const lastX = ref(0);
 const lastTime = ref(0);
@@ -47,7 +47,7 @@ function handleMouseMove(event) {
 
   const deltaX = event.clientX - lastX.value;
 
-  projectsRef.value.scrollBy({
+  activitesRef.value.scrollBy({
     left: -deltaX * dragSpeed,
   });
 
@@ -81,7 +81,7 @@ function applyMomentum(currentTime) {
 
   const deltaTime = currentTime - lastTime.value;
 
-  projectsRef.value.scrollBy({
+  activitesRef.value.scrollBy({
     left: -velocity.value * deltaTime,
   });
 
@@ -109,7 +109,7 @@ function applyMomentum(currentTime) {
     <div
       v-if="activities.length"
       class="activities"
-      ref="projectsRef"
+      ref="activitiesRef"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
