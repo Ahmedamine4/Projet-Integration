@@ -7,7 +7,7 @@ import { useInstitutionStore } from '@/stores/institution';
 import { useGithubStore } from '@/stores/github';
 import Button from '@/components/common/Button.vue';
 import { GithubIcon } from 'lucide-vue-next';
-
+import gettingStartedIllustration from '@/assets/getting-started-illustration.png';
 
 const institutionStore = useInstitutionStore();
 const githubStore = useGithubStore();
@@ -83,7 +83,7 @@ async function handleStepAction(key) {
   }
 function completeSchoolStep(schoolData) {
   institutionStore.setSchoolPath(schoolData.schoolPath);
-  stepStatus.school = 'pending';
+  stepStatus.school = 'done';
   isSchoolModalOpen.value = false;
 }
 function savePhoneNumber() {
@@ -102,7 +102,15 @@ function savePhoneNumber() {
 <template>
   <div class="page-content">
     <h1>Let's get you set up,</h1>
+    <p class="page-subtitle">
+  Complete these quick steps to build and secure your verified portfolio.
+</p>
     <div class="wrapper-getting-started">
+            <img
+          class="getting-started-illustration"
+          :src="gettingStartedIllustration"
+          alt=""
+        />
       <div class="wrapper-header">
         <h2>Getting Started</h2>
 
@@ -116,6 +124,7 @@ function savePhoneNumber() {
       <div class="wrapper-steps">
         <div v-for="step in steps" :key="step.key" class="step-wrapper">
           <GettingStartedStep
+            :step-key="step.key"
             :title="step.title"
             :description="step.description"
             :status="stepStatus[step.key]"
@@ -136,9 +145,9 @@ function savePhoneNumber() {
                 type="button"
                 variant="submit"
                 :loading="githubStore.loading"
-                @click="connectGithub"
+                @click.stop="connectGithub"
               >
-                <Github class="github-icon" />
+                <GithubIcon class="github-button-icon" />
                 Connect with GitHub
               </Button>
             </div>
@@ -153,15 +162,15 @@ function savePhoneNumber() {
                 <div class="phone-form">
                   
 
-<div class="phone-input-wrapper">
-  <span class="phone-prefix">+212</span>
+              <div class="phone-input-wrapper">
+                <span class="phone-prefix">+212</span>
 
-  <input
-    v-model="phoneForm.phoneNumber"
-    type="tel"
-    placeholder="Enter your phone number"
-  />
-</div>
+                <input
+                  v-model="phoneForm.phoneNumber"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                />
+              </div>
 
                   <Button
                   class="phone-button"
@@ -190,19 +199,30 @@ function savePhoneNumber() {
 .page-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 3rem var(--space-xl);
+  align-items: flex-start;
+  width: clamp(16rem, 75vw, 80rem);
+  margin-inline: auto;
+  padding: 2rem var(--space-xl);
   gap: 3rem;
+}
+.page-content h1 {
+  margin: 0;
+}
+.page-subtitle {
+  margin: -1rem 0 0;
+  color: rgba(var(--color-primary-rgb), 0.6);
+  font-size: var(--font-size-md);
 }
 
 .wrapper-getting-started {
   display: flex;
   flex-direction: column;
-  width: clamp(16rem, 75vw, 80rem);
+  width: 100%;
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: var(--radius-md);
   height: fit-content;
   padding-bottom: 0;
+  position: relative;
 }
 
 .wrapper-header {
@@ -345,6 +365,12 @@ function savePhoneNumber() {
   color: white;
   box-shadow: 0 8px 20px rgba(245, 158, 11, 0.18);
 }
+.github-button-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: white;
+  stroke: white;
+}
 
 .github-icon {
   width: 1.2rem;
@@ -359,4 +385,13 @@ display:block;
   padding-inline: 1.25rem;
   align-self: flex-start;
 }
+.getting-started-illustration {
+  position: absolute;
+  top: -5rem;
+  right: 2rem;
+  width: 14rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
 </style>
