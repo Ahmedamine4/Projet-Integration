@@ -12,16 +12,6 @@ export const creerDemandeRecommandation = async (etudiantId, data) => {
 
   const profId = professeur.professeur.prof_utilisateur_id;
 
-  const demandeExistante = await prisma.lettresDeRecommendations.findUnique({
-    where: {
-      utilisateur_id_prof_utilisateur_id: {
-        utilisateur_id: etudiantId,
-        prof_utilisateur_id: profId,
-      },
-    },
-  });
-  if (demandeExistante) throw new Error('Une demande existe déjà pour ce professeur');
-
   const demande = await prisma.lettresDeRecommendations.create({
     data: {
       utilisateur_id: etudiantId,
