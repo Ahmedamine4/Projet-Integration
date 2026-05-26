@@ -2,7 +2,6 @@ import express from 'express';
 import { addActivite, getMesActivites, updateActivite, updateVisibiliteActivite } from '../controllers/activite.controller.js';
 import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
-import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
