@@ -42,7 +42,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
         :src="project.imagePreview"
         :alt="project.title ? `${project.title} image` : 'Project image'"
         draggable="false"
-      />
+      >
     </div>
     <div class="project-content">
       <div class="project-header">
@@ -52,8 +52,14 @@ const { handleDoubleTap } = useDoubleTap(() => {
             v-if="canEdit"
             class="project-visibility"
           >
-            <Eye v-if="project.visibleToEveryone" :size="14" />
-            <EyeOff v-else :size="14" />
+            <Eye
+              v-if="project.visibleToEveryone"
+              :size="14"
+            />
+            <EyeOff
+              v-else
+              :size="14"
+            />
           </span>
 
           <span class="project-date">{{ formatDate(project.date) }}</span>
@@ -62,7 +68,10 @@ const { handleDoubleTap } = useDoubleTap(() => {
 
       <p>{{ project.description }}</p>
       <div class="project-meta">
-        <div v-if="project.technologies?.length" class="project-tags">
+        <div
+          v-if="project.technologies?.length"
+          class="project-tags"
+        >
           <span
             v-for="technology in project.technologies.slice(0, 3)"
             :key="technology"
@@ -75,8 +84,14 @@ const { handleDoubleTap } = useDoubleTap(() => {
           </span>
         </div>
 
-        <div v-if="project.domains?.length" class="project-tags">
-          <span v-for="domain in project.domains.slice(0, 2)" :key="domain">
+        <div
+          v-if="project.domains?.length"
+          class="project-tags"
+        >
+          <span
+            v-for="domain in project.domains.slice(0, 2)"
+            :key="domain"
+          >
             {{ domain }}
           </span>
           <span v-if="project.domains?.length > 2">

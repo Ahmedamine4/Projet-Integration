@@ -38,32 +38,55 @@ const { handleDoubleTap } = useDoubleTap(() => {
     <div class="activity-top">
       <div class="activity-info">
         <div class="activity-kicker">
-          <span v-if="activity.activityType" class="activity-type">
+          <span
+            v-if="activity.activityType"
+            class="activity-type"
+          >
             {{ activity.activityType }}
           </span>
 
           <span class="activity-date">
-            <CalendarDays :size="13" :stroke-width="2" />
+            <CalendarDays
+              :size="13"
+              :stroke-width="2"
+            />
             {{ formatDate(activity.date) }}
           </span>
           <span
             v-if="canEdit"
             class="activity-visibility"
           >
-            <Eye v-if="activity.visibleToEveryone" :size="14" :stroke-width="2" />
-            <EyeOff v-else :size="14" :stroke-width="2" />
+            <Eye
+              v-if="activity.visibleToEveryone"
+              :size="14"
+              :stroke-width="2"
+            />
+            <EyeOff
+              v-else
+              :size="14"
+              :stroke-width="2"
+            />
           </span>
         </div>
 
         <h3>{{ activity.title }}</h3>
 
         <div class="activity-details">
-          <span v-if="activity.location" class="activity-location">
-            <MapPin :size="14" :stroke-width="2" />
+          <span
+            v-if="activity.location"
+            class="activity-location"
+          >
+            <MapPin
+              :size="14"
+              :stroke-width="2"
+            />
             {{ activity.location }}
           </span>
 
-          <span v-if="activity.club" class="activity-club">
+          <span
+            v-if="activity.club"
+            class="activity-club"
+          >
             {{ activity.club }}
           </span>
         </div>
@@ -78,7 +101,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
           :src="activity.imagePreview"
           :alt="activity.title ? `${activity.title} image` : 'Activity image'"
           draggable="false"
-        />
+        >
       </div>
     </div>
 
@@ -87,7 +110,10 @@ const { handleDoubleTap } = useDoubleTap(() => {
     </p>
 
     <div class="activity-footer">
-      <div v-if="activity.technologies?.length" class="activity-tags">
+      <div
+        v-if="activity.technologies?.length"
+        class="activity-tags"
+      >
         <span
           v-for="technology in activity.technologies.slice(0, 3)"
           :key="technology"
@@ -100,7 +126,10 @@ const { handleDoubleTap } = useDoubleTap(() => {
         </span>
       </div>
 
-      <div v-if="activity.domains?.length" class="activity-tags muted">
+      <div
+        v-if="activity.domains?.length"
+        class="activity-tags muted"
+      >
         <span
           v-for="domain in activity.domains.slice(0, 2)"
           :key="domain"

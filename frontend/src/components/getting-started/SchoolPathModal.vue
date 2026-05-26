@@ -350,7 +350,10 @@ function isSchoolYearRangeValid(school, fieldKey) {
 </script>
 <template>
   <Transition name="pop-up">
-    <div class="modal-overlay" v-if="open">
+    <div
+      v-if="open"
+      class="modal-overlay"
+    >
       <div class="modal">
         <div class="modal__header">
           <div class="close-button">
@@ -370,10 +373,18 @@ function isSchoolYearRangeValid(school, fieldKey) {
         </div>
 
         <div class="modal__body">
-          <Transition :name="`step-${stepDirection}`" mode="out-in">
+          <Transition
+            :name="`step-${stepDirection}`"
+            mode="out-in"
+          >
             <div :key="currentStepIndex">
-              <div class="study-status-picker" v-if="currentStepIndex === 0">
-                <h3 class="step-title">Study status</h3>
+              <div
+                v-if="currentStepIndex === 0"
+                class="study-status-picker"
+              >
+                <h3 class="step-title">
+                  Study status
+                </h3>
                 <span class="step-description">
                   Tell us whether you are currently studying so we can shape your academic path around your situation.
                 </span>
@@ -408,12 +419,17 @@ function isSchoolYearRangeValid(school, fieldKey) {
                 </button>
               </div>
 
-              <div class="level-picker" v-else-if="currentStepIndex === 1">
-                <h3 class="step-title">Academic level</h3>
+              <div
+                v-else-if="currentStepIndex === 1"
+                class="level-picker"
+              >
+                <h3 class="step-title">
+                  Academic level
+                </h3>
                 <span class="step-description">
                   {{ isCurrentlyStudying
-                      ? 'Choose the academic level you are currently working toward.'
-                      : 'Select the highest academic level you have completed.'
+                    ? 'Choose the academic level you are currently working toward.'
+                    : 'Select the highest academic level you have completed.'
                   }}
                 </span>
                 <button
@@ -434,7 +450,10 @@ function isSchoolYearRangeValid(school, fieldKey) {
                 </button>
               </div>
 
-              <div class="school-step" v-else>
+              <div
+                v-else
+                class="school-step"
+              >
                 <h3 class="step-title">
                   {{ currentSchoolField.title }}
                 </h3>
@@ -442,9 +461,9 @@ function isSchoolYearRangeValid(school, fieldKey) {
                   {{ currentSchoolFieldDescription }}
                 </span>
                 <BaseDropdown
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].schoolName"
                   :options="schools.map(school => school?.nom)"
                   :placeholder="currentSchoolField.placeholder"
-                  v-model="schoolFieldsInputs[currentSchoolFieldKey].schoolName"
                 />
 
                 <YearInput
@@ -482,7 +501,7 @@ function isSchoolYearRangeValid(school, fieldKey) {
             :disabled="!isCurrentStepComplete"
             @click="goNext"
           >
-            {{ completedStepsCount < numOfSteps ? 'Next' : 'Complete'}}
+            {{ completedStepsCount < numOfSteps ? 'Next' : 'Complete' }}
           </BaseButton>
         </div>
       </div>

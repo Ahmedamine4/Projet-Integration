@@ -20,8 +20,13 @@ const emit = defineEmits(['toggle']);
 </script>
 
 <template>
-  <div v-if="items.length" class="label-group">
-    <p class="label-title">{{ title }}</p>
+  <div
+    v-if="items.length"
+    class="label-group"
+  >
+    <p class="label-title">
+      {{ title }}
+    </p>
 
     <div class="label-tags">
       <span
@@ -33,7 +38,10 @@ const emit = defineEmits(['toggle']);
       >
         {{ item.name }}
 
-        <button type="button" @click="emit('toggle', item)">
+        <button
+          type="button"
+          @click="emit('toggle', item)"
+        >
           <X
             v-if="item.selected"
             :size="12"

@@ -157,7 +157,10 @@ onMounted(() => {
     </div>
 
     <div class="actions">
-      <button type="button" @click="openCreateModal()">
+      <button
+        type="button"
+        @click="openCreateModal()"
+      >
         Add {{ selectedType }}
       </button>
       <button
@@ -176,14 +179,38 @@ onMounted(() => {
       </button>
     </div>
 
-    <p v-if="isLoading">Loading...</p>
-    <p v-if="pageError" class="error">{{ pageError }}</p>
-    <p v-if="projectStore.error" class="error">{{ projectStore.error }}</p>
-    <p v-if="internshipStore.error" class="error">{{ internshipStore.error }}</p>
-    <p v-if="activityStore.error" class="error">{{ activityStore.error }}</p>
+    <p v-if="isLoading">
+      Loading...
+    </p>
+    <p
+      v-if="pageError"
+      class="error"
+    >
+      {{ pageError }}
+    </p>
+    <p
+      v-if="projectStore.error"
+      class="error"
+    >
+      {{ projectStore.error }}
+    </p>
+    <p
+      v-if="internshipStore.error"
+      class="error"
+    >
+      {{ internshipStore.error }}
+    </p>
+    <p
+      v-if="activityStore.error"
+      class="error"
+    >
+      {{ activityStore.error }}
+    </p>
 
     <div class="list">
-      <p v-if="!currentItems.length">No {{ selectedType }} items yet.</p>
+      <p v-if="!currentItems.length">
+        No {{ selectedType }} items yet.
+      </p>
 
       <div
         v-for="item in currentItems"
@@ -194,15 +221,19 @@ onMounted(() => {
           v-if="item.imagePreview"
           :src="item.imagePreview"
           :alt="item.title"
-        />
+        >
 
         <div>
           <h2>{{ item.title }}</h2>
           <p>
             {{ item.startDate || item.date }}
-            <span v-if="item.endDate">to {{ item.endDate }}</span>
+            <span v-if="item.endDate">
+              to {{ item.endDate }}
+            </span>
           </p>
-          <p>{{ item.description }}</p>
+          <p>
+            {{ item.description }}
+          </p>
 
           <p
             v-for="detail in getItemDetails(item)"
@@ -227,7 +258,10 @@ onMounted(() => {
           </div>
         </div>
 
-        <button type="button" @click="openEditModal(item)">
+        <button
+          type="button"
+          @click="openEditModal(item)"
+        >
           Edit
         </button>
       </div>

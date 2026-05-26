@@ -30,7 +30,10 @@ const meterStyle = computed(() => {
 
 <template>
   <div class="progress-meter__bar">
-    <div class="progress-meter__fill" :style="meterStyle" />
+    <div
+      class="progress-meter__fill"
+      :style="meterStyle"
+    />
   </div>
 </template>
 

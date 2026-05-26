@@ -370,115 +370,126 @@ const links = computed(() => [
 </script>
 
 <template>
-	<div class="portfolio">
-		<div class="portfolio__banner" />
+  <div class="portfolio">
+    <div class="portfolio__banner" />
 
-		<main>
-			<div class="profile">
-				<div class="profile__photo">
-					<img :src alt="photo">
-					<button class="qr-button" @click="openQRModal">
-						<QrCode :size="15" :stroke-width="2.3" />
-						<span>generate QR code</span>
-					</button>
-				</div>
-				<div class="profile__info">
-					<h2 class="name">Elon Musk</h2>
-					<span>Engineering Student at <strong>ENSAT</strong></span>
-					<div class="statistics">
-						<div>
-							<span>Followers</span>
-							<h2>439</h2>
-						</div>
-						<div>
-							<span>Followings</span>
-							<h2>102</h2>
-						</div>
-						<div>
-							<span>Score</span>
-							<h2>152</h2>
-						</div>
-					</div>
-					<div class="actions">
-						<button class="follow-button">
-							Follow
-						</button>
-						<button class="recommend-button">
-							Recommend
-						</button>
-					</div>
-				</div>
-			</div>
-			<div class="about">
-				<AboutMe :user-id="userId" />
-				<div class="education-skills-wrapper">
-					<PortfolioEducation :user-id="userId" />
-					<PortfolioSkills :user-id="userId" />
-				</div>
-			</div>
-			<div
+    <main>
+      <div class="profile">
+        <div class="profile__photo">
+          <img
+            :src
+            alt="photo"
+          >
+          <button
+            class="qr-button"
+            @click="openQRModal"
+          >
+            <QrCode
+              :size="15"
+              :stroke-width="2.3"
+            />
+            <span>generate QR code</span>
+          </button>
+        </div>
+        <div class="profile__info">
+          <h2 class="name">
+            Elon Musk
+          </h2>
+          <span>Engineering Student at <strong>ENSAT</strong></span>
+          <div class="statistics">
+            <div>
+              <span>Followers</span>
+              <h2>439</h2>
+            </div>
+            <div>
+              <span>Followings</span>
+              <h2>102</h2>
+            </div>
+            <div>
+              <span>Score</span>
+              <h2>152</h2>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="follow-button">
+              Follow
+            </button>
+            <button class="recommend-button">
+              Recommend
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="about">
+        <AboutMe :user-id="userId" />
+        <div class="education-skills-wrapper">
+          <PortfolioEducation :user-id="userId" />
+          <PortfolioSkills :user-id="userId" />
+        </div>
+      </div>
+      <div
         v-if="shouldShowProjectSection"
         class="portfolio-section-wrapper"
       >
-				<ProjectsSection
-					:projects="visibleProjects"
-					:can-add="isOwnPortfolio"
-					@add-project="openExperienceModal('project')"
-					@edit-project="project => openEditExperienceModal('project', project)"
-				/>
+        <ProjectsSection
+          :projects="visibleProjects"
+          :can-add="isOwnPortfolio"
+          @add-project="openExperienceModal('project')"
+          @edit-project="project => openEditExperienceModal('project', project)"
+        />
 
-				<BaseError v-if="experienceErrors.project">
-					{{ experienceErrors.project }}
-				</BaseError>
-			</div>
+        <BaseError v-if="experienceErrors.project">
+          {{ experienceErrors.project }}
+        </BaseError>
+      </div>
 
-			<div
+      <div
         v-if="shouldShowActivitySection"
         class="portfolio-section-wrapper"
       >
-				<ActivitiesSection
-					:activities="visibleActivities"
-					:can-add="isOwnPortfolio"
-					@add-activity="openExperienceModal('activity')"
-					@edit-activity="activity => openEditExperienceModal('activity', activity)"
-				/>
+        <ActivitiesSection
+          :activities="visibleActivities"
+          :can-add="isOwnPortfolio"
+          @add-activity="openExperienceModal('activity')"
+          @edit-activity="activity => openEditExperienceModal('activity', activity)"
+        />
 
-				<BaseError v-if="experienceErrors.activity">
-					{{ experienceErrors.activity }}
-				</BaseError>
-			</div>
-		</main>
+        <BaseError v-if="experienceErrors.activity">
+          {{ experienceErrors.activity }}
+        </BaseError>
+      </div>
+    </main>
 
-		<footer>
-			<PortfolioContact 
-				:email="authStore.user?.email"
-				:canedit="isOwnPortfolio"
-				:links="links"
-			/>
-		</footer>
+    <footer>
+      <PortfolioContact
+        :email="authStore.user?.email"
+        :canedit="isOwnPortfolio"
+        :links="links"
+      />
+    </footer>
 
-		<QRcodeModal
-			:open="isQRModalOpen"
-			title="Share your portfolio"
-			:username="authStore.user?.utilisateur_id"
-			@close="isQRModalOpen = false"
-		/>
+    <QRcodeModal
+      :open="isQRModalOpen"
+      title="Share your portfolio"
+      :username="authStore.user?.utilisateur_id"
+      @close="isQRModalOpen = false"
+    />
 
-		<ExperienceModal
-			v-if="isOwnPortfolio"
-			:open="experienceModal.open"
-			:mode="experienceModal.mode"
-			:type="experienceModal.type"
-			:initial-value="experienceModal.selected"
-			:loading="experienceModal.type === 'project'
-				? projectStore.loading
-				: activityStore.loading"
-			:school-options="[]"
-			:professor-emails="professorEmails"
-			@close="closeExperienceModal"
-			@submit="handleExperienceSubmit"
-		/>
-	</div>
+    <ExperienceModal
+      v-if="isOwnPortfolio"
+      :open="experienceModal.open"
+      :mode="experienceModal.mode"
+      :type="experienceModal.type"
+      :initial-value="experienceModal.selected"
+      :loading="experienceModal.type === 'project'
+        ? projectStore.loading
+        : activityStore.loading"
+      :school-options="[]"
+      :professor-emails="professorEmails"
+      @close="closeExperienceModal"
+      @submit="handleExperienceSubmit"
+    />
+  </div>
 </template>
 
 <style scoped>

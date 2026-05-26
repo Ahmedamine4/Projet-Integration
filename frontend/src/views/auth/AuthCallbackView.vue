@@ -26,11 +26,16 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="loading" v-if="!error">
+  <div
+    v-if="!error"
+    class="loading"
+  >
     <BaseSpinner size="lg" />
     <span>Signing you in...</span>
   </div>
-  <BaseError v-else>{{ error }}</BaseError>
+  <BaseError v-else>
+    {{ error }}
+  </BaseError>
 </template>
 
 <style scoped>

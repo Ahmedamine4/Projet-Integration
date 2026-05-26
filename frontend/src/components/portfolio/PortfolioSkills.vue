@@ -1,7 +1,7 @@
 <script setup>
 import { BadgeCheck, Layers } from 'lucide-vue-next';
 
-const props = defineProps({
+defineProps({
   userId: { type: String, required: true },
 });
 
@@ -30,7 +30,10 @@ const domains = [
     <div class="skills__body">
       <section class="skills__group">
         <div class="skills__title">
-          <BadgeCheck :size="20" :stroke-width="1.9" />
+          <BadgeCheck
+            :size="20"
+            :stroke-width="1.9"
+          />
           <h3>Skills</h3>
         </div>
 
@@ -46,7 +49,10 @@ const domains = [
 
       <section class="skills__group">
         <div class="skills__title">
-          <Layers :size="20" :stroke-width="1.9" />
+          <Layers
+            :size="20"
+            :stroke-width="1.9"
+          />
           <h3>Domains</h3>
         </div>
 

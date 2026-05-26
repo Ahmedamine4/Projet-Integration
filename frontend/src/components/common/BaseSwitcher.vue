@@ -27,15 +27,21 @@ const thumbStyle = computed(() => {
 
 <template>
   <div class="switcher">
-    <span class="switcher__thumb" :style="thumbStyle" />
+    <span
+      class="switcher__thumb"
+      :style="thumbStyle"
+    />
 
-    <template v-for="option in options" :key="option.value">
+    <template
+      v-for="option in options"
+      :key="option.value"
+    >
       <input
         :id="`switcher-${option.value}`"
         v-model="model"
         :value="option.value"
         type="radio"
-      />
+      >
       <label
         :for="`switcher-${option.value}`"
         :class="{ selected: model === option.value }"

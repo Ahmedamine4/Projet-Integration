@@ -237,7 +237,9 @@ onBeforeUnmount(() => {
 <template>
   <div class="activities-shell">
     <div class="activities-header">
-      <div class="title">Activities</div>
+      <div class="title">
+        Activities
+      </div>
       <button
         v-if="canAdd"
         type="button"
@@ -273,7 +275,10 @@ onBeforeUnmount(() => {
       </article>
     </div>
 
-    <div class="activities-empty" v-else>
+    <div
+      v-else
+      class="activities-empty"
+    >
       <div class="empty-state">
         <p>No activities yet</p>
       </div>

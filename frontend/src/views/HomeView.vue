@@ -8,10 +8,18 @@ const router = useRouter();
 <template>
   <section class="home-hero">
     <header class="home-hero__nav">
-      <BaseButton variant="ghost" size="xs" @click="router.push('/login')">
+      <BaseButton
+        variant="ghost"
+        size="xs"
+        @click="router.push('/login')"
+      >
         Sign in
       </BaseButton>
-      <BaseButton variant="pill" size="xs" @click="router.push('/register')">
+      <BaseButton
+        variant="pill"
+        size="xs"
+        @click="router.push('/register')"
+      >
         Sign up
       </BaseButton>
     </header>

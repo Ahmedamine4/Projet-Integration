@@ -7,16 +7,26 @@ const router = useRouter();
 
 <template>
   <section class="not-found">
-    <p class="not-found__code">404</p>
+    <p class="not-found__code">
+      404
+    </p>
     <h1>Unverified page</h1>
     <p class="not-found__message">
       This page does not have a certified place in your portfolio.
     </p>
     <div class="not-found__actions">
-      <BaseButton variant="pill" size="xs" @click="router.push('/')">
+      <BaseButton
+        variant="pill"
+        size="xs"
+        @click="router.push('/')"
+      >
         Back home
       </BaseButton>
-      <BaseButton variant="ghost" size="xs" @click="router.push('/login')">
+      <BaseButton
+        variant="ghost"
+        size="xs"
+        @click="router.push('/login')"
+      >
         Sign in
       </BaseButton>
     </div>

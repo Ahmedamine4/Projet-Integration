@@ -1,6 +1,6 @@
 <template>
   <div class="auth-shell">
-    <aside class="auth-visual"></aside>
+    <aside class="auth-visual" />
     <section class="auth-panel">
       <slot />
     </section>

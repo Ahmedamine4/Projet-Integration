@@ -75,32 +75,44 @@ watch(selected, () => {
 </script>
 
 <template>
-  <div class="sidebar-space" :class="{ collapsed }">
+  <div
+    class="sidebar-space"
+    :class="{ collapsed }"
+  >
     <button
       class="mobile-toggle"
       @click="collapsed = false"
     >
       <Menu :size="20" />
     </button>
-    <div class="sidebar-overlay" @click="collapsed = true" />
+    <div
+      class="sidebar-overlay"
+      @click="collapsed = true"
+    />
     <aside class="sidebar">
       <header>
         <div class="brand">
-          <img :src="FolioCraftLogo" />
+          <img :src="FolioCraftLogo">
         </div>
 
-        <button class="sidebar__toggle" @click="collapsed = !collapsed">
+        <button
+          class="sidebar__toggle"
+          @click="collapsed = !collapsed"
+        >
           <PanelLeftOpen v-if="collapsed" />
           <PanelLeftClose v-else />
         </button>
       </header>
 
       <nav>
-        <span class="sidebar__thumb" :style="thumbStyle"> </span>
+        <span
+          class="sidebar__thumb"
+          :style="thumbStyle"
+        />
         <button
-          class="sidebar__item"
           v-for="item in sidebarItems"
           :key="item.label"
+          class="sidebar__item"
           :class="{ selected: item.label === selected }"
           @click="selected = item.label"
         >
@@ -121,7 +133,10 @@ watch(selected, () => {
             <Bell />
           </button>
         </div>
-        <button class="sidebar__item" @click="handleLogout">
+        <button
+          class="sidebar__item"
+          @click="handleLogout"
+        >
           <LogOut />
           <span>Log out</span>
         </button>

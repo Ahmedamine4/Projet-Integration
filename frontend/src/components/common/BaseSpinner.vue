@@ -8,7 +8,10 @@ defineProps({
 </script>
 
 <template>
-  <div :class="`spinner--${size}`" class="spinner" />
+  <div
+    :class="`spinner--${size}`"
+    class="spinner"
+  />
 </template>
 
 <style scoped>

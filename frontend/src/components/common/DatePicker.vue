@@ -293,8 +293,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="pickerElement" class="date-picker">
-    <label v-if="label" class="date-picker__label" :for="id">
+  <div
+    ref="pickerElement"
+    class="date-picker"
+  >
+    <label
+      v-if="label"
+      class="date-picker__label"
+      :for="id"
+    >
       {{ label }}
     </label>
 
@@ -306,7 +313,10 @@ onBeforeUnmount(() => {
       @click="isOpen ? (isOpen = false) : openPicker()"
     >
       <span>{{ displayValue }}</span>
-      <Calendar class="date-picker__icon" :size="16" />
+      <Calendar
+        class="date-picker__icon"
+        :size="16"
+      />
     </button>
 
     <Transition name="date-picker-popover">
@@ -349,7 +359,10 @@ onBeforeUnmount(() => {
           v-if="pickerMode === 'days'"
           class="date-picker__weekdays"
         >
-          <span v-for="day in weekDays" :key="day">
+          <span
+            v-for="day in weekDays"
+            :key="day"
+          >
             {{ day }}
           </span>
         </div>
@@ -368,8 +381,8 @@ onBeforeUnmount(() => {
               'selected': day.isSelected,
               'disabled': day.isDisabled
             }"
-            @click="selectDate(day)"
             :disabled="day.isDisabled"
+            @click="selectDate(day)"
           >
             {{ day.dayNumber }}
           </button>
@@ -388,14 +401,17 @@ onBeforeUnmount(() => {
               selected: isSelectedYear(year),
               disabled: isDisabledYear(year)
             }"
-            @click="selectYear(year)"
             :disabled="isDisabledYear(year)"
+            @click="selectYear(year)"
           >
             {{ year }}
           </button>
         </div>
 
-        <div v-else class="date-picker__month-grid">
+        <div
+          v-else
+          class="date-picker__month-grid"
+        >
           <button
             v-for="(month, index) in monthNames"
             :key="month"
@@ -405,8 +421,8 @@ onBeforeUnmount(() => {
               selected: isSelectedMonth(index),
               disabled: isDisabledMonth(index),
             }"
-            @click="selectMonth(index)"
             :disabled="isDisabledMonth(index)"
+            @click="selectMonth(index)"
           >
             {{ month }}
           </button>

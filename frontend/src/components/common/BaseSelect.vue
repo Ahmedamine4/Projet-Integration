@@ -59,8 +59,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="selectElement" class="select">
-    <span v-if="label" class="select__label">
+  <div
+    ref="selectElement"
+    class="select"
+  >
+    <span
+      v-if="label"
+      class="select__label"
+    >
       {{ label }}
     </span>
 
@@ -72,10 +78,16 @@ onBeforeUnmount(() => {
       @click="isOpen = !isOpen"
     >
       <span class="select__value">{{ displayValue }}</span>
-      <ChevronDown class="select__icon" :size="16" />
+      <ChevronDown
+        class="select__icon"
+        :size="16"
+      />
     </button>
     <Transition name="popover">
-      <div v-if="shouldShowOptions" class="select__list">
+      <div
+        v-if="shouldShowOptions"
+        class="select__list"
+      >
         <button
           v-for="option in options"
           :key="option"

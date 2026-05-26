@@ -145,8 +145,8 @@ watch(() => props.userId, fetchAbout);
       <textarea
         v-else
         ref="textareaElem"
-        class="about-me__textarea"
         v-model="editText"
+        class="about-me__textarea"
         :maxlength="MAX_ABOUT_LEN"
         placeholder="Write a concise professional summary..."
         @input="resizeTextarea"
@@ -154,7 +154,10 @@ watch(() => props.userId, fetchAbout);
     </div>
 
     <footer>
-      <div class="view-footer" v-if="!isEdit">
+      <div
+        v-if="!isEdit"
+        class="view-footer"
+      >
         <button
           v-if="isTruncated"
           class="see-more"
@@ -163,12 +166,23 @@ watch(() => props.userId, fetchAbout);
           <span>
             {{ isExpanded ? 'See less' : 'See more' }}
           </span>
-          <ChevronUp v-if="isExpanded" :size="16" />
-          <ChevronDown v-else :size="16" />
+          <ChevronUp
+            v-if="isExpanded"
+            :size="16"
+          />
+          <ChevronDown
+            v-else
+            :size="16"
+          />
         </button>
-        <span v-if="isOwner">Double-click to edit</span>
+        <span v-if="isOwner">
+          Double-click to edit
+        </span>
       </div>
-      <div class="edit-footer" v-else>
+      <div
+        v-else
+        class="edit-footer"
+      >
         <span
           class="edit-footer__count"
           :class="{ 'is-short': aboutLength < MIN_ABOUT_LEN }"

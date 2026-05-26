@@ -101,40 +101,65 @@ function handleClick(e) {
       rel="noopener noreferrer"
       @click="handleClick"
     >
-      <span>{{ title }}</span>
-      <Pencil v-if="isOwner" class="contact-link__icon owner-icon" />
-      <ArrowUpRight v-else class="contact-link__icon contact-link__arrow" />
+      <span>
+        {{ title }}
+      </span>
+      <Pencil
+        v-if="isOwner"
+        class="contact-link__icon owner-icon"
+      />
+      <ArrowUpRight
+        v-else
+        class="contact-link__icon contact-link__arrow"
+      />
     </a>
   </template>
 
   <!-- EDIT MODE -->
-  <div v-else class="contact-link-edit">
-    <span class="contact-link-edit__label">{{ title }}</span>
+  <div
+    v-else
+    class="contact-link-edit"
+  >
+    <span class="contact-link-edit__label">
+      {{ title }}
+    </span>
 
-    <div class="contact-link-edit__row" :class="{ 'has-error': error }">
+    <div
+      class="contact-link-edit__row"
+      :class="{ 'has-error': error }"
+    >
       <input
         v-model="draft"
+        autofocus
         type="url"
         :placeholder="placeholder"
         @keydown.enter="save"
         @keydown.esc="cancelEdit"
         @input="error = ''"
-        autofocus
-      />
-      <button class="action-btn action-btn--cancel" @click="cancelEdit" title="Cancel">
+      >
+      <button
+        class="action-btn action-btn--cancel"
+        title="Cancel"
+        @click="cancelEdit"
+      >
         <X :size="13" />
       </button>
       <button
         class="action-btn action-btn--save"
+        title="Save"
         :disabled="saving"
         @click="save"
-        title="Save"
       >
         <Check :size="13" />
       </button>
     </div>
 
-    <p v-if="error" class="contact-link-edit__error">{{ error }}</p>
+    <p
+      v-if="error"
+      class="contact-link-edit__error"
+    >
+      {{ error }}
+    </p>
   </div>
 </template>
 

@@ -109,9 +109,17 @@ const registerWithGoogle = async () => {
 </script>
 
 <template>
-  <BaseCard title="Register" size="sm">
-    <p class="auth-subtitle">Create an account to get started</p>
-    <form class="auth-form" @submit.prevent="register">
+  <BaseCard
+    title="Register"
+    size="sm"
+  >
+    <p class="auth-subtitle">
+      Create an account to get started
+    </p>
+    <form
+      class="auth-form"
+      @submit.prevent="register"
+    >
       <div class="field">
         <BaseInput
           v-model="firstName"
@@ -119,7 +127,10 @@ const registerWithGoogle = async () => {
           placeholder="First name"
           autocomplete="given-name"
         />
-        <BaseError v-if="errors.firstName" variant="field">
+        <BaseError
+          v-if="errors.firstName"
+          variant="field"
+        >
           {{ errors.firstName }}
         </BaseError>
       </div>
@@ -132,15 +143,25 @@ const registerWithGoogle = async () => {
           autocomplete="family-name"
         />
 
-        <BaseError v-if="errors.lastName" variant="field">
+        <BaseError
+          v-if="errors.lastName"
+          variant="field"
+        >
           {{ errors.lastName }}
         </BaseError>
       </div>
 
       <div class="field">
-        <BaseInput v-model="email" label="Email" placeholder="email" />
+        <BaseInput
+          v-model="email"
+          label="Email"
+          placeholder="email"
+        />
 
-        <BaseError v-if="errors.email" variant="field">
+        <BaseError
+          v-if="errors.email"
+          variant="field"
+        >
           {{ errors.email }}
         </BaseError>
       </div>
@@ -154,7 +175,10 @@ const registerWithGoogle = async () => {
             placeholder="password"
           />
 
-          <BaseError v-if="errors.password" variant="field">
+          <BaseError
+            v-if="errors.password"
+            variant="field"
+          >
             {{ errors.password }}
           </BaseError>
 
@@ -169,7 +193,10 @@ const registerWithGoogle = async () => {
             placeholder="confirm password"
           />
 
-          <BaseError v-if="errors.confirm" variant="field">
+          <BaseError
+            v-if="errors.confirm"
+            variant="field"
+          >
             {{ errors.confirm }}
           </BaseError>
         </div>
@@ -182,19 +209,21 @@ const registerWithGoogle = async () => {
           :loading="isRegistering"
           :disabled="
             isRegistering ||
-            isGoogleLoading ||
-            !firstName ||
-            !lastName ||
-            !email ||
-            !password ||
-            !confirm
+              isGoogleLoading ||
+              !firstName ||
+              !lastName ||
+              !email ||
+              !password ||
+              !confirm
           "
         >
           Register
         </BaseButton>
       </div>
 
-      <BaseDivider>Or continue with Google</BaseDivider>
+      <BaseDivider>
+        Or continue with Google
+      </BaseDivider>
 
       <BaseButton
         type="button"

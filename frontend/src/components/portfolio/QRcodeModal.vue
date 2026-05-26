@@ -43,38 +43,48 @@ watch(
 
 <template>
   <Transition name="pop-up">
-    <div class="modal-overlay" v-if="open">
+    <div
+      v-if="open"
+      class="modal-overlay"
+    >
       <div class="modal">
         <div class="modal__header">
           <div class="close-button">
             <CloseButton @click="close" />
           </div>
           <h3>{{ title }}</h3>
-          <h5 class="modal-body-header">Scan this code to share your Portfolio in seconds.</h5>
+          <h5 class="modal-body-header">
+            Scan this code to share your Portfolio in seconds.
+          </h5>
         </div>
 
         <div class="modal__body">
           <div class="qrcode-wrapper">
-            <img :src="qrCodeDataUrl" alt="Portfolio QR Code" class="qrcode" size=20rem/>
+            <img
+              :src="qrCodeDataUrl"
+              alt="Portfolio QR Code"
+              class="qrcode"
+              size="20rem"
+            >
           </div>
         </div>
 
         <div class="modal__footer">
           <BaseButton
-              type="button"
-              variant="ghost"
-              @click="$emit('close')"
-            >
-              Close
-            </BaseButton>
+            type="button"
+            variant="ghost"
+            @click="$emit('close')"
+          >
+            Close
+          </BaseButton>
 
-            <BaseButton
-              type="submit"
-              variant="submit"
-              :loading
-            >
-              {{ `Copy link` }}
-            </BaseButton>
+          <BaseButton
+            type="submit"
+            variant="submit"
+            :loading
+          >
+            {{ `Copy link` }}
+          </BaseButton>
         </div>
       </div>
     </div>

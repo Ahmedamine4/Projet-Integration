@@ -95,7 +95,9 @@ function applyMomentum(currentTime) {
 <template>
   <div class="projects-shell">
     <div class="projects-header">
-      <div class="title">Projects</div>
+      <div class="title">
+        Projects
+      </div>
       <button
         v-if="canAdd"
         type="button"
@@ -108,14 +110,17 @@ function applyMomentum(currentTime) {
     </div>
     <div
       v-if="projects.length"
-      class="projects"
       ref="projectsRef"
+      class="projects"
       @mousedown="handleMouseDown"
       @mousemove="handleMouseMove"
       @mouseup="handleMouseUp"
       @mouseleave="handleMouseUp"
     >
-      <template v-for="project in projects" :key="project.id">
+      <template
+        v-for="project in projects"
+        :key="project.id"
+      >
         <PortfolioProject
           :project
           :can-edit="canAdd"
@@ -124,7 +129,10 @@ function applyMomentum(currentTime) {
       </template>
     </div>
 
-    <div class="projects-empty" v-else>
+    <div
+      v-else
+      class="projects-empty"
+    >
       <div class="empty-state">
         <p>No projects yet</p>
       </div>

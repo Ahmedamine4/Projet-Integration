@@ -70,7 +70,11 @@ function increaseYear() {
 
 <template>
   <div class="year-input">
-    <label v-if="label" class="year-input__label" :for="inputId">
+    <label
+      v-if="label"
+      class="year-input__label"
+      :for="inputId"
+    >
       {{ label }}
     </label>
 

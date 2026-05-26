@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, useAttrs } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import BaseInput from '@/components/common/BaseInput.vue';
 
 defineOptions({
@@ -66,7 +66,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="dropdownElement" class="dropdown">
+  <div
+    ref="dropdownElement"
+    class="dropdown"
+  >
     <BaseInput
       v-model="model"
       v-bind="$attrs"
@@ -76,14 +79,14 @@ onBeforeUnmount(() => {
     />
     <Transition name="popover">
       <div
-        class="dropdown__list"
         v-if="shouldShowOptions"
+        class="dropdown__list"
         :style="{ '--visible-options': visibleOptions }"
       >
         <button
-          class="dropdown__option"
           v-for="option in filteredOptions"
           :key="option"
+          class="dropdown__option"
           type="button"
           @click="selectOption(option)"
         >

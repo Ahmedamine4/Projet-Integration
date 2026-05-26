@@ -82,7 +82,10 @@ async function completeSchoolStep(schoolData) {
           <span>
             {{ `${doneCount} / ${steps.length}` }}
           </span>
-          <ProgressMeter :value="doneCount" :max="steps.length" />
+          <ProgressMeter
+            :value="doneCount"
+            :max="steps.length"
+          />
         </div>
       </div>
       <div class="wrapper-steps">

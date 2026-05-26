@@ -1,7 +1,7 @@
 <script setup>
 import { GraduationCap } from 'lucide-vue-next';
 
-const props = defineProps({
+defineProps({
   userId: { type: String, required: true },
 });
 
@@ -34,16 +34,26 @@ const educationItems = [
         :key="item.id"
         class="education__item"
       >
-        <div class="education__icon" aria-hidden="true">
-          <GraduationCap :size="18" :stroke-width="1.9" />
+        <div
+          class="education__icon"
+          aria-hidden="true"
+        >
+          <GraduationCap
+            :size="18"
+            :stroke-width="1.9"
+          />
         </div>
         <div class="education__content">
           <div class="education__heading">
             <h3>{{ item.school }}</h3>
             <span>{{ item.period }}</span>
           </div>
-          <p class="education__degree">{{ item.level }}</p>
-          <p class="education__description">{{ item.description }}</p>
+          <p class="education__degree">
+            {{ item.level }}
+          </p>
+          <p class="education__description">
+            {{ item.description }}
+          </p>
         </div>
       </article>
     </div>

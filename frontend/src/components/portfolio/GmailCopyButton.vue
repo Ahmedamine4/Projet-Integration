@@ -19,7 +19,11 @@ function copyEmail() {
 </script>
 
 <template>
-  <button class="gmail-btn" :class="{ copied }" @click="copyEmail">
+  <button
+    class="gmail-btn"
+    :class="{ copied }"
+    @click="copyEmail"
+  >
     <span>{{ copied ? 'Copied !' : email }}</span>
     <Copy size="16" />
   </button>

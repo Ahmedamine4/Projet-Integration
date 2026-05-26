@@ -77,10 +77,18 @@ const loginWithGoogle = async () => {
 </script>
 
 <template>
-  <BaseCard title="Welcome back" size="sm">
-    <p class="auth-subtitle">Sign in to your account to continue</p>
+  <BaseCard
+    title="Welcome back"
+    size="sm"
+  >
+    <p class="auth-subtitle">
+      Sign in to your account to continue
+    </p>
 
-    <form class="auth-form" @submit.prevent="login">
+    <form
+      class="auth-form"
+      @submit.prevent="login"
+    >
       <div class="field">
         <BaseInput
           v-model="email"
@@ -89,7 +97,10 @@ const loginWithGoogle = async () => {
           autocomplete="email"
         />
 
-        <BaseError v-if="errors.email" variant="field">
+        <BaseError
+          v-if="errors.email"
+          variant="field"
+        >
           {{ errors.email }}
         </BaseError>
       </div>
@@ -113,7 +124,9 @@ const loginWithGoogle = async () => {
         </BaseButton>
       </div>
 
-      <BaseDivider>Or continue with Google</BaseDivider>
+      <BaseDivider>
+        Or continue with Google
+      </BaseDivider>
 
       <BaseButton
         type="button"

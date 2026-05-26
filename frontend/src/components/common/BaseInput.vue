@@ -34,13 +34,22 @@ const classes = computed(() => ['input', `input--${props.size}`]);
 </script>
 
 <template>
-  <label :class="classes">
-    <span v-if="label" class="input__label">
+  <label
+    :class="classes"
+  >
+    <span
+      v-if="label"
+      class="input__label"
+    >
       {{ label }}
     </span>
 
     <div class="input__control">
-      <input v-bind="$attrs" v-model="model" :type="inputType" />
+      <input
+        v-bind="$attrs"
+        v-model="model"
+        :type="inputType"
+      >
 
       <button
         v-if="isPasswordInput"

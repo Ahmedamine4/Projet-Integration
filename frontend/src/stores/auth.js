@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
       try {
           const { data } = await api.get('/auth/profile');
           user.value = data.user;
-      } catch (error) {
+      } catch {
           user.value = null; // Cookie expiré ou absent
       }
   }

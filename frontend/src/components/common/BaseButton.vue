@@ -37,14 +37,17 @@ const classes = computed(() => [
 </script>
 
 <template>
-  <button :class="classes" :disabled="disabled || loading">
+  <button
+    :class="classes"
+    :disabled="disabled || loading"
+  >
     <BaseSpinner v-if="loading" />
     <img
       v-else-if="props.variant === 'google'"
       :src="googleIcon"
       alt="Google"
       class="google-icon"
-    />
+    >
     <slot />
   </button>
 </template>

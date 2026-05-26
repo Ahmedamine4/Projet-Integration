@@ -40,9 +40,9 @@ function onLinkUpdated() {
 <template>
   <div class="contact">
     <div class="contact__content">
-    <h2>Interested in working together ?</h2>
-    <p>Feel free to reach out to me for any inquiries, collaborations, or just to say hello !</p>
-    <GmailCopyButton :email="props.email" />
+      <h2>Interested in working together ?</h2>
+      <p>Feel free to reach out to me for any inquiries, collaborations, or just to say hello !</p>
+      <GmailCopyButton :email="props.email" />
     </div>
     <div class="contact__links">
       <ContactLink
@@ -59,9 +59,12 @@ function onLinkUpdated() {
         @cancel="stopEdit"
         @updated="onLinkUpdated"
       />
-
     </div>
-    <img :src="gradiant" alt="Gradiant" class="contact__gradiant" />
+    <img
+      :src="gradiant"
+      alt="Gradiant"
+      class="contact__gradiant"
+    >
   </div>
 </template>
 

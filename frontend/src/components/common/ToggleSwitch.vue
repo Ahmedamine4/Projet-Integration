@@ -18,9 +18,9 @@ defineProps({
 
     <label class="toggle-switch">
       <input
-        type="checkbox"
         v-model="model"
-      />
+        type="checkbox"
+      >
 
       <span />
     </label>

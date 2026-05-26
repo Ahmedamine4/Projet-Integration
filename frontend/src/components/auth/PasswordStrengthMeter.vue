@@ -87,7 +87,7 @@ const strengthTextStyle = computed(() => {
           type="checkbox"
           :checked="rule.passed"
           tabindex="-1"
-        />
+        >
         <span>{{ rule.label }}</span>
       </li>
     </ul>

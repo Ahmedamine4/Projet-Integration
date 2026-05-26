@@ -108,7 +108,11 @@ onUnmounted(releasePreviewURL);
     @drop.prevent="handleDrop"
   >
     <div class="drop-zone__preview">
-      <img v-if="hasPreview" :src="displayPreviewURL" alt="">
+      <img
+        v-if="hasPreview"
+        :src="displayPreviewURL"
+        alt=""
+      >
       <ImagePlus v-else />
     </div>
     <div class="drop-zone__content">
@@ -137,7 +141,7 @@ onUnmounted(releasePreviewURL);
         :accept="accept"
         class="hidden-input"
         @change="handleFileChange"
-      />
+      >
 
       <p
         class="file-name"
