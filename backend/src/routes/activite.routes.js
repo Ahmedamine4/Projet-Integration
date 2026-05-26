@@ -5,8 +5,8 @@ import {
   getActivitesPubliquesPortfolio,
   updateValidationActivite,
 } from '../controllers/activite.controller.js';
-import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
+import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 router.use(authMiddleware);
