@@ -161,22 +161,18 @@ trivy-config:
     - trivy config
       --severity HIGH,CRITICAL
       --exit-code 1
-      --no-progress
       infrastructure/
     - trivy config
       --severity HIGH,CRITICAL
       --exit-code 1
-      --no-progress
       backend/Dockerfile
     - trivy config
       --severity HIGH,CRITICAL
       --exit-code 1
-      --no-progress
       frontend/Dockerfile
     - trivy config
       --severity HIGH,CRITICAL
       --exit-code 1
-      --no-progress
       ai/Dockerfile
 
   artifacts:
@@ -190,30 +186,14 @@ trivy-config:
       --severity HIGH,CRITICAL
       --format json
       --output trivy-config-report.json
-      --no-progress
       infrastructure/ backend/Dockerfile frontend/Dockerfile ai/Dockerfile
 
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes:
-        - infrastructure/**/*
-        - backend/Dockerfile
-        - frontend/Dockerfile
-        - ai/Dockerfile
     - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - infrastructure/**/*
-        - backend/Dockerfile
-        - frontend/Dockerfile
-        - ai/Dockerfile
     - if: '$CI_COMMIT_BRANCH == "develop"'
-      changes:
-        - infrastructure/**/*
-        - backend/Dockerfile
-        - frontend/Dockerfile
-        - ai/Dockerfile
     - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"' # temporary branch for testing security hardening, will be removed after testing
-
+    
 # FRONTEND TESTS
 frontend-tests:
   stage: test
