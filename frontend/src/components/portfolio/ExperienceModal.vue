@@ -11,6 +11,8 @@ import ImageDropzone from '@/components/common/ImageDropzone.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
 import Select from '@/components/common/Select.vue';
 import Error from '@/components/common/Error.vue';
+import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
+import { formatLocalDate } from '@/utils/date';
 import ModificationRequest from '../common/ModificationRequest.vue';
 
 const props = defineProps({
@@ -273,16 +275,7 @@ watch(
 
 onUnmounted(() => {
   clearTimeout(descriptionTypingTimer);
-  document.body.style.overflow = '';
 });
-
-function formatLocalDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
 
 const todayValue = computed(() => formatLocalDate(new Date()));
 
@@ -425,9 +418,9 @@ function resizeTextarea() {
 
 onMounted(resizeTextarea);
 
-watch(() => props.open, (open) => {
-  document.body.style.overflow = open ? 'hidden' : '';
+useBodyScrollLock(() => props.open);
 
+watch(() => props.open, (open) => {
   if (!open) return;
 
   if (isEdit.value) fillForm();
@@ -793,8 +786,7 @@ const existingImageName = computed(() => {
   --modal-edge-space: var(--space-lg);
   --modal-field-gap: var(--space-md);
   --modal-inner-gap: var(--space-xs);
-  --scrollbar-width: clamp(8px, 1vw, 12px);
-  --scrollbar-padding: clamp(2px, 0.25vw, 3px);
+  --scrollbar-width: 10px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -875,22 +867,6 @@ const existingImageName = computed(() => {
   padding: var(--modal-edge-space);
 }
 
-.experience-form__body::-webkit-scrollbar {
-  width: var(--scrollbar-width);
-}
-
-.experience-form__body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.experience-form__body::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--color-primary-rgb), 0.22);
-  border-radius: 999px;
-  border: var(--scrollbar-padding) solid transparent;
-  background-clip: content-box;
-}
-
-
 .field,
 .institution-field {
   display: grid;
@@ -946,6 +922,9 @@ textarea {
   font-family: var(--font-ui);
   font-size: var(--font-size-md);
   overflow: hidden;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 textarea:focus {

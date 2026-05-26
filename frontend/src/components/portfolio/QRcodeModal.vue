@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, watch } from 'vue';
 import CloseButton from '@/components/common/CloseButton.vue';
 import QRCode from 'qrcode';
 import Button from '@/components/common/Button.vue';
+import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 
 const props = defineProps({
   open: {
@@ -19,13 +20,7 @@ const props = defineProps({
   },
 });
 
-watch(() => props.open, (open) => {
-  document.body.style.overflow = open ? 'hidden' : '';
-});
-
-onUnmounted(() => {
-  document.body.style.overflow = '';
-});
+useBodyScrollLock(() => props.open);
 
 const emit = defineEmits(['close']);
 

@@ -1,9 +1,12 @@
 <script setup>
-import { ref, reactive, computed, watch, onUnmounted } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import Button from '@/components/common/Button.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
+import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
+import { addDays, formatLocalDate } from '@/utils/date';
+import DatePicker from '../common/DatePicker.vue';
 
 const academicLevels = [
   {
@@ -70,13 +73,7 @@ const props = defineProps({
   },
 });
 
-watch(() => props.open, (open) => {
-  document.body.style.overflow = open ? 'hidden' : '';
-});
-
-onUnmounted(() => {
-  document.body.style.overflow = '';
-});
+useBodyScrollLock(() => props.open);
 
 const emit = defineEmits(['close', 'complete']);
 
@@ -99,30 +96,59 @@ const selectedLevel = computed(() => {
 });
 
 const schoolFieldsInputs = reactive({
-  bachelorSchool: '',
-  masterSchool: '',
-  phdInstitution: '',
+  bachelorSchool: {
+    schoolName: '',
+    startDate: '',
+    endDate: '',
+  },
+  masterSchool: {
+    schoolName: '',
+    startDate: '',
+    endDate: '',
+  },
+  phdInstitution: {
+    schoolName: '',
+    startDate: '',
+    endDate: '',
+  },
 });
 
+function getInstitutionIdByName(name) {
+  return props.schools.find((school) => {
+    return school.nom.toLowerCase() === name.toLowerCase();
+  })?.institution_id || '';
+}
+
+function isCurrentSchoolField(fieldKey) {
+  const highestLevelFieldKey = selectedLevel.value?.fields.at(-1);
+
+  return (
+    isCurrentlyStudying.value === true &&
+    fieldKey === highestLevelFieldKey
+  );
+}
+
 const schoolPath = computed(() => {
-  const schools = props.schools;
-  const bachelorSchool = schools.find((school) => {
-    return school.nom.toLowerCase() === schoolFieldsInputs.bachelorSchool.toLowerCase();
-  })?.institution_id || '';
-  const masterSchool = schools.find((school) => {
-    return school.nom.toLowerCase() === schoolFieldsInputs.masterSchool.toLowerCase();
-  })?.institution_id || '';
-  const phdInstitution = schools.find((school) => {
-    return school.nom.toLowerCase() === schoolFieldsInputs.phdInstitution.toLowerCase();
-  })?.institution_id || '';
-  return { bachelorSchool, masterSchool, phdInstitution };
+  return Object.fromEntries(
+    Object.entries(schoolFieldsInputs).map(([fieldKey, input]) => {
+      return [
+        fieldKey,
+        {
+          institutionId: getInstitutionIdByName(input.schoolName),
+          startDate: input.startDate,
+          endDate: input.endDate,
+          isCurrent: isCurrentSchoolField(fieldKey),
+        },
+      ];
+    })
+  );
 });
 
 const completedStepsCount = computed(() => {
   if (isCurrentlyStudying.value === null) return 0;
   if (!selectedLevelKey.value) return 1;
   return Object.values(schoolPath.value).reduce((acc, school) => {
-    return school ? acc + 1 : acc;
+    return isSchoolComplete(school) ? acc + 1 : acc;
   }, 2);
 });
 
@@ -154,6 +180,42 @@ const currentSchoolFieldDescription = computed(() => {
   return completedSchoolDescriptions[currentSchoolFieldKey.value];
 });
 
+const currentSchoolEndDateLabel = computed(() => {
+  if (isCurrentSchoolField(currentSchoolFieldKey.value)) {
+    return 'Expected completion date';
+  }
+
+  return 'Completion date';
+});
+
+const isCurrentStepComplete = computed(() => {
+  if (currentStepIndex.value === 0) {
+    return isCurrentlyStudying.value !== null;
+  }
+
+  if (currentStepIndex.value === 1) {
+    return Boolean(selectedLevelKey.value);
+  }
+
+  const currentSchool = schoolPath.value[currentSchoolFieldKey.value];
+
+  return isSchoolComplete(currentSchool);
+});
+
+function isSchoolComplete(school) {
+  return Boolean(
+    school.institutionId &&
+    school.startDate &&
+    school.endDate
+  );
+}
+
+function resetSchoolField(fieldKey) {
+  schoolFieldsInputs[fieldKey].schoolName = '';
+  schoolFieldsInputs[fieldKey].startDate = '';
+  schoolFieldsInputs[fieldKey].endDate = '';
+}
+
 function resetCurrentStep() {
   if (currentStepIndex.value === 0) {
     isCurrentlyStudying.value = null;
@@ -163,16 +225,16 @@ function resetCurrentStep() {
     selectedLevelKey.value = '';
     return;
   }
-  schoolFieldsInputs[currentSchoolFieldKey.value] = '';
+  resetSchoolField(currentSchoolFieldKey.value);
 }
 
 function resetSchoolPath() {
   isCurrentlyStudying.value = null;
   selectedLevelKey.value = '';
 
-  schoolFieldsInputs.bachelorSchool = '';
-  schoolFieldsInputs.masterSchool = '';
-  schoolFieldsInputs.phdInstitution = '';
+  resetSchoolField('bachelorSchool');
+  resetSchoolField('masterSchool');
+  resetSchoolField('phdInstitution');
 
   currentStepIndex.value = 0;
 }
@@ -210,6 +272,53 @@ function goNext() {
   }
   stepDirection.value = 'forward';
   currentStepIndex.value++;
+}
+
+const todayValue = formatLocalDate(new Date());
+
+function getPreviousSchoolFieldKey() {
+  const fields = selectedLevel.value?.fields ?? [];
+  const index = fields.indexOf(currentSchoolFieldKey.value);
+
+  return index > 0 ? fields[index - 1] : '';
+}
+
+function getPreviousSchoolEndDate() {
+  const previousFieldKey = getPreviousSchoolFieldKey();
+
+  return previousFieldKey
+    ? schoolFieldsInputs[previousFieldKey].endDate
+    : '';
+}
+
+function getStartMinDate() {
+  const previousEndDate = getPreviousSchoolEndDate();
+
+  return previousEndDate ? addDays(previousEndDate, 1) : '';
+}
+
+function getStartMaxDate() {
+  const endDate = schoolFieldsInputs[currentSchoolFieldKey.value].endDate;
+
+  if (!endDate) return todayValue;
+
+  const dayBeforeEndDate = addDays(endDate, -1);
+
+  return dayBeforeEndDate < todayValue ? dayBeforeEndDate : todayValue;
+}
+
+function getEndMinDate() {
+  const startDate = schoolFieldsInputs[currentSchoolFieldKey.value].startDate;
+
+  if (startDate) return addDays(startDate, 1);
+
+  return getStartMinDate();
+}
+
+function getEndMaxDate() {
+  if (isCurrentSchoolField(currentSchoolFieldKey.value)) return '';
+
+  return todayValue;
 }
 </script>
 <template>
@@ -308,7 +417,23 @@ function goNext() {
                 <Dropdown
                   :options="schools.map(school => school?.nom)"
                   :placeholder="currentSchoolField.placeholder"
-                  v-model="schoolFieldsInputs[currentSchoolFieldKey]"
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].schoolName"
+                />
+
+                <DatePicker
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].startDate"
+                  label="Start date"
+                  placeholder="Select start date"
+                  :min-date="getStartMinDate()"
+                  :max-date="getStartMaxDate()"
+                />
+
+                <DatePicker
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].endDate"
+                  :label="currentSchoolEndDateLabel"
+                  :placeholder="`Select ${currentSchoolEndDateLabel.toLowerCase()}`"
+                  :min-date="getEndMinDate()"
+                  :max-date="getEndMaxDate()"
                 />
               </div>
             </div>
@@ -327,12 +452,7 @@ function goNext() {
           <Button
             variant="submit"
             class="next-button"
-            :disabled="
-              isCurrentlyStudying === null ||
-              currentStepIndex &&
-              !selectedLevelKey ||
-              currentStepIndex > 1 &&
-              !schoolPath[currentSchoolFieldKey]"
+            :disabled="!isCurrentStepComplete"
             @click="goNext"
           >
             {{ completedStepsCount < numOfSteps ? 'Next' : 'Complete'}}

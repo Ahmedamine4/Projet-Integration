@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import api from '@/services/api';
+import { addDays, formatLocalDate } from '@/utils/date';
 
 function buildInternshipFormData(internship) {
   const formData = new FormData();
@@ -23,22 +24,8 @@ function buildInternshipFormData(internship) {
   return formData;
 }
 
-function formatDate(dateValue) {
-  if (!dateValue) return '';
-  return new Date(dateValue).toISOString().slice(0, 10);
-}
-
-function addDays(dateValue, days) {
-  if (!dateValue || days == null) return '';
-
-  const date = new Date(dateValue);
-  date.setDate(date.getDate() + Number(days));
-
-  return formatDate(date);
-}
-
 function normalizeInternship(data) {
-  const startDate = formatDate(data.date_experience);
+  const startDate = formatLocalDate(data.date_experience);
   const endDate = addDays(data.date_experience, data.stage?.duree);
 
   return {

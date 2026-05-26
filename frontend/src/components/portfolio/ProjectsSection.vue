@@ -204,6 +204,7 @@ function applyMomentum(currentTime) {
   padding-block: var(--padding-block);
   overscroll-behavior-x: contain;
   cursor: grab;
+  scrollbar-width: none;
 }
 
 .projects:active {

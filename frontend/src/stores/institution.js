@@ -28,7 +28,7 @@ export const useInstitutionStore = defineStore('institution', () => {
 
 	function setSchoolPath(schoolPath) {
 		Object.keys(selectedSchoolPath).forEach(key => {
-			selectedSchoolPath[key] = schoolPath[key];
+			selectedSchoolPath[key] = schoolPath[key]?.institutionId || '';
 		});
 	}
 

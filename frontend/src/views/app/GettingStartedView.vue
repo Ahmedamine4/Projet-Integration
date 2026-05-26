@@ -61,7 +61,9 @@ function handleStepAction(key) {
 async function completeSchoolStep(schoolData) {
   await api.post('/select-institutions', {
     etudiantId: authStore.user.utilisateur_id,
-    institutionId: Object.values(schoolData.schoolPath).filter(Boolean),
+    institutionId: Object.values(schoolData.schoolPath)
+      .map(school => school.institutionId)
+      .filter(Boolean),
   });
   institutionStore.setSchoolPath(schoolData.schoolPath);
   stepStatus.school = 'pending';
