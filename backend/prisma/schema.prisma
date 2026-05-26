@@ -15,6 +15,10 @@ datasource db {
 
 // ENUMS
 
+enum ActionSession {
+LOGIN
+LOGOUT
+}
 
 enum TypeExperience {
   certification
@@ -58,6 +62,10 @@ model Utilisateur {
   telephone        String?         @db.VarChar(20)
   a_propos         String?
   date_de_creation DateTime?       @default(now())
+  github           String?
+  instagram        String?
+  x                String?
+  linkedin         String?
 
   // Relations d'héritage (1-to-1)
   administrateur Administrateur?
@@ -208,12 +216,18 @@ model Notification {
 }
 
 model Connexion {
-  connexion_id      String      @id @default(cuid())
-  ip_address        String?     @db.VarChar(50)
-  statut            Boolean?
-  date_de_connexion DateTime?
-  utilisateur_id    String
-  utilisateur       Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  connexion_id          String      @id @default(cuid())
+  utilisateur_id        String
+  action                ActionSession
+  browser               String?
+  device_type           String?
+  os                    String?
+  browser_version       String?
+  ip                    String?
+  ville                 String?
+  pays                  String?
+  date_action           DateTime @default(now())
+  utilisateur           Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
 
   @@map("connexions")
 }
@@ -287,9 +301,6 @@ model Projet {
   lien_youtube     String?
   resultat_obtenus String?
   role             String?             @db.VarChar(50)
-  photo            String?
-  technologies     String[]
-  domains          String[]
   experience       Experience          @relation(fields: [experience_id], references: [experience_id])
   validation       ValideProjet?
 
@@ -309,6 +320,7 @@ model Activite {
 
 model Stage {
   experience_id      String           @id
+  date_fin           DateTime?
   duree              String?          @db.VarChar(50)
   missions_realisees String?
   rapport_stage      String?
@@ -342,10 +354,11 @@ model Interaction {
 model LettresDeRecommendations {
   utilisateur_id      String
   prof_utilisateur_id String
-  type_candidature    String?           @db.VarChar(50)
+  objet               String?      @db.VarChar(255)
+  description         String?
   fichier             String?
-  statut              StatutValidation?
-  date_lettre         DateTime?
+  statut              StatutValidation?      @default(en_attente)
+  date_lettre         DateTime?              @default(now())
   commentaire         String?
 
   etudiant   Etudiant   @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
@@ -414,7 +427,9 @@ model ValideEtudiant {
   utilisateur_id String
   institution_id String
   statut         StatutValidation?
-  date_d_action  DateTime?
+  date           DateTime?
+  description    String?
+  niveau         String?
 
   etudiant       Etudiant          @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
   institution    Institution       @relation(fields: [institution_id], references: [institution_id])

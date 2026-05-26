@@ -19,20 +19,18 @@ export const uploadPhoto = async (file) => {
   return data.publicUrl;
 };
 
-export const createStage = async (etudiantId, data, photoUrl) => {
+export const creeStage = async (etudiantId, data, photoUrl) => {
   
     const stageExistant = await prisma.experience.findFirst({
         where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre },
       });
-      
-      if (stageExistant) {
-        throw new Error('Stage déjà existant');
-      }
+      if (stageExistant) throw new Error('Stage déjà existant');
+    
 
     const debut = new Date(data.date_debut);
     const fin = new Date(data.date_fin);
     const diffMs = fin - debut;
-    const duree = String(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));;
+    const duree = String(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 
     const technologies = JSON.parse(data.technologies || '[]');
     const domaines = JSON.parse(data.domaines || '[]');
@@ -42,9 +40,10 @@ export const createStage = async (etudiantId, data, photoUrl) => {
       data: {
         titre: data.titre,
         date_experience: debut,
-        visibilite: false,       // par defaut
+        visibilite: false,
         type: 'stage',
         description: data.description,
+        type_specifique: data.is_academique === 'true' ? 'academique' : 'personnel',
         utilisateur_id: etudiantId,
       },
     });
@@ -52,9 +51,10 @@ export const createStage = async (etudiantId, data, photoUrl) => {
     const stage = await tx.stage.create({
       data: {
         experience_id: experience.experience_id,
+        date_fin: fin,
         duree: duree,
         missions_realisees: data.missions_realisees ?? null,
-        rapport_stage: data.rapport_stage ?? null, //URL ou null
+        rapport_stage: data.rapport_stage ?? null,
       },
     });
 
@@ -104,6 +104,7 @@ export const createStage = async (etudiantId, data, photoUrl) => {
           utilisateur_id: professeur.utilisateur_id,
           experience_id: experience.experience_id,
           statut: 'en_attente',
+          date_d_action: new Date(),
         }
       });
 
@@ -151,7 +152,14 @@ export const getStagesByEtudiant = async (etudiantId) => {
   });
 };
 
-export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
+export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
+  const stageExistant = await prisma.experience.findFirst({
+        where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre, experience_id: { not: experienceId } },
+      });
+      if (stageExistant) {
+        throw new Error('Stage déjà existant');
+      }
+
   return await prisma.$transaction(async (tx) => {
     //verifier que le stage appartient vrai a l'etudiant
     const experience = await tx.experience.findFirst({
@@ -169,25 +177,28 @@ export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
       },
     });
 
-    if (!experience) throw new Error('Stage non trouvé');
+    if (!experience) throw new Error('Stage not found');
 
     const debut = data.date_debut ? new Date(data.date_debut) : experience.date_experience;
-    const fin = data.date_fin ? new Date(data.date_fin) : new Date(experience.date_experience.getTime() + parseInt(experience.stage.duree) * 24 * 60 * 60 * 1000); //????
+    const fin = data.date_fin ? new Date(data.date_fin) : experience.stage.date_fin;
     const duree = (data.date_debut || data.date_fin) ? String(Math.ceil((fin - debut) / (1000 * 60 * 60 * 24))) : experience.stage.duree;
 
+    // editer experience et stage
     await tx.experience.update({
       where: { experience_id: experienceId },
       data: {
         titre: data.titre ?? experience.titre,
         date_experience: debut,
         description: data.description ?? experience.description,
-        visibilite: false, //invisible, il faut le revalider
+        visibilite: false, //invisible
+        type_specifique: data.is_academique ? (data.is_academique === 'true' ? 'academique' : 'personnel') : experience.type_specifique,
       },
     });
 
     await tx.stage.update({
       where: { experience_id: experienceId },
       data: {
+        date_fin: fin,
         duree: duree,
         missions_realisees: data.missions_realisees ?? experience.stage.missions_realisees,
         rapport_stage: data.rapport_stage ?? experience.stage.rapport_stage,
@@ -199,7 +210,7 @@ export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
       const technologies = JSON.parse(data.technologies || '[]');
       const domaines = JSON.parse(data.domaines || '[]');
 
-      //supprimer les anciennes
+      //supprimer les anciennes car c'est facile que de faire un update pour les anciennes
       await tx.competence.deleteMany({
         where: {
           experiences: {
@@ -233,6 +244,11 @@ export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
 
     //si deja le stage est dans la table du valideStage
     if (experience.stage.validation) {
+      //si le stage est valide ou refuse on ne peut plus le modifier
+      if (experience.stage.validation.statut !== 'en_attente') {
+        throw new Error('Ce stage a déjà été traité par le professeur, vous ne pouvez plus le modifier');
+      }
+
       let profId = experience.stage.validation.utilisateur_id;
 
       // L'étudiant veut changer de prof
@@ -241,6 +257,7 @@ export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
           where: { email: data.email_professeur },
           include: { professeur: true },
         });
+
         if (!nouveauProf || !nouveauProf.professeur) {
           throw new Error('Professeur non trouvé avec cet email');
         }
@@ -252,8 +269,7 @@ export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
         data: {
           statut: 'en_attente',
           utilisateur_id: profId,
-          date_d_action: null,
-          commentaire: null,
+          date_d_action: new Date(),
         },
       });
 
@@ -264,7 +280,7 @@ export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
 
       await creerNotification(
         profId,
-        `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son stage "${data.titre ?? experience.titre}". Une nouvelle validation est requise.`,
+        `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son stage "${data.titre ?? experience.titre}". Il demande une validation pour un stage.`,
         'validation_stage'
       );
 
@@ -283,6 +299,7 @@ export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
           utilisateur_id: prof.utilisateur_id,
           experience_id: experienceId,
           statut: 'en_attente',
+          date_d_action: new Date(),
         },
       });
 
@@ -325,84 +342,6 @@ export const updateStage = async (etudiantId, experienceId, data, photoUrl) => {
   });
 };
 
-//pour le prof
-
-export const getDemandesValidationProfesseur = async (profId) => {
-  return prisma.valideStage.findMany({
-    where: { 
-      utilisateur_id: profId,
-      statut: 'en_attente'
-     },
-    include: {
-      stage: {
-        include: {
-          experience: {
-            include: {
-              etudiant: {
-                include: {
-                  utilisateur: {
-                    select: { nom: true, prenom: true, email: true },
-                  },
-                },
-              },
-              competences: true,
-              documentations: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: { date_d_action: 'desc' },
-  });
-};
-
-export const traiterValidationStage = async (profId, experienceId, statut, commentaire) => {
-  const validation = await prisma.valideStage.findUnique({
-    where: { experience_id: experienceId },
-    include: {
-      stage: {
-        include: {
-          experience: { select: { titre: true, utilisateur_id: true } },
-        },
-      },
-    },
-  });
-
-  if (!validation) throw new Error('Demande de validation non trouvée');
-  if (validation.utilisateur_id !== profId) throw new Error('Accès refusé');
-  if (validation.statut !== 'en_attente') throw new Error('Cette demande a déjà été traitée');
-
-  const updated = await prisma.valideStage.update({
-    where: { experience_id: experienceId },
-    data: {
-      statut,
-      commentaire: commentaire ?? null,
-      date_d_action: new Date(),
-    },
-  });
-
-  //rendre stage visible 
-  if (statut === 'valide') {
-    await prisma.experience.update({
-      where: { experience_id: experienceId },
-      data: { visibilite: true },
-    });
-  }
-
-  //notification pour etudiant
-  const etudiantId = validation.stage.experience.utilisateur_id;
-  const titreStage = validation.stage.experience.titre;
-
-  const messageEtudiant =
-    statut === 'valide'
-      ? `Votre stage "${titreStage}" a été validé par votre professeur.`
-      : `Votre stage "${titreStage}" a été refusé. Commentaire : ${commentaire ?? 'Aucun commentaire'}`;
-
-  await creerNotification(etudiantId, messageEtudiant, 'validation_stage');
-
-  return updated;
-};
-
 export const getStagesVisiblesByEtudiant = async (etudiantId) => {
   return prisma.experience.findMany({
     where: { utilisateur_id: etudiantId, type: 'stage', visibilite: true },
@@ -412,5 +351,31 @@ export const getStagesVisiblesByEtudiant = async (etudiantId) => {
       documentations: true,
     },
     orderBy: { date_experience: 'desc' },
+  });
+};
+
+export const updateVisibiliteStageService = async (etudiantId, experienceId, visibilite) => {
+  const experience = await prisma.experience.findFirst({
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'stage' },
+    include: {
+      stage: { include: { validation: true } },
+    },
+  });
+
+  if (!experience) throw new Error('Stage non trouvé');
+
+  //si academique statut doit etre valide
+  if (experience.type_specifique === 'academique') {
+    const statut = experience.stage?.validation?.statut;
+    if (statut !== 'valide') {
+      throw new Error('Vous ne pouvez changer la visibilité que si le stage académique est validé');
+    }
+  }
+  //si personnel
+
+  return prisma.experience.update({
+    where: { experience_id: experienceId },
+    data: { visibilite },
+    select: { experience_id: true, visibilite: true },
   });
 };

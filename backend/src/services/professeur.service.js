@@ -103,7 +103,6 @@ export const getStagesProf = async (profId, statut, commente) => {
   }));
 };
 
-
 export const getProjetsProf = async (profId, statut, commente) => {
   const projets = await prisma.valideProjet.findMany({
     where: {
@@ -163,7 +162,6 @@ export const getStageById = async (profId, experienceId) => {
   return stage;
 };
 
-
 export const getProjetById = async (profId, experienceId) => {
   const projet = await prisma.valideProjet.findUnique({
     where: { experience_id: experienceId },
@@ -185,8 +183,6 @@ export const getProjetById = async (profId, experienceId) => {
   return projet;
 };
 
-
-
 export const traiterValidationProjet = async (profId, experienceId, statut, commentaire) => {
   const validation = await prisma.valideProjet.findUnique({
     where: { experience_id: experienceId },
@@ -203,7 +199,9 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
 
     const updated = await prisma.valideProjet.update({
       where: { experience_id: experienceId },
-      data: { commentaire, date_d_action: new Date() },
+      data: { 
+        commentaire, 
+        date_d_action: new Date() },
     });
 
     await creerNotification(
@@ -230,7 +228,6 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
 
   return updated;
 };
-
 
 export const traiterValidationStageProf = async (profId, experienceId, statut, commentaire) => {
   const validation = await prisma.valideStage.findUnique({

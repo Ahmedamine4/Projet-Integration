@@ -1,57 +1,276 @@
-import prisma from "../config/prisma.js";
-import { RoleUtilisateur } from "@prisma/client";
-import {
-  StatutValidation,
-  TypeExperience,
-  TypeSpecifique,
-} from "@prisma/client";
+import prisma from '../config/prisma.js';
+import { supabase } from '../config/supabase.js';
+import { creerNotification } from './notification.service.js';
 
-export const createProjet = async (data, userId) => {
+//upload photo sur supabase et collection de url
+export const uploadPhoto = async (file) => {
+  const fileName = `${Date.now()}_${file.originalname}`;
+
+  const { error } = await supabase.storage
+    .from('projets-photos')
+    .upload(fileName, file.buffer, { contentType: file.mimetype });
+
+  if (error) throw new Error('Erreur upload image : ' + error.message);
+
+  const { data } = supabase.storage
+    .from('projets-photos')
+    .getPublicUrl(fileName);
+
+  return data.publicUrl;
+};
+
+export const creeProjet = async (etudiantId, data, imageUrl) => {
+
+  const projetExistant = await prisma.experience.findFirst({
+    where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle },
+  });
+  if (projetExistant) throw new Error('Projet déjà existant');
+
+  const technologies = JSON.parse(data.technologies || '[]');
+  const domaines = JSON.parse(data.domains || '[]');
+  const isAcademique = data.projetType === 'academique';
+
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.create({
       data: {
         titre: data.projectTitle,
         date_experience: new Date(data.projectDate),
+        visibilite: false,
+        type: 'projet',
         description: data.description,
-        visibilite: data.visibleToEveryone,
-        type: TypeExperience.projet,
-        utilisateur_id: userId,
+        type_specifique: isAcademique ? 'academique' : 'personnel',
+        utilisateur_id: etudiantId,
       },
     });
 
-    const projetData = {
-      experience_id: experience.experience_id,
-      lien_github: data.githubLink,
-      photo: data.imageUrl, //
-      technologies: data.technologies, //
-      domains: data.domains, //
-    };
-
-    if (data.projetType === TypeSpecifique.academique) {
-      const prof = await prisma.utilisateur.findFirst({
-        where: {
-          email: data.professorEmail,
-          role: RoleUtilisateur.professeur,
-        },
-      });
-      if (!prof) {
-        throw new Error("Professeur non trouvé avec cet email");
-      }
-      projetData.validation = {
-        create: {
-          experience_id: experience.experience_id,
-          utilisateur_id: prof.utilisateur_id,
-          statut: StatutValidation.en_attente,
-          date_d_action: new Date(),
-          commentaire: null,
-        },
-      };
-    }
     const projet = await tx.projet.create({
-      data: projetData,
+      data: {
+        experience_id: experience.experience_id,
+        lien_github: data.githubLink ?? null,
+      },
     });
 
-    return { experience, projet };
+    const competencesTech = await Promise.all(
+      technologies.map(nom =>
+        tx.competence.create({
+          data: {
+            type: 'technologie',
+            nom: nom,
+            experiences: { connect: { experience_id: experience.experience_id } },
+          },
+        })
+      )
+    );
+
+    const competencesDomaines = await Promise.all(
+      domaines.map(nom =>
+        tx.competence.create({
+          data: {
+            type: 'domaine',
+            nom,
+            experiences: { connect: { experience_id: experience.experience_id } },
+          },
+        })
+      )
+    );
+
+    //si projet académique creer valideProjet avec statut en_attend et envoyer notification au prof
+    let validation = null;
+    if (isAcademique && data.professorEmail) {
+      const professeur = await tx.utilisateur.findUnique({
+        where: { email: data.professorEmail },
+        include: { professeur: true },
+      });
+      if (!professeur || !professeur.professeur) throw new Error('Professeur non trouvé avec cet email');
+
+      validation = await tx.valideProjet.create({
+        data: {
+          utilisateur_id: professeur.utilisateur_id,
+          experience_id: experience.experience_id,
+          statut: 'en_attente',
+          date_d_action: new Date(),
+        },
+      });
+
+      const etudiant = await tx.utilisateur.findUnique({
+        where: { utilisateur_id: etudiantId },
+        select: { nom: true, prenom: true },
+      });
+
+      await creerNotification(
+        professeur.utilisateur_id,
+        `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle}".`,
+        'validation_projet'
+      );
+    }
+
+    let documentation = null;
+    if (imageUrl) {
+      documentation = await tx.documentation.create({
+        data: { captures: imageUrl, experience_id: experience.experience_id },
+      });
+    }
+
+    return { experience, projet, competences: [...competencesTech, ...competencesDomaines], validation, documentation };
+  });
+};
+
+export const getProjetsByEtudiant = async (etudiantId) => {
+  return prisma.experience.findMany({
+    where: { utilisateur_id: etudiantId, type: 'projet' },
+    include: {
+      projet: { include: { validation: true } },
+      competences: true,
+      documentations: true,
+    },
+    orderBy: { date_experience: 'desc' },
+  });
+};
+
+export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
+  const projetExistant = await prisma.experience.findFirst({
+    where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle, experience_id: { not: experienceId } },
+  });
+  if (projetExistant) throw new Error('Projet déjà existant');
+
+  return await prisma.$transaction(async (tx) => {
+    const experience = await tx.experience.findFirst({
+      where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet' },
+      include: {
+        projet: { include: { validation: true } },
+      },
+    });
+
+    if (!experience) throw new Error('Projet non trouvé');
+
+    const isAcademique = data.projetType ? data.projetType === 'academique' : experience.type_specifique === 'academique';
+
+    await tx.experience.update({
+      where: { experience_id: experienceId },
+      data: {
+        titre: data.projectTitle ?? experience.titre,
+        date_experience: data.projectDate ? new Date(data.projectDate) : experience.date_experience,
+        description: data.description ?? experience.description,
+        visibilite: false,
+        type_specifique: data.projetType ? (data.projetType === 'academique' ? 'academique' : 'personnel') : experience.type_specifique,
+      },
+    });
+
+    await tx.projet.update({
+      where: { experience_id: experienceId },
+      data: {
+        lien_github: data.githubLink ?? experience.projet.lien_github,
+      },
+    });
+
+    if (data.technologies !== undefined || data.domains !== undefined) {
+      const technologies = JSON.parse(data.technologies || '[]');
+      const domaines = JSON.parse(data.domains || '[]');
+
+      await tx.competence.deleteMany({
+        where: { experiences: { some: { experience_id: experienceId } } },
+      });
+
+      await Promise.all([
+        ...technologies.map(nom =>
+          tx.competence.create({
+            data: {
+              type: 'technologie',
+              nom,
+              experiences: { connect: { experience_id: experienceId } },
+            },
+          })
+        ),
+        ...domaines.map(nom =>
+          tx.competence.create({
+            data: {
+              type: 'domaine',
+              nom,
+              experiences: { connect: { experience_id: experienceId } },
+            },
+          })
+        ),
+      ]);
+    }
+
+    if (experience.projet.validation) {
+      if (experience.projet.validation.statut !== 'en_attente') {
+        throw new Error('Ce projet a déjà été traité par le professeur, vous ne pouvez plus le modifier');
+      }
+
+      let profId = experience.projet.validation.utilisateur_id;
+
+      if (data.professorEmail) {
+        const nouveauProf = await tx.utilisateur.findUnique({
+          where: { email: data.professorEmail },
+          include: { professeur: true },
+        });
+        if (!nouveauProf || !nouveauProf.professeur) throw new Error('Professeur non trouvé avec cet email');
+        profId = nouveauProf.utilisateur_id;
+      }
+
+      await tx.valideProjet.update({
+        where: { experience_id: experienceId },
+        data: { statut: 'en_attente', utilisateur_id: profId, date_d_action: new Date(), commentaire: null },
+      });
+
+      const etudiant = await tx.utilisateur.findUnique({
+        where: { utilisateur_id: etudiantId },
+        select: { nom: true, prenom: true },
+      });
+
+      await creerNotification(
+        profId,
+        `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son projet "${data.projectTitle ?? experience.titre}". Il demande une validation.`,
+        'validation_projet'
+      );
+
+    } else if (data.professorEmail) {
+      const prof = await tx.utilisateur.findUnique({
+        where: { email: data.professorEmail },
+        include: { professeur: true },
+      });
+      if (!prof || !prof.professeur) throw new Error('Professeur non trouvé avec cet email');
+
+
+      await tx.valideProjet.create({
+        data: { utilisateur_id: prof.utilisateur_id, experience_id: experienceId, statut: 'en_attente', date_d_action: new Date()},
+      });
+
+      const etudiant = await tx.utilisateur.findUnique({
+        where: { utilisateur_id: etudiantId },
+        select: { nom: true, prenom: true },
+      });
+
+      await creerNotification(
+        prof.utilisateur_id,
+        `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle ?? experience.titre}".`,
+        'validation_projet'
+      );
+    }
+
+    if (imageUrl) {
+      const docExistante = await tx.documentation.findFirst({ where: { experience_id: experienceId } });
+      if (docExistante) {
+        await tx.documentation.update({
+          where: { documentation_id: docExistante.documentation_id },
+          data: { captures: imageUrl },
+        });
+      } else {
+        await tx.documentation.create({
+          data: { captures: imageUrl, experience_id: experienceId },
+        });
+      }
+    }
+
+    return tx.experience.findUnique({
+      where: { experience_id: experienceId },
+      include: {
+        projet: { include: { validation: true } },
+        competences: true,
+        documentations: true,
+      },
+    });
   });
 };
 
@@ -64,5 +283,27 @@ export const getProjetsVisiblesByEtudiant = async (etudiantId) => {
       documentations: true,
     },
     orderBy: { date_experience: 'desc' },
+  });
+};
+
+export const updateVisibiliteProjetService = async (etudiantId, experienceId, visibilite) => {
+  const experience = await prisma.experience.findFirst({
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet' },
+    include: { projet: { include: { validation: true } } },
+  });
+
+  if (!experience) throw new Error('Projet non trouvé');
+
+  if (experience.type_specifique === 'academique') {
+    const statut = experience.projet?.validation?.statut;
+    if (statut !== 'valide') {
+      throw new Error('Vous ne pouvez changer la visibilité que si le projet académique est validé');
+    }
+  }
+
+  return prisma.experience.update({
+    where: { experience_id: experienceId },
+    data: { visibilite },
+    select: { experience_id: true, visibilite: true },
   });
 };

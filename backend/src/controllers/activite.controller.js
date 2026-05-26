@@ -1,122 +1,87 @@
 import {
-  createActivite as createActiviteService,
-  getMesActivitesService,
-  getPortfolioPublicActivitiesService,
-  updateValidationActiviteService,
+  uploadPhoto,
+  creeActivite,
+  getActivitesByEtudiant,
+  editActivite,
+  updateVisibiliteActiviteService,
 } from '../services/activite.service.js';
-import { supabase } from '../config/supabase.js';
 
-function getStatusCode(error, fallbackStatus = 500) {
-  return error?.statusCode || fallbackStatus;
-}
-
-function normalizeArrayPayload(value) {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (typeof value === 'string' && value.trim().length > 0) {
-    try {
-      const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  return [];
-}
-
-export async function createActivite(req, res) {
+export const addActivite = async (req, res) => {
   try {
-    const data = { ...req.body };
-    data.competences = normalizeArrayPayload(data.competences);
-    data.documentations = normalizeArrayPayload(data.documentations);
+    const etudiantId = req.user.utilisateur_id;
+    const { titre, date_experience, description } = req.body;
 
-    if (req.file) {
-      const fileName = `${Date.now()}-${req.file.originalname}`;
-
-      const { error } = await supabase.storage
-        .from('activites')
-        .upload(fileName, req.file.buffer, {
-          contentType: req.file.mimetype,
-        });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      const { data: publicUrl } = supabase.storage
-        .from('activites')
-        .getPublicUrl(fileName);
-
-      data.documentations.push({
-        captures: publicUrl.publicUrl,
-      });
+    if (!titre || !date_experience || !description) {
+      return res.status(400).json({ success: false, message: 'Champs obligatoires manquants' });
     }
 
-    const activite = await createActiviteService(data, req.user);
+    let imageUrl = null;
+    if (req.file) imageUrl = await uploadPhoto(req.file);
 
-    return res.status(201).json({
-      success: true,
-      data: activite,
-    });
+    const result = await creeActivite(etudiantId, req.body, imageUrl);
+    return res.status(201).json({ success: true, data: result });
   } catch (error) {
-    return res.status(getStatusCode(error, 400)).json({
-      success: false,
-      message: error.message || "Erreur lors de la creation de l'activite",
-    });
+    console.error('Erreur addActivite:', error);
+    const errorsMap = {
+      'Activité déjà existante': 409,
+    };
+    const status = errorsMap[error.message];
+    if (status) return res.status(status).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
-}
+};
 
-export async function getMesActivites(req, res) {
+export const getMesActivites = async (req, res) => {
   try {
-    const activites = await getMesActivitesService(req.user);
-
-    return res.status(200).json({
-      success: true,
-      data: activites,
-    });
+    const activites = await getActivitesByEtudiant(req.user.utilisateur_id);
+    return res.status(200).json({ success: true, data: activites });
   } catch (error) {
-    return res.status(getStatusCode(error, 400)).json({
-      success: false,
-      message: error.message || 'Erreur lors de la recuperation des activites',
-    });
+    console.error('Erreur getMesActivites:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
-}
+};
 
-export async function updateValidationActivite(req, res) {
+export const updateActivite = async (req, res) => {
   try {
-    const activite = await updateValidationActiviteService(
-      req.params.id,
-      req.body,
-      req.user
-    );
+    const etudiantId = req.user.utilisateur_id;
+    const { experienceId } = req.params;
 
-    return res.status(200).json({
-      success: true,
-      data: activite,
-    });
+    let imageUrl = null;
+    if (req.file) imageUrl = await uploadPhoto(req.file);
+
+    const result = await editActivite(etudiantId, experienceId, req.body, imageUrl);
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    return res.status(getStatusCode(error, 400)).json({
-      success: false,
-      message: error.message || "Erreur lors de la mise a jour de la validation",
-    });
+    console.error('Erreur updateActivite:', error);
+    const errorsMap = {
+      'Activité déjà existante': 409,
+      'Activité non trouvée': 404,
+    };
+    const status = errorsMap[error.message];
+    if (status) return res.status(status).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
-}
+};
 
-export async function getActivitesPubliquesPortfolio(req, res) {
+export const updateVisibiliteActivite = async (req, res) => {
   try {
-    const activites = await getPortfolioPublicActivitiesService(req.params.etudiantId);
+    const etudiantId = req.user.utilisateur_id;
+    const { experienceId } = req.params;
+    const { visibilite } = req.body;
 
-    return res.status(200).json({
-      success: true,
-      data: activites,
-    });
+    if (typeof visibilite !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'visibilite doit être un boolean' });
+    }
+
+    const result = await updateVisibiliteActiviteService(etudiantId, experienceId, visibilite);
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
-    return res.status(getStatusCode(error, 400)).json({
-      success: false,
-      message: error.message || 'Erreur lors de la recuperation des activites publiques',
-    });
+    console.error('Erreur updateVisibiliteActivite:', error);
+    const errorsMap = {
+      'Activité non trouvée': 404,
+    };
+    const status = errorsMap[error.message];
+    if (status) return res.status(status).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
-}
+};
