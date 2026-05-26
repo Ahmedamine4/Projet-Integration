@@ -47,6 +47,7 @@ function onLinkUpdated() {
     <div class="contact__links">
       <ContactLink
         v-for="link in props.links"
+        v-show="isOwner || link.href"
         :key="link.platform"
         :title="link.label"
         :platform="link.platform"
@@ -70,18 +71,16 @@ function onLinkUpdated() {
   display: flex;
   justify-content: space-between;
   position: relative;
-  padding: var(--space-xl);
   background-color: #1A1412;
   color: var(--color-background);
   overflow: hidden;
   height: 60vh;
   min-height: 20rem;
   width: calc(100% - 20px);
-  justify-self: center;
   border-radius: var(--radius-md);
-  padding-left: 7%;
-  padding-right: 7%;
+  padding-inline: 7%;
   letter-spacing: 0.02em;
+  margin-inline: auto;
   margin-bottom: 10px;
   align-items: center;
   box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
