@@ -6,7 +6,7 @@ import {
 export const demanderRecommandation = async (req, res) => {
   try {
     const etudiantId = req.user.utilisateur_id;
-    const { objet, description, email_professeur, institution_id } = req.body;
+    const { objet, description, email_professeur } = req.body;
 
     if (!email_professeur) {
       return res.status(400).json({ success: false, message: 'Email du professeur requis' });
@@ -21,10 +21,6 @@ export const demanderRecommandation = async (req, res) => {
     console.error('Erreur demanderRecommandation:', error);
     const errorsMap = {
       'Professeur non trouvé avec cet email': 404,
-      'Institution non trouvée': 404,
-      'Une demande existe déjà pour ce professeur': 409,
-      'Email du professeur requis': 400,
-      'Objet de la demande requis': 400,
     };
     const status = errorsMap[error.message];
     if (status) return res.status(status).json({ success: false, message: error.message });
