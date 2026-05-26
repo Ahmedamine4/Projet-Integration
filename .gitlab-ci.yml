@@ -142,6 +142,7 @@ trivy-fs:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"' # temporary branch for testing security hardening, will be removed after testing
 
 # TRIVY - DOCKER, TERRAFORM, NGINX, AND INFRA MISCONFIGURATION
 trivy-config:
@@ -210,6 +211,7 @@ trivy-config:
         - backend/Dockerfile
         - frontend/Dockerfile
         - ai/Dockerfile
+    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"' # temporary branch for testing security hardening, will be removed after testing
 
 # FRONTEND TESTS
 frontend-tests:
