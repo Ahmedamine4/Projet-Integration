@@ -111,7 +111,7 @@ function onLinkUpdated() {
 .contact__content {
   position: relative;
   z-index: 1;
-  max-width: 600px;
+  max-width: min(600px, 100%);
 }
 .contact__links {
   position: relative;
@@ -120,11 +120,32 @@ function onLinkUpdated() {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-width: 300px;
+  margin-left: 3rem;
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+  .contact {
+    align-items: flex-start;
+    justify-content: center;
+    height: auto;
+    min-height: 60vh;
+    flex-direction: column;
+    gap: 2rem;
+    padding: var(--space-xl);
+  }
 
+  .contact__content {
+    width: 100%;
+    max-width: none;
+  }
+
+  .contact__links {
+    width: 100%;
+    min-width: 0px;
+    margin-left: 0rem;
+  }
 }
 
 @media (max-width: 480px) {

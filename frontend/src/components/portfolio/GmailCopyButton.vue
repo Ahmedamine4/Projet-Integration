@@ -42,6 +42,7 @@ function copyEmail() {
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
   margin-top: var(--space-lg);
+  max-width: 100%;
 }
 
 .gmail-btn:hover {
@@ -57,5 +58,12 @@ function copyEmail() {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+}
+.gmail-btn span {
+  max-width: 100%;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

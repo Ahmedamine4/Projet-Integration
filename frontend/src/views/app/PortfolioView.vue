@@ -348,12 +348,12 @@ const links = computed(() => [
   {
     platform: 'github',
     label: 'GitHub',
-    href: authStore.user?.github,
+    href: "https://github.com",
   },
   {
     platform: 'linkedin',
     label: 'LinkedIn',
-    href: authStore.user?.linkedin,
+    href: "https://linkedin.com",
   },
   {
     platform: 'x',
