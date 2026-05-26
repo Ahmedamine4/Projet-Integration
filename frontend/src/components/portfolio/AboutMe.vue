@@ -4,6 +4,7 @@ import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import Button from '@/components/common/Button.vue';
 import { FileText, ChevronUp, ChevronDown } from 'lucide-vue-next';
+import { useDoubleTap } from '@/composables/useDoubleTap';
 
 const props = defineProps({
   userId: { type: String, required: true },
@@ -107,22 +108,11 @@ async function saveEdit() {
   }
 }
 
-const lastTapAt = ref(0);
+const { handleDoubleTap } = useDoubleTap(() => {
+  if (isEdit.value || !isOwner.value) return;
 
-function handleDoubleTap(event) {
-  if (event.pointerType === 'mouse' || isEdit.value) return;
-
-  const now = Date.now();
-
-  if (now - lastTapAt.value < 320) {
-    event.preventDefault();
-    edit();
-    lastTapAt.value = 0;
-    return;
-  }
-
-  lastTapAt.value = now;
-}
+  edit();
+});
 
 onMounted(fetchAbout);
 watch(() => props.userId, fetchAbout);
@@ -138,7 +128,7 @@ watch(() => props.userId, fetchAbout);
       class="about-me__body"
       :class="{ edit: isEdit }"
       @dblclick="edit"
-      @pointerup="handleDoubleTap"
+      @click="handleDoubleTap"
     >
       <p v-if="loading && !isEdit">
         Loading professional summary...
@@ -214,7 +204,7 @@ watch(() => props.userId, fetchAbout);
   display: flex;
   flex-direction: column;
   border: var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: 0 10px 16px rgba(0, 0, 0, 0.04);
   background-color: rgba(var(--color-surface-rgb), 0.3);
 }

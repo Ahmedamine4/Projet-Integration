@@ -10,6 +10,7 @@ import { QrCode } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
+import { useActivityStore } from '@/stores/activity';
 import Error from '@/components/common/Error.vue';
 import { useRoute } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/ActivitiesSection.vue';
@@ -170,7 +171,7 @@ const activities = ref([
 		title: "Morocco Social Tech Hackathon 2018: Smart Region",
 		date: "2018-01-01",
 		description: "Participated in the Morocco Social Tech Hackathon 2018 focused on Smart Region solutions at Technopark Casablanca. The hackathon centered on designing digital solutions for smart cities, connected regions, social innovation, IoT systems, mobile applications, web platforms, data analysis, and civic technology to improve regional services and community impact.",
-		visibleToEveryone: true,
+		visibleToEveryone: false,
 		activityType: "Hackathon",
 		location: "Technopark Casablanca",
 		club: "",
@@ -184,6 +185,19 @@ const activities = ref([
 		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779735001446-maxresdefault.jpg"
 	},
 ]);
+
+const professorEmails = [
+  'ahmed.elamrani@ensat.ac.ma',
+  'fatima.zahra@ensat.ac.ma',
+  'youssef.bennani@uae.ac.ma',
+  'sara.lahlou@fstt.ac.ma',
+  'nour.chaoui@encgt.ac.ma',
+  'karim.boukhari@ensate.uae.ac.ma',
+  'amina.tazi@fs-tanger.ac.ma',
+  'mehdi.elidrissi@ensah.ma',
+  'salma.aitali@fstt.ac.ma',
+  'omar.benali@uae.ac.ma'
+];
 
 const authStore = useAuthStore();
 const userId = computed(() => authStore.user?.utilisateur_id);
@@ -204,79 +218,124 @@ const shouldShowProjectSection = computed(() => {
 	return isOwnPortfolio.value || visibleProjects.value.length > 0;
 });
 
+const visibleActivities = computed(() => {
+  if (isOwnPortfolio.value) return activities.value;
+
+  return activities.value.filter(activity => activity.visibleToEveryone);
+});
+
+const shouldShowActivitySection = computed(() => {
+  return isOwnPortfolio.value || visibleActivities.value.length > 0;
+});
+
 const projectStore = useProjectStore();
+const activityStore = useActivityStore();
 
-const isProjectModalOpen = ref(false);
-const projectError = ref('');
+const experienceErrors = ref({
+  project: '',
+  activity: '',
+});
 
-const projectModalMode = ref('create');
-const selectedProject = ref(null);
+const experienceModal = ref({
+  open: false,
+  type: 'project',
+  mode: 'create',
+  selected: null,
+});
 
-const professorEmails = [
-  'ahmed.elamrani@ensat.ac.ma',
-  'fatima.zahra@ensat.ac.ma',
-  'youssef.bennani@uae.ac.ma',
-  'sara.lahlou@fstt.ac.ma',
-  'nour.chaoui@encgt.ac.ma',
-  'karim.boukhari@ensate.uae.ac.ma',
-  'amina.tazi@fs-tanger.ac.ma',
-  'mehdi.elidrissi@ensah.ma',
-  'salma.aitali@fstt.ac.ma',
-  'omar.benali@uae.ac.ma'
-];
-
-function openProjectModal() {
-	projectError.value = '';
-	projectModalMode.value = 'create';
-	selectedProject.value = null;
-	isProjectModalOpen.value = true;
+function openExperienceModal(type) {
+  experienceErrors.value[type] = '';
+  experienceModal.value = {
+    open: true,
+    type,
+    mode: 'create',
+    selected: null,
+  };
 }
 
-function openEditProjectModal(project) {
-  projectError.value = '';
-  projectModalMode.value = 'edit';
-  selectedProject.value = project;
-  isProjectModalOpen.value = true;
+function openEditExperienceModal(type, experience) {
+  experienceErrors.value[type] = '';
+  experienceModal.value = {
+    open: true,
+    type,
+    mode: 'edit',
+    selected: experience,
+  };
 }
 
-function closeProjectModal() {
-	isProjectModalOpen.value = false;
-	selectedProject.value = null;
-	projectModalMode.value = 'create';
+function closeExperienceModal() {
+  experienceModal.value = {
+    ...experienceModal.value,
+    open: false,
+    mode: 'create',
+    selected: null,
+  };
 }
 
-async function handleProjectSubmit(project) {
-	projectError.value = '';
+async function handleExperienceSubmit(experience) {
+  const type = experienceModal.value.type;
+  experienceErrors.value[type] = '';
 
-	try {
-		if (projectModalMode.value === 'edit') {
-			const index = projects.value.findIndex(
-				item => item.id === selectedProject.value?.id
-			);
+  try {
+    const isEdit = experienceModal.value.mode === 'edit';
+    const selectedId = experienceModal.value.selected?.id;
 
-			if (index !== -1) {
-				projects.value[index] = {
-					...projects.value[index],
-					...project,
-					imagePreview: project.image
-						? URL.createObjectURL(project.image)
-						: projects.value[index].imagePreview
-				};
-			}
+    if (type === 'project') {
+      if (isEdit) {
+        const index = projects.value.findIndex(item => item.id === selectedId);
 
-			closeProjectModal();
-			return;
-		}
+        if (index !== -1) {
+          projects.value[index] = {
+            ...projects.value[index],
+            ...experience,
+            imagePreview: experience.image
+              ? URL.createObjectURL(experience.image)
+              : projects.value[index].imagePreview,
+          };
+        }
 
-		const createdProject = await projectStore.createProject(project);
-		projects.value.unshift(createdProject);
-		closeProjectModal();
-	}
-	catch(error) {
-		projectError.value = error.response?.data?.message ||
-			error.message ||
-			'Failed to save project';
-	}
+        closeExperienceModal();
+        return;
+      }
+
+      const createdProject = await projectStore.createProject(experience);
+      projects.value.unshift(createdProject);
+      closeExperienceModal();
+      return;
+    }
+
+    if (type === 'activity') {
+      if (isEdit) {
+        const index = activities.value.findIndex(item => item.id === selectedId);
+
+        if (index !== -1) {
+          activities.value = activities.value.map((activity, currentIndex) =>
+            currentIndex === index
+              ? {
+                  ...activity,
+                  ...experience,
+                  imagePreview: experience.image
+                    ? URL.createObjectURL(experience.image)
+                    : activity.imagePreview,
+                }
+              : activity
+          );
+        }
+
+        closeExperienceModal();
+        return;
+      }
+
+      const createdActivity = await activityStore.createActivity(experience);
+      activities.value = [createdActivity, ...activities.value];
+      closeExperienceModal();
+    }
+  }
+  catch (error) {
+    experienceErrors.value[type] = error.response?.data?.message ||
+      error.message ||
+      `Failed to save ${type}`;
+  }
 }
 
 const isQRModalOpen = ref(false);
@@ -331,24 +390,37 @@ function openQRModal() {
 					<Skills :user-id="userId" />
 				</div>
 			</div>
-			<div class="portfolio-section-wrapper">
+			<div
+        v-if="shouldShowProjectSection"
+        class="portfolio-section-wrapper"
+      >
 				<ProjectsSection
-					v-if="shouldShowProjectSection"
 					:projects="visibleProjects"
 					:can-add="isOwnPortfolio"
-					@add-project="openProjectModal"
-					@edit-project="openEditProjectModal"
+					@add-project="openExperienceModal('project')"
+					@edit-project="project => openEditExperienceModal('project', project)"
 				/>
 			</div>
 
-			<div class="portfolio-section-wrapper">
+			<Error v-if="experienceErrors.project">
+				{{ experienceErrors.project }}
+			</Error>
+
+			<div
+        v-if="shouldShowActivitySection"
+        class="portfolio-section-wrapper"
+      >
 				<ActivitiesSection
-					:activities
+					:activities="visibleActivities"
 					:can-add="isOwnPortfolio"
+					@add-activity="openExperienceModal('activity')"
+					@edit-activity="activity => openEditExperienceModal('activity', activity)"
 				/>
 			</div>
 
-			<Error v-if="projectError">{{ projectError }}</Error>
+			<Error v-if="experienceErrors.activity">
+				{{ experienceErrors.activity }}
+			</Error>
 		</main>
 	</div>
 	<QRcodeModal
@@ -360,15 +432,17 @@ function openQRModal() {
 
 	<ExperienceModal
 		v-if="isOwnPortfolio"
-		:open="isProjectModalOpen"
-		:mode="projectModalMode"
-		type="project"
-		:initial-value="selectedProject"
-		:loading="projectStore.loading"
+		:open="experienceModal.open"
+		:mode="experienceModal.mode"
+		:type="experienceModal.type"
+		:initial-value="experienceModal.selected"
+		:loading="experienceModal.type === 'project'
+			? projectStore.loading
+			: activityStore.loading"
 		:school-options="[]"
 		:professor-emails="professorEmails"
-		@close="closeProjectModal"
-		@submit="handleProjectSubmit"
+		@close="closeExperienceModal"
+		@submit="handleExperienceSubmit"
 	/>
 </template>
 

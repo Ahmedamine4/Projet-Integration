@@ -29,7 +29,7 @@ function buildActivityFormData(activity) {
   formData.append('documentations', JSON.stringify([]));
 
   if (activity.image) {
-    formData.append('img', activity.image);
+    formData.append('photo', activity.image);
   }
 
   return formData;

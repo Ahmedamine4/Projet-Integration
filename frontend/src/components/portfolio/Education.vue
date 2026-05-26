@@ -56,7 +56,7 @@ const educationItems = [
   display: flex;
   flex-direction: column;
   border: var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: 0 10px 16px rgba(0, 0, 0, 0.04);
   background-color: rgba(var(--color-surface-rgb), 0.3);
 }

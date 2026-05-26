@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue';
 import { ArrowUpRight, Eye, EyeOff } from 'lucide-vue-next';
+import { useDoubleTap } from '@/composables/useDoubleTap';
 
 const props = defineProps({
   project: {
@@ -22,22 +22,11 @@ function formatDate(date) {
   })
 }
 
-const lastTapAt = ref(0);
+const { handleDoubleTap } = useDoubleTap(() => {
+  if (!props.canEdit) return;
 
-function handleDoubleTap(event) {
-  if (event.pointerType === 'mouse' || !props.canEdit) return;
-
-  const now = Date.now();
-
-  if (now - lastTapAt.value < 320) {
-    event.preventDefault();
-    emit('edit', props.project);
-    lastTapAt.value = 0;
-    return;
-  }
-
-  lastTapAt.value = now;
-}
+  emit('edit', props.project);
+});
 </script>
 
 <template>
@@ -45,7 +34,7 @@ function handleDoubleTap(event) {
     class="project-card"
     :class="{ 'project-card--editable': canEdit }"
     @dblclick="canEdit && emit('edit', project)"
-    @pointerup="handleDoubleTap"
+    @click="handleDoubleTap"
   >
     <div class="project-preview">
       <img

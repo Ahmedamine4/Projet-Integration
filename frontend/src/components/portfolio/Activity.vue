@@ -1,12 +1,19 @@
 <script setup>
-import { MapPin, CalendarDays } from 'lucide-vue-next';
+import { MapPin, CalendarDays, Eye, EyeOff } from 'lucide-vue-next';
+import { useDoubleTap } from '@/composables/useDoubleTap';
 
-defineProps({
+const props = defineProps({
   activity: {
     type: Object,
     required: true,
   },
+  canEdit: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const emit = defineEmits(['edit']);
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
@@ -14,10 +21,20 @@ function formatDate(date) {
     year: 'numeric',
   });
 }
+
+const { handleDoubleTap } = useDoubleTap(() => {
+  if (!props.canEdit) return;
+
+  emit('edit', props.activity);
+});
 </script>
 
 <template>
-  <article class="activity-card">
+  <article
+    class="activity-card"
+    @dblclick="canEdit && emit('edit', activity)"
+    @click="handleDoubleTap"
+  >
     <div class="activity-top">
       <div class="activity-info">
         <div class="activity-kicker">
@@ -28,6 +45,13 @@ function formatDate(date) {
           <span class="activity-date">
             <CalendarDays :size="13" :stroke-width="2" />
             {{ formatDate(activity.date) }}
+          </span>
+          <span
+            v-if="canEdit"
+            class="activity-visibility"
+          >
+            <Eye v-if="activity.visibleToEveryone" :size="14" :stroke-width="2" />
+            <EyeOff v-else :size="14" :stroke-width="2" />
           </span>
         </div>
 
@@ -88,6 +112,13 @@ function formatDate(date) {
           +{{ activity.domains.length - 2 }}
         </span>
       </div>
+
+      <span
+        v-if="canEdit"
+        class="activity-edit-hint"
+      >
+        Double-click to edit
+      </span>
     </div>
   </article>
 </template>
@@ -114,7 +145,7 @@ function formatDate(date) {
       var(--color-background)    
     );
   border: var(--border);
-  border-radius: 2rem;
+  border-radius: var(--radius-lg);
   box-shadow: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
   overflow: hidden;
   user-select: none;
@@ -143,7 +174,8 @@ function formatDate(date) {
 }
 
 .activity-type,
-.activity-date {
+.activity-date,
+.activity-visibility {
   width: fit-content;
   padding: 0.4rem 0.64rem;
   border-radius: 999px;
@@ -170,6 +202,18 @@ function formatDate(date) {
 }
 
 .activity-date svg {
+  flex-shrink: 0;
+}
+
+.activity-visibility {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(var(--color-primary-rgb), 0.58);
+  background-color: rgba(var(--color-primary-rgb), 0.055);
+}
+
+.activity-visibility svg {
   flex-shrink: 0;
 }
 
@@ -287,6 +331,15 @@ function formatDate(date) {
 
 .activity-tags.muted span {
   color: rgba(var(--color-primary-rgb), 0.42);
+}
+
+.activity-edit-hint {
+  justify-self: end;
+  color: rgba(var(--color-primary-rgb), 0.48);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-medium);
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 @media (max-width: 820px) {
