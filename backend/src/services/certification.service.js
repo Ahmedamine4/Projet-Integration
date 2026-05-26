@@ -52,3 +52,15 @@ export const getMyCertifications = async (userId) => {
     }
   });
 };
+
+export const getCertificationsVisiblesByEtudiant = async (etudiantId) => {
+  return prisma.experience.findMany({
+    where: { utilisateur_id: etudiantId, type: 'certification', visibilite: true },
+    include: {
+      certification: { include: { validation: true } },
+      competences: true,
+      documentations: true,
+    },
+    orderBy: { date_experience: 'desc' },
+  });
+};

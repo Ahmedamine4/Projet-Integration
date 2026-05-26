@@ -10,9 +10,6 @@ import aiRoutes from './routes/ai.route.js';
 import stageRoutes from './routes/stage.routes.js';
 import activiteRoutes from './routes/activite.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
-import notificationRoutes from './routes/notification.routes.js';
-import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
-import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
 
 const app = express();
 app.use(cors({
@@ -44,11 +41,6 @@ app.use('/api/validation', ValidationEtudiantRoutes);
 
 // Branchement des routes d'ajout du projet
 app.use('/api', projetRoutes);
-app.use('/api/notifications', notificationRoutes);
-//Modifications des infromations
-app.use('/api/users', updateUtilisateurRoutes);
-
-app.use('/api', ValidationProjetRoutes);
 
 // Route de test
 app.get("/", (req, res) => {

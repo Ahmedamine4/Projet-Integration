@@ -1,4 +1,4 @@
-import express from 'express';
+ import express from 'express';
 import {
   createActivite,
   getMesActivites,
@@ -9,16 +9,17 @@ import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
 
 const router = express.Router();
+router.use(authMiddleware);
 
 // Creation unique: personnelle ou academique selon typeActivite,
 // avec image optionnelle envoyee dans le champ form-data "img".
-router.post('/', authMiddleware, upload.single('img'), createActivite);
+router.post('/', authorizeRoles(ROLES.ETUDIANT), upload.single('photo'), createActivite);
 
 // Liste des activites du compte connecte.
-router.get('/me', authMiddleware, getMesActivites);
+router.get('/me', getMesActivites);
 
 // Validation ou refus par un administrateur.
-router.patch('/:id/validation', authMiddleware, updateValidationActivite);
+router.patch('/:id/validation', updateValidationActivite);
 
 // Affichage public du portfolio:
 // activites personnelles visibles + activites academiques validees.

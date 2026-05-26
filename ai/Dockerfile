@@ -24,7 +24,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY scripts/main.py        ./scripts/main.py
 COPY scripts/inference.py   ./scripts/inference.py
 COPY scripts/normalise.py   ./scripts/normalise.py
-COPY scripts/__init__.py    ./scripts/__init__.py
 COPY scripts/download_models.sh ./scripts/download_models.sh
 COPY models ./models
 COPY data ./data

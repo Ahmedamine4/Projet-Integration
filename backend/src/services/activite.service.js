@@ -427,3 +427,15 @@ export async function getPortfolioPublicActivitiesService(etudiantId) {
     },
   });
 }
+
+export async function getActivitesVisiblesByEtudiant(etudiantId) {
+  return prisma.experience.findMany({
+    where: { utilisateur_id: etudiantId, type: 'activite', visibilite: true },
+    include: {
+      activite: { include: { validation: true, clubs: true } },
+      competences: true,
+      documentations: true,
+    },
+    orderBy: { date_experience: 'desc' },
+  });
+}
