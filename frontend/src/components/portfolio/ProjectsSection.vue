@@ -125,7 +125,9 @@ function applyMomentum(currentTime) {
     </div>
 
     <div class="projects-empty" v-else>
-      No projects yet
+      <div class="empty-state">
+        <p>No projects yet</p>
+      </div>
     </div>
   </div>
 </template>
@@ -248,10 +250,25 @@ function applyMomentum(currentTime) {
   min-height: 12rem;
   padding-inline: var(--padding-inline);
   padding-block: var(--padding-block);
-  color: rgba(var(--color-primary-rgb), 0.52);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-medium);
   text-align: center;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  width: min(100%, 28rem);
+  padding: var(--space-xl);
+  border: 1px dashed rgba(var(--color-primary-rgb), 0.18);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-surface-rgb), 0.22);
+}
+
+.empty-state p {
+  margin: 0;
+  color: rgba(var(--color-primary-rgb), 0.52);
+  font-family: var(--font-editorial);
+  font-size: 1.45rem;
+  font-weight: var(--font-medium);
 }
 
 @media (max-width: 640px) {

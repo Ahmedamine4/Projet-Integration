@@ -400,11 +400,11 @@ function openQRModal() {
 					@add-project="openExperienceModal('project')"
 					@edit-project="project => openEditExperienceModal('project', project)"
 				/>
-			</div>
 
-			<Error v-if="experienceErrors.project">
-				{{ experienceErrors.project }}
-			</Error>
+				<Error v-if="experienceErrors.project">
+					{{ experienceErrors.project }}
+				</Error>
+			</div>
 
 			<div
         v-if="shouldShowActivitySection"
@@ -416,11 +416,11 @@ function openQRModal() {
 					@add-activity="openExperienceModal('activity')"
 					@edit-activity="activity => openEditExperienceModal('activity', activity)"
 				/>
-			</div>
 
-			<Error v-if="experienceErrors.activity">
-				{{ experienceErrors.activity }}
-			</Error>
+				<Error v-if="experienceErrors.activity">
+					{{ experienceErrors.activity }}
+				</Error>
+			</div>
 		</main>
 	</div>
 	<QRcodeModal
@@ -651,6 +651,8 @@ function openQRModal() {
 
 .portfolio-section-wrapper {
 	margin-inline: calc(var(--portfolio-section-bleed) * -1);
+	display: grid;
+	gap: var(--space-md);
 }
 
 @media (max-width: 980px) {

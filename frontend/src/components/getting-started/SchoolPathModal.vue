@@ -2,11 +2,10 @@
 import { ref, reactive, computed } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
+import YearInput from '@/components/common/YearInput.vue';
 import Button from '@/components/common/Button.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
-import { addDays, formatLocalDate } from '@/utils/date';
-import DatePicker from '../common/DatePicker.vue';
 
 const academicLevels = [
   {
@@ -98,18 +97,18 @@ const selectedLevel = computed(() => {
 const schoolFieldsInputs = reactive({
   bachelorSchool: {
     schoolName: '',
-    startDate: '',
-    endDate: '',
+    startYear: null,
+    endYear: null,
   },
   masterSchool: {
     schoolName: '',
-    startDate: '',
-    endDate: '',
+    startYear: null,
+    endYear: null,
   },
   phdInstitution: {
     schoolName: '',
-    startDate: '',
-    endDate: '',
+    startYear: null,
+    endYear: null,
   },
 });
 
@@ -135,8 +134,8 @@ const schoolPath = computed(() => {
         fieldKey,
         {
           institutionId: getInstitutionIdByName(input.schoolName),
-          startDate: input.startDate,
-          endDate: input.endDate,
+          startYear: input.startYear,
+          endYear: input.endYear,
           isCurrent: isCurrentSchoolField(fieldKey),
         },
       ];
@@ -147,8 +146,8 @@ const schoolPath = computed(() => {
 const completedStepsCount = computed(() => {
   if (isCurrentlyStudying.value === null) return 0;
   if (!selectedLevelKey.value) return 1;
-  return Object.values(schoolPath.value).reduce((acc, school) => {
-    return isSchoolComplete(school) ? acc + 1 : acc;
+  return Object.entries(schoolPath.value).reduce((acc, [fieldKey, school]) => {
+    return isSchoolComplete(school, fieldKey) ? acc + 1 : acc;
   }, 2);
 });
 
@@ -180,12 +179,12 @@ const currentSchoolFieldDescription = computed(() => {
   return completedSchoolDescriptions[currentSchoolFieldKey.value];
 });
 
-const currentSchoolEndDateLabel = computed(() => {
+const currentSchoolEndYearLabel = computed(() => {
   if (isCurrentSchoolField(currentSchoolFieldKey.value)) {
-    return 'Expected completion date';
+    return 'Expected completion year';
   }
 
-  return 'Completion date';
+  return 'Completion year';
 });
 
 const isCurrentStepComplete = computed(() => {
@@ -199,21 +198,22 @@ const isCurrentStepComplete = computed(() => {
 
   const currentSchool = schoolPath.value[currentSchoolFieldKey.value];
 
-  return isSchoolComplete(currentSchool);
+  return isSchoolComplete(currentSchool, currentSchoolFieldKey.value);
 });
 
-function isSchoolComplete(school) {
+function isSchoolComplete(school, fieldKey) {
   return Boolean(
     school.institutionId &&
-    school.startDate &&
-    school.endDate
+    isValidYear(school.startYear) &&
+    isValidYear(school.endYear) &&
+    isSchoolYearRangeValid(school, fieldKey)
   );
 }
 
 function resetSchoolField(fieldKey) {
   schoolFieldsInputs[fieldKey].schoolName = '';
-  schoolFieldsInputs[fieldKey].startDate = '';
-  schoolFieldsInputs[fieldKey].endDate = '';
+  schoolFieldsInputs[fieldKey].startYear = null;
+  schoolFieldsInputs[fieldKey].endYear = null;
 }
 
 function resetCurrentStep() {
@@ -274,51 +274,78 @@ function goNext() {
   currentStepIndex.value++;
 }
 
-const todayValue = formatLocalDate(new Date());
+const currentYear = new Date().getFullYear();
+const minSchoolYear = 1980;
 
-function getPreviousSchoolFieldKey() {
+function getPreviousSchoolFieldKey(fieldKey = currentSchoolFieldKey.value) {
   const fields = selectedLevel.value?.fields ?? [];
-  const index = fields.indexOf(currentSchoolFieldKey.value);
+  const index = fields.indexOf(fieldKey);
 
   return index > 0 ? fields[index - 1] : '';
 }
 
-function getPreviousSchoolEndDate() {
-  const previousFieldKey = getPreviousSchoolFieldKey();
+function getPreviousSchoolEndYear(fieldKey = currentSchoolFieldKey.value) {
+  const previousFieldKey = getPreviousSchoolFieldKey(fieldKey);
 
   return previousFieldKey
-    ? schoolFieldsInputs[previousFieldKey].endDate
-    : '';
+    ? schoolFieldsInputs[previousFieldKey].endYear
+    : null;
 }
 
-function getStartMinDate() {
-  const previousEndDate = getPreviousSchoolEndDate();
+function getStartMinYear() {
+  const previousEndYear = Number(getPreviousSchoolEndYear());
 
-  return previousEndDate ? addDays(previousEndDate, 1) : '';
+  return previousEndYear
+    ? Math.max(previousEndYear, minSchoolYear)
+    : minSchoolYear;
 }
 
-function getStartMaxDate() {
-  const endDate = schoolFieldsInputs[currentSchoolFieldKey.value].endDate;
+function getStartMaxYear() {
+  const endYear = Number(schoolFieldsInputs[currentSchoolFieldKey.value].endYear);
 
-  if (!endDate) return todayValue;
+  if (endYear) return Math.min(endYear, currentYear);
 
-  const dayBeforeEndDate = addDays(endDate, -1);
-
-  return dayBeforeEndDate < todayValue ? dayBeforeEndDate : todayValue;
+  return currentYear;
 }
 
-function getEndMinDate() {
-  const startDate = schoolFieldsInputs[currentSchoolFieldKey.value].startDate;
+function getEndMinYear() {
+  const startYear = schoolFieldsInputs[currentSchoolFieldKey.value].startYear;
 
-  if (startDate) return addDays(startDate, 1);
+  if (isCurrentSchoolField(currentSchoolFieldKey.value)) {
+    return Math.max(Number(startYear) || minSchoolYear, currentYear);
+  }
 
-  return getStartMinDate();
+  if (isValidYear(startYear)) return startYear;
+
+  return getStartMinYear();
 }
 
-function getEndMaxDate() {
-  if (isCurrentSchoolField(currentSchoolFieldKey.value)) return '';
+function getEndMaxYear() {
+  if (isCurrentSchoolField(currentSchoolFieldKey.value)) return null;
 
-  return todayValue;
+  return currentYear;
+}
+
+function isValidYear(value) {
+  const year = Number(value);
+
+  return /^\d{4}$/.test(String(value)) && year >= minSchoolYear;
+}
+
+function isSchoolYearRangeValid(school, fieldKey) {
+  const startYear = Number(school.startYear);
+  const endYear = Number(school.endYear);
+
+  if (startYear > currentYear) return false;
+  if (endYear < startYear) return false;
+  if (school.isCurrent && endYear < currentYear) return false;
+  if (!school.isCurrent && endYear > currentYear) return false;
+
+  const previousEndYear = Number(getPreviousSchoolEndYear(fieldKey));
+
+  if (previousEndYear && startYear < previousEndYear) return false;
+
+  return true;
 }
 </script>
 <template>
@@ -420,20 +447,20 @@ function getEndMaxDate() {
                   v-model="schoolFieldsInputs[currentSchoolFieldKey].schoolName"
                 />
 
-                <DatePicker
-                  v-model="schoolFieldsInputs[currentSchoolFieldKey].startDate"
-                  label="Start date"
-                  placeholder="Select start date"
-                  :min-date="getStartMinDate()"
-                  :max-date="getStartMaxDate()"
+                <YearInput
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].startYear"
+                  label="Start year"
+                  placeholder="YYYY"
+                  :min="getStartMinYear()"
+                  :max="getStartMaxYear()"
                 />
 
-                <DatePicker
-                  v-model="schoolFieldsInputs[currentSchoolFieldKey].endDate"
-                  :label="currentSchoolEndDateLabel"
-                  :placeholder="`Select ${currentSchoolEndDateLabel.toLowerCase()}`"
-                  :min-date="getEndMinDate()"
-                  :max-date="getEndMaxDate()"
+                <YearInput
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].endYear"
+                  :label="currentSchoolEndYearLabel"
+                  placeholder="YYYY"
+                  :min="getEndMinYear()"
+                  :max="getEndMaxYear()"
                 />
               </div>
             </div>
