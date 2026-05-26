@@ -100,7 +100,9 @@ function savePhoneNumber() {
 </script>
 
 <template>
+  <div class="getting-started-page">
   <div class="page-content">
+  
     <h1>Let's get you set up,</h1>
     <p class="page-subtitle">
   Complete these quick steps to build and secure your verified portfolio.
@@ -187,6 +189,7 @@ function savePhoneNumber() {
       </div>
     </div>
   </div>
+  </div>
   <SchoolPathModal
     :open="isSchoolModalOpen"
     :schools="institutionStore.institutions"
@@ -204,6 +207,15 @@ function savePhoneNumber() {
   margin-inline: auto;
   padding: 2rem var(--space-xl);
   gap: 3rem;
+  position: relative;
+  /*overflow: hidden;*/
+}
+.getting-started-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 35%, rgba(236, 72, 153, 0.22), transparent 32%),
+    radial-gradient(circle at 50% 45%, rgba(249, 115, 22, 0.18), transparent 40%),
+    linear-gradient(120deg, #fff7ed 0%, #fffaf5 50%, #ffffff 100%);
 }
 .page-content h1 {
   margin: 0;
@@ -223,6 +235,7 @@ function savePhoneNumber() {
   height: fit-content;
   padding-bottom: 0;
   position: relative;
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .wrapper-header {
@@ -393,5 +406,13 @@ display:block;
   pointer-events: none;
   z-index: 2;
 }
+
+:global(body) {
+  background:
+    radial-gradient(circle at 18% 35%, rgba(236, 72, 153, 0.22), transparent 32%),
+    radial-gradient(circle at 50% 45%, rgba(249, 115, 22, 0.18), transparent 40%),
+    linear-gradient(120deg, #fff7ed 0%, #fffaf5 50%, #ffffff 100%);
+}
+
 
 </style>
