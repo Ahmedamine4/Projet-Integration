@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import CloseButton from '@/components/common/CloseButton.vue';
 import QRCode from 'qrcode';
-import Button from '@/components/common/Button.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 
 const props = defineProps({
@@ -60,21 +60,21 @@ watch(
         </div>
 
         <div class="modal__footer">
-          <Button
+          <BaseButton
               type="button"
               variant="ghost"
               @click="$emit('close')"
             >
               Close
-            </Button>
+            </BaseButton>
 
-            <Button
+            <BaseButton
               type="submit"
               variant="submit"
               :loading
             >
               {{ `Copy link` }}
-            </Button>
+            </BaseButton>
         </div>
       </div>
     </div>

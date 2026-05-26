@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, useAttrs } from 'vue';
-import Input from '@/components/common/Input.vue';
+import BaseInput from '@/components/common/BaseInput.vue';
 
 defineOptions({
   inheritAttrs: false,
@@ -67,7 +67,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="dropdownElement" class="dropdown">
-    <Input
+    <BaseInput
       v-model="model"
       v-bind="$attrs"
       :label

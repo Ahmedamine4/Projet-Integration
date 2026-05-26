@@ -2,12 +2,12 @@
 import { ref, reactive } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter, useRoute } from 'vue-router';
-import Card from '@/components/common/Card.vue';
-import Input from '@/components/common/Input.vue';
-import Button from '@/components/common/Button.vue';
+import BaseCard from '@/components/common/BaseCard.vue';
+import BaseInput from '@/components/common/BaseInput.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
 import AuthFooter from '@/components/auth/AuthFooter.vue';
-import Divider from '@/components/common/Divider.vue';
-import Error from '@/components/common/Error.vue';
+import BaseDivider from '@/components/common/BaseDivider.vue';
+import BaseError from '@/components/common/BaseError.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -77,24 +77,24 @@ const loginWithGoogle = async () => {
 </script>
 
 <template>
-  <Card title="Welcome back" size="sm">
+  <BaseCard title="Welcome back" size="sm">
     <p class="auth-subtitle">Sign in to your account to continue</p>
 
     <form class="auth-form" @submit.prevent="login">
       <div class="field">
-        <Input
+        <BaseInput
           v-model="email"
           label="Email address"
           placeholder="name@company.com"
           autocomplete="email"
         />
 
-        <Error v-if="errors.email" variant="field">
+        <BaseError v-if="errors.email" variant="field">
           {{ errors.email }}
-        </Error>
+        </BaseError>
       </div>
       <div class="field">
-        <Input
+        <BaseInput
           v-model="password"
           label="Password"
           type="password"
@@ -103,19 +103,19 @@ const loginWithGoogle = async () => {
         />
       </div>
       <div class="submit-row">
-        <Button
+        <BaseButton
           block
           variant="submit"
           :loading="isLoggingIn"
           :disabled="isLoggingIn || isGoogleLoading || !email || !password"
         >
           Sign In
-        </Button>
+        </BaseButton>
       </div>
 
-      <Divider>Or continue with Google</Divider>
+      <BaseDivider>Or continue with Google</BaseDivider>
 
-      <Button
+      <BaseButton
         type="button"
         variant="google"
         block
@@ -124,18 +124,18 @@ const loginWithGoogle = async () => {
         @click="loginWithGoogle"
       >
         Continue with Google
-      </Button>
+      </BaseButton>
 
-      <Error v-if="serverError">
+      <BaseError v-if="serverError">
         {{ serverError }}
-      </Error>
+      </BaseError>
     </form>
     <AuthFooter
       message="Don't have an account?"
       link-text="Register now"
       to="/register"
     />
-  </Card>
+  </BaseCard>
 </template>
 <style scoped>
 .auth-form {

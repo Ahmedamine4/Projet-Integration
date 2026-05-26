@@ -14,11 +14,13 @@ const props = defineProps({
 
 const meterStyle = computed(() => {
   const completionPercentage = (props.value * 100) / props.max;
-  let backgroundColor = '';
+  let backgroundColor;
+
   if (completionPercentage <= 25) backgroundColor = 'var(--color-error)';
   else if (completionPercentage <= 50) backgroundColor = '#e07012';
   else if (completionPercentage <= 75) backgroundColor = '#d9b20b';
   else backgroundColor = 'var(--color-success)';
+
   return {
     width: `${completionPercentage}%`,
     backgroundColor,

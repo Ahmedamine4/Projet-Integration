@@ -1,16 +1,16 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { analyzeExperienceDescription } from '@/services/aiApi';
-import Button from '@/components/common/Button.vue';
-import Input from '@/components/common/Input.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
+import BaseInput from '@/components/common/BaseInput.vue';
 import DatePicker from '@/components/common/DatePicker.vue';
-import Dropdown from '@/components/common/Dropdown.vue';
-import Labels from '@/components/common/Labels.vue';
+import BaseDropdown from '@/components/common/BaseDropdown.vue';
+import BaseLabels from '@/components/common/BaseLabels.vue';
 import ToggleSwitch from '@/components/common/ToggleSwitch.vue';
 import ImageDropzone from '@/components/common/ImageDropzone.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
-import Select from '@/components/common/Select.vue';
-import Error from '@/components/common/Error.vue';
+import BaseSelect from '@/components/common/BaseSelect.vue';
+import BaseError from '@/components/common/BaseError.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { formatLocalDate } from '@/utils/date';
 import ModificationRequest from '../common/ModificationRequest.vue';
@@ -483,14 +483,14 @@ const existingImageName = computed(() => {
               {{ message.content }}
             </ModificationRequest>
             <div class="field">
-              <Input
+              <BaseInput
                 v-model="form.title"
                 :label="`${capitalizedType} title`"
                 :placeholder="`Enter your ${props.type} title`"
               />
-              <Error v-if="errors.title" variant="field">
+              <BaseError v-if="errors.title" variant="field">
                 {{ errors.title }}
-              </Error>
+              </BaseError>
             </div>
 
             <div
@@ -503,9 +503,9 @@ const existingImageName = computed(() => {
                 :placeholder="`Select ${props.type} date`"
                 :max-date="todayValue"
               />
-              <Error v-if="errors.date" variant="field">
+              <BaseError v-if="errors.date" variant="field">
                 {{ errors.date }}
-              </Error>
+              </BaseError>
             </div>
 
 
@@ -517,9 +517,9 @@ const existingImageName = computed(() => {
                   placeholder="Select start date"
                   :max-date="todayValue"
                 />
-                <Error v-if="errors.startDate" variant="field">
+                <BaseError v-if="errors.startDate" variant="field">
                   {{ errors.startDate }}
-                </Error>
+                </BaseError>
               </div>
 
               <div class="field">
@@ -529,9 +529,9 @@ const existingImageName = computed(() => {
                   placeholder="Select end date"
                   :min-date="form.startDate"
                 />
-                <Error v-if="errors.endDate" variant="field">
+                <BaseError v-if="errors.endDate" variant="field">
                   {{ errors.endDate }}
-                </Error>
+                </BaseError>
               </div>
             </div>
 
@@ -546,9 +546,9 @@ const existingImageName = computed(() => {
                 :initial-file-name="existingImageName"
                 v-model="form.image"
               />
-              <Error v-if="errors.image" variant="field">
+              <BaseError v-if="errors.image" variant="field">
                 {{ errors.image }}
-              </Error>
+              </BaseError>
             </div>
 
             <div class="field">
@@ -563,9 +563,9 @@ const existingImageName = computed(() => {
                   :maxlength="MAX_TEXT_LEN"
                 />
                 <div class="textarea-meta">
-                  <Error v-if="errors.description" variant="field">
+                  <BaseError v-if="errors.description" variant="field">
                     {{ errors.description }}
-                  </Error>
+                  </BaseError>
 
                   <span class="textarea-counter">
                     {{ form.description.length }}/{{ MAX_TEXT_LEN }}
@@ -579,14 +579,14 @@ const existingImageName = computed(() => {
                 Missing a technology? Make sure it is clearly mentioned in the description, then try again.
               </p>
 
-              <Labels
+              <BaseLabels
                 title="Detected domains"
                 :items="domains"
                 :color-rgb="domainColorRgb"
                 @toggle="toggleLabel"
               />
 
-              <Labels
+              <BaseLabels
                 title="Detected technologies"
                 :items="technologies"
                 @toggle="toggleLabel"
@@ -618,7 +618,7 @@ const existingImageName = computed(() => {
               v-if="currentConfig.showMissions"
               class="field"
             >
-              <Input
+              <BaseInput
                 v-model="form.report"
                 label="Internship report URL"
                 type="url"
@@ -631,7 +631,7 @@ const existingImageName = computed(() => {
               class="form-group"
             >
               <div class="field">
-                <Input
+                <BaseInput
                   v-model="form.activityType"
                   label="Activity type"
                   placeholder="Club event, competition, workshop..."
@@ -639,7 +639,7 @@ const existingImageName = computed(() => {
               </div>
 
               <div class="field">
-                <Input
+                <BaseInput
                   v-model="form.location"
                   label="Location"
                   placeholder="Where did it happen?"
@@ -647,7 +647,7 @@ const existingImageName = computed(() => {
               </div>
 
               <div class="field">
-                <Input
+                <BaseInput
                   v-model="form.club"
                   label="Club"
                   placeholder="Club or organization name"
@@ -660,7 +660,7 @@ const existingImageName = computed(() => {
               class="form-group"
             >
               <div class="field">
-                <Input
+                <BaseInput
                   v-model="form.institution"
                   label="Issuing institution"
                   placeholder="Institution or platform name"
@@ -668,19 +668,19 @@ const existingImageName = computed(() => {
               </div>
 
               <div class="field">
-                <Input
+                <BaseInput
                   v-model="form.certificateURL"
                   label="Certificate URL"
                   type="url"
                   placeholder="https://example.com/certificate"
                 />
-                <Error v-if="errors.certificateURL" variant="field">
+                <BaseError v-if="errors.certificateURL" variant="field">
                   {{ errors.certificateURL }}
-                </Error>
+                </BaseError>
               </div>
 
               <div class="field">
-                <Input
+                <BaseInput
                   v-model="form.certificateCode"
                   label="Certificate code"
                   placeholder="Certificate ID or verification code"
@@ -692,15 +692,15 @@ const existingImageName = computed(() => {
               v-if="currentConfig.showGithub"
               class="field"
             >
-              <Input
+              <BaseInput
                 v-model="form.githubLink"
                 label="GitHub link"
                 type="url"
                 placeholder="https://github.com/username/project-name"
               />
-              <Error v-if="errors.githubLink" variant="field">
+              <BaseError v-if="errors.githubLink" variant="field">
                 {{ errors.githubLink }}
-              </Error>
+              </BaseError>
             </div>
 
             <div
@@ -714,27 +714,27 @@ const existingImageName = computed(() => {
               <Transition name="field-reveal">
                 <div v-if="form.isAcademic" class="academic-form-group">
                   <div class="institution-field">
-                    <Select
+                    <BaseSelect
                       v-model="form.institution"
                       :options="schoolOptions"
                       label="Institution"
                       placeholder="Select the institution"
                     />
-                    <Error v-if="errors.institution" variant="field">
+                    <BaseError v-if="errors.institution" variant="field">
                       {{ errors.institution }}
-                    </Error>
+                    </BaseError>
                   </div>
                   <div class="field">
-                    <Dropdown
+                    <BaseDropdown
                       v-model="form.teacherEmail"
                       :options="professorEmails"
                       label="Teacher email"
                       placeholder="teacher@school.com"
                       autocomplete="nope"
                     />
-                    <Error v-if="errors.teacherEmail" variant="field">
+                    <BaseError v-if="errors.teacherEmail" variant="field">
                       {{ errors.teacherEmail }}
-                    </Error>
+                    </BaseError>
                   </div>
                 </div>
               </Transition>
@@ -747,21 +747,21 @@ const existingImageName = computed(() => {
           </div>
 
           <div class="experience-form__footer">
-            <Button
+            <BaseButton
               type="button"
               variant="ghost"
               @click="$emit('close')"
             >
               Cancel
-            </Button>
+            </BaseButton>
 
-            <Button
+            <BaseButton
               type="submit"
               variant="submit"
               :loading
             >
               {{ isEdit ? 'Save changes' : `Submit ${props.type}` }}
-            </Button>
+            </BaseButton>
           </div>
         </form>
       </div>

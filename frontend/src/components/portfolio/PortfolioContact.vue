@@ -47,13 +47,13 @@ function onLinkUpdated() {
     <div class="contact__links">
       <ContactLink
         v-for="link in props.links"
-        v-show="isOwner || link.href"
+        v-show="props.canedit || link.href"
         :key="link.platform"
         :title="link.label"
         :platform="link.platform"
         :href="link.href"
-        :isOwner="props.canedit"
-        :isEditing="editingPlatform === link.platform"
+        :is-owner="props.canedit"
+        :is-editing="editingPlatform === link.platform"
         :disabled="editingPlatform !== null && editingPlatform !== link.platform"
         @edit="startEdit(link.platform)"
         @cancel="stopEdit"

@@ -1,9 +1,9 @@
 <script setup>
 import { ref, reactive, computed } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
-import Dropdown from '@/components/common/Dropdown.vue';
+import BaseDropdown from '@/components/common/BaseDropdown.vue';
 import YearInput from '@/components/common/YearInput.vue';
-import Button from '@/components/common/Button.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 
@@ -441,7 +441,7 @@ function isSchoolYearRangeValid(school, fieldKey) {
                 <span class="step-description">
                   {{ currentSchoolFieldDescription }}
                 </span>
-                <Dropdown
+                <BaseDropdown
                   :options="schools.map(school => school?.nom)"
                   :placeholder="currentSchoolField.placeholder"
                   v-model="schoolFieldsInputs[currentSchoolFieldKey].schoolName"
@@ -468,22 +468,22 @@ function isSchoolYearRangeValid(school, fieldKey) {
         </div>
 
         <div class="modal__footer">
-          <Button
+          <BaseButton
             variant="ghost"
             class="back-button"
             @click="goBack"
           >
             {{ currentStepIndex > 0 ? 'Back' : 'Close' }}
-          </Button>
+          </BaseButton>
 
-          <Button
+          <BaseButton
             variant="submit"
             class="next-button"
             :disabled="!isCurrentStepComplete"
             @click="goNext"
           >
             {{ completedStepsCount < numOfSteps ? 'Next' : 'Complete'}}
-          </Button>
+          </BaseButton>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Plus } from 'lucide-vue-next';
-import Project from '@/components/portfolio/Project.vue';
+import PortfolioProject from '@/components/portfolio/PortfolioProject.vue';
 defineProps({
   projects: {
     type: Array,
@@ -116,7 +116,7 @@ function applyMomentum(currentTime) {
       @mouseleave="handleMouseUp"
     >
       <template v-for="project in projects" :key="project.id">
-        <Project
+        <PortfolioProject
           :project
           :can-edit="canAdd"
           @edit="project => emit('edit-project', project)"

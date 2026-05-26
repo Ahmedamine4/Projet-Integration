@@ -1,6 +1,6 @@
 <script setup>
 import { Plus } from 'lucide-vue-next';
-import Activity from '@/components/portfolio/Activity.vue';
+import PortfolioActivity from '@/components/portfolio/PortfolioActivity.vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
@@ -265,7 +265,7 @@ onBeforeUnmount(() => {
         :style="getActivityCardStyle(index)"
         @pointerdown="startDrag($event, index)"
       >
-        <Activity
+        <PortfolioActivity
           :activity
           :can-edit="canAdd"
           @edit="activity => emit('edit-activity', activity)"

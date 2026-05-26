@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import Button from '@/components/common/Button.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
 
 const router = useRouter();
 </script>
@@ -13,12 +13,12 @@ const router = useRouter();
       This page does not have a certified place in your portfolio.
     </p>
     <div class="not-found__actions">
-      <Button variant="pill" size="xs" @click="router.push('/')">
+      <BaseButton variant="pill" size="xs" @click="router.push('/')">
         Back home
-      </Button>
-      <Button variant="ghost" size="xs" @click="router.push('/login')">
+      </BaseButton>
+      <BaseButton variant="ghost" size="xs" @click="router.push('/login')">
         Sign in
-      </Button>
+      </BaseButton>
     </div>
   </section>
 </template>

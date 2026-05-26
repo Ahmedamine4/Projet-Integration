@@ -1,6 +1,6 @@
 <script setup>
 import { storeToRefs } from 'pinia';
-import Sidebar from '@/components/layout/Sidebar.vue';
+import AppSidebar from '@/components/layout/AppSidebar.vue';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
@@ -9,7 +9,7 @@ const { user } = storeToRefs(authStore);
 
 <template>
   <main class="app-shell">
-    <Sidebar :user="user || undefined" />
+    <AppSidebar :user="user || undefined" />
     <section class="app-content">
       <slot />
     </section>

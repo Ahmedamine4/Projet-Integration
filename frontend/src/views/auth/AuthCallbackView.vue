@@ -2,8 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import Error from '@/components/common/Error.vue';
-import Spinner from '@/components/common/Spinner.vue';
+import BaseError from '@/components/common/BaseError.vue';
+import BaseSpinner from '@/components/common/BaseSpinner.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -27,10 +27,10 @@ onMounted(async () => {
 
 <template>
   <div class="loading" v-if="!error">
-    <Spinner size="lg" />
+    <BaseSpinner size="lg" />
     <span>Signing you in...</span>
   </div>
-  <Error v-else>{{ error }}</Error>
+  <BaseError v-else>{{ error }}</BaseError>
 </template>
 
 <style scoped>

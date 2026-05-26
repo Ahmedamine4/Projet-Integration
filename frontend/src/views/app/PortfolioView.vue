@@ -3,18 +3,18 @@ import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import src from '@/assets/images/profile-photo.png'
 import AboutMe from '@/components/portfolio/AboutMe.vue';
-import Education from '@/components/portfolio/Education.vue';
-import Skills from '@/components/portfolio/Skills.vue';
+import PortfolioEducation from '@/components/portfolio/PortfolioEducation.vue';
+import PortfolioSkills from '@/components/portfolio/PortfolioSkills.vue';
 import ProjectsSection from '@/components/portfolio/ProjectsSection.vue';
 import { QrCode } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { useActivityStore } from '@/stores/activity';
-import Error from '@/components/common/Error.vue';
+import BaseError from '@/components/common/BaseError.vue';
 import { useRoute } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/ActivitiesSection.vue';
-import Contact from '@/components/portfolio/Contact.vue';
+import PortfolioContact from '@/components/portfolio/PortfolioContact.vue';
 
 const projects = ref([
   {
@@ -412,8 +412,8 @@ const links = computed(() => [
 			<div class="about">
 				<AboutMe :user-id="userId" />
 				<div class="education-skills-wrapper">
-					<Education :user-id="userId" />
-					<Skills :user-id="userId" />
+					<PortfolioEducation :user-id="userId" />
+					<PortfolioSkills :user-id="userId" />
 				</div>
 			</div>
 			<div
@@ -427,9 +427,9 @@ const links = computed(() => [
 					@edit-project="project => openEditExperienceModal('project', project)"
 				/>
 
-				<Error v-if="experienceErrors.project">
+				<BaseError v-if="experienceErrors.project">
 					{{ experienceErrors.project }}
-				</Error>
+				</BaseError>
 			</div>
 
 			<div
@@ -443,14 +443,14 @@ const links = computed(() => [
 					@edit-activity="activity => openEditExperienceModal('activity', activity)"
 				/>
 
-				<Error v-if="experienceErrors.activity">
+				<BaseError v-if="experienceErrors.activity">
 					{{ experienceErrors.activity }}
-				</Error>
+				</BaseError>
 			</div>
 		</main>
 
 		<footer>
-			<Contact 
+			<PortfolioContact 
 				:email="authStore.user?.email"
 				:canedit="isOwnPortfolio"
 				:links="links"

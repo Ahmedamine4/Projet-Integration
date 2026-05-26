@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import Button from '@/components/common/Button.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
 
 const router = useRouter();
 </script>
@@ -8,12 +8,12 @@ const router = useRouter();
 <template>
   <section class="home-hero">
     <header class="home-hero__nav">
-      <Button variant="ghost" size="xs" @click="router.push('/login')">
+      <BaseButton variant="ghost" size="xs" @click="router.push('/login')">
         Sign in
-      </Button>
-      <Button variant="pill" size="xs" @click="router.push('/register')">
+      </BaseButton>
+      <BaseButton variant="pill" size="xs" @click="router.push('/register')">
         Sign up
-      </Button>
+      </BaseButton>
     </header>
 
     <div class="home-hero__content">

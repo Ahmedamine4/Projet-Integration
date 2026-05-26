@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
-import Button from '@/components/common/Button.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
 import { FileText, ChevronUp, ChevronDown } from 'lucide-vue-next';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 
@@ -176,14 +176,14 @@ watch(() => props.userId, fetchAbout);
           {{ aboutLength }} / {{ MAX_ABOUT_LEN }}
         </span>
         <div class="edit-footer__actions">
-          <Button
+          <BaseButton
             size="xs"
             variant="ghost"
             @click="cancelEdit"
           >
             Cancel
-          </Button>
-          <Button
+          </BaseButton>
+          <BaseButton
             size="xs"
             variant="submit"
             :loading="saving"
@@ -191,7 +191,7 @@ watch(() => props.userId, fetchAbout);
             @click="saveEdit"
           >
             Save changes
-          </Button>
+          </BaseButton>
         </div>
       </div>
     </footer>

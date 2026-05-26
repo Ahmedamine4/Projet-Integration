@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import googleIcon from '@/assets/icons/google.svg';
-import Spinner from '@/components/common/Spinner.vue';
+import BaseSpinner from '@/components/common/BaseSpinner.vue';
 
 const props = defineProps({
   variant: {
@@ -38,7 +38,7 @@ const classes = computed(() => [
 
 <template>
   <button :class="classes" :disabled="disabled || loading">
-    <Spinner v-if="loading" />
+    <BaseSpinner v-if="loading" />
     <img
       v-else-if="props.variant === 'google'"
       :src="googleIcon"
