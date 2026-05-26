@@ -1,6 +1,0 @@
-- name: Setup Monitoring Server
-  hosts: all
-  become: true
-
-  roles:
-    - monitoring

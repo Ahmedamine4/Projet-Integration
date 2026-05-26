@@ -6,6 +6,11 @@ import { useInternshipStore } from '@/stores/internship';
 import { useActivityStore } from '@/stores/activity';
 import { useInstitutionStore } from '@/stores/institution';
 
+const message = {
+  teacherName: 'Mohammed El Ghailani',
+  content: 'Please add more details about your role in this experience, especially the tasks you completed and the tools you used. Also, clarify the final result or outcome before resubmitting.',
+};
+
 const institutionStore = useInstitutionStore();
 
 const professorEmails = [
@@ -229,12 +234,13 @@ onMounted(() => {
     </div>
 
     <ExperienceModal
+      :message
       :mode="modalMode"
       :type="selectedType"
       :initial-value="selectedExperience"
       :open="modalOpen"
       :loading="isLoading"
-      :school-options="institutionStore.selectedInstitutions"
+      :school-options="institutionStore.selectedInstitutions.map(institution => institution.nom)"
       :professor-emails="professorEmails"
       @close="closeModal"
       @submit="handleSubmit"
