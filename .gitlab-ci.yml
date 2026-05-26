@@ -10,7 +10,6 @@ workflow:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"' # temporary branch for testing security hardening, will be removed after testing
     - when: never
 
 default:
@@ -51,10 +50,8 @@ sonarqube:
       -Dsonar.token="$SONAR_TOKEN"
 
   rules:
-    - when: never #7ydo t7wa
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"' # temporary branch for testing security hardening, will be removed after testing
 
 # BACKEND LINT
 backend-lint:
@@ -144,7 +141,6 @@ trivy-fs:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"' # temporary branch for testing security hardening, will be removed after testing
 
 # TRIVY - DOCKER, TERRAFORM, NGINX, AND INFRA MISCONFIGURATION
 trivy-config:
@@ -183,7 +179,6 @@ trivy-config:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"'
 
 # FRONTEND TESTS
 frontend-tests:
@@ -268,4 +263,3 @@ docker-build-prod:
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"' # temporary branch for testing security hardening, will be removed after testing
