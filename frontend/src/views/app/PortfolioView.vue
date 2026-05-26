@@ -14,6 +14,7 @@ import { useActivityStore } from '@/stores/activity';
 import Error from '@/components/common/Error.vue';
 import { useRoute } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/ActivitiesSection.vue';
+import Contact from '@/components/portfolio/Contact.vue';
 
 const projects = ref([
   {
@@ -342,6 +343,30 @@ const isQRModalOpen = ref(false);
 function openQRModal() {
   isQRModalOpen.value = true;
 }
+
+const links = computed(() => [
+  {
+    platform: 'github',
+    label: 'GitHub',
+    href: authStore.user?.github,
+  },
+  {
+    platform: 'linkedin',
+    label: 'LinkedIn',
+    href: authStore.user?.linkedin,
+  },
+  {
+    platform: 'x',
+    label: 'Twitter / X',
+    href: authStore.user?.twitter,
+  },
+  {
+    platform: 'instagram',
+    label: 'Instagram',
+    href: authStore.user?.instagram,
+  },
+].filter(link => link.href));
+
 </script>
 
 <template>
@@ -423,6 +448,13 @@ function openQRModal() {
 			</div>
 		</main>
 	</div>
+	<footer>
+		<Contact 
+			:email="authStore.user?.email"
+			:canedit="isOwnPortfolio"
+			:links="links"
+		/>
+	</footer>
 	<QRcodeModal
 		:open="isQRModalOpen"
   		title="Share your portfolio"
