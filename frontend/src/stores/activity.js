@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import api from '@/services/api';
+import { formatLocalDate } from '@/utils/date';
 
 function buildActivityFormData(activity) {
   const formData = new FormData();
@@ -29,15 +30,10 @@ function buildActivityFormData(activity) {
   formData.append('documentations', JSON.stringify([]));
 
   if (activity.image) {
-    formData.append('img', activity.image);
+    formData.append('photo', activity.image);
   }
 
   return formData;
-}
-
-function formatDate(dateValue) {
-  if (!dateValue) return '';
-  return new Date(dateValue).toISOString().slice(0, 10);
 }
 
 function normalizeActivity(data) {
@@ -45,7 +41,7 @@ function normalizeActivity(data) {
     id: data.experience_id,
     type: 'activity',
     title: data.experience?.titre ?? '',
-    date: formatDate(data.experience?.date_experience),
+    date: formatLocalDate(data.experience?.date_experience),
     description: data.experience?.description ?? '',
     visibleToEveryone: data.experience?.visibilite ?? false,
     activityType: data.type ?? '',

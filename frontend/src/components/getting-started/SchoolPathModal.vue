@@ -2,8 +2,10 @@
 import { ref, reactive, computed } from 'vue';
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
+import YearInput from '@/components/common/YearInput.vue';
 import Button from '@/components/common/Button.vue';
 import CloseButton from '@/components/common/CloseButton.vue';
+import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 
 const academicLevels = [
   {
@@ -70,6 +72,8 @@ const props = defineProps({
   },
 });
 
+useBodyScrollLock(() => props.open);
+
 const emit = defineEmits(['close', 'complete']);
 
 const isCurrentlyStudying = ref(null);
@@ -91,29 +95,59 @@ const selectedLevel = computed(() => {
 });
 
 const schoolFieldsInputs = reactive({
-  bachelorSchool: '',
-  masterSchool: '',
-  phdInstitution: '',
+  bachelorSchool: {
+    schoolName: '',
+    startYear: null,
+    endYear: null,
+  },
+  masterSchool: {
+    schoolName: '',
+    startYear: null,
+    endYear: null,
+  },
+  phdInstitution: {
+    schoolName: '',
+    startYear: null,
+    endYear: null,
+  },
 });
 
+function getInstitutionIdByName(name) {
+  return props.schools.find((school) => {
+    return school.nom.toLowerCase() === name.toLowerCase();
+  })?.institution_id || '';
+}
+
+function isCurrentSchoolField(fieldKey) {
+  const highestLevelFieldKey = selectedLevel.value?.fields.at(-1);
+
+  return (
+    isCurrentlyStudying.value === true &&
+    fieldKey === highestLevelFieldKey
+  );
+}
+
 const schoolPath = computed(() => {
-  const bachelorSchool = props.schools.find((school) => {
-    return school.toLowerCase() === schoolFieldsInputs.bachelorSchool.toLowerCase();
-  }) || '';
-  const masterSchool = props.schools.find((school) => {
-    return school.toLowerCase() === schoolFieldsInputs.masterSchool.toLowerCase();
-  }) || '';
-  const phdInstitution = props.schools.find((school) => {
-    return school.toLowerCase() === schoolFieldsInputs.phdInstitution.toLowerCase();
-  }) || '';
-  return { bachelorSchool, masterSchool, phdInstitution };
+  return Object.fromEntries(
+    Object.entries(schoolFieldsInputs).map(([fieldKey, input]) => {
+      return [
+        fieldKey,
+        {
+          institutionId: getInstitutionIdByName(input.schoolName),
+          startYear: input.startYear,
+          endYear: input.endYear,
+          isCurrent: isCurrentSchoolField(fieldKey),
+        },
+      ];
+    })
+  );
 });
 
 const completedStepsCount = computed(() => {
   if (isCurrentlyStudying.value === null) return 0;
   if (!selectedLevelKey.value) return 1;
-  return Object.values(schoolPath.value).reduce((acc, school) => {
-    return school ? acc + 1 : acc;
+  return Object.entries(schoolPath.value).reduce((acc, [fieldKey, school]) => {
+    return isSchoolComplete(school, fieldKey) ? acc + 1 : acc;
   }, 2);
 });
 
@@ -145,6 +179,43 @@ const currentSchoolFieldDescription = computed(() => {
   return completedSchoolDescriptions[currentSchoolFieldKey.value];
 });
 
+const currentSchoolEndYearLabel = computed(() => {
+  if (isCurrentSchoolField(currentSchoolFieldKey.value)) {
+    return 'Expected completion year';
+  }
+
+  return 'Completion year';
+});
+
+const isCurrentStepComplete = computed(() => {
+  if (currentStepIndex.value === 0) {
+    return isCurrentlyStudying.value !== null;
+  }
+
+  if (currentStepIndex.value === 1) {
+    return Boolean(selectedLevelKey.value);
+  }
+
+  const currentSchool = schoolPath.value[currentSchoolFieldKey.value];
+
+  return isSchoolComplete(currentSchool, currentSchoolFieldKey.value);
+});
+
+function isSchoolComplete(school, fieldKey) {
+  return Boolean(
+    school.institutionId &&
+    isValidYear(school.startYear) &&
+    isValidYear(school.endYear) &&
+    isSchoolYearRangeValid(school, fieldKey)
+  );
+}
+
+function resetSchoolField(fieldKey) {
+  schoolFieldsInputs[fieldKey].schoolName = '';
+  schoolFieldsInputs[fieldKey].startYear = null;
+  schoolFieldsInputs[fieldKey].endYear = null;
+}
+
 function resetCurrentStep() {
   if (currentStepIndex.value === 0) {
     isCurrentlyStudying.value = null;
@@ -154,16 +225,16 @@ function resetCurrentStep() {
     selectedLevelKey.value = '';
     return;
   }
-  schoolFieldsInputs[currentSchoolFieldKey.value] = '';
+  resetSchoolField(currentSchoolFieldKey.value);
 }
 
 function resetSchoolPath() {
   isCurrentlyStudying.value = null;
   selectedLevelKey.value = '';
 
-  schoolFieldsInputs.bachelorSchool = '';
-  schoolFieldsInputs.masterSchool = '';
-  schoolFieldsInputs.phdInstitution = '';
+  resetSchoolField('bachelorSchool');
+  resetSchoolField('masterSchool');
+  resetSchoolField('phdInstitution');
 
   currentStepIndex.value = 0;
 }
@@ -201,6 +272,80 @@ function goNext() {
   }
   stepDirection.value = 'forward';
   currentStepIndex.value++;
+}
+
+const currentYear = new Date().getFullYear();
+const minSchoolYear = 1980;
+
+function getPreviousSchoolFieldKey(fieldKey = currentSchoolFieldKey.value) {
+  const fields = selectedLevel.value?.fields ?? [];
+  const index = fields.indexOf(fieldKey);
+
+  return index > 0 ? fields[index - 1] : '';
+}
+
+function getPreviousSchoolEndYear(fieldKey = currentSchoolFieldKey.value) {
+  const previousFieldKey = getPreviousSchoolFieldKey(fieldKey);
+
+  return previousFieldKey
+    ? schoolFieldsInputs[previousFieldKey].endYear
+    : null;
+}
+
+function getStartMinYear() {
+  const previousEndYear = Number(getPreviousSchoolEndYear());
+
+  return previousEndYear
+    ? Math.max(previousEndYear, minSchoolYear)
+    : minSchoolYear;
+}
+
+function getStartMaxYear() {
+  const endYear = Number(schoolFieldsInputs[currentSchoolFieldKey.value].endYear);
+
+  if (endYear) return Math.min(endYear, currentYear);
+
+  return currentYear;
+}
+
+function getEndMinYear() {
+  const startYear = schoolFieldsInputs[currentSchoolFieldKey.value].startYear;
+
+  if (isCurrentSchoolField(currentSchoolFieldKey.value)) {
+    return Math.max(Number(startYear) || minSchoolYear, currentYear);
+  }
+
+  if (isValidYear(startYear)) return startYear;
+
+  return getStartMinYear();
+}
+
+function getEndMaxYear() {
+  if (isCurrentSchoolField(currentSchoolFieldKey.value)) return null;
+
+  return currentYear;
+}
+
+function isValidYear(value) {
+  const year = Number(value);
+
+  return /^\d{4}$/.test(String(value)) && year >= minSchoolYear;
+}
+
+function isSchoolYearRangeValid(school, fieldKey) {
+  const startYear = Number(school.startYear);
+  const endYear = Number(school.endYear);
+
+  if (startYear > currentYear) return false;
+  if (endYear < startYear) return false;
+  if (school.isCurrent && endYear < currentYear) return false;
+  if (!school.isCurrent && endYear > currentYear) return false;
+
+  const previousEndYear = Number(getPreviousSchoolEndYear(fieldKey));
+
+  if (previousEndYear && startYear < previousEndYear) return false;
+
+  return true;
 }
 </script>
 <template>
@@ -297,9 +442,25 @@ function goNext() {
                   {{ currentSchoolFieldDescription }}
                 </span>
                 <Dropdown
-                  :options="schools"
+                  :options="schools.map(school => school?.nom)"
                   :placeholder="currentSchoolField.placeholder"
-                  v-model="schoolFieldsInputs[currentSchoolFieldKey]"
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].schoolName"
+                />
+
+                <YearInput
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].startYear"
+                  label="Start year"
+                  placeholder="YYYY"
+                  :min="getStartMinYear()"
+                  :max="getStartMaxYear()"
+                />
+
+                <YearInput
+                  v-model="schoolFieldsInputs[currentSchoolFieldKey].endYear"
+                  :label="currentSchoolEndYearLabel"
+                  placeholder="YYYY"
+                  :min="getEndMinYear()"
+                  :max="getEndMaxYear()"
                 />
               </div>
             </div>
@@ -318,12 +479,7 @@ function goNext() {
           <Button
             variant="submit"
             class="next-button"
-            :disabled="
-              isCurrentlyStudying === null ||
-              currentStepIndex &&
-              !selectedLevelKey ||
-              currentStepIndex > 1 &&
-              !schoolPath[currentSchoolFieldKey]"
+            :disabled="!isCurrentStepComplete"
             @click="goNext"
           >
             {{ completedStepsCount < numOfSteps ? 'Next' : 'Complete'}}
@@ -398,6 +554,11 @@ function goNext() {
 }
 
 .modal__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  flex-shrink: 0;
+  background-color: var(--color-background);
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -550,7 +711,7 @@ function goNext() {
   .modal {
     width: 100%;
     align-self: end;
-    border-radius: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
   }
 }
 

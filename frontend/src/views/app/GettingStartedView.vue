@@ -4,6 +4,10 @@ import GettingStartedStep from '@/components/getting-started/GettingStartedStep.
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
+import { useAuthStore } from '@/stores/auth';
+import api from '@/services/api';
+
+const authStore = useAuthStore();
 
 const institutionStore = useInstitutionStore();
 
@@ -35,7 +39,7 @@ const stepStatus = reactive({
 
 const doneCount = computed(() =>
   steps.reduce((acc, step) => {
-    return stepStatus[step.key] !== 'todo' ? acc + 1 : acc;
+    return stepStatus[step.key] === 'done' ? acc + 1 : acc;
   }, 0),
 );
 
@@ -54,7 +58,13 @@ function handleStepAction(key) {
   stepStatus[key] = 'done';
 }
 
-function completeSchoolStep(schoolData) {
+async function completeSchoolStep(schoolData) {
+  await api.post('/select-institutions', {
+    etudiantId: authStore.user.utilisateur_id,
+    institutionId: Object.values(schoolData.schoolPath)
+      .map(school => school.institutionId)
+      .filter(Boolean),
+  });
   institutionStore.setSchoolPath(schoolData.schoolPath);
   stepStatus.school = 'pending';
   isSchoolModalOpen.value = false;
@@ -100,14 +110,17 @@ function completeSchoolStep(schoolData) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3rem var(--space-xl);
+  width: 100%;
+  min-width: 0;
+  padding: 3rem 12vw;
   gap: 3rem;
 }
 
 .wrapper-getting-started {
   display: flex;
   flex-direction: column;
-  width: clamp(16rem, 75vw, 80rem);
+  width: 100%;
+  max-width: 80rem;
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: var(--radius-md);
   height: fit-content;
@@ -150,7 +163,17 @@ function completeSchoolStep(schoolData) {
   color: rgba(var(--color-primary-rgb), 0.72);
 }
 
+@media (max-width: 768px) {
+  .page-content {
+    padding-inline: 6vw;
+  }
+}
+
 @media (max-width: 480px) {
+  .page-content {
+    padding-inline: 1rem;
+  }
+
   .wrapper-header {
     flex-direction: column;
     align-items: flex-start;
