@@ -158,42 +158,32 @@ trivy-config:
       - .trivycache/
 
   script:
-    - trivy config
-      --severity HIGH,CRITICAL
-      --exit-code 1
-      infrastructure/
-    - trivy config
-      --severity HIGH,CRITICAL
-      --exit-code 1
-      backend/Dockerfile
-    - trivy config
-      --severity HIGH,CRITICAL
-      --exit-code 1
-      frontend/Dockerfile
-    - trivy config
-      --severity HIGH,CRITICAL
-      --exit-code 1
-      ai/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 infrastructure/
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 backend/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 frontend/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 ai/Dockerfile
 
   artifacts:
     when: always
     expire_in: 7 days
     paths:
-      - trivy-config-report.json
+      - trivy-config-infrastructure.json
+      - trivy-config-backend.json
+      - trivy-config-frontend.json
+      - trivy-config-ai.json
 
   after_script:
-    - trivy config
-      --severity HIGH,CRITICAL
-      --format json
-      --output trivy-config-report.json
-      infrastructure/ backend/Dockerfile frontend/Dockerfile ai/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --format json --output trivy-config-infrastructure.json infrastructure/
+    - trivy config --severity HIGH,CRITICAL --format json --output trivy-config-backend.json backend/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --format json --output trivy-config-frontend.json frontend/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --format json --output trivy-config-ai.json ai/Dockerfile
 
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"' # temporary branch for testing security hardening, will be removed after testing
-    
+    - if: '$CI_COMMIT_BRANCH == "ci-security-hardening"'
+        
 # FRONTEND TESTS
 frontend-tests:
   stage: test
