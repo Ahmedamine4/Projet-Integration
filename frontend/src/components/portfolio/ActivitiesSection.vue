@@ -16,7 +16,13 @@ const props = defineProps({
 
 const emit = defineEmits(['add-activity', 'edit-activity']);
 
-const swipeThreshold = 140;
+const swipeDistance = {
+  ratio: 0.3,
+  min: 100,
+  max: 200,
+  fallbackCardWidth: 400,
+};
+
 const visibleDepth = 2;
 const animationDuration = 420;
 const stackOffsetY = 20;
@@ -118,7 +124,13 @@ function finishMove() {
 function stopDrag() {
   if (!isDragging.value) return;
 
-  const shouldMove = Math.abs(dragX.value) > swipeThreshold;
+  const cardWidth = cardRefs.value[0]?.offsetWidth ?? swipeDistance.fallbackCardWidth;
+  const requiredSwipeDistance = Math.min(
+    swipeDistance.max,
+    Math.max(swipeDistance.min, cardWidth * swipeDistance.ratio)
+  );
+
+  const shouldMove = Math.abs(dragX.value) > requiredSwipeDistance;
   if (shouldMove) {
     isDragging.value = false;
     isMovingToBack.value = true;

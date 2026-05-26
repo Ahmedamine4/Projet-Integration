@@ -115,7 +115,7 @@ function formatDate(date) {
     );
   border: var(--border);
   border-radius: 2rem;
-  box-shadow: 0 1.4rem 3.2rem rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
   overflow: hidden;
   user-select: none;
 }
