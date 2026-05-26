@@ -3,6 +3,10 @@ import pluginVue from 'eslint-plugin-vue'
 import globals from 'globals'
 
 export default [
+  {
+    ignores: ['dist/**', 'node_modules/**'],
+  },
+
   js.configs.recommended,
 
   ...pluginVue.configs['flat/recommended'],
@@ -15,6 +19,7 @@ export default [
 
   {
     rules: {
+      'vue/multi-word-component-names': 'off',
       'no-unused-vars': 'warn',
     },
   },
