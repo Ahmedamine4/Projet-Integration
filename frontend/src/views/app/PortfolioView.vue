@@ -372,6 +372,7 @@ const links = computed(() => [
 <template>
 	<div class="portfolio">
 		<div class="portfolio__banner" />
+
 		<main>
 			<div class="profile">
 				<div class="profile__photo">
@@ -447,35 +448,37 @@ const links = computed(() => [
 				</Error>
 			</div>
 		</main>
-	</div>
-	<footer>
-		<Contact 
-			:email="authStore.user?.email"
-			:canedit="isOwnPortfolio"
-			:links="links"
-		/>
-	</footer>
-	<QRcodeModal
-		:open="isQRModalOpen"
-  		title="Share your portfolio"
-  		:username="authStore.user?.utilisateur_id"
-  		@close="isQRModalOpen = false"
-	/>
 
-	<ExperienceModal
-		v-if="isOwnPortfolio"
-		:open="experienceModal.open"
-		:mode="experienceModal.mode"
-		:type="experienceModal.type"
-		:initial-value="experienceModal.selected"
-		:loading="experienceModal.type === 'project'
-			? projectStore.loading
-			: activityStore.loading"
-		:school-options="[]"
-		:professor-emails="professorEmails"
-		@close="closeExperienceModal"
-		@submit="handleExperienceSubmit"
-	/>
+		<footer>
+			<Contact 
+				:email="authStore.user?.email"
+				:canedit="isOwnPortfolio"
+				:links="links"
+			/>
+		</footer>
+
+		<QRcodeModal
+			:open="isQRModalOpen"
+			title="Share your portfolio"
+			:username="authStore.user?.utilisateur_id"
+			@close="isQRModalOpen = false"
+		/>
+
+		<ExperienceModal
+			v-if="isOwnPortfolio"
+			:open="experienceModal.open"
+			:mode="experienceModal.mode"
+			:type="experienceModal.type"
+			:initial-value="experienceModal.selected"
+			:loading="experienceModal.type === 'project'
+				? projectStore.loading
+				: activityStore.loading"
+			:school-options="[]"
+			:professor-emails="professorEmails"
+			@close="closeExperienceModal"
+			@submit="handleExperienceSubmit"
+		/>
+	</div>
 </template>
 
 <style scoped>
@@ -683,8 +686,6 @@ const links = computed(() => [
 
 .portfolio-section-wrapper {
 	margin-inline: calc(var(--portfolio-section-bleed) * -1);
-	display: grid;
-	gap: var(--space-md);
 }
 
 @media (max-width: 980px) {
