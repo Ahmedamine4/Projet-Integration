@@ -1,5 +1,6 @@
 <script setup>
 import { Plus } from 'lucide-vue-next';
+import SwipeHint from '@/components/common/SwipeHint.vue';
 import PortfolioActivity from '@/components/portfolio/PortfolioActivity.vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -26,7 +27,7 @@ const swipeDistance = {
 const visibleDepth = 2;
 const animationDuration = 420;
 const stackOffsetY = 20;
-const stackHeightBuffer = 96;
+const stackHeightBuffer = 140;
 let moveTimer = null;
 
 const activityCards = ref([...props.activities]);
@@ -273,6 +274,7 @@ onBeforeUnmount(() => {
           @edit="activity => emit('edit-activity', activity)"
         />
       </article>
+      <SwipeHint class="activities-swipe-hint" />
     </div>
 
     <div
@@ -353,6 +355,7 @@ onBeforeUnmount(() => {
   overflow: visible;
   margin-inline: auto;
   padding-block: var(--padding-block);
+  user-select: none;
 }
 
 .activities-empty {
@@ -389,13 +392,19 @@ onBeforeUnmount(() => {
   height: var(--activity-card-height, auto);
   display: flex;
   cursor: grab;
-  user-select: none;
   touch-action: none;
   will-change: transform, opacity;
 }
 
 .activity-stack-card.is-dragging {
   cursor: grabbing;
+}
+
+.activities-swipe-hint {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-xl);
+  transform: translateX(-50%);
 }
 
 @media (max-width: 820px) {

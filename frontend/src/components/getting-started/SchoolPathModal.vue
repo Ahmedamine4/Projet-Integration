@@ -179,14 +179,6 @@ const currentSchoolFieldDescription = computed(() => {
   return completedSchoolDescriptions[currentSchoolFieldKey.value];
 });
 
-const currentSchoolEndYearLabel = computed(() => {
-  if (isCurrentSchoolField(currentSchoolFieldKey.value)) {
-    return 'Expected completion year';
-  }
-
-  return 'Completion year';
-});
-
 const isCurrentStepComplete = computed(() => {
   if (currentStepIndex.value === 0) {
     return isCurrentlyStudying.value !== null;
@@ -202,9 +194,17 @@ const isCurrentStepComplete = computed(() => {
 });
 
 function isSchoolComplete(school, fieldKey) {
+  const hasRequiredFields = school.institutionId && isValidYear(school.startYear);
+
+  if (school.isCurrent) {
+    return Boolean(
+      hasRequiredFields &&
+      isSchoolYearRangeValid(school, fieldKey)
+    );
+  }
+
   return Boolean(
-    school.institutionId &&
-    isValidYear(school.startYear) &&
+    hasRequiredFields &&
     isValidYear(school.endYear) &&
     isSchoolYearRangeValid(school, fieldKey)
   );
@@ -311,18 +311,12 @@ function getStartMaxYear() {
 function getEndMinYear() {
   const startYear = schoolFieldsInputs[currentSchoolFieldKey.value].startYear;
 
-  if (isCurrentSchoolField(currentSchoolFieldKey.value)) {
-    return Math.max(Number(startYear) || minSchoolYear, currentYear);
-  }
-
   if (isValidYear(startYear)) return startYear;
 
   return getStartMinYear();
 }
 
 function getEndMaxYear() {
-  if (isCurrentSchoolField(currentSchoolFieldKey.value)) return null;
-
   return currentYear;
 }
 
@@ -337,9 +331,11 @@ function isSchoolYearRangeValid(school, fieldKey) {
   const endYear = Number(school.endYear);
 
   if (startYear > currentYear) return false;
-  if (endYear < startYear) return false;
-  if (school.isCurrent && endYear < currentYear) return false;
-  if (!school.isCurrent && endYear > currentYear) return false;
+
+  if (!school.isCurrent) {
+    if (endYear < startYear) return false;
+    if (endYear > currentYear) return false;
+  }
 
   const previousEndYear = Number(getPreviousSchoolEndYear(fieldKey));
 
@@ -475,8 +471,9 @@ function isSchoolYearRangeValid(school, fieldKey) {
                 />
 
                 <YearInput
+                  v-if="!isCurrentSchoolField(currentSchoolFieldKey)"
                   v-model="schoolFieldsInputs[currentSchoolFieldKey].endYear"
-                  :label="currentSchoolEndYearLabel"
+                  label="Completion year"
                   placeholder="YYYY"
                   :min="getEndMinYear()"
                   :max="getEndMaxYear()"
