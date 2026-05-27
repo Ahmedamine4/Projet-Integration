@@ -516,7 +516,6 @@ const links = computed(() => [
 
 .portfolio main {
 	--portfolio-padding-inline: clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
-	--portfolio-section-bleed: calc(var(--portfolio-padding-inline) / 2);
 	display: flex;
 	flex-direction: column;
 	gap: clamp(calc(var(--space-xl) * 2), 7vw, calc(var(--space-xl) * 3));
@@ -695,10 +694,6 @@ const links = computed(() => [
 	gap: var(--space-lg);
 }
 
-.portfolio-section-wrapper {
-	margin-inline: calc(var(--portfolio-section-bleed) * -1);
-}
-
 @media (max-width: 980px) {
 	.profile {
 		flex-direction: column;
@@ -720,7 +715,6 @@ const links = computed(() => [
 @media (max-width: 640px) {
   .portfolio main {
     --portfolio-padding-inline: var(--space-md);
-    --portfolio-section-bleed: var(--portfolio-padding-inline);
   }
 }
 </style>

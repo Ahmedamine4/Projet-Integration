@@ -16,6 +16,8 @@ defineProps({
 const emit = defineEmits(['add-project', 'edit-project']);
 
 const projectsRef = ref(null);
+const canScrollLeft = ref(false);
+const canScrollRight = ref(false);
 const isDragging = ref(false);
 const lastX = ref(0);
 const lastTime = ref(0);
@@ -26,6 +28,15 @@ const dragSpeed = 1.2;
 const minReleaseVelocity = 0.05;
 const frictionPerFrame = 0.95;
 const targetFrameDuration = 16;
+
+function updateScrollFades() {
+  const el = projectsRef.value;
+  if (!el) return;
+
+  const maxScrollLeft = el.scrollWidth - el.clientWidth;
+  canScrollLeft.value = el.scrollLeft > 1;
+  canScrollRight.value = el.scrollLeft < maxScrollLeft - 1;
+}
 
 function handleMouseDown(event) {
   isDragging.value = true;
@@ -110,23 +121,32 @@ function applyMomentum(currentTime) {
     </div>
     <div
       v-if="projects.length"
-      ref="projectsRef"
-      class="projects"
-      @mousedown="handleMouseDown"
-      @mousemove="handleMouseMove"
-      @mouseup="handleMouseUp"
-      @mouseleave="handleMouseUp"
+      class="projects-scroll-frame"
+      :class="{
+        'has-left-fade': canScrollLeft,
+        'has-right-fade': canScrollRight,
+      }"
     >
-      <template
-        v-for="project in projects"
-        :key="project.id"
+      <div
+        ref="projectsRef"
+        class="projects"
+        @mousedown="handleMouseDown"
+        @mousemove="handleMouseMove"
+        @mouseup="handleMouseUp"
+        @mouseleave="handleMouseUp"
+        @scroll="updateScrollFades"
       >
-        <PortfolioProject
-          :project
-          :can-edit="canAdd"
-          @edit="project => emit('edit-project', project)"
-        />
-      </template>
+        <template
+          v-for="project in projects"
+          :key="project.id"
+        >
+          <PortfolioProject
+            :project
+            :can-edit="canAdd"
+            @edit="project => emit('edit-project', project)"
+          />
+        </template>
+      </div>
     </div>
 
     <div
@@ -142,8 +162,6 @@ function applyMomentum(currentTime) {
 
 <style scoped>
 .projects-shell {
-  --padding-inline: var(--portfolio-section-bleed, var(--space-xl));
-  --fade-width: var(--padding-inline);
   --padding-block: calc(var(--space-xl) * 1.5);
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   position: relative;
@@ -164,7 +182,6 @@ function applyMomentum(currentTime) {
 
 .title {
   position: relative;
-  padding-inline: var(--padding-inline);
   background: transparent;
   color: var(--color-primary);
   font-family: var(--font-editorial);
@@ -175,6 +192,8 @@ function applyMomentum(currentTime) {
 }
 
 .add-project-button {
+  position: relative;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
@@ -186,7 +205,6 @@ function applyMomentum(currentTime) {
   color: var(--color-background);
   padding-block: var(--space-sm);
   padding-inline: 0.75rem var(--space-md);
-  margin-right: var(--padding-inline);
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
   cursor: pointer;
 	transition:
@@ -202,19 +220,57 @@ function applyMomentum(currentTime) {
 }
 
 .projects {
-  box-sizing: border-box;
   display: flex;
+  box-sizing: border-box;
   position: relative;
   z-index: 1;
   gap: var(--space-lg);
   height: fit-content;
   width: 100%;
   overflow-x: auto;
-  padding-inline: var(--padding-inline);
   padding-block: var(--padding-block);
   overscroll-behavior-x: contain;
   cursor: grab;
   scrollbar-width: none;
+}
+
+.projects-scroll-frame {
+  position: relative;
+}
+
+.projects-scroll-frame::before,
+.projects-scroll-frame::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 0;
+  pointer-events: none;
+  transition: width var(--transition-normal);
+}
+
+.projects-scroll-frame::before {
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    var(--color-background) 0%,
+    rgba(var(--color-background-rgb), 0) 100%
+  );
+}
+
+.projects-scroll-frame::after {
+  right: 0;
+  background: linear-gradient(
+    270deg,
+    var(--color-background) 0%,
+    rgba(var(--color-background-rgb), 0) 100%
+  );
+}
+
+.projects-scroll-frame.has-left-fade::before,
+.projects-scroll-frame.has-right-fade::after {
+  width: 4rem;
 }
 
 .projects:active {
@@ -225,38 +281,10 @@ function applyMomentum(currentTime) {
   display: none;
 }
 
-.projects-shell::before,
-.projects-shell::after {
-  content: '';
-  position: absolute;
-  width: var(--fade-width);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.projects-shell::before {
-  inset: 0 auto 0 0;
-  background: linear-gradient(
-    to right,
-    var(--color-background) 60%,
-    transparent
-  );
-}
-
-.projects-shell::after {
-  inset: 0 0 0 auto;
-  background: linear-gradient(
-    to left,
-    var(--color-background) 60%,
-    transparent
-  );
-}
-
 .projects-empty {
   display: grid;
   place-items: center;
   min-height: 12rem;
-  padding-inline: var(--padding-inline);
   padding-block: var(--padding-block);
   text-align: center;
 }

@@ -288,7 +288,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .activities-shell {
-  --padding-inline: var(--portfolio-section-bleed, var(--space-xl));
   --padding-block: calc(var(--space-xl) * 1.5);
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   position: relative;
@@ -309,7 +308,6 @@ onBeforeUnmount(() => {
 
 .title {
   position: relative;
-  padding-inline: var(--padding-inline);
   background: transparent;
   color: var(--color-primary);
   font-family: var(--font-editorial);
@@ -331,7 +329,6 @@ onBeforeUnmount(() => {
   color: var(--color-background);
   padding-block: var(--space-sm);
   padding-inline: 0.75rem var(--space-md);
-  margin-right: var(--padding-inline);
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
   cursor: pointer;
 	transition:
@@ -355,7 +352,6 @@ onBeforeUnmount(() => {
   min-height: var(--activity-stack-height, 32rem);
   overflow: visible;
   margin-inline: auto;
-  padding-inline: var(--padding-inline);
   padding-block: var(--padding-block);
 }
 
@@ -363,7 +359,6 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   min-height: 12rem;
-  padding-inline: var(--padding-inline);
   padding-block: var(--padding-block);
   text-align: center;
 }
@@ -390,7 +385,7 @@ onBeforeUnmount(() => {
   position: absolute;
   top: var(--padding-block);
   left: 50%;
-  width: min(calc(100% - (var(--padding-inline) * 2)), 38rem);
+  width: min(100%, 38rem);
   height: var(--activity-card-height, auto);
   display: flex;
   cursor: grab;
