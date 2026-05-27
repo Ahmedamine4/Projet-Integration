@@ -92,7 +92,10 @@ watch(selected, () => {
     <aside class="sidebar">
       <header>
         <div class="brand">
-          <img :src="FolioCraftLogo">
+          <img
+            :src="FolioCraftLogo"
+            draggable="false"
+          >
         </div>
 
         <button

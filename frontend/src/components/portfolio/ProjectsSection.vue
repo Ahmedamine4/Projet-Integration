@@ -235,6 +235,7 @@ function applyMomentum(currentTime) {
 }
 
 .projects-scroll-frame {
+  --project-fade-width: clamp(2rem, 6vw, 4rem);
   position: relative;
 }
 
@@ -270,7 +271,7 @@ function applyMomentum(currentTime) {
 
 .projects-scroll-frame.has-left-fade::before,
 .projects-scroll-frame.has-right-fade::after {
-  width: 4rem;
+  width: var(--project-fade-width);
 }
 
 .projects:active {

@@ -64,6 +64,7 @@ function onLinkUpdated() {
       :src="gradiant"
       alt="Gradiant"
       class="contact__gradiant"
+      draggable="false"
     >
   </div>
 </template>
