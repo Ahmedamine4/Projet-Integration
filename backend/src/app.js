@@ -14,6 +14,7 @@ import notificationRoutes from './routes/notification.routes.js';
 import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
 import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
 import githubRoutes from './routes/github.route.js';
+import lettreRecommandationRoutes from './routes/lettre_recommandation.routes.js';
 
 
 
@@ -30,6 +31,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/users', portfolioRoutes);
+app.use('/api/lettre-recommandation', lettreRecommandationRoutes);
 
 // Branchement des routes de gestion des stages
 app.use('/api/stages', stageRoutes);

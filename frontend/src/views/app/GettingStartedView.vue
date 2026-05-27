@@ -205,7 +205,7 @@ function savePhoneNumber() {
   align-items: flex-start;
   width: clamp(16rem, 75vw, 80rem);
   margin-inline: auto;
-  padding: 2rem var(--space-xl);
+  padding: clamp(1.5rem, 4vw, 2rem) clamp(1.25rem, 5vw, var(--space-xl));
   gap: 3rem;
   position: relative;
   /*overflow: hidden;*/
@@ -213,12 +213,14 @@ function savePhoneNumber() {
 .getting-started-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 18% 35%, rgba(236, 72, 153, 0.22), transparent 32%),
-    radial-gradient(circle at 50% 45%, rgba(249, 115, 22, 0.18), transparent 40%),
+    radial-gradient(circle at 18% 35%, rgba(236, 72, 153, 0.12), transparent 32%),
+    radial-gradient(circle at 50% 45%, rgba(249, 115, 22, 0.2), transparent 40%),
     linear-gradient(120deg, #fff7ed 0%, #fffaf5 50%, #ffffff 100%);
 }
 .page-content h1 {
   margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.1;
 }
 .page-subtitle {
   margin: -1rem 0 0;
@@ -400,18 +402,11 @@ display:block;
 }
 .getting-started-illustration {
   position: absolute;
-  top: -5rem;
-  right: 2rem;
-  width: 14rem;
+  top: clamp(-3rem, -6vw, -1.5rem);
+ right: clamp(1rem, 4vw, 2rem);
+  width: clamp(8rem, 14vw, 14rem);
   pointer-events: none;
   z-index: 2;
-}
-
-:global(body) {
-  background:
-    radial-gradient(circle at 18% 35%, rgba(236, 72, 153, 0.22), transparent 32%),
-    radial-gradient(circle at 50% 45%, rgba(249, 115, 22, 0.18), transparent 40%),
-    linear-gradient(120deg, #fff7ed 0%, #fffaf5 50%, #ffffff 100%);
 }
 
 
