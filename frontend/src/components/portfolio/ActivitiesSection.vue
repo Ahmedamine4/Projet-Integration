@@ -29,6 +29,7 @@ const animationDuration = 420;
 const stackOffsetY = 20;
 const stackHeightBuffer = 140;
 let moveTimer = null;
+let mountMeasureTimer = null;
 
 const activityCards = ref([...props.activities]);
 const isDragging = ref(false);
@@ -39,6 +40,8 @@ const currentX = ref(0);
 const currentY = ref(0);
 const cardRefs = ref([]);
 const maxCardHeight = ref(0);
+const activitiesShellRef = ref(null);
+let resizeObserver = null;
 
 const dragX = computed(() => currentX.value - startX.value);
 const dragY = computed(() => currentY.value - startY.value);
@@ -75,7 +78,7 @@ function startDrag(event, index) {
   if (index !== topIndex) return;
   if (isMovingToBack.value) {
     finishMove();
-  };
+  }
 
   isDragging.value = true;
   startX.value = event.clientX;
@@ -219,8 +222,16 @@ watch(
 );
 
 onMounted(() => {
-  scheduleHeightUpdate();
+  mountMeasureTimer = setTimeout(scheduleHeightUpdate);
   window.addEventListener('resize', scheduleHeightUpdate);
+
+  resizeObserver = new ResizeObserver(() => {
+    scheduleHeightUpdate();
+  });
+
+  if (activitiesShellRef.value) {
+    resizeObserver.observe(activitiesShellRef.value);
+  }
 });
 
 onBeforeUnmount(() => {
@@ -228,9 +239,17 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointerup', stopDrag);
   window.removeEventListener('resize', scheduleHeightUpdate);
 
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+
   if (moveTimer) {
     clearTimeout(moveTimer);
     moveTimer = null;
+  }
+
+  if (mountMeasureTimer) {
+    clearTimeout(mountMeasureTimer);
+    mountMeasureTimer = null;
   }
 });
 </script>
@@ -245,47 +264,57 @@ onBeforeUnmount(() => {
     @add="emit('add-activity')"
   >
     <div
-      class="activities"
-      :style="{
-        '--activity-card-height': maxCardHeight ? `${maxCardHeight}px` : undefined,
-        '--activity-stack-height': stackHeight ? `${stackHeight}px` : undefined,
-      }"
+      ref="activitiesShellRef"
+      class="activities-shell"
     >
-      <article
-        v-for="(activity, index) in activityCards"
-        :key="activity.id"
-        :ref="element => setCardRef(element, index)"
-        class="activity-stack-card"
-        :class="{ 'is-dragging': isDragging && index === 0 }"
-        :style="getActivityCardStyle(index)"
-        @pointerdown="startDrag($event, index)"
+      <div
+        class="activities"
+        :style="{
+          '--activity-card-height': maxCardHeight ? `${maxCardHeight}px` : undefined,
+          '--activity-stack-height': stackHeight ? `${stackHeight}px` : undefined,
+        }"
       >
-        <PortfolioActivity
-          :activity
-          :can-edit="canAdd"
-          @edit="activity => emit('edit-activity', activity)"
-        />
-      </article>
-      <SwipeHint class="activities-swipe-hint" />
+        <article
+          v-for="(activity, index) in activityCards"
+          :key="activity.id"
+          :ref="element => setCardRef(element, index)"
+          class="activity-stack-card"
+          :class="{ 'is-dragging': isDragging && index === 0 }"
+          :style="getActivityCardStyle(index)"
+          @pointerdown="startDrag($event, index)"
+        >
+          <PortfolioActivity
+            :activity
+            :can-edit="canAdd"
+            @edit="activity => emit('edit-activity', activity)"
+          />
+        </article>
+        <SwipeHint class="activities-swipe-hint" />
+      </div>
     </div>
   </PortfolioSectionShell>
 </template>
 
 <style scoped>
+.activities-shell {
+  width: min(100%, 48rem);
+  margin-inline: auto;
+}
+
 .activities {
   box-sizing: border-box;
   position: relative;
   display: grid;
   place-items: center;
-  width: min(100%, 48rem);
+  width: 100%;
   min-height: var(--activity-stack-height, 32rem);
   overflow: visible;
-  margin-inline: auto;
   padding-block: var(--padding-block);
   user-select: none;
 }
 
 .activity-stack-card {
+  container-type: inline-size;
   position: absolute;
   top: var(--padding-block);
   left: 50%;

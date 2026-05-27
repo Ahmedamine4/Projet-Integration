@@ -1,6 +1,7 @@
 <script setup>
 import { MapPin, CalendarDays, Eye, EyeOff } from 'lucide-vue-next';
 import { useDoubleTap } from '@/composables/useDoubleTap';
+import ExploreButton from '@/components/portfolio/ExploreButton.vue';
 
 const props = defineProps({
   activity: {
@@ -109,7 +110,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
       {{ activity.description }}
     </p>
 
-    <div class="activity-footer">
+    <div class="activity-meta">
       <div
         v-if="activity.technologies?.length"
         class="activity-tags"
@@ -141,7 +142,9 @@ const { handleDoubleTap } = useDoubleTap(() => {
           +{{ activity.domains.length - 2 }}
         </span>
       </div>
-
+    </div>
+    <div class="activity-footer">
+      <ExploreButton experience-type="activity" />
       <span
         v-if="canEdit"
         class="activity-edit-hint"
@@ -251,7 +254,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
   color: rgba(var(--color-primary-rgb), 0.96);
   font-size: 1.65rem;
   font-weight: var(--font-bold);
-  line-height: 1.04;
+  line-height: 1.2;
   letter-spacing: 0;
   overflow-wrap: anywhere;
   display: -webkit-box;
@@ -335,7 +338,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
   overflow: hidden;
 }
 
-.activity-footer {
+.activity-meta {
   display: grid;
   gap: 0.45rem;
   margin-top: auto;
@@ -362,13 +365,46 @@ const { handleDoubleTap } = useDoubleTap(() => {
   color: rgba(var(--color-primary-rgb), 0.42);
 }
 
+.activity-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
 .activity-edit-hint {
-  justify-self: end;
+  margin-left: auto;
   color: rgba(var(--color-primary-rgb), 0.48);
   font-size: var(--font-size-xxs);
   font-weight: var(--font-medium);
   white-space: nowrap;
   cursor: pointer;
+}
+
+@container (max-width: 32rem) {
+  .activity-card {
+    width: 100%;
+    padding: 1.15rem;
+    gap: 0.85rem;
+  }
+
+  .activity-top {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-image {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+  }
+
+  .activity-info h3 {
+    font-size: 1.55rem;
+  }
+
+  .activity-description {
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+  }
 }
 
 @media (max-width: 820px) {

@@ -1,6 +1,7 @@
 <script setup>
-import { ArrowUpRight, Eye, EyeOff } from 'lucide-vue-next';
+import { Eye, EyeOff } from 'lucide-vue-next';
 import { useDoubleTap } from '@/composables/useDoubleTap';
+import ExploreButton from '@/components/portfolio/ExploreButton.vue';
 
 const props = defineProps({
   project: {
@@ -100,17 +101,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
         </div>
       </div>
       <div class="project-footer">
-        <a
-          v-if="project.githubLink"
-          class="project-button"
-          :href="project.githubLink"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span>Explore project</span>
-          <ArrowUpRight :size="14" />
-        </a>
-
+        <ExploreButton experience-type="project" />
         <span
           v-if="canEdit"
           class="project-edit-hint"
@@ -235,6 +226,12 @@ const { handleDoubleTap } = useDoubleTap(() => {
   overflow: hidden;
 }
 
+.project-meta {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: auto;
+}
+
 .project-tags {
   display: flex;
   flex-wrap: wrap;
@@ -250,73 +247,6 @@ const { handleDoubleTap } = useDoubleTap(() => {
   font-size: var(--font-size-xxs);
   font-weight: var(--font-medium);
   line-height: 1;
-}
-
-.project-meta {
-  display: grid;
-  gap: var(--space-sm);
-  margin-top: auto;
-}
-
-.project-button {
-  --button-size: 2rem;
-  --icon-size: 14px;
-  --icon-center-offset: calc((var(--button-size) - var(--icon-size)) / 2);
-  --label-width: 5.8rem;
-  --expanded-button-width: calc(
-    var(--button-size) + var(--label-width) + var(--icon-center-offset)
-  );
-  display: inline-flex;
-  width: var(--button-size);
-  height: var(--button-size);
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  overflow: hidden;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.14);
-  background-color: rgba(var(--color-secondary-rgb), 0.08);
-  color: var(--color-secondary);
-  text-decoration: none;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-medium);
-  transition:
-    width var(--transition-normal),
-    gap var(--transition-fast),
-    padding-inline var(--transition-normal),
-    border-color var(--transition-fast),
-    background-color var(--transition-fast),
-    transform var(--transition-fast);
-}
-
-.project-button span {
-  max-width: 0;
-  opacity: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  transition:
-    max-width var(--transition-normal),
-    opacity var(--transition-fast);
-}
-
-.project-button svg {
-  flex-shrink: 0;
-}
-
-.project-button:is(:hover, :focus-visible) {
-  width: var(--expanded-button-width);
-  justify-content: center;
-  gap: var(--icon-center-offset);
-  padding-inline: 0.8rem var(--icon-center-offset);
-  outline: none;
-  border-color: rgba(var(--color-secondary-rgb), 0.16);
-  background-color: rgba(var(--color-secondary-rgb), 0.14);
-  transform: translateY(-1px);
-}
-
-.project-button:is(:hover, :focus-visible) span {
-  max-width: var(--label-width);
-  opacity: 1;
 }
 
 .project-footer {

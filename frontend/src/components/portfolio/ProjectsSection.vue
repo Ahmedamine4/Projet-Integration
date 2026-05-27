@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import PortfolioSectionShell from '@/components/portfolio/PortfolioSectionShell.vue';
 import PortfolioProject from '@/components/portfolio/PortfolioProject.vue';
 defineProps({
@@ -101,6 +101,10 @@ function applyMomentum(currentTime) {
 
   animationFrame.value = requestAnimationFrame(applyMomentum);
 }
+
+onMounted(() => {
+  nextTick(updateScrollFades);
+});
 </script>
 
 <template>

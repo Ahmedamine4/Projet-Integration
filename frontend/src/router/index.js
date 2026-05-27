@@ -31,7 +31,7 @@ const routes = [
     meta: { layout: 'auth' },
   },
   {
-    path: '/dashboard',
+    path: '/dashboard/:id?',
     name: 'dashboard',
     component: () => import('@/views/app/DashboardView.vue'),
     meta: {

@@ -16,6 +16,19 @@ import { useRoute } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/ActivitiesSection.vue';
 import PortfolioContact from '@/components/portfolio/PortfolioContact.vue';
 
+const professorEmails = [
+  'ahmed.elamrani@ensat.ac.ma',
+  'fatima.zahra@ensat.ac.ma',
+  'youssef.bennani@uae.ac.ma',
+  'sara.lahlou@fstt.ac.ma',
+  'nour.chaoui@encgt.ac.ma',
+  'karim.boukhari@ensate.uae.ac.ma',
+  'amina.tazi@fs-tanger.ac.ma',
+  'mehdi.elidrissi@ensah.ma',
+  'salma.aitali@fstt.ac.ma',
+  'omar.benali@uae.ac.ma'
+];
+
 const projects = ref([
   {
     id: "cmpgz1ulc0003pn3vmqh9f6l8",
@@ -187,18 +200,7 @@ const activities = ref([
 	},
 ]);
 
-const professorEmails = [
-  'ahmed.elamrani@ensat.ac.ma',
-  'fatima.zahra@ensat.ac.ma',
-  'youssef.bennani@uae.ac.ma',
-  'sara.lahlou@fstt.ac.ma',
-  'nour.chaoui@encgt.ac.ma',
-  'karim.boukhari@ensate.uae.ac.ma',
-  'amina.tazi@fs-tanger.ac.ma',
-  'mehdi.elidrissi@ensah.ma',
-  'salma.aitali@fstt.ac.ma',
-  'omar.benali@uae.ac.ma'
-];
+const certifications = ref([]);
 
 const authStore = useAuthStore();
 const userId = computed(() => authStore.user?.utilisateur_id);
@@ -215,18 +217,28 @@ const visibleProjects = computed(() => {
 	return projects.value.filter(project => project.visibleToEveryone);
 });
 
-const shouldShowProjectSection = computed(() => {
-	return isOwnPortfolio.value || visibleProjects.value.length > 0;
-});
-
 const visibleActivities = computed(() => {
   if (isOwnPortfolio.value) return activities.value;
 
   return activities.value.filter(activity => activity.visibleToEveryone);
 });
 
+const visibleCertifications = computed(() => {
+  if (isOwnPortfolio.value) return certifications.value;
+
+  return certifications.value.filter(certification => certification.visibleToEveryone);
+});
+
+const shouldShowProjectSection = computed(() => {
+	return isOwnPortfolio.value || visibleProjects.value.length > 0;
+});
+
 const shouldShowActivitySection = computed(() => {
   return isOwnPortfolio.value || visibleActivities.value.length > 0;
+});
+
+const shouldShowCertificationSection = computed(() => {
+  return isOwnPortfolio.value || visibleCertifications.value.length > 0;
 });
 
 const projectStore = useProjectStore();
@@ -442,21 +454,30 @@ const links = computed(() => [
           {{ experienceErrors.project }}
         </BaseError>
       </div>
-
       <div
-        v-if="shouldShowActivitySection"
-        class="portfolio-section-wrapper"
+        v-if="shouldShowActivitySection || shouldShowCertificationSection"
+        class="portfolio-split-sections"
       >
-        <ActivitiesSection
-          :activities="visibleActivities"
-          :can-add="isOwnPortfolio"
-          @add-activity="openExperienceModal('activity')"
-          @edit-activity="activity => openEditExperienceModal('activity', activity)"
-        />
+        <div
+          v-if="shouldShowActivitySection"
+          class="portfolio-section-wrapper"
+        >
+          <ActivitiesSection
+            :activities="visibleActivities"
+            :can-add="isOwnPortfolio"
+            @add-activity="openExperienceModal('activity')"
+            @edit-activity="activity => openEditExperienceModal('activity', activity)"
+          />
 
-        <BaseError v-if="experienceErrors.activity">
-          {{ experienceErrors.activity }}
-        </BaseError>
+          <BaseError v-if="experienceErrors.activity">
+            {{ experienceErrors.activity }}
+          </BaseError>
+        </div>
+
+        <div
+          v-if="shouldShowCertificationSection"
+          class="portfolio-section-wrapper"
+        />
       </div>
     </main>
 
@@ -516,9 +537,10 @@ const links = computed(() => [
 
 .portfolio main {
 	--portfolio-padding-inline: clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
+  --portfolio-section-gap: clamp(calc(var(--space-xl) * 2), 7vw, calc(var(--space-xl) * 3));
 	display: flex;
 	flex-direction: column;
-	gap: clamp(calc(var(--space-xl) * 2), 7vw, calc(var(--space-xl) * 3));
+	gap: var(--portfolio-section-gap);
 	padding-block: 0 6rem;
 	padding-inline: var(--portfolio-padding-inline);
 }
@@ -692,6 +714,13 @@ const links = computed(() => [
 	display: grid;
 	grid-template-rows: auto 1fr;
 	gap: var(--space-lg);
+}
+
+.portfolio-split-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  column-gap: calc(var(--space-xl) * 2);
+  row-gap: var(--portfolio-section-gap);
 }
 
 @media (max-width: 980px) {

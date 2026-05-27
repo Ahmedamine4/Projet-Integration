@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { computed, ref } from 'vue';
 import FolioCraftLogo from '@/assets/icons/FolioCraft.svg';
 import {
   LayoutDashboard,
@@ -40,17 +40,14 @@ const sidebarItems = [
   { label: 'Settings', icon: Settings },
 ];
 
-const selected = ref(
-  sidebarItems.find(item => item.path === route.path)?.label ||
-  'Dashboard'
-);
+function isItemActive(item) {
+  if (!item.path) return false;
 
-const selectedItem = computed(() => {
-  return sidebarItems.find(item => item.label === selected.value);
-});
+  return route.path === item.path || route.path.startsWith(`${item.path}/`);
+}
 
 const activeIndex = computed(() => {
-  const index = sidebarItems.findIndex((item) => item.label === selected.value);
+  const index = sidebarItems.findIndex(isItemActive);
   return index >= 0 ? index : 0;
 });
 
@@ -60,6 +57,12 @@ const thumbStyle = computed(() => {
   };
 });
 
+function selectItem(item) {
+  if (!item.path) return;
+
+  router.push(item.path);
+}
+
 async function handleLogout() {
   try {
     await authStore.logout();
@@ -67,11 +70,6 @@ async function handleLogout() {
     router.replace('/login');
   }
 }
-
-watch(selected, () => {
-  if (!selectedItem.value.path) return;
-  router.push(selectedItem.value.path);
-});
 </script>
 
 <template>
@@ -116,8 +114,8 @@ watch(selected, () => {
           v-for="item in sidebarItems"
           :key="item.label"
           class="sidebar__item"
-          :class="{ selected: item.label === selected }"
-          @click="selected = item.label"
+          :class="{ selected: isItemActive(item) }"
+          @click="selectItem(item)"
         >
           <component :is="item.icon" />
           <span>{{ item.label }}</span>
