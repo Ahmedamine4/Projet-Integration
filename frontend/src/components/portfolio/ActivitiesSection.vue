@@ -1,7 +1,7 @@
 <script setup>
-import { Plus } from 'lucide-vue-next';
 import SwipeHint from '@/components/common/SwipeHint.vue';
 import PortfolioActivity from '@/components/portfolio/PortfolioActivity.vue';
+import PortfolioSectionShell from '@/components/portfolio/PortfolioSectionShell.vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
@@ -236,23 +236,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="activities-shell">
-    <div class="activities-header">
-      <div class="title">
-        Activities
-      </div>
-      <button
-        v-if="canAdd"
-        type="button"
-        class="add-activity-button"
-        @click="emit('add-activity')"
-      >
-        <Plus :size="15" />
-        Add Activity
-      </button>
-    </div>
+  <PortfolioSectionShell
+    title="Activities"
+    add-label="Add Activity"
+    :can-add="canAdd"
+    :is-empty="!activityCards.length"
+    empty-label="No activities yet"
+    @add="emit('add-activity')"
+  >
     <div
-      v-if="activityCards.length"
       class="activities"
       :style="{
         '--activity-card-height': maxCardHeight ? `${maxCardHeight}px` : undefined,
@@ -276,75 +268,10 @@ onBeforeUnmount(() => {
       </article>
       <SwipeHint class="activities-swipe-hint" />
     </div>
-
-    <div
-      v-else
-      class="activities-empty"
-    >
-      <div class="empty-state">
-        <p>No activities yet</p>
-      </div>
-    </div>
-  </div>
+  </PortfolioSectionShell>
 </template>
 
 <style scoped>
-.activities-shell {
-  --padding-block: calc(var(--space-xl) * 1.5);
-  --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  position: relative;
-  width: 100%;
-  height: fit-content;
-  border-bottom: var(--border);
-  border-radius: 0;
-  background: var(--color-background);
-  padding: 0;
-}
-
-.activities-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-lg);
-}
-
-.title {
-  position: relative;
-  background: transparent;
-  color: var(--color-primary);
-  font-family: var(--font-editorial);
-  font-size: 2.45rem;
-  font-weight: var(--font-medium);
-  line-height: 1;
-  letter-spacing: 0;
-}
-
-.add-activity-button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  border: none;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-medium);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-primary);
-  color: var(--color-background);
-  padding-block: var(--space-sm);
-  padding-inline: 0.75rem var(--space-md);
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
-  cursor: pointer;
-	transition:
-		background-color var(--transition-fast),
-		box-shadow var(--transition-fast),
-		transform var(--transition-fast);
-}
-
-.add-activity-button:hover {
-	background-color: rgba(var(--color-primary-rgb), 0.92);
-  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.34);
-  transform: translateY(-1px);
-}
-
 .activities {
   box-sizing: border-box;
   position: relative;
@@ -356,32 +283,6 @@ onBeforeUnmount(() => {
   margin-inline: auto;
   padding-block: var(--padding-block);
   user-select: none;
-}
-
-.activities-empty {
-  display: grid;
-  place-items: center;
-  min-height: 12rem;
-  padding-block: var(--padding-block);
-  text-align: center;
-}
-
-.empty-state {
-  display: grid;
-  place-items: center;
-  width: min(100%, 28rem);
-  padding: var(--space-xl);
-  border: 1px dashed rgba(var(--color-primary-rgb), 0.18);
-  border-radius: var(--radius-md);
-  background: rgba(var(--color-surface-rgb), 0.22);
-}
-
-.empty-state p {
-  margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.52);
-  font-family: var(--font-editorial);
-  font-size: 1.45rem;
-  font-weight: var(--font-medium);
 }
 
 .activity-stack-card {
@@ -408,10 +309,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 820px) {
-  .title {
-    font-size: 2.15rem;
-  }
-
   .activity-stack-card {
     width: min(calc(100% - 2rem), 27rem);
   }

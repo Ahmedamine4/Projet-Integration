@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Plus } from 'lucide-vue-next';
+import PortfolioSectionShell from '@/components/portfolio/PortfolioSectionShell.vue';
 import PortfolioProject from '@/components/portfolio/PortfolioProject.vue';
 defineProps({
   projects: {
@@ -104,23 +104,15 @@ function applyMomentum(currentTime) {
 </script>
 
 <template>
-  <div class="projects-shell">
-    <div class="projects-header">
-      <div class="title">
-        Projects
-      </div>
-      <button
-        v-if="canAdd"
-        type="button"
-        class="add-project-button"
-        @click="emit('add-project')"
-      >
-        <Plus :size="15" />
-        Add Project
-      </button>
-    </div>
+  <PortfolioSectionShell
+    title="Projects"
+    add-label="Add Project"
+    :can-add="canAdd"
+    :is-empty="!projects.length"
+    empty-label="No projects yet"
+    @add="emit('add-project')"
+  >
     <div
-      v-if="projects.length"
       class="projects-scroll-frame"
       :class="{
         'has-left-fade': canScrollLeft,
@@ -148,77 +140,10 @@ function applyMomentum(currentTime) {
         </template>
       </div>
     </div>
-
-    <div
-      v-else
-      class="projects-empty"
-    >
-      <div class="empty-state">
-        <p>No projects yet</p>
-      </div>
-    </div>
-  </div>
+  </PortfolioSectionShell>
 </template>
 
 <style scoped>
-.projects-shell {
-  --padding-block: calc(var(--space-xl) * 1.5);
-  --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  position: relative;
-  width: 100%;
-  height: fit-content;
-  border-bottom: var(--border);
-  border-radius: 0;
-  background: var(--color-background);
-  padding: 0;
-}
-
-.projects-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-lg);
-}
-
-.title {
-  position: relative;
-  background: transparent;
-  color: var(--color-primary);
-  font-family: var(--font-editorial);
-  font-size: 2.45rem;
-  font-weight: var(--font-medium);
-  line-height: 1;
-  letter-spacing: 0;
-}
-
-.add-project-button {
-  position: relative;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  border: none;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-medium);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-primary);
-  color: var(--color-background);
-  padding-block: var(--space-sm);
-  padding-inline: 0.75rem var(--space-md);
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
-  cursor: pointer;
-	transition:
-		background-color var(--transition-fast),
-		box-shadow var(--transition-fast),
-		transform var(--transition-fast);
-}
-
-.add-project-button:hover {
-	background-color: rgba(var(--color-primary-rgb), 0.92);
-  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.34);
-  transform: translateY(-1px);
-}
-
 .projects {
   display: flex;
   box-sizing: border-box;
@@ -282,37 +207,7 @@ function applyMomentum(currentTime) {
   display: none;
 }
 
-.projects-empty {
-  display: grid;
-  place-items: center;
-  min-height: 12rem;
-  padding-block: var(--padding-block);
-  text-align: center;
-}
-
-.empty-state {
-  display: grid;
-  place-items: center;
-  width: min(100%, 28rem);
-  padding: var(--space-xl);
-  border: 1px dashed rgba(var(--color-primary-rgb), 0.18);
-  border-radius: var(--radius-md);
-  background: rgba(var(--color-surface-rgb), 0.22);
-}
-
-.empty-state p {
-  margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.52);
-  font-family: var(--font-editorial);
-  font-size: 1.45rem;
-  font-weight: var(--font-medium);
-}
-
 @media (max-width: 640px) {
-  .title {
-    font-size: 2.15rem;
-  }
-
   .projects {
     gap: var(--space-md);
   }
