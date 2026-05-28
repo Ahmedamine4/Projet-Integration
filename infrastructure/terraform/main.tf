@@ -1,133 +1,180 @@
-provider "aws" {
-  region = var.aws_region
-
-  default_tags {
-    tags = {
-      Environment = var.environment
-      Project     = "portfolio"
-      ManagedBy   = "Terraform"
-    }
-  }
-}
-
-// VPC
-
-resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+# --- BASE DE DONNÉES RDS (POSTGRESQL POUR PRISMA) ---
+resource "aws_db_subnet_group" "db_subnets" {
+  name       = "${var.project_name}-${var.environment}-db-subnet-group"
+  subnet_ids = aws_subnet.public[*].id  # ✅ PRIVÉ (pas public)
 
   tags = {
-    Name = "${var.project_name}-vpc"
+    Name = "${var.project_name}-${var.environment}-db-subnet"
   }
 }
 
-// Internet Gateway
-
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
+resource "aws_db_instance" "postgres" {
+  allocated_storage      = 20
+  engine                 = "postgres"
+  engine_version         = "15"
+  instance_class         = "db.t3.micro"
+  db_name                = "portfolio_db"
+  username               = "portfolio_user"
+  password               = var.db_password
+  db_subnet_group_name   = aws_db_subnet_group.db_subnets.name
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  skip_final_snapshot    = true
+  publicly_accessible    = true  # ✅ PRIVÉ (sécurisé)
 
   tags = {
-    Name = "${var.project_name}-igw"
+    Name = "${var.project_name}-${var.environment}-postgres"
   }
 }
 
-//  SUBNETS PUBLIQUES 
+# --- EC2 BACKEND + IA ---
+resource "aws_key_pair" "deployer" {
+  key_name   = "${var.project_name}-${var.environment}-key"
+public_key = file("${path.module}/keys/id_rsa.pub")
+}
 
-resource "aws_subnet" "public" {
-  count                   = length(var.public_subnet_cidrs)
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
+resource "aws_instance" "app_server" {
+  ami                    = "ami-00ac45f3035ff009e"  # Ubuntu 22.04 LTS eu-west-3
+  instance_type          = "t3.medium"
+  subnet_id              = aws_subnet.public[0].id
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
+  key_name               = aws_key_pair.deployer.key_name
+  
+  # ✅ Script de setup automatique
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    set -e
+    apt-get update -y
+    apt-get upgrade -y
+    apt-get install -y git curl postgresql-client
+    
+    # Installation NVM + Node.js
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+    export NVM_DIR="/root/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm install --lts
+    nvm use --lts
+    ln -sf $(which node) /usr/local/bin/node
+    ln -sf $(which npm) /usr/local/bin/npm
+    
+    # PM2 pour gérer l'application
+    npm install -g pm2
+    
+    echo "✅ Backend EC2 prêt"
+  EOF
+  )
 
   tags = {
-    Name = "${var.project_name}-public-subnet-${count.index + 1}"
+    Name = "${var.project_name}-${var.environment}-backend-ai"
   }
 }
 
-//  SUBNETS PRIVÉES 
-
-resource "aws_subnet" "private" {
-  count             = length(var.private_subnet_cidrs)
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidrs[count.index]
-  availability_zone = var.availability_zones[count.index]
+# --- LOAD BALANCER (ALB) ---
+resource "aws_lb" "main" {
+  name               = "${var.project_name}-${var.environment}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb_sg.id]
+  subnets            = aws_subnet.public[*].id
 
   tags = {
-    Name = "${var.project_name}-private-subnet-${count.index + 1}"
+    Name = "${var.project_name}-${var.environment}-alb"
   }
 }
 
-// ROUTE TABLE PUBLIQUE 
+resource "aws_lb_target_group" "main" {
+  name     = "${var.project_name}-${var.environment}-tg"
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
 
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block      = "0.0.0.0/0"
-    gateway_id      = aws_internet_gateway.main.id
-  }
-
-  tags = {
-    Name = "${var.project_name}-public-rt"
-  }
-}
-
-resource "aws_route_table_association" "public" {
-  count          = length(aws_subnet.public)
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.public.id
-}
-
-// Elastic IPs pour les NAT Gateways          //obligatoire et necessaire pour NAT Gateway public
-resource "aws_eip" "nat" {
-  count  = length(var.public_subnet_cidrs)
-
-  domain = "vpc"
-
-  tags = {
-    Name        = "${var.project_name}-nat-eip-${count.index + 1}"
-    Environment = var.environment
-  }
-}
-
-// NAT Gateways (un par subnet public / AZ)
-resource "aws_nat_gateway" "main" {
-  count = length(var.public_subnet_cidrs)
-
-  allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public[count.index].id
-
-  // Important : on attend que l'Internet Gateway soit créé
-  depends_on = [aws_internet_gateway.main]
-
-  tags = {
-    Name        = "${var.project_name}-nat-gateway-${count.index + 1}"
-    Environment = var.environment
-  }
-}
-
-// Route table privée 
-resource "aws_route_table" "private" {
-  count  = length(var.private_subnet_cidrs)
-  vpc_id = aws_vpc.main.id
-
-  // Route vers Internet via le NAT Gateway correspondant
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[count.index].id
+  health_check {
+    path                = "/api/health"  # ✅ Ajoute un vrai endpoint de health check
+    protocol            = "HTTP"
+    port                = "3000"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200"
   }
 
   tags = {
-    Name        = "${var.project_name}-private-rt-${count.index + 1}"
-    Environment = var.environment
+    Name = "${var.project_name}-${var.environment}-tg"
   }
 }
 
-// Association des subnets privés à leurs route tables     (on a deja des association pour les subnets publics)
-resource "aws_route_table_association" "private" {
-  count          = length(aws_subnet.private)
-  subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private[count.index].id
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.main.arn
+  }
 }
+
+resource "aws_lb_target_group_attachment" "app" {
+  target_group_arn = aws_lb_target_group.main.arn
+  target_id        = aws_instance.app_server.id
+  port             = 3000
+}
+
+# --- S3 FRONTEND ---
+resource "aws_s3_bucket" "frontend" {
+  bucket = "${var.project_name}-frontend-${data.aws_caller_identity.current.account_id}"  # ✅ Unique avec account ID
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-frontend"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_policy" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+  depends_on = [aws_s3_bucket_public_access_block.frontend]
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.frontend.arn}/*"
+      }
+    ]
+  })
+}
+
+resource "aws_s3_bucket_website_configuration" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"  # Vue Router SPA
+  }
+}
+
+# ✅ Récupérer l'account ID
+data "aws_caller_identity" "current" {}
+
+
+resource "aws_eip" "app_server" {
+  instance = aws_instance.app_server.id
+  domain   = "vpc"
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-app-eip"
+  }
+} 

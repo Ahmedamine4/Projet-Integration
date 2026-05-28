@@ -45,3 +45,15 @@ variable "availability_zones" {
   type        = list(string)
   default     = ["eu-west-3a", "eu-west-3b"]
 }
+
+variable "ssh_public_key_path" {
+  description = "Chemin vers ta clé publique SSH"
+  type        = string
+  default     = "~/.ssh/id_rsa.pub"
+}
+
+variable "your_ip" {
+  description = "Ton adresse IP publique (pour SSH et debug RDS)"
+  type        = string
+  default     = "160.177.124.101"
+}

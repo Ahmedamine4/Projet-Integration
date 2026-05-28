@@ -17,8 +17,13 @@ import githubRoutes from './routes/github.route.js';
 import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
-app.use(cors({
+/*app.use(cors({
   origin: true, // Autorise les requêtes
+  credentials: true
+}));*/
+
+app.use(cors({
+  origin: ["http://portfolio-frontend-582797602217.s3-website.eu-west-3.amazonaws.com", "http://localhost:3000"],
   credentials: true
 }));
 
