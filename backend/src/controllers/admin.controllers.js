@@ -5,7 +5,25 @@ import {
   bloquerUtilisateur,
   debloquerUtilisateur,
   getProfessionnelsEnAttente,
+  addAdmin,
 } from '../services/admin.services.js';
+
+export async function ajouterAdmin(req, res) {
+  try {
+    const { utilisateur_id, niveau_acces } = req.body;
+    const result = await addAdmin({ utilisateur_id, niveau_acces });
+    return res.status(201).json({
+      success: true,
+      message: result.message,
+      admin: result.admin,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+}
 
 export async function ajoutDirecteur(req, res) {
   try {

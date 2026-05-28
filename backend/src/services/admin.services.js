@@ -1,5 +1,31 @@
 import prisma from '../config/prisma.js';
 
+
+//j'ai ajouté la fonctionnalité que admin peut promouvoir un autre user
+export async function addAdmin({utilisateur_id,niveau_acces}) {
+ const result = await prisma.$transaction(async (tx) => {
+      await tx.utilisateur.update({
+      where: { utilisateur_id },
+      data: { role: 'administrateur' },
+    });
+    const admin = await tx.administrateur.create({
+      data: {
+        admin_utilisateur_id: utilisateur_id,
+        niveau_acces,
+      },
+    });
+
+    return admin;
+  });
+
+  return {
+    message: 'Admin ajouté',
+    admin: result,
+  }; 
+}
+
+
+
 export async function assignerDirecteur({ utilisateur_id, institution_id, poste, bureau }) {
 
   const result = await prisma.$transaction(async (tx) => {
