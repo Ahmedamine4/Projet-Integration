@@ -43,8 +43,10 @@
           environment:
             - ENV=production
 
-- name: Start VM4 AI container
-  shell: docker-compose up -d
+- name: Recreate clean Docker stack
+  shell: |
+    docker-compose down
+    docker-compose up -d --force-recreate --remove-orphans
   args:
     chdir: /home/vagrant
     
