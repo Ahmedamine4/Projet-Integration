@@ -276,20 +276,23 @@ model Documentation {
 }
 
 model Projet {
-  experience_id    String        @id
-  lien_github      String?
-  lien_youtube     String?
-  resultat_obtenus String?
-  role             String?       @db.VarChar(50)
-  photo            String?
-  technologies     String[]
-  domains          String[]
-  experience       Experience    @relation(fields: [experience_id], references: [experience_id])
-  validation       ValideProjet?
+  experience_id        String      @id
+  repository_id        String?     @unique
+  lien_github          String?
+  lien_youtube         String?
+  resultat_obtenus     String?
+  role                 String?     @db.VarChar(50)
+  photo                String?
+  is_draft             Boolean     @default(false)
+  technologies_locked  Boolean     @default(false)
+  technologies         String[]
+  domains              String[]
+  experience           Experience  @relation(fields: [experience_id], references: [experience_id])
+  repository           Repository? @relation(fields: [repository_id], references: [repository_id], onDelete: SetNull)
+  validation           ValideProjet?
 
   @@map("projets")
 }
-
 model Activite {
   experience_id String          @id
   type          String?         @db.VarChar(50)
@@ -431,6 +434,7 @@ model Repository {
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
   etudiants           Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
+  projets             Projet[]
 
   @@map("repositories")
 }

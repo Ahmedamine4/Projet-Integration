@@ -62,6 +62,7 @@ export const updateProjet = async (req, res) => {
       'Projet déjà existant': 409,
       'Projet non trouvé': 404,
       'Professeur non trouvé avec cet email': 404,
+      'Les technologies import�es depuis GitHub sont verrouill�es': 403,
       'Ce projet a déjà été traité par le professeur, vous ne pouvez plus le modifier': 403,
     };
     const status = errorsMap[error.message];

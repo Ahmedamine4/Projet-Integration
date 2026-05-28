@@ -1,8 +1,7 @@
--- Supprimer les colonnes orphelines de projets
-ALTER TABLE "projets" DROP COLUMN IF EXISTS "domains";
-ALTER TABLE "projets" DROP COLUMN IF EXISTS "technologies";
-ALTER TABLE "projets" DROP COLUMN IF EXISTS "photo";
-ALTER TABLE "projets" DROP COLUMN IF EXISTS "type_projet";
+-- Projet:
+-- on garde "photo", "technologies" et "domains" car ils sont utilisés
+-- par le modèle final et par la logique Draft Project GitHub.
+-- "type_projet" a déjà été supprimé par une migration précédente.
 
 -- Ajouter date_fin dans stages
 ALTER TABLE "stages" ADD COLUMN IF NOT EXISTS "date_fin" TIMESTAMP(3);

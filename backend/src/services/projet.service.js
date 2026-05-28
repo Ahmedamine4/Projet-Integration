@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.js';
 import { supabase } from '../config/supabase.js';
 import { creerNotification } from './notification.service.js';
+import { TypeExperience, TypeSpecifique } from '@prisma/client';
 
 //upload photo sur supabase et collection de url
 export const uploadPhoto = async (file) => {
@@ -145,6 +146,13 @@ export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
 
     const isAcademique = data.projetType ? data.projetType === 'academique' : experience.type_specifique === 'academique';
 
+    if (
+      experience.projet?.technologies_locked &&
+      data.technologies !== undefined
+    ) {
+      throw new Error('Les technologies importées depuis GitHub sont verrouillées');
+    }
+
     await tx.experience.update({
       where: { experience_id: experienceId },
       data: {
@@ -234,7 +242,7 @@ export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
 
 
       await tx.valideProjet.create({
-        data: { utilisateur_id: prof.utilisateur_id, experience_id: experienceId, statut: 'en_attente', date_d_action: new Date()},
+        data: { utilisateur_id: prof.utilisateur_id, experience_id: experienceId, statut: 'en_attente', date_d_action: new Date() },
       });
 
       const etudiant = await tx.utilisateur.findUnique({
@@ -276,7 +284,11 @@ export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
 
 export const getProjetsVisiblesByEtudiant = async (etudiantId) => {
   return prisma.experience.findMany({
-    where: { utilisateur_id: etudiantId, type: 'projet', visibilite: true },
+    where: {
+      utilisateur_id: etudiantId,
+      type: 'projet',
+      visibilite: true,
+    },
     include: {
       projet: { include: { validation: true } },
       competences: true,
@@ -307,3 +319,77 @@ export const updateVisibiliteProjetService = async (etudiantId, experienceId, vi
     select: { experience_id: true, visibilite: true },
   });
 };
+//cration d'un projet brouillon à partir d'un repo github, avec is_draft à true et technologies_locked à true .
+
+export const createDraftProjetFromRepository = async (repository, etudiantId) => {
+  return await prisma.$transaction(async (tx) => {
+    const experience = await tx.experience.create({
+      data: {
+        titre: repository.title,
+        description: repository.description || `Projet importé depuis GitHub : ${repository.title}`,  // a verifier 
+        visibilite: false,
+        type: TypeExperience.projet,
+        type_specifique: TypeSpecifique.personnel,
+        utilisateur_id: etudiantId,
+      },
+    });
+
+    const projet = await tx.projet.create({
+      data: {
+        experience_id: experience.experience_id,
+        repository_id: repository.repository_id,
+        lien_github: repository.link,
+        technologies: repository.language ? [repository.language] : [],
+        domains: [],
+        is_draft: true,
+        technologies_locked: true,
+      },
+    });
+
+    return { experience, projet };
+  });
+};
+/*boucle sur les repositories importés
+cherche si un projet existe déjà pour repository_id
+si oui : ne recrée rien
+sinon : appelle createDraftProjetFromRepository(...)*/
+
+export const createDraftProjectsFromRepos = async (etudiantId, repositories) => {
+  const draftProjects = [];
+
+  // On parcourt tous les repositories GitHub déjà synchronisés pour cet étudiant.
+  for (const repository of repositories) {
+    // Sécurité métier :
+    // si le repository est rattaché à un autre étudiant,
+    // on ne crée aucun draft pour éviter un mauvais ownership.
+    if (repository.etudiant_id && repository.etudiant_id !== etudiantId) {
+      continue;
+    }
+
+    // Vérification anti-doublon :
+    // avant de créer un draft, on regarde si un projet existe déjà
+    // pour ce repository et pour ce même étudiant.
+    // Si oui, on ne recrée rien.
+    const existingProjet = await prisma.projet.findFirst({
+      where: {
+        repository_id: repository.repository_id,
+        experience: {
+          utilisateur_id: etudiantId,
+        },
+      },
+      select: { experience_id: true },
+    });
+
+    if (existingProjet) {
+      continue;
+    }
+
+    // Si aucun projet n'est lié à ce repository pour cet étudiant,
+    // alors on crée un nouveau draft projet.
+    const draftProjet = await createDraftProjetFromRepository(repository, etudiantId);
+    draftProjects.push(draftProjet);
+  }
+
+  return draftProjects;
+};
+
