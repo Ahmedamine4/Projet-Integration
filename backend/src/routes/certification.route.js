@@ -1,27 +1,23 @@
-//done
 import express from 'express';
 import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../middlewares/auth.middleware.js';
 import {
   addCertification,
-  getMyCertifications,
+  getMesCertifications,
+  updateCertification,
+  updateVisibiliteCertification,
 } from '../controllers/certification.controller.js';
+import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
+import { upload } from '../middlewares/upload.middleware.js';
 
 const router = express.Router();
 
 router.use(authMiddleware);
+router.use(authorizeRoles(ROLES.ETUDIANT));
 
-router.post(
-  '/',
-  authorizeRoles(ROLES.ETUDIANT),
-  //validateAddCertification,
-  addCertification
-);
-
-router.get(
-  '/me',
-  authorizeRoles(ROLES.ETUDIANT),
-  getMyCertifications
-);
+router.post('/', upload.single('photo'), addCertification);
+router.get('/me', getMesCertifications);
+router.patch('/:experienceId', upload.single('photo'), updateCertification);
+router.patch('/:experienceId/visibilite', updateVisibiliteCertification);
 
 export default router;

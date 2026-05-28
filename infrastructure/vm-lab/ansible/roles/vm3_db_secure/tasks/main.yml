@@ -1,78 +1,85 @@
 ---
-# System update
 - name: Update apt cache
   apt:
     update_cache: true
     cache_valid_time: 3600
 
-- name: Upgrade all installed packages
-  apt:
-    upgrade: dist
-
-# PostgreSQL
-- name: Install PostgreSQL
+- name: Install required packages
   apt:
     name:
-      - postgresql
-      - postgresql-contrib
+      - curl
+      - git
+      - net-tools
+      - ufw
+      - docker.io
+      - docker-compose
     state: present
 
-- name: Ensure PostgreSQL is running and enabled
+- name: Enable and start Docker
   service:
-    name: postgresql
+    name: docker
     state: started
     enabled: true
 
-- name: Locate postgresql.conf
-  find:
-    paths: /etc/postgresql
-    patterns: "postgresql.conf"
-    recurse: true
-  register: pg_conf_search
+- name: Add vagrant user to docker group
+  user:
+    name: vagrant
+    groups: docker
+    append: true
 
-- name: Set PostgreSQL config directory fact
-  set_fact:
-    pg_conf_dir: "{{ pg_conf_search.files[0].path | dirname }}"
+- name: Create VM3 docker-compose.yml
+  copy:
+    dest: /home/vagrant/docker-compose.yml
+    owner: vagrant
+    group: vagrant
+    mode: "0644"
+    content: |
+      services:
+        postgres:
+          image: postgres:16-alpine
+          container_name: postgres-db-container
+          restart: unless-stopped
+          env_file:
+            - .env
+          ports:
+            - "192.168.56.12:5432:5432"
+          volumes:
+            - postgres_data:/var/lib/postgresql/data
 
-# Listen on all interfaces — UFW below enforces who can actually reach 5432
-- name: Configure listen_addresses
-  lineinfile:
-    path:   "{{ pg_conf_dir }}/postgresql.conf"
-    regexp: "^#?listen_addresses"
-    line:   "listen_addresses = '*'"
-    backup: true
-  notify: restart postgresql
+      volumes:
+        postgres_data:
 
-# Allow VM2 to authenticate; UFW blocks everyone else at the network level
-- name: Add VM2 to pg_hba.conf
-  lineinfile:
-    path:        "{{ pg_conf_dir }}/pg_hba.conf"
-    line:        "host  all  all  {{ vm2_ip }}/32  md5"
-    insertafter: "^# IPv4 local connections"
-    backup: true
-  notify: restart postgresql
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
 
-# Firewall (UFW)
-- name: Install UFW
+- name: Allow PostgreSQL only from VM2
+  ufw:
+    rule: allow
+    src: "192.168.56.11"
+    port: "5432"
+    proto: tcp
+
+- name: Enable firewall
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Start VM3 database container
+  shell: docker-compose up -d
+  args:
+    chdir: /home/vagrant
+    
+- name: Install Node Exporter
   apt:
-    name: ufw
+    name: prometheus-node-exporter
     state: present
 
-- name: Allow SSH (keep Vagrant connection alive)
-  ufw:
-    rule:  allow
-    port:  "22"
-    proto: tcp
-
-- name: Allow PostgreSQL ONLY from VM2
-  ufw:
-    rule:  allow
-    src:   "{{ vm2_ip }}"
-    port:  "5432"
-    proto: tcp
-
-- name: Enable UFW with default-deny incoming
-  ufw:
-    state:     enabled
-    policy:    deny
-    direction: incoming
+- name: Start Node Exporter
+  service:
+    name: prometheus-node-exporter
+    enabled: yes
+    state: started

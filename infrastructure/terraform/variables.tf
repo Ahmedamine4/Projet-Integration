@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "eu-west-3"
 }
 
+variable "db_password"{
+  description ="mdp database pour prisma"
+  type=string
+  sensitive=true
+}
+
 variable "environment" {
   description = "Environnement"
   type        = string

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch, getCurrentInstance } from 'vue';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 const model = defineModel({
@@ -25,6 +25,9 @@ const props = defineProps({
     default: '',
   },
 });
+
+const instance = getCurrentInstance();
+const id = `date-picker-${instance.uid}`;
 
 const monthNames = [
   'January',
@@ -291,11 +294,12 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="pickerElement" class="date-picker">
-    <span v-if="label" class="date-picker__label">
+    <label v-if="label" class="date-picker__label" :for="id">
       {{ label }}
-    </span>
+    </label>
 
     <button
+      :id
       type="button"
       class="date-picker__control"
       :class="{ 'date-picker__control--placeholder': !model }"
@@ -634,12 +638,6 @@ onBeforeUnmount(() => {
   background: transparent;
 }
 
-.date-picker__day--muted.disabled:is(:hover, :focus-visible) {
-  color: rgba(var(--color-error-rgb), 0.34);
-  border-color: transparent;
-  background: transparent;
-}
-
 .date-picker__year-grid,
 .date-picker__month-grid {
   display: grid;
@@ -651,21 +649,6 @@ onBeforeUnmount(() => {
   max-height: 13.5rem;
   overflow: auto;
   padding-right: 0.15rem;
-}
-
-.date-picker__year-grid::-webkit-scrollbar {
-  width: var(--scrollbar-width);
-}
-
-.date-picker__year-grid::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.date-picker__year-grid::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--color-primary-rgb), 0.22);
-  border-radius: 999px;
-  border: var(--scrollbar-padding) solid transparent;
-  background-clip: content-box;
 }
 
 .date-picker__month-grid {
@@ -703,7 +686,6 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   gap: var(--space-sm);
-  margin-top: var(--space-sm);
   padding-top: var(--space-sm);
   border-top: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }

@@ -1,0 +1,60 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install required packages
+  apt:
+    name:
+      - curl
+      - git
+      - net-tools
+      - docker.io
+      - docker-compose
+    state: present
+
+- name: Enable and start Docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Add vagrant user to docker group
+  user:
+    name: vagrant
+    groups: docker
+    append: true
+
+- name: Create VM4 docker-compose.yml
+  copy:
+    dest: /home/vagrant/docker-compose.yml
+    owner: vagrant
+    group: vagrant
+    mode: "0644"
+    content: |
+      services:
+        ai:
+          image: tijabdel/ai:prod
+          container_name: ai-container
+          restart: unless-stopped
+          ports:
+            - "192.168.56.13:8000:8000"
+          environment:
+            - ENV=production
+
+- name: Start VM4 AI container
+  shell: docker-compose up -d
+  args:
+    chdir: /home/vagrant
+    
+- name: Install Node Exporter
+  apt:
+    name: prometheus-node-exporter
+    state: present
+
+- name: Start Node Exporter
+  service:
+    name: prometheus-node-exporter
+    enabled: yes
+    state: started

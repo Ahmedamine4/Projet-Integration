@@ -3,18 +3,6 @@ import api from '@/services/api';
 import { supabase } from '@/services/supabase';
 import { ref, computed } from 'vue';
 
-function normalizeUser(user) {
-  if (!user) return null;
-
-  const { prenom, nom, ...rest } = user;
-
-  return {
-    ...rest,
-    firstName: user.firstName || prenom || '',
-    lastName: user.lastName || nom || '',
-  };
-}
-
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
 
@@ -23,7 +11,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchProfile() { // Appelé au démarrage pour vérifier si l'utilisateur est déjà connecté (cookie valide)
       try {
           const { data } = await api.get('/auth/profile');
-          user.value = normalizeUser(data.user);
+          user.value = data.user;
       } catch (error) {
           user.value = null; // Cookie expiré ou absent
       }
@@ -50,7 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
       password,
     });
 
-    user.value = normalizeUser(data.user);
+    user.value = data.user;
   }
 
   async function register(userData) {
@@ -63,7 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
       password,
     });
 
-    user.value = normalizeUser(data.user);
+    user.value = data.user;
   }
 
   async function startGoogleAuth() {
@@ -95,14 +83,13 @@ export const useAuthStore = defineStore('auth', () => {
       access_token: supabaseToken,
     });
 
-    user.value = normalizeUser(response.data.user);
+    user.value = response.data.user;
   }
 
   async function logout() {
     const { error } = await supabase.auth.signOut();
 
-    if (error) throw error;
-    await api.post('/auth/logout');
+    if (error) console.warn(error);
 
     user.value = null;
   }
