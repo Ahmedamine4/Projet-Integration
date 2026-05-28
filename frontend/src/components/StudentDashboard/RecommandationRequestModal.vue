@@ -159,8 +159,7 @@ function submitRequest() {
 .modal-card {
   display: flex;
   flex-direction: column;
-  width: clamp(32rem, 40vw, 44rem);
-  max-width: 100vw;
+  width: clamp(20rem, 40vw, 44rem);
   height: calc(100vh - 2 * var(--space-sm));
   margin-inline: var(--space-sm);
   background-color: var(--color-background);

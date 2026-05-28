@@ -332,15 +332,6 @@ function savePhoneNumber() {
   gap: var(--space-sm);
   width: min(100%, 28rem);
 }
-
-.phone-form label {
-  font-size: var(--font-size-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: var(--font-medium);
-  color: var(--color-primary-hover);
-}
-
 .phone-input-wrapper {
   display: flex;
   align-items: center;
@@ -385,14 +376,6 @@ function savePhoneNumber() {
   height: 1.1rem;
   color: white;
   stroke: white;
-}
-
-.github-icon {
-  width: 1.2rem;
-  height: 1.2rem;
-  color:white;
-stroke:white;
-display:block;
 }
 .phone-button {
   width: fit-content;

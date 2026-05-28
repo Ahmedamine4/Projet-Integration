@@ -1,13 +1,21 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useInstitutionStore } from '@/stores/institution';
 import Button from '@/components/common/Button.vue';
 import RecommandationRequestModal from '@/components/StudentDashboard/RecommandationRequestModal.vue';
 
 const isModalOpen = ref(false);
 const isLoading = ref(false);
 
-const testSchools = ['ENSA Tanger', 'ENSA Tétouan', 'FST Tanger'];
+const institutionStore = useInstitutionStore();
 
+onMounted(() => {
+  institutionStore.fetchInstitutions();
+});
+
+const schoolOptions = computed(() =>
+  institutionStore.institutions.map((institution) => institution.nom)
+);
 const testProfessorEmails = [
   'prof1@uae.ac.ma',
   'prof2@uae.ac.ma',
@@ -37,7 +45,7 @@ function handleSubmit(data) {
     <RecommandationRequestModal
       :open="isModalOpen"
       :loading="isLoading"
-      :school-options="testSchools"
+      :school-options="schoolOptions"
       :professor-emails="testProfessorEmails"
       @close="isModalOpen = false"
       @submit="handleSubmit"
