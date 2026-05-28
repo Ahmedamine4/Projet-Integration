@@ -4,14 +4,20 @@ import GettingStartedStep from '@/components/getting-started/GettingStartedStep.
 import ProgressMeter from '@/components/common/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
-import { useAuthStore } from '@/stores/auth';
-import api from '@/services/api';
-
-const authStore = useAuthStore();
+import { useGithubStore } from '@/stores/github';
 
 const institutionStore = useInstitutionStore();
+const githubStore = useGithubStore();
 
-onMounted(institutionStore.fetchInstitutions);
+onMounted(() => {
+  institutionStore.fetchInstitutions();
+
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('github') === 'connected') {
+    stepStatus.github = 'done';
+  }
+});
 
 const steps = [
   {
@@ -39,13 +45,13 @@ const stepStatus = reactive({
 
 const doneCount = computed(() =>
   steps.reduce((acc, step) => {
-    return stepStatus[step.key] === 'done' ? acc + 1 : acc;
+    return stepStatus[step.key] !== 'todo' ? acc + 1 : acc;
   }, 0),
 );
 
 const isSchoolModalOpen = ref(false);
 
-function handleStepAction(key) {
+async function handleStepAction(key) {
   const step = steps.find((step) => step.key === key);
 
   if (!step) return;
@@ -54,17 +60,15 @@ function handleStepAction(key) {
     isSchoolModalOpen.value = true;
     return;
   }
+  if (step.key === 'github') {
+    await githubStore.connectGithub();
+    return;
+  }
 
   stepStatus[key] = 'done';
 }
 
-async function completeSchoolStep(schoolData) {
-  await api.post('/select-institutions', {
-    etudiantId: authStore.user.utilisateur_id,
-    institutionId: Object.values(schoolData.schoolPath)
-      .map(school => school.institutionId)
-      .filter(Boolean),
-  });
+function completeSchoolStep(schoolData) {
   institutionStore.setSchoolPath(schoolData.schoolPath);
   stepStatus.school = 'pending';
   isSchoolModalOpen.value = false;
@@ -110,17 +114,14 @@ async function completeSchoolStep(schoolData) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-  min-width: 0;
-  padding: 3rem 12vw;
+  padding: 3rem var(--space-xl);
   gap: 3rem;
 }
 
 .wrapper-getting-started {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 80rem;
+  width: clamp(16rem, 75vw, 80rem);
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: var(--radius-md);
   height: fit-content;
@@ -163,17 +164,7 @@ async function completeSchoolStep(schoolData) {
   color: rgba(var(--color-primary-rgb), 0.72);
 }
 
-@media (max-width: 768px) {
-  .page-content {
-    padding-inline: 6vw;
-  }
-}
-
 @media (max-width: 480px) {
-  .page-content {
-    padding-inline: 1rem;
-  }
-
   .wrapper-header {
     flex-direction: column;
     align-items: flex-start;
