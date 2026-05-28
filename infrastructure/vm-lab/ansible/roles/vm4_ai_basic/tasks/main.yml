@@ -47,3 +47,14 @@
   shell: docker-compose up -d
   args:
     chdir: /home/vagrant
+    
+- name: Install Node Exporter
+  apt:
+    name: prometheus-node-exporter
+    state: present
+
+- name: Start Node Exporter
+  service:
+    name: prometheus-node-exporter
+    enabled: yes
+    state: started

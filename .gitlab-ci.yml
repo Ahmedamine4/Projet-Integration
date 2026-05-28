@@ -1,6 +1,6 @@
 stages:
-  - quality
   - lint
+  - quality
   - security
   - test
   - build
