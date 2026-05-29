@@ -183,18 +183,18 @@ onMounted(() => {
 .projects-scroll-frame::before {
   left: 0;
   background: linear-gradient(
-    90deg,
-    var(--color-background) 0%,
-    rgba(var(--color-background-rgb), 0) 100%
+    to right,
+    var(--color-background),
+    rgba(var(--color-background-rgb), 0)
   );
 }
 
 .projects-scroll-frame::after {
   right: 0;
   background: linear-gradient(
-    270deg,
-    var(--color-background) 0%,
-    rgba(var(--color-background-rgb), 0) 100%
+    to left,
+    var(--color-background),
+    rgba(var(--color-background-rgb), 0)
   );
 }
 

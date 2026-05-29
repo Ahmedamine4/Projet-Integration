@@ -863,7 +863,7 @@ const existingImageName = computed(() => {
   position: absolute;
   left: 0;
   right: var(--scrollbar-width);
-  top: calc(100% + 0.5px);
+  top: 100%;
   height: 24px;
   pointer-events: none;
   backdrop-filter: blur(4px);
@@ -1027,7 +1027,7 @@ textarea:focus {
   position: absolute;
   left: 0;
   right: var(--scrollbar-width);
-  bottom: calc(100% + 0.5px);
+  bottom: 100%;
   height: 24px;
   pointer-events: none;
   backdrop-filter: blur(4px);

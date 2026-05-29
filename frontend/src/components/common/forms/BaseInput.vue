@@ -158,4 +158,16 @@ input:focus {
   border-color: var(--color-secondary);
   box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
+
+/* Chrome / Edge Chromium / Safari */
+input[type="password"]::-webkit-password-toggle-button {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* IE / old Edge */
+input[type="password"]::-ms-reveal {
+  display: none;
+}
 </style>
