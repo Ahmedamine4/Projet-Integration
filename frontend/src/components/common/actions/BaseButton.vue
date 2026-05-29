@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import googleIcon from '@/assets/icons/google.svg';
-import BaseSpinner from '@/components/common/BaseSpinner.vue';
+import BaseSpinner from '@/components/common/feedback/BaseSpinner.vue';
 
 const props = defineProps({
   variant: {

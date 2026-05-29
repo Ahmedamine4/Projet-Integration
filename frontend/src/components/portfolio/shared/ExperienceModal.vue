@@ -1,19 +1,19 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { analyzeExperienceDescription } from '@/services/aiApi';
-import BaseButton from '@/components/common/BaseButton.vue';
-import BaseInput from '@/components/common/BaseInput.vue';
-import DatePicker from '@/components/common/DatePicker.vue';
-import BaseDropdown from '@/components/common/BaseDropdown.vue';
-import BaseLabels from '@/components/common/BaseLabels.vue';
-import ToggleSwitch from '@/components/common/ToggleSwitch.vue';
-import ImageDropzone from '@/components/common/ImageDropzone.vue';
-import CloseButton from '@/components/common/CloseButton.vue';
-import BaseSelect from '@/components/common/BaseSelect.vue';
-import BaseError from '@/components/common/BaseError.vue';
+import BaseButton from '@/components/common/actions/BaseButton.vue';
+import BaseInput from '@/components/common/forms/BaseInput.vue';
+import DatePicker from '@/components/common/forms/DatePicker.vue';
+import BaseDropdown from '@/components/common/forms/BaseDropdown.vue';
+import BaseLabels from '@/components/common/forms/BaseLabels.vue';
+import ToggleSwitch from '@/components/common/forms/ToggleSwitch.vue';
+import ImageDropzone from '@/components/common/forms/ImageDropzone.vue';
+import CloseButton from '@/components/common/actions/CloseButton.vue';
+import BaseSelect from '@/components/common/forms/BaseSelect.vue';
+import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { formatLocalDate } from '@/utils/date';
-import ModificationRequest from '../common/ModificationRequest.vue';
+import ModificationRequest from '@/components/common/display/ModificationRequest.vue';
 
 const props = defineProps({
   open: {

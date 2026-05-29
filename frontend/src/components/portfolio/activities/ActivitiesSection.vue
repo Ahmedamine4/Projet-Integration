@@ -1,7 +1,7 @@
 <script setup>
-import SwipeHint from '@/components/common/SwipeHint.vue';
-import PortfolioActivity from '@/components/portfolio/PortfolioActivity.vue';
-import PortfolioSectionShell from '@/components/portfolio/PortfolioSectionShell.vue';
+import SwipeHint from '@/components/common/display/SwipeHint.vue';
+import PortfolioActivity from '@/components/portfolio/activities/PortfolioActivity.vue';
+import PortfolioSectionShell from '@/components/portfolio/layout/PortfolioSectionShell.vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({

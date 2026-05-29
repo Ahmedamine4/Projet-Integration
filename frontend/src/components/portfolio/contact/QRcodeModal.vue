@@ -1,8 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue';
-import CloseButton from '@/components/common/CloseButton.vue';
+import CloseButton from '@/components/common/actions/CloseButton.vue';
 import QRCode from 'qrcode';
-import BaseButton from '@/components/common/BaseButton.vue';
+import BaseButton from '@/components/common/actions/BaseButton.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 
 const props = defineProps({

@@ -1,7 +1,7 @@
 <script setup>
 import gradiant from '@/assets/images/brown-gradiant.png';
-import GmailCopyButton from '@/components/portfolio/GmailCopyButton.vue';
-import ContactLink from '@/components/portfolio/ContactLink.vue';
+import GmailCopyButton from '@/components/portfolio/contact/GmailCopyButton.vue';
+import ContactLink from '@/components/portfolio/contact/ContactLink.vue';
 import { ref } from 'vue';
 
 

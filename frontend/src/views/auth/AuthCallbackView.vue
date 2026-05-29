@@ -2,8 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import BaseError from '@/components/common/BaseError.vue';
-import BaseSpinner from '@/components/common/BaseSpinner.vue';
+import BaseError from '@/components/common/feedback/BaseError.vue';
+import BaseSpinner from '@/components/common/feedback/BaseSpinner.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();

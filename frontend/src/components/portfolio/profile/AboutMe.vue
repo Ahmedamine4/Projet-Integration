@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
-import BaseButton from '@/components/common/BaseButton.vue';
+import BaseButton from '@/components/common/actions/BaseButton.vue';
 import { FileText, ChevronUp, ChevronDown } from 'lucide-vue-next';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 

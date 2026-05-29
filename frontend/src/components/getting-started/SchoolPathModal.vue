@@ -1,10 +1,10 @@
 <script setup>
 import { ref, reactive, computed } from 'vue';
-import ProgressMeter from '@/components/common/ProgressMeter.vue';
-import BaseDropdown from '@/components/common/BaseDropdown.vue';
-import YearInput from '@/components/common/YearInput.vue';
-import BaseButton from '@/components/common/BaseButton.vue';
-import CloseButton from '@/components/common/CloseButton.vue';
+import ProgressMeter from '@/components/common/display/ProgressMeter.vue';
+import BaseDropdown from '@/components/common/forms/BaseDropdown.vue';
+import YearInput from '@/components/common/forms/YearInput.vue';
+import BaseButton from '@/components/common/actions/BaseButton.vue';
+import CloseButton from '@/components/common/actions/CloseButton.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 
 const academicLevels = [

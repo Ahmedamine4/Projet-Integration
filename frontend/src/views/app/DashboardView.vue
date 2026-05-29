@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import PortfolioCertification from '@/components/portfolio/PortfolioCertification.vue';
+import PortfolioCertification from '@/components/portfolio/certifications/PortfolioCertification.vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
@@ -53,5 +53,4 @@ const certification = ref({
   margin-top: 30vh;
 }
 </style>
-
 

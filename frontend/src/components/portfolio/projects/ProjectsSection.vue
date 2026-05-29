@@ -1,7 +1,7 @@
 <script setup>
 import { nextTick, onMounted, ref } from 'vue';
-import PortfolioSectionShell from '@/components/portfolio/PortfolioSectionShell.vue';
-import PortfolioProject from '@/components/portfolio/PortfolioProject.vue';
+import PortfolioSectionShell from '@/components/portfolio/layout/PortfolioSectionShell.vue';
+import PortfolioProject from '@/components/portfolio/projects/PortfolioProject.vue';
 defineProps({
   projects: {
     type: Array,

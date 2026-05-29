@@ -2,13 +2,13 @@
 import { ref, reactive } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
-import BaseButton from '@/components/common/BaseButton.vue';
-import BaseCard from '@/components/common/BaseCard.vue';
-import BaseInput from '@/components/common/BaseInput.vue';
+import BaseButton from '@/components/common/actions/BaseButton.vue';
+import BaseCard from '@/components/common/display/BaseCard.vue';
+import BaseInput from '@/components/common/forms/BaseInput.vue';
 import AuthFooter from '@/components/auth/AuthFooter.vue';
-import BaseDivider from '@/components/common/BaseDivider.vue';
+import BaseDivider from '@/components/common/display/BaseDivider.vue';
 import PasswordStrengthMeter from '@/components/auth/PasswordStrengthMeter.vue';
-import BaseError from '@/components/common/BaseError.vue';
+import BaseError from '@/components/common/feedback/BaseError.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();

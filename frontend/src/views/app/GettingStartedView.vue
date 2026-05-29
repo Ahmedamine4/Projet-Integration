@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue';
 import GettingStartedStep from '@/components/getting-started/GettingStartedStep.vue';
-import ProgressMeter from '@/components/common/ProgressMeter.vue';
+import ProgressMeter from '@/components/common/display/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
 import { useAuthStore } from '@/stores/auth';

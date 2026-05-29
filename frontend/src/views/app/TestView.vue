@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
+import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { useInternshipStore } from '@/stores/internship';
 import { useActivityStore } from '@/stores/activity';

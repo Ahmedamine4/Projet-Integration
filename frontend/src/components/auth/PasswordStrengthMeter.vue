@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import ProgressMeter from '@/components/common/ProgressMeter.vue';
+import ProgressMeter from '@/components/common/display/ProgressMeter.vue';
 
 const props = defineProps({
   password: {

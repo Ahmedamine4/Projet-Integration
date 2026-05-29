@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import BaseInput from '@/components/common/BaseInput.vue';
+import BaseInput from '@/components/common/forms/BaseInput.vue';
 
 defineOptions({
   inheritAttrs: false,

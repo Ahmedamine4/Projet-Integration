@@ -1,7 +1,7 @@
 <script setup>
 import { Eye, EyeOff } from 'lucide-vue-next';
 import { useDoubleTap } from '@/composables/useDoubleTap';
-import ExploreButton from '@/components/portfolio/ExploreButton.vue';
+import ExploreButton from '@/components/portfolio/shared/ExploreButton.vue';
 
 const props = defineProps({
   project: {

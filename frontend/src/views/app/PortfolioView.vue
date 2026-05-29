@@ -2,19 +2,19 @@
 import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import src from '@/assets/images/profile-photo.png'
-import AboutMe from '@/components/portfolio/AboutMe.vue';
-import PortfolioEducation from '@/components/portfolio/PortfolioEducation.vue';
-import PortfolioSkills from '@/components/portfolio/PortfolioSkills.vue';
-import ProjectsSection from '@/components/portfolio/ProjectsSection.vue';
+import AboutMe from '@/components/portfolio/profile/AboutMe.vue';
+import PortfolioEducation from '@/components/portfolio/profile/PortfolioEducation.vue';
+import PortfolioSkills from '@/components/portfolio/profile/PortfolioSkills.vue';
+import ProjectsSection from '@/components/portfolio/projects/ProjectsSection.vue';
 import { QrCode } from 'lucide-vue-next';
-import QRcodeModal from '@/components/portfolio/QRcodeModal.vue';
-import ExperienceModal from '@/components/portfolio/ExperienceModal.vue';
+import QRcodeModal from '@/components/portfolio/contact/QRcodeModal.vue';
+import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { useActivityStore } from '@/stores/activity';
-import BaseError from '@/components/common/BaseError.vue';
+import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useRoute } from 'vue-router';
-import ActivitiesSection from '@/components/portfolio/ActivitiesSection.vue';
-import PortfolioContact from '@/components/portfolio/PortfolioContact.vue';
+import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
+import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
