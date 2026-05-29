@@ -1,5 +1,3 @@
-# ✅ SUPPRIMER : aws_security_group "public" et "backend" (redondants)
-
 # Pare-feu pour le Load Balancer 
 resource "aws_security_group" "alb_sg" {
   name        = "${var.project_name}-${var.environment}-alb-sg"
