@@ -57,8 +57,10 @@
             - frontend
           ports:
             - "80:80"
+            - "443:443"
           volumes:
             - ./nginx.conf:/etc/nginx/conf.d/default.conf
+            - ./certs:/etc/nginx/certs
 
 - name: Create VM2 nginx.conf
   copy:
@@ -82,8 +84,19 @@
           }
       }
 
-- name: Start VM2 containers
-  shell: docker-compose up -d
+- name: Copy .env to VM
+  copy:
+    src: /vagrant/.env
+    dest: /home/vagrant/.env
+    owner: vagrant
+    group: vagrant
+    mode: "0644"
+
+    
+- name: Recreate clean Docker stack
+  shell: |
+    docker-compose down
+    docker-compose up -d --force-recreate --remove-orphans
   args:
     chdir: /home/vagrant
     

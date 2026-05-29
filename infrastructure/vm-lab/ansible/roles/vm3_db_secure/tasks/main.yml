@@ -68,8 +68,24 @@
     policy: deny
     direction: incoming
 
-- name: Start VM3 database container
-  shell: docker-compose up -d
+- name: Allow Node Exporter (Prometheus)
+  ufw:
+    rule: allow
+    port: "9100"
+    proto: tcp    
+
+- name: Copy .env to VM
+  copy:
+    src: /vagrant/.env
+    dest: /home/vagrant/.env
+    owner: vagrant
+    group: vagrant
+    mode: "0644"    
+
+- name: Recreate clean Docker stack
+  shell: |
+    docker-compose down
+    docker-compose up -d --force-recreate --remove-orphans
   args:
     chdir: /home/vagrant
     
