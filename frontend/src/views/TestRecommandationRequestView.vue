@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useInstitutionStore } from '@/stores/institution';
-import Button from '@/components/common/Button.vue';
+import Button from '@/components/common/actions/BaseButton.vue';
 import RecommandationRequestModal from '@/components/StudentDashboard/RecommandationRequestModal.vue';
 
 const isModalOpen = ref(false);

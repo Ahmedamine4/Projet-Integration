@@ -1,11 +1,11 @@
 <script setup>
 import { reactive } from 'vue';
-import Button from '@/components/common/Button.vue';
-import Input from '@/components/common/Input.vue';
-import Dropdown from '@/components/common/Dropdown.vue';
-import Select from '@/components/common/Select.vue';
-import Error from '@/components/common/Error.vue';
-import CloseButton from '@/components/common/CloseButton.vue';
+import Button from '@/components/common/actions/BaseButton.vue';
+import Input from '@/components/common/forms/BaseInput.vue';
+import Dropdown from '@/components/common/forms/BaseDropdown.vue';
+import Select from '@/components/common/forms/BaseSelect.vue';
+import Error from '@/components/common/feedback/BaseError.vue';
+import CloseButton from '@/components/common/actions/CloseButton.vue';
 
 const props = defineProps({
   open: Boolean,

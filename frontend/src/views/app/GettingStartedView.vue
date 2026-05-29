@@ -5,7 +5,7 @@ import ProgressMeter from '@/components/common/display/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
 import { useGithubStore } from '@/stores/github';
-import Button from '@/components/common/Button.vue';
+import Button from '@/components/common/actions/BaseButton.vue';
 import { GithubIcon } from 'lucide-vue-next';
 import gettingStartedIllustration from '@/assets/getting-started-illustration.png';
 
