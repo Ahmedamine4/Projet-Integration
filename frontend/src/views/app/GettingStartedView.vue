@@ -11,7 +11,7 @@ import gettingStartedIllustration from '@/assets/getting-started-illustration.pn
 
 const institutionStore = useInstitutionStore();
 const githubStore = useGithubStore();
-
+const phoneError = ref('');
 onMounted(() => {
   institutionStore.fetchInstitutions();
 
@@ -87,11 +87,28 @@ function completeSchoolStep(schoolData) {
   isSchoolModalOpen.value = false;
 }
 function savePhoneNumber() {
-  if (!phoneForm.phoneNumber.trim()) return;
+  const phone = phoneForm.phoneNumber.trim();
+
+  if (!phone) {
+    phoneError.value = 'Phone number is required';
+    return;
+  }
+
+  if (!/^\d+$/.test(phone)) {
+    phoneError.value = 'Phone number must contain only digits';
+    return;
+  }
+
+  if (phone.length !== 9) {
+    phoneError.value = 'Phone number must contain 9 digits';
+    return;
+  }
+
+  phoneError.value = '';
 
   console.log('Phone:', {
     countryCode: phoneForm.countryCode,
-    phoneNumber: phoneForm.phoneNumber,
+    phoneNumber: phone,
   });
 
   stepStatus.phone = 'done';
@@ -173,6 +190,9 @@ function savePhoneNumber() {
                   placeholder="Enter your phone number"
                 />
               </div>
+              <p v-if="phoneError" class="phone-error">
+                 {{ phoneError }}
+               </p>
 
                   <Button
                   class="phone-button"
@@ -390,5 +410,10 @@ function savePhoneNumber() {
   width: clamp(8rem, 14vw, 14rem);
   pointer-events: none;
   z-index: 2;
+}
+.phone-error {
+  margin: 0;
+  color:var(--color-error);
+  font-size: var(--font-size-xs);
 }
 </style>
