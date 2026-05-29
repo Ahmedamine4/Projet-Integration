@@ -10,6 +10,13 @@ import aiRoutes from './routes/ai.route.js';
 import stageRoutes from './routes/stage.routes.js';
 import activiteRoutes from './routes/activite.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
+import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
+import githubRoutes from './routes/github.route.js';
+import lettreRecommandationRoutes from './routes/lettre_recommandation.routes.js';
+
+
 
 const app = express();
 app.use(cors({
@@ -24,6 +31,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/users', portfolioRoutes);
+app.use('/api/lettre-recommandation', lettreRecommandationRoutes);
 
 // Branchement des routes de gestion des stages
 app.use('/api/stages', stageRoutes);
@@ -41,6 +49,16 @@ app.use('/api/validation', ValidationEtudiantRoutes);
 
 // Branchement des routes d'ajout du projet
 app.use('/api', projetRoutes);
+<<<<<<< HEAD
+=======
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/github', githubRoutes);
+//Modifications des infromations
+app.use('/api/users', updateUtilisateurRoutes);
+
+app.use('/api', ValidationProjetRoutes);
+>>>>>>> testing
+
 
 // Route de test
 app.get("/", (req, res) => {

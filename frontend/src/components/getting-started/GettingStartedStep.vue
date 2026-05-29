@@ -1,5 +1,5 @@
 <script setup>
-import { CircleCheck, CircleDashed, ClockFading } from 'lucide-vue-next';
+import { CircleCheck, CircleDashed, ClockFading ,GraduationCap, Phone, GithubIcon, } from 'lucide-vue-next';
 
 const props = defineProps({
   title: {
@@ -14,6 +14,10 @@ const props = defineProps({
     type: String,
     default: 'todo',
     validator: (value) => ['todo', 'pending', 'done'].includes(value),
+  },
+  stepKey: {
+  type: String,
+  required: true,
   },
 });
 
@@ -31,18 +35,25 @@ function handleToggle() {
     @click="handleToggle"
   >
     <div class="left">
-      <CircleCheck
-        v-if="status === 'done'"
-        class="step-icon"
-      />
-      <ClockFading
-        v-else-if="status === 'pending'"
-        class="step-icon"
-      />
-      <CircleDashed
-        v-else
-        class="step-icon"
-      />
+        <CircleCheck
+          v-if="status === 'done'"
+          class="step-icon done-icon"
+        />
+
+        <GraduationCap
+          v-else-if="stepKey === 'school'"
+          class="step-icon"
+        />
+
+        <GithubIcon
+          v-else-if="stepKey === 'github'"
+          class="step-icon"
+        />
+
+        <Phone
+          v-else-if="stepKey === 'phone'"
+          class="step-icon"
+        />
       <div class="description">
         <h3>{{ title }}</h3>
         <p>{{ description }}</p>
@@ -92,22 +103,14 @@ p {
   align-self: flex-start;
   width: 1.8rem;
   height: 1.8rem;
-  color: var(--color-background);
+  color: rgba(var(--color-primary-rgb), 0.45);
 }
 
 .done .step-icon {
+   color: var(--color-background);
   fill: var(--color-success);
 }
 
-.todo .step-icon {
-  scale: 0.8;
-  color: rgba(var(--color-primary-rgb), 0.3);
-}
-
-.pending .step-icon {
-  scale: 0.8;
-  color: #d9b20b;
-}
 
 .step-field {
   flex: 1;

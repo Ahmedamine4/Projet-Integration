@@ -391,6 +391,4 @@ function savePhoneNumber() {
   pointer-events: none;
   z-index: 2;
 }
-
-
 </style>
