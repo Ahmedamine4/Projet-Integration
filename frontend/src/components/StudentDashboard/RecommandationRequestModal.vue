@@ -253,8 +253,4 @@ textarea:focus {
     border-radius: var(--radius-md) var(--radius-md) 0 0;
   }
 }
-<<<<<<< HEAD
 </style>
-=======
-</style>
->>>>>>> testing
