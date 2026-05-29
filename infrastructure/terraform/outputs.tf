@@ -74,3 +74,9 @@ output "resume" {
 ╚═══════════════════════════════════════════════════════════╝
   EOT
 }
+
+
+output "cloudfront_domain_name" {
+  description = "URL CloudFront HTTPS du frontend"
+  value       = aws_cloudfront_distribution.s3_distribution.domain_name
+}
