@@ -4,16 +4,47 @@
     update_cache: true
     cache_valid_time: 3600
 
-- name: Install required packages
+- name: Install required and security packages
   apt:
     name:
       - curl
       - git
       - net-tools
       - ufw
+      - fail2ban
+      - unattended-upgrades
       - docker.io
       - docker-compose
+      - prometheus-node-exporter
     state: present
+
+- name: Disable SSH root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+    backup: true
+
+- name: Reload SSH
+  service:
+    name: ssh
+    state: reloaded
+
+- name: Enable unattended security upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+- name: Enable and start fail2ban
+  service:
+    name: fail2ban
+    enabled: true
+    state: started
 
 - name: Enable and start Docker
   service:
@@ -41,13 +72,25 @@
           restart: unless-stopped
           env_file:
             - .env
+          environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
           ports:
-            - "192.168.56.12:5432:5432"
+            - "{{ vm3_ip }}:5432:5432"
           volumes:
             - postgres_data:/var/lib/postgresql/data
 
       volumes:
         postgres_data:
+
+- name: Copy .env to VM with restricted permissions
+  copy:
+    src: /vagrant/.env
+    dest: /home/vagrant/.env
+    owner: vagrant
+    group: vagrant
+    mode: "0600"
 
 - name: Allow SSH
   ufw:
@@ -58,8 +101,15 @@
 - name: Allow PostgreSQL only from VM2
   ufw:
     rule: allow
-    src: "192.168.56.11"
+    src: "{{ vm2_ip }}"
     port: "5432"
+    proto: tcp
+
+- name: Allow Node Exporter only from VM1
+  ufw:
+    rule: allow
+    src: "{{ vm1_ip }}"
+    port: "9100"
     proto: tcp
 
 - name: Enable firewall
@@ -68,34 +118,15 @@
     policy: deny
     direction: incoming
 
-- name: Allow Node Exporter (Prometheus)
-  ufw:
-    rule: allow
-    port: "9100"
-    proto: tcp    
-
-- name: Copy .env to VM
-  copy:
-    src: /vagrant/.env
-    dest: /home/vagrant/.env
-    owner: vagrant
-    group: vagrant
-    mode: "0644"    
-
 - name: Recreate clean Docker stack
   shell: |
     docker-compose down
     docker-compose up -d --force-recreate --remove-orphans
   args:
     chdir: /home/vagrant
-    
-- name: Install Node Exporter
-  apt:
-    name: prometheus-node-exporter
-    state: present
 
-- name: Start Node Exporter
+- name: Enable and start Node Exporter
   service:
     name: prometheus-node-exporter
-    enabled: yes
+    enabled: true
     state: started
