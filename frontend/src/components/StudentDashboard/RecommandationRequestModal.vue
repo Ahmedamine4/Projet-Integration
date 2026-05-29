@@ -71,14 +71,23 @@ function submitRequest() {
 
 <template>
   <Transition name="pop-up">
-    <div v-if="open" class="modal-overlay">
+    <div
+      v-if="open"
+      class="modal-overlay"
+    >
       <div class="modal-card">
         <div class="modal-card__header">
           <h2>Request a recommendation letter</h2>
-          <CloseButton size="lg" @click="emit('close')" />
+          <CloseButton
+            size="lg"
+            @click="emit('close')"
+          />
         </div>
 
-        <form class="recommendation-form" @submit.prevent="submitRequest">
+        <form
+          class="recommendation-form"
+          @submit.prevent="submitRequest"
+        >
           <div class="recommendation-form__body">
             <div class="field">
               <Input
@@ -86,7 +95,10 @@ function submitRequest() {
                 label="Request object"
                 placeholder="Example: Recommendation letter for internship"
               />
-              <Error v-if="errors.title" variant="field">
+              <Error
+                v-if="errors.title"
+                variant="field"
+              >
                 {{ errors.title }}
               </Error>
             </div>
@@ -99,7 +111,10 @@ function submitRequest() {
                 placeholder="Explain why you need this recommendation letter..."
                 maxlength="1200"
               />
-              <Error v-if="errors.description" variant="field">
+              <Error
+                v-if="errors.description"
+                variant="field"
+              >
                 {{ errors.description }}
               </Error>
             </div>
@@ -111,7 +126,10 @@ function submitRequest() {
                 label="Institution"
                 placeholder="Select your school"
               />
-              <Error v-if="errors.institution" variant="field">
+              <Error
+                v-if="errors.institution"
+                variant="field"
+              >
                 {{ errors.institution }}
               </Error>
             </div>
@@ -123,18 +141,29 @@ function submitRequest() {
                 label="Professor email"
                 placeholder="teacher@school.com"
               />
-              <Error v-if="errors.teacherEmail" variant="field">
+              <Error
+                v-if="errors.teacherEmail"
+                variant="field"
+              >
                 {{ errors.teacherEmail }}
               </Error>
             </div>
           </div>
 
           <div class="recommendation-form__footer">
-            <Button type="button" variant="ghost" @click="emit('close')">
+            <Button
+              type="button"
+              variant="ghost"
+              @click="emit('close')"
+            >
               Cancel
             </Button>
 
-            <Button type="submit" variant="submit" :loading="loading">
+            <Button
+              type="submit"
+              variant="submit"
+              :loading="loading"
+            >
               Send request
             </Button>
           </div>
@@ -166,7 +195,6 @@ function submitRequest() {
   border-radius: var(--radius-md);
   overflow: hidden;
 }
-
 
 .modal-card__header {
   display: flex;

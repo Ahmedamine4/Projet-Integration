@@ -1,6 +1,5 @@
 <template>
-  <div class="dashboard-view">
-  </div>
+  <div class="dashboard-view" />
 </template>
 
 <style scoped>

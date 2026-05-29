@@ -38,7 +38,11 @@ function handleSubmit(data) {
   <main class="test-page">
     <h1>Recommendation Request Modal Test</h1>
 
-    <Button type="button" variant="submit" @click="isModalOpen = true">
+    <Button
+      type="button"
+      variant="submit"
+      @click="isModalOpen = true"
+    >
       Open recommendation request modal
     </Button>
 

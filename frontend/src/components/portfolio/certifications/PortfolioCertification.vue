@@ -313,8 +313,8 @@ const { handleDoubleTap } = useDoubleTap(() => {
   line-height: 1.22;
   overflow-wrap: anywhere;
   display: -webkit-box;
-  line-clamp: 2;
-  -webkit-line-clamp: 2;
+  line-clamp: 1;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
