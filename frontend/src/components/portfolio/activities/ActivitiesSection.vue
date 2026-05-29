@@ -15,7 +15,11 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['add-activity', 'edit-activity']);
+const emit = defineEmits([
+  'add-activity',
+  'edit-activity',
+  'update-max-card-height',
+]);
 
 const swipeDistance = {
   ratio: 0.3,
@@ -62,6 +66,7 @@ function updateMaxCardHeight() {
   });
 
   maxCardHeight.value = Math.max(0, ...heights);
+  emit('update-max-card-height', maxCardHeight.value);
 }
 
 function scheduleHeightUpdate() {

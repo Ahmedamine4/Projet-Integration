@@ -25,7 +25,7 @@ const emit = defineEmits(['edit']);
 const isExpanded = ref(false);
 
 const issuedDate = computed(() => {
-  return new Date(props.certification.issueDate);
+  return new Date(props.certification.date);
 });
 
 const issuedYear = computed(() => {
@@ -124,18 +124,18 @@ function toggleExpanded() {
         </p>
 
         <div
-          v-if="certification.code || certification.institution"
+          v-if="certification.certificateCode || certification.institution"
           class="certification-facts"
         >
           <div
-            v-if="certification.code"
+            v-if="certification.certificateCode"
             class="certification-fact"
           >
             <span class="certification-fact-label">
               Credential ID
             </span>
             <span class="certification-fact-value">
-              {{ certification.code }}
+              {{ certification.certificateCode }}
             </span>
           </div>
 
@@ -186,9 +186,9 @@ function toggleExpanded() {
 
         <div class="certification-footer">
           <a
-            v-if="certification.credentialUrl"
+            v-if="certification.certificateURL"
             class="certification-link"
-            :href="certification.credentialUrl"
+            :href="certification.certificateURL"
             target="_blank"
             rel="noreferrer"
           >
@@ -303,6 +303,11 @@ function toggleExpanded() {
   font-weight: var(--font-bold);
   line-height: 1.22;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .certification-controls {

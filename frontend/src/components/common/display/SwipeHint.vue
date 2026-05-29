@@ -42,14 +42,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.25rem, 0.8vw, 0.5rem);
+  gap: clamp(0.2rem, 0.6vw, 0.4rem);
   color: color-mix(
     in srgb,
     var(--color-primary) 42%,
     var(--color-background)
   );
   font-family: var(--font-ui);
-  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  font-size: clamp(1rem, 2vw, 1.4rem);
   font-weight: var(--font-medium);
   line-height: 1;
   white-space: nowrap;
@@ -59,8 +59,8 @@
 
 .swipe-hint-icon {
   flex: 0 0 auto;
-  width: clamp(2.5rem, 5vw, 3.5rem);
-  height: clamp(1.25rem, 2.6vw, 1.75rem);
+  width: clamp(1.8rem, 3.5vw, 2.5rem);
+  height: clamp(0.9rem, 1.8vw, 1.25rem);
   color: currentColor;
   transform: translateY(0.08em);
 }
