@@ -49,15 +49,12 @@ app.use('/api/validation', ValidationEtudiantRoutes);
 
 // Branchement des routes d'ajout du projet
 app.use('/api', projetRoutes);
-<<<<<<< HEAD
-=======
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/github', githubRoutes);
 //Modifications des infromations
 app.use('/api/users', updateUtilisateurRoutes);
 
 app.use('/api', ValidationProjetRoutes);
->>>>>>> testing
 
 
 // Route de test
