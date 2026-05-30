@@ -110,16 +110,16 @@ resource "aws_lb_target_group" "main" {
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
 
-  health_check {
-    path                = "/api/health"
-    protocol            = "HTTP"
-    port                = "3000"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200"
-  }
+health_check {
+  path                = "/"
+  protocol            = "HTTP"
+  port                = "3000"
+  interval            = 30
+  timeout             = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 2
+  matcher             = "200"
+}
 
   tags = {
     Name = "${var.project_name}-${var.environment}-tg"
