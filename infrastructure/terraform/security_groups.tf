@@ -1,8 +1,8 @@
-# Pare-feu pour le Load Balancer 
+# Pare-feu pour le Load Balancer
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.project_name}-${var.environment}-alb-sg"
+  name_prefix        = "${var.project_name}-${var.environment}-alb-sg"
   vpc_id      = aws_vpc.main.id
-  description = "ALB - accept HTTP from internet"
+  description = "ALB - accept HTTP/HTTPS from internet"
 
   ingress {
     from_port   = 80
@@ -30,9 +30,9 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# Pare-feu pour l'EC2 backend
+# Pare-feu pour l'EC2 backend (ASG)
 resource "aws_security_group" "app_sg" {
-  name        = "${var.project_name}-${var.environment}-app-sg"
+  name_prefix        = "${var.project_name}-${var.environment}-app-sg"
   vpc_id      = aws_vpc.main.id
   description = "EC2 backend - port 3000 from ALB only"
 
@@ -44,12 +44,12 @@ resource "aws_security_group" "app_sg" {
     security_groups = [aws_security_group.alb_sg.id]
   }
 
-  # ✅ SSH pour debug (RESTREINT à ton IP)
+  # ✅ SSH pour debug (Note: Comme l'EC2 est privée, l'accès SSH se fera via Session Manager ou un Bastion)
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["160.177.124.101/32"]  # ← Ton IP
+    cidr_blocks = ["102.53.139.14/32"] # Ton IP
   }
 
   egress {
@@ -66,11 +66,11 @@ resource "aws_security_group" "app_sg" {
 
 # Pare-feu pour PostgreSQL
 resource "aws_security_group" "db_sg" {
-  name        = "${var.project_name}-${var.environment}-db-sg"
+  name_prefix        = "${var.project_name}-${var.environment}-db-sg"
   vpc_id      = aws_vpc.main.id
   description = "PostgreSQL - only from app tier"
 
-  # EC2 → RDS port 5432
+  # ✅ EC2 (ASG) → RDS port 5432
   ingress {
     description     = "PostgreSQL from app tier"
     from_port       = 5432
@@ -79,14 +79,8 @@ resource "aws_security_group" "db_sg" {
     security_groups = [aws_security_group.app_sg.id]
   }
 
-  # ✅ TON IP — pour Prisma migrate
-  ingress {
-    description = "PostgreSQL from my PC (TEMPORARY - REMOVE AFTER)"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["160.177.124.101/32"]  # ← Ton IP
-  }
+  # 🛑 Règle de l'IP publique supprimée car la DB n'a plus de route vers Internet.
+  # Pour exécuter Prisma Migrate, il faudra le lancer depuis l'instance EC2 elle-même.
 
   egress {
     from_port   = 0

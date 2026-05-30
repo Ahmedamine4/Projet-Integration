@@ -1,5 +1,5 @@
 output "test_message" {
-  value = "✅ Terraform est bien initialisé !"
+  value = "✅ Terraform est bien initialisé et respecte le schéma !"
 }
 
 output "vpc_id" {
@@ -16,31 +16,13 @@ output "private_subnet_ids" {
 
 # ✅ URL du Load Balancer
 output "api_url" {
-  description = "URL publique du backend Node.js"
+  description = "URL publique du backend Node.js (ALB)"
   value       = "http://${aws_lb.main.dns_name}"
 }
 
-# ✅ DATABASE_URL complète
-output "database_url" {
-  description = "DATABASE_URL à coller dans ton .env Prisma"
-  value       = "postgresql://portfolio_user:${var.db_password}@${aws_db_instance.postgres.endpoint}/portfolio_db"
-  sensitive   = true
-}
-
 output "database_endpoint" {
-  description = "Endpoint RDS PostgreSQL"
+  description = "Endpoint RDS PostgreSQL (Privé)"
   value       = aws_db_instance.postgres.endpoint
-}
-
-# ✅ Commande SSH
-output "ec2_ssh_command" {
-  description = "Commande SSH pour accéder à l'EC2"
-  value       = "ssh -i ~/keys/id_rsa ubuntu@${aws_instance.app_server.private_ip}"
-}
-
-output "ec2_private_ip" {
-  description = "IP privée de l'EC2 (derrière NAT)"
-  value       = aws_instance.app_server.private_ip
 }
 
 # ✅ S3 Frontend
@@ -49,34 +31,27 @@ output "s3_bucket_name" {
   value       = aws_s3_bucket.frontend.bucket
 }
 
-output "s3_website_url" {
-  description = "URL du frontend Vue.js hébergé sur S3"
-  value       = "http://${aws_s3_bucket.frontend.bucket_regional_domain_name}"
+output "cloudfront_domain_name" {
+  description = "URL CloudFront HTTPS du frontend"
+  value       = aws_cloudfront_distribution.s3_distribution.domain_name
 }
 
-# ✅ Résumé
+# ✅ Résumé mis à jour
 output "resume" {
   value = <<-EOT
 
 ╔═══════════════════════════════════════════════════════════╗
-║         INFRASTRUCTURE DÉPLOYÉE AVEC SUCCÈS              ║
+║       INFRASTRUCTURE MULTI-AZ DÉPLOYÉE AVEC SUCCÈS        ║
 ╠═══════════════════════════════════════════════════════════╣
-║ 🌐 Backend API   : ${aws_lb.main.dns_name}
-║ 🗄️  PostgreSQL   : ${aws_db_instance.postgres.endpoint}
-║ 📦 S3 Frontend   : ${aws_s3_bucket.frontend.bucket}
-║ 💻 EC2 IP privée : ${aws_instance.app_server.private_ip}
+║ 🌐 Point d'entrée API ALB : ${aws_lb.main.dns_name}
+║ 🔒 Auto Scaling Group    : Activé (Min: 2, Max: 4) en Privé
+║ 🗄️  PostgreSQL Isolée     : ${aws_db_instance.postgres.endpoint}
+║ 📦 S3 Frontend (CDN)     : ${aws_cloudfront_distribution.s3_distribution.domain_name}
 ╠═══════════════════════════════════════════════════════════╣
 ║ Prochaines étapes :
-║ 1. terraform output database_url
-║ 2. Coller dans .env du backend
-║ 3. npx prisma migrate deploy
-║ 4. npm run build && S3 upload
+║ 1. Build de ton application frontend.
+║ 2. Sync du build vers le bucket S3 : ${aws_s3_bucket.frontend.bucket}
+║ 3. Déploiement/CI-CD du code backend sur les instances de l'ASG.
 ╚═══════════════════════════════════════════════════════════╝
   EOT
-}
-
-
-output "cloudfront_domain_name" {
-  description = "URL CloudFront HTTPS du frontend"
-  value       = aws_cloudfront_distribution.s3_distribution.domain_name
 }

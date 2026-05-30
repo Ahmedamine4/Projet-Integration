@@ -1,7 +1,7 @@
-# --- BASE DE DONNÉES RDS (POSTGRESQL POUR PRISMA) ---
+# --- BASE DE DONNÉES RDS (POSTGRESQL - 100% PRIVÉE) ---
 resource "aws_db_subnet_group" "db_subnets" {
-  name       = "${var.project_name}-${var.environment}-db-subnet-group"
-  subnet_ids = aws_subnet.public[*].id # ✅ PRIVÉ (pas public)
+  name_prefix = "${var.project_name}-${var.environment}-db-subnet-" # ◄ Change 'name' par 'name_prefix' (ajoute un tiret à la fin)
+  subnet_ids  = aws_subnet.private[*].id
 
   tags = {
     Name = "${var.project_name}-${var.environment}-db-subnet"
@@ -19,27 +19,28 @@ resource "aws_db_instance" "postgres" {
   db_subnet_group_name   = aws_db_subnet_group.db_subnets.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   skip_final_snapshot    = true
-  publicly_accessible    = true # ✅ PRIVÉ (sécurisé)
+  publicly_accessible    = false # ✅ PRIVÉ (Invisible depuis Internet)
 
   tags = {
     Name = "${var.project_name}-${var.environment}-postgres"
   }
 }
 
-# --- EC2 BACKEND + IA ---
+# --- Clé SSH ---
 resource "aws_key_pair" "deployer" {
   key_name   = "${var.project_name}-${var.environment}-key"
   public_key = file("${path.module}/keys/id_rsa.pub")
 }
 
-resource "aws_instance" "app_server" {
-  ami                    = "ami-00ac45f3035ff009e" # Ubuntu 22.04 LTS eu-west-3
-  instance_type          = "t3.medium"
-  subnet_id              = aws_subnet.public[0].id
-  vpc_security_group_ids = [aws_security_group.app_sg.id]
-  key_name               = aws_key_pair.deployer.key_name
+# --- ✅ TEMPLATE DE LANCEMENT (LAUNCH TEMPLATE) POUR EC2 ---
+resource "aws_launch_template" "app" {
+  name_prefix   = "${var.project_name}-${var.environment}-lt-"
+  image_id      = "ami-00ac45f3035ff009e" # Ubuntu 22.04 LTS eu-west-3
+  instance_type = "t3.medium"
+  key_name      = aws_key_pair.deployer.key_name
 
-  # ✅ Script de setup automatique
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
+
   user_data = base64encode(<<-EOF
     #!/bin/bash
     set -e
@@ -63,8 +64,30 @@ resource "aws_instance" "app_server" {
   EOF
   )
 
-  tags = {
-    Name = "${var.project_name}-${var.environment}-backend-ai"
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "${var.project_name}-${var.environment}-backend-ai"
+    }
+  }
+}
+
+# --- ✅ AUTO SCALING GROUP (ASG MULTI-AZ) ---
+resource "aws_autoscaling_group" "app_asg" {
+  name                = "${var.project_name}-${var.environment}-asg"
+  desired_capacity    = 2
+  max_size            = 4
+  min_size            = 2
+  vpc_zone_identifier = aws_subnet.public[*].id # ✅ Déploiement dans les Subnets Privés
+  target_group_arns   = [aws_lb_target_group.main.arn] # ✅ Attachement automatique à l'ALB
+
+  launch_template {
+    id      = aws_launch_template.app.id
+    version = "$Latest"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -74,7 +97,7 @@ resource "aws_lb" "main" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets            = aws_subnet.public[*].id
+  subnets            = aws_subnet.public[*].id # L'ALB reste public pour recevoir le trafic
 
   tags = {
     Name = "${var.project_name}-${var.environment}-alb"
@@ -88,7 +111,7 @@ resource "aws_lb_target_group" "main" {
   vpc_id   = aws_vpc.main.id
 
   health_check {
-    path                = "/api/health" # Ajoute un endpoint de health check
+    path                = "/api/health"
     protocol            = "HTTP"
     port                = "3000"
     interval            = 30
@@ -114,15 +137,9 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "app" {
-  target_group_arn = aws_lb_target_group.main.arn
-  target_id        = aws_instance.app_server.id
-  port             = 3000
-}
-
 # --- S3 FRONTEND ---
 resource "aws_s3_bucket" "frontend" {
-  bucket = "${var.project_name}-frontend-${data.aws_caller_identity.current.account_id}" # ✅ Unique avec account ID
+  bucket = "${var.project_name}-frontend-${data.aws_caller_identity.current.account_id}"
 
   tags = {
     Name = "${var.project_name}-${var.environment}-frontend"
@@ -162,24 +179,13 @@ resource "aws_s3_bucket_website_configuration" "frontend" {
   }
 
   error_document {
-    key = "index.html" # Vue Router SPA
+    key = "index.html"
   }
 }
 
-# ✅ Récupérer l'account ID
 data "aws_caller_identity" "current" {}
 
-
-resource "aws_eip" "app_server" {
-  instance = aws_instance.app_server.id
-  domain   = "vpc"
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-app-eip"
-  }
-}
-
-# Dans main.tf, ajoute :
+# --- CLOUDFRONT ---
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name

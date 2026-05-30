@@ -48,8 +48,8 @@ resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block      = "0.0.0.0/0"
-    gateway_id      = aws_internet_gateway.main.id
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
   }
 
   tags = {
@@ -101,9 +101,22 @@ resource "aws_route_table" "private" {
   }
 }
 
-# --- ASSOCIATIONS SUBNETS PRIVÉS ---
 resource "aws_route_table_association" "private" {
   count          = length(aws_subnet.private)
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
+}
+
+# --- ✅ VPC ENDPOINT (S3 GATEWAY) ---
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.eu-west-3.s3"
+  vpc_endpoint_type = "Gateway"
+
+  # Associe l'endpoint à toutes les tables de routage (Publiques et Privées)
+  route_table_ids = concat([aws_route_table.public.id], aws_route_table.private[*].id)
+
+  tags = {
+    Name = "${var.project_name}-s3-endpoint"
+  }
 }
