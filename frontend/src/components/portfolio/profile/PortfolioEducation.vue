@@ -1,26 +1,14 @@
 <script setup>
 import { GraduationCap } from 'lucide-vue-next';
+import PortfolioEmptyState from '@/components/portfolio/shared/PortfolioEmptyState.vue';
 
 defineProps({
   userId: { type: String, required: true },
+  items: {
+    type: Array,
+    default: () => [],
+  },
 });
-
-const educationItems = [
-  {
-    id: 'institution_ensa_tanger_master',
-    school: 'ENSA Tanger',
-    level: 'Master',
-    description: 'Advanced software engineering and information systems studies.',
-    period: '2025 - Present',
-  },
-  {
-    id: 'institution_ensa_tanger',
-    school: 'ENSA Tanger',
-    level: 'Bachelor / Licence',
-    description: 'Computer science and software engineering studies.',
-    period: '2023 - 2025',
-  },
-];
 </script>
 
 <template>
@@ -30,7 +18,7 @@ const educationItems = [
     </header>
     <div class="education__body">
       <article
-        v-for="item in educationItems"
+        v-for="item in items"
         :key="item.id"
         class="education__item"
       >
@@ -56,6 +44,11 @@ const educationItems = [
           </p>
         </div>
       </article>
+      <PortfolioEmptyState
+        v-if="!items.length"
+        class="education__empty"
+        message="No education information has been added yet."
+      />
     </div>
   </div>
 </template>
@@ -151,4 +144,5 @@ const educationItems = [
   font-weight: var(--font-light);
   line-height: 1.3;
 }
+
 </style>

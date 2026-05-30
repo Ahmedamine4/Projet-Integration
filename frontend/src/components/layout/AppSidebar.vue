@@ -24,8 +24,8 @@ defineProps({
   user: {
     type: Object,
     default: () => ({
-      prenom: 'User',
-      nom: '',
+      firstName: 'User',
+      lastName: '',
     }),
   },
 });
@@ -125,10 +125,10 @@ async function handleLogout() {
       <footer>
         <div class="sidebar__account">
           <span class="sidebar__avatar">
-            {{ user?.prenom?.[0] || 'U' }}
+            {{ user?.firstName?.[0] || 'U' }}
           </span>
           <span class="sidebar__user">
-            {{ user.prenom || 'User' }}
+            {{ user.firstName || 'User' }}
           </span>
           <button class="sidebar__notification">
             <Bell />

@@ -57,7 +57,15 @@ export const getCertificationsVisiblesByEtudiant = async (etudiantId) => {
   return prisma.experience.findMany({
     where: { utilisateur_id: etudiantId, type: 'certification', visibilite: true },
     include: {
-      certification: { include: { validation: true } },
+      certification: {
+        include: {
+          validation: {
+            include: {
+              institution: true,
+            },
+          },
+        },
+      },
       competences: true,
       documentations: true,
     },

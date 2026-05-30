@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import api from '@/services/api';
+import { normalizeProject } from '@/utils/portfolioNormalizers';
 
 function buildProjectFormData(experience) {
   const formData = new FormData();
@@ -20,21 +21,6 @@ function buildProjectFormData(experience) {
   }
 
   return formData;
-}
-
-function normalizeProject(data) {
-  return {
-    id: data.experience.experience_id,
-    type: 'project',
-    title: data.experience.titre ?? '',
-    date: data.experience.date_experience ?? '',
-    description: data.experience.description ?? '',
-    visibleToEveryone: data.experience.visibilite ?? false,
-    githubLink: data.projet.lien_github ?? '',
-    technologies: data.projet.technologies ?? [],
-    domains: data.projet.domains ?? [],
-    imagePreview: data.projet.photo ?? '',
-  };
 }
 
 export const useProjectStore = defineStore('project', () => {

@@ -1,25 +1,56 @@
 <script setup>
-import { BadgeCheck, Layers } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
+import { BadgeCheck, ChevronDown, ChevronUp, Layers } from 'lucide-vue-next';
+import PortfolioEmptyState from '@/components/portfolio/shared/PortfolioEmptyState.vue';
 
-defineProps({
+const props = defineProps({
   userId: { type: String, required: true },
+  skills: {
+    type: Array,
+    default: () => [],
+  },
+  domains: {
+    type: Array,
+    default: () => [],
+  },
 });
 
-const skills = [
-  'React',
-  'Node.js',
-  'PostgreSQL',
-  'Docker',
-  'GitHub Actions',
-  'Python',
-];
+const SKILLS_PREVIEW_LIMIT = 8;
+const DOMAINS_PREVIEW_LIMIT = 5;
 
-const domains = [
-  'Web Frontend',
-  'Web Backend',
-  'DevOps and Cloud Infrastructure',
-  'Machine Learning and AI',
-];
+const areSkillsExpanded = ref(false);
+const areDomainsExpanded = ref(false);
+
+const hiddenSkillsCount = computed(() =>
+  Math.max(props.skills.length - SKILLS_PREVIEW_LIMIT, 0)
+);
+const hiddenDomainsCount = computed(() =>
+  Math.max(props.domains.length - DOMAINS_PREVIEW_LIMIT, 0)
+);
+const visibleSkills = computed(() =>
+  areSkillsExpanded.value
+    ? props.skills
+    : props.skills.slice(0, SKILLS_PREVIEW_LIMIT)
+);
+const visibleDomains = computed(() =>
+  areDomainsExpanded.value
+    ? props.domains
+    : props.domains.slice(0, DOMAINS_PREVIEW_LIMIT)
+);
+
+watch(
+  () => props.skills,
+  () => {
+    areSkillsExpanded.value = false;
+  }
+);
+
+watch(
+  () => props.domains,
+  () => {
+    areDomainsExpanded.value = false;
+  }
+);
 </script>
 
 <template>
@@ -39,12 +70,35 @@ const domains = [
 
         <div class="skills__chips">
           <span
-            v-for="skill in skills"
+            v-for="skill in visibleSkills"
             :key="skill"
           >
             {{ skill }}
           </span>
+          <PortfolioEmptyState
+            v-if="!skills.length"
+            class="skills__empty"
+            message="No skills have been added yet."
+          />
         </div>
+        <button
+          v-if="hiddenSkillsCount"
+          class="skills-list-toggle"
+          type="button"
+          @click="areSkillsExpanded = !areSkillsExpanded"
+        >
+          <span>
+            {{ areSkillsExpanded ? 'Show fewer skills' : `View all skills (${skills.length})` }}
+          </span>
+          <ChevronUp
+            v-if="areSkillsExpanded"
+            :size="15"
+          />
+          <ChevronDown
+            v-else
+            :size="15"
+          />
+        </button>
       </section>
 
       <section class="skills__group">
@@ -58,11 +112,39 @@ const domains = [
 
         <ul class="domains">
           <li
-            v-for="domain in domains"
+            v-for="domain in visibleDomains"
             :key="domain"
           >
             {{ domain }}
           </li>
+          <li
+            v-if="hiddenDomainsCount"
+            class="domains__toggle-item"
+          >
+            <button
+              class="skills-list-toggle domains__more"
+              type="button"
+              @click="areDomainsExpanded = !areDomainsExpanded"
+            >
+              <span>
+                {{ areDomainsExpanded ? 'Show fewer domains' : `View all domains (${domains.length})` }}
+              </span>
+              <ChevronUp
+                v-if="areDomainsExpanded"
+                :size="15"
+              />
+              <ChevronDown
+                v-else
+                :size="15"
+              />
+            </button>
+          </li>
+          <PortfolioEmptyState
+            v-if="!domains.length"
+            as="li"
+            class="domains__empty"
+            message="No domains have been added yet."
+          />
         </ul>
       </section>
     </div>
@@ -138,6 +220,27 @@ const domains = [
   line-height: 1;
 }
 
+.skills-list-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: fit-content;
+  border: 0;
+  padding: 0.25rem 0;
+  background: transparent;
+  color: rgba(var(--color-primary-rgb), 0.56);
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-bold);
+  line-height: 1;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.skills-list-toggle:hover {
+  color: rgba(var(--color-primary-rgb), 0.78);
+}
+
 .domains {
   display: grid;
   gap: var(--space-xs);
@@ -163,5 +266,21 @@ const domains = [
   height: 0.42rem;
   border-radius: 50%;
   background-color: var(--color-secondary);
+}
+
+.domains .domains__toggle-item {
+  padding-left: 0;
+}
+
+.domains .domains__toggle-item::before {
+  display: none;
+}
+
+.domains__empty::before {
+  display: none;
+}
+
+.skills__empty {
+  flex: 1 0 100%;
 }
 </style>

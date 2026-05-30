@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import api from '@/services/api';
-import { formatLocalDate } from '@/utils/date';
+import { normalizeActivity } from '@/utils/portfolioNormalizers';
 
 function buildActivityFormData(activity) {
   const formData = new FormData();
@@ -34,29 +34,6 @@ function buildActivityFormData(activity) {
   }
 
   return formData;
-}
-
-function normalizeActivity(data) {
-  return {
-    id: data.experience_id,
-    type: 'activity',
-    title: data.experience?.titre ?? '',
-    date: formatLocalDate(data.experience?.date_experience),
-    description: data.experience?.description ?? '',
-    visibleToEveryone: data.experience?.visibilite ?? false,
-    activityType: data.type ?? '',
-    location: data.lieu ?? '',
-    club: '',
-    technologies:
-      data.experience?.competences
-        ?.filter((competence) => competence.type === 'technologie')
-        .map((technology) => technology.nom) ?? [],
-    domains:
-      data.experience?.competences
-        ?.filter((competence) => competence.type === 'domaine')
-        .map((domain) => domain.nom) ?? [],
-    imagePreview: data.experience?.documentations?.[0]?.captures ?? '',
-  };
 }
 
 export const useActivityStore = defineStore('activity', () => {
