@@ -8,6 +8,7 @@ import {
   EyeOff,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useDoubleTap } from '@/composables/useDoubleTap';
 
 const props = defineProps({
   certification: {
@@ -25,7 +26,7 @@ const emit = defineEmits(['edit']);
 const isExpanded = ref(false);
 
 const issuedDate = computed(() => {
-  return new Date(props.certification.issueDate);
+  return new Date(props.certification.date);
 });
 
 const issuedYear = computed(() => {
@@ -51,6 +52,12 @@ const shortDescription = computed(() => {
 function toggleExpanded() {
   isExpanded.value = !isExpanded.value;
 }
+
+const { handleDoubleTap } = useDoubleTap(() => {
+  if (!props.canEdit) return;
+
+  emit('edit', props.certification);
+});
 </script>
 
 <template>
@@ -117,6 +124,7 @@ function toggleExpanded() {
     <div
       class="certification-details-track"
       @dblclick="canEdit && emit('edit', certification)"
+      @click="handleDoubleTap"
     >
       <div class="certification-details">
         <p v-if="certification.description">
@@ -124,18 +132,18 @@ function toggleExpanded() {
         </p>
 
         <div
-          v-if="certification.code || certification.institution"
+          v-if="certification.certificateCode || certification.institution"
           class="certification-facts"
         >
           <div
-            v-if="certification.code"
+            v-if="certification.certificateCode"
             class="certification-fact"
           >
             <span class="certification-fact-label">
               Credential ID
             </span>
             <span class="certification-fact-value">
-              {{ certification.code }}
+              {{ certification.certificateCode }}
             </span>
           </div>
 
@@ -186,9 +194,9 @@ function toggleExpanded() {
 
         <div class="certification-footer">
           <a
-            v-if="certification.credentialUrl"
+            v-if="certification.certificateURL"
             class="certification-link"
-            :href="certification.credentialUrl"
+            :href="certification.certificateURL"
             target="_blank"
             rel="noreferrer"
           >
@@ -213,6 +221,7 @@ function toggleExpanded() {
 
 <style scoped>
 .certification {
+  container-type: inline-size;
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
@@ -303,6 +312,11 @@ function toggleExpanded() {
   font-weight: var(--font-bold);
   line-height: 1.22;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  line-clamp: 1;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .certification-controls {
@@ -460,7 +474,18 @@ function toggleExpanded() {
   font-weight: var(--font-medium);
 }
 
-@media (max-width: 640px) {
+@container (max-width: 32rem) {
+  .certification-summary {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .certification-controls {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 820px) {
   .certification-summary {
     grid-template-columns: auto minmax(0, 1fr);
   }

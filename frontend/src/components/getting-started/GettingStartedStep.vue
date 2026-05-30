@@ -1,5 +1,5 @@
 <script setup>
-import { CircleCheck, CircleDashed, ClockFading ,GraduationCap, Phone, GithubIcon, } from 'lucide-vue-next';
+import { CircleCheck, GraduationCap, GithubIcon, Phone} from 'lucide-vue-next';
 
 const props = defineProps({
   title: {
@@ -35,25 +35,25 @@ function handleToggle() {
     @click="handleToggle"
   >
     <div class="left">
-        <CircleCheck
-          v-if="status === 'done'"
-          class="step-icon done-icon"
-        />
+      <CircleCheck
+        v-if="status === 'done'"
+        class="step-icon done-icon"
+      />
 
-        <GraduationCap
-          v-else-if="stepKey === 'school'"
-          class="step-icon"
-        />
+      <GraduationCap
+        v-else-if="stepKey === 'school'"
+        class="step-icon"
+      />
 
-        <GithubIcon
-          v-else-if="stepKey === 'github'"
-          class="step-icon"
-        />
+      <GithubIcon
+        v-else-if="stepKey === 'github'"
+        class="step-icon"
+      />
 
-        <Phone
-          v-else-if="stepKey === 'phone'"
-          class="step-icon"
-        />
+      <Phone
+        v-else-if="stepKey === 'phone'"
+        class="step-icon"
+      />
       <div class="description">
         <h3>{{ title }}</h3>
         <p>{{ description }}</p>
@@ -107,10 +107,9 @@ p {
 }
 
 .done .step-icon {
-   color: var(--color-background);
+  color: var(--color-background);
   fill: var(--color-success);
 }
-
 
 .step-field {
   flex: 1;

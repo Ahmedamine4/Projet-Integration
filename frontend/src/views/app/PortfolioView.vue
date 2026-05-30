@@ -14,6 +14,7 @@ import { useActivityStore } from '@/stores/activity';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useRoute } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
+import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
 
 const professorEmails = [
@@ -200,7 +201,125 @@ const activities = ref([
 	},
 ]);
 
-const certifications = ref([]);
+const certifications = ref([
+  {
+    id: 'cert-aws-solutions-architect',
+    type: 'certificate',
+    title: 'AWS Certified Solutions Architect - Associate',
+    date: '2025-04-18',
+    description: 'Validated skills in designing secure, resilient, high-performing, and cost-optimized cloud architectures on AWS.',
+    visibleToEveryone: true,
+    institution: 'Amazon Web Services',
+    certificateCode: 'AWS-SAA-2025-0418',
+    certificateURL: 'https://aws.amazon.com/certification/certified-solutions-architect-associate/',
+    technologies: ['AWS', 'Cloud Architecture', 'IAM'],
+    domains: ['DevOps and Cloud Infrastructure'],
+  },
+  {
+    id: 'cert-google-data-analytics',
+    type: 'certificate',
+    title: 'Google Data Analytics Professional Certificate',
+    date: '2024-11-06',
+    description: 'Completed practical training in data cleaning, analysis, visualization, spreadsheets, SQL, and dashboard storytelling.',
+    visibleToEveryone: true,
+    institution: 'Google',
+    certificateCode: 'GDA-2024-1106',
+    certificateURL: 'https://www.coursera.org/professional-certificates/google-data-analytics',
+    technologies: ['SQL', 'Tableau', 'Spreadsheets'],
+    domains: ['Data Science and Analytics'],
+  },
+  {
+    id: 'cert-vue-developer',
+    type: 'certificate',
+    title: 'Vue.js Developer Certification',
+    date: '2024-06-12',
+    description: 'Demonstrated knowledge of Vue components, reactivity, routing, state management, composables, and production application structure.',
+    visibleToEveryone: true,
+    institution: 'Vue School',
+    certificateCode: 'VUE-DEV-0612',
+    certificateURL: 'https://vueschool.io/',
+    technologies: ['Vue.js', 'Pinia', 'Vue Router'],
+    domains: ['Web Frontend'],
+  },
+  {
+    id: 'cert-node-api',
+    type: 'certificate',
+    title: 'Node.js API Development',
+    date: '2024-03-15',
+    description: 'Covered REST API design, Express middleware, authentication, validation, database access, and deployment practices.',
+    visibleToEveryone: true,
+    institution: 'OpenClassrooms',
+    certificateCode: 'NODE-API-2024',
+    certificateURL: 'https://openclassrooms.com/',
+    technologies: ['Node.js', 'Express', 'REST'],
+    domains: ['Web Backend'],
+  },
+  {
+    id: 'cert-git-github',
+    type: 'certificate',
+    title: 'Git and GitHub Version Control',
+    date: '2023-07-19',
+    description: 'Completed hands-on training in branching, pull requests, conflict resolution, collaboration workflows, and repository hygiene.',
+    visibleToEveryone: true,
+    institution: 'GitHub',
+    certificateCode: 'GH-GIT-0719',
+    certificateURL: 'https://github.com/',
+    technologies: ['Git', 'GitHub'],
+    domains: ['Software Engineering'],
+  },
+  {
+    id: 'cert-python',
+    type: 'certificate',
+    title: 'Python for Everybody',
+    date: '2023-05-04',
+    description: 'Studied Python fundamentals, data structures, files, web data access, APIs, and beginner automation scripting.',
+    visibleToEveryone: true,
+    institution: 'University of Michigan',
+    certificateCode: 'PY4E-2023',
+    certificateURL: 'https://www.py4e.com/',
+    technologies: ['Python'],
+    domains: ['Software Engineering', 'Data Science and Analytics'],
+  },
+  {
+    id: 'cert-linux',
+    type: 'certificate',
+    title: 'Linux Command Line Basics',
+    date: '2022-11-24',
+    description: 'Practiced shell navigation, file permissions, process inspection, package management, scripting basics, and server workflows.',
+    visibleToEveryone: true,
+    institution: 'Linux Foundation',
+    certificateCode: 'LNX-CLI-2022',
+    certificateURL: 'https://training.linuxfoundation.org/',
+    technologies: ['Linux', 'Bash'],
+    domains: ['DevOps and Cloud Infrastructure'],
+  },
+  {
+    id: 'cert-figma',
+    type: 'certificate',
+    title: 'UI/UX Design with Figma',
+    date: '2022-09-13',
+    description: 'Completed design exercises covering wireframes, components, prototyping, layout systems, visual hierarchy, and usability review.',
+    visibleToEveryone: true,
+    institution: 'Coursera Project Network',
+    certificateCode: 'FIGMA-UX-2022',
+    certificateURL: 'https://www.coursera.org/',
+    technologies: ['Figma', 'Prototyping'],
+    domains: ['UI UX Design'],
+  },
+  {
+    id: 'cert-java',
+    type: 'certificate',
+    title: 'Java Programming Foundations',
+    date: '2022-03-10',
+    description: 'Practiced object-oriented programming, collections, exceptions, file handling, testing basics, and simple console applications.',
+    visibleToEveryone: true,
+    institution: 'Oracle Academy',
+    certificateCode: 'JAVA-FND-2022',
+    certificateURL: 'https://academy.oracle.com/',
+    technologies: ['Java', 'OOP'],
+    domains: ['Software Engineering'],
+  },
+]);
 
 const authStore = useAuthStore();
 const userId = computed(() => authStore.user?.utilisateur_id);
@@ -379,6 +498,11 @@ const links = computed(() => [
   },
 ].filter(link => link.href));
 
+const activityMaxCardHeight = ref(0);
+
+function updateActivityMaxCardHeight(height) {
+  activityMaxCardHeight.value = height;
+}
 </script>
 
 <template>
@@ -467,6 +591,7 @@ const links = computed(() => [
             :can-add="isOwnPortfolio"
             @add-activity="openExperienceModal('activity')"
             @edit-activity="activity => openEditExperienceModal('activity', activity)"
+            @update-max-card-height="updateActivityMaxCardHeight"
           />
 
           <BaseError v-if="experienceErrors.activity">
@@ -477,7 +602,15 @@ const links = computed(() => [
         <div
           v-if="shouldShowCertificationSection"
           class="portfolio-section-wrapper"
-        />
+        >
+          <CertificationsSection
+            :certifications="visibleCertifications"
+            :can-add="isOwnPortfolio"
+            :max-card-height="activityMaxCardHeight"
+            @add-certification="openExperienceModal('certificate')"
+            @edit-certification="certification => openEditExperienceModal('certificate', certification)"
+          />
+        </div>
       </div>
     </main>
 
@@ -719,6 +852,7 @@ const links = computed(() => [
 .portfolio-split-sections {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  align-items: stretch;
   column-gap: calc(var(--space-xl) * 2);
   row-gap: var(--portfolio-section-gap);
 }

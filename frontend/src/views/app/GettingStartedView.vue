@@ -60,13 +60,6 @@ const phoneForm = reactive({
   phoneNumber: '',
 });
 
-const countryCodes = [
-  { label: '🇲🇦 +212', value: '+212' },
-  { label: '🇫🇷 +33', value: '+33' },
-  { label: '🇪🇸 +34', value: '+34' },
-  { label: '🇺🇸 +1', value: '+1' },
-];
-
 async function handleStepAction(key) {
   const step = steps.find((step) => step.key === key);
 
@@ -77,15 +70,18 @@ async function handleStepAction(key) {
     return;
   }
   selectedStep.value = selectedStep.value === key ? null : key;
-  }
-  async function connectGithub() {
+}
+
+async function connectGithub() {
   await githubStore.connectGithub();
-  }
+}
+
 function completeSchoolStep(schoolData) {
   institutionStore.setSchoolPath(schoolData.schoolPath);
   stepStatus.school = 'done';
   isSchoolModalOpen.value = false;
 }
+
 function savePhoneNumber() {
   const phone = phoneForm.phoneNumber.trim();
 
@@ -118,69 +114,71 @@ function savePhoneNumber() {
 
 <template>
   <div class="getting-started-page">
-  <div class="page-content">
-  
-    <h1>Let's get you set up,</h1>
-    <p class="page-subtitle">
-  Complete these quick steps to build and secure your verified portfolio.
-</p>
-    <div class="wrapper-getting-started">
-            <img
+    <div class="page-content">
+      <h1>Let's get you set up,</h1>
+      <p class="page-subtitle">
+        Complete these quick steps to build and secure your verified portfolio.
+      </p>
+      <div class="wrapper-getting-started">
+        <img
           class="getting-started-illustration"
           :src="gettingStartedIllustration"
           alt=""
-        />
-      <div class="wrapper-header">
-        <h2>Getting Started</h2>
+        >
+        <div class="wrapper-header">
+          <h2>Getting Started</h2>
 
-        <div class="step-meter__track">
-          <span>
-            {{ `${doneCount} / ${steps.length}` }}
-          </span>
-          <ProgressMeter :value="doneCount" :max="steps.length" />
+          <div class="step-meter__track">
+            <span>
+              {{ `${doneCount} / ${steps.length}` }}
+            </span>
+            <ProgressMeter
+              :value="doneCount"
+              :max="steps.length"
+            />
+          </div>
         </div>
-      </div>
-      <div class="wrapper-steps">
-        <div v-for="step in steps" :key="step.key" class="step-wrapper">
-          <GettingStartedStep
-            :step-key="step.key"
-            :title="step.title"
-            :description="step.description"
-            :status="stepStatus[step.key]"
-            @action="handleStepAction(step.key)"
-          />
+        <div class="wrapper-steps">
+          <div
+            v-for="step in steps"
+            :key="step.key"
+            class="step-wrapper"
+          >
+            <GettingStartedStep
+              :step-key="step.key"
+              :title="step.title"
+              :description="step.description"
+              :status="stepStatus[step.key]"
+              @action="handleStepAction(step.key)"
+            />
 
-          <Transition name="field-reveal">
-            <div
-              v-if="selectedStep === 'github' && step.key === 'github'"
-              class="step-action-panel"
-            >
-              <p>
-                Authorize GitHub to connect your account and import your repositories.
-              </p>
-
-                              <Button
-                class="github-button"
-                type="button"
-                variant="submit"
-                :loading="githubStore.loading"
-                @click.stop="connectGithub"
+            <Transition name="field-reveal">
+              <div
+                v-if="selectedStep === 'github' && step.key === 'github'"
+                class="step-action-panel"
               >
-                <GithubIcon class="github-button-icon" />
-                Connect with GitHub
-              </Button>
-            </div>
-          </Transition>
-          <Transition name="field-reveal">
+                <p>
+                  Authorize GitHub to connect your account and import your repositories.
+                </p>
+
+                <Button
+                  class="github-button"
+                  type="button"
+                  variant="submit"
+                  :loading="githubStore.loading"
+                  @click.stop="connectGithub"
+                >
+                  <GithubIcon class="github-button-icon" />
+                  Connect with GitHub
+                </Button>
+              </div>
+            </Transition>
+            <Transition name="field-reveal">
               <div
                 v-if="selectedStep === 'phone' && step.key === 'phone'"
                 class="step-action-panel"
               >
-                
-
                 <div class="phone-form">
-                  
-
               <div class="phone-input-wrapper">
                 <span class="phone-prefix">+212</span>
 
@@ -195,7 +193,7 @@ function savePhoneNumber() {
                </p>
 
                   <Button
-                  class="phone-button"
+                    class="phone-button"
                     type="button"
                     variant="submit"
                     @click="savePhoneNumber"
@@ -205,10 +203,10 @@ function savePhoneNumber() {
                 </div>
               </div>
             </Transition>
+          </div>
         </div>
       </div>
     </div>
-  </div>
   </div>
   <SchoolPathModal
     :open="isSchoolModalOpen"
@@ -230,6 +228,7 @@ function savePhoneNumber() {
   position: relative;
   /*overflow: hidden;*/
 }
+
 .getting-started-page {
   min-height: 100vh;
   background:
@@ -237,11 +236,13 @@ function savePhoneNumber() {
     radial-gradient(circle at 50% 45%, rgba(249, 115, 22, 0.2), transparent 40%),
     linear-gradient(120deg, #fff7ed 0%, #fffaf5 50%, #ffffff 100%);
 }
+
 .page-content h1 {
   margin: 0;
   font-size: clamp(2rem, 5vw, 3rem);
   line-height: 1.1;
 }
+
 .page-subtitle {
   margin: -1rem 0 0;
   color: rgba(var(--color-primary-rgb), 0.6);
@@ -296,17 +297,6 @@ function savePhoneNumber() {
   color: rgba(var(--color-primary-rgb), 0.72);
 }
 
-@media (max-width: 480px) {
-  .wrapper-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .step-meter__track {
-    width: 98%;
-    max-width: none;
-    margin-inline: 0;
-  }
-}
 .step-wrapper {
   display: flex;
   flex-direction: column;
@@ -352,6 +342,7 @@ function savePhoneNumber() {
   gap: var(--space-sm);
   width: min(100%, 28rem);
 }
+
 .phone-input-wrapper {
   display: flex;
   align-items: center;
@@ -362,6 +353,7 @@ function savePhoneNumber() {
   background: rgba(var(--color-surface-rgb), 0.32);
   overflow: hidden;
 }
+
 .phone-input-wrapper input {
   flex: 1;
   height: 100%;
@@ -386,23 +378,27 @@ function savePhoneNumber() {
   font-size: var(--font-size-sm);
   font-weight: var(--font-medium);
 }
+
 .github-button {
   background: #111;
   color: white;
   box-shadow: 0 8px 20px rgba(245, 158, 11, 0.18);
 }
+
 .github-button-icon {
   width: 1.1rem;
   height: 1.1rem;
   color: white;
   stroke: white;
 }
+
 .phone-button {
   width: fit-content;
   min-width: 0;
   padding-inline: 1.25rem;
   align-self: flex-start;
 }
+
 .getting-started-illustration {
   position: absolute;
   top: clamp(-3rem, -6vw, -1.5rem);
@@ -415,5 +411,18 @@ function savePhoneNumber() {
   margin: 0;
   color:var(--color-error);
   font-size: var(--font-size-xs);
+  }
+
+@media (max-width: 480px) {
+  .wrapper-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .step-meter__track {
+    width: 98%;
+    max-width: none;
+    margin-inline: 0;
+  }
 }
 </style>
