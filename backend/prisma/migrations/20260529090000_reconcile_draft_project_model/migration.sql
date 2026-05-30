@@ -2,7 +2,9 @@
 -- This migration keeps the Repository shape used by the current services:
 -- title / link / private, and restores the Projet draft fields used by GitHub import.
 
--- Repositories: normalize old GitHub-shaped columns to the current Repository model.
+-- Repositories: keep the current Repository model created by prior migrations.
+-- The migration history already defines title/link/private directly, so we must
+-- not reference legacy columns like name/full_name/html_url/is_private here.
 ALTER TABLE "repositories"
 ADD COLUMN IF NOT EXISTS "title" TEXT,
 ADD COLUMN IF NOT EXISTS "link" TEXT,
@@ -12,12 +14,9 @@ ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIME
 
 UPDATE "repositories"
 SET
-  "title" = COALESCE("title", "name", "full_name"),
-  "link" = COALESCE("link", "html_url"),
-  "private" = COALESCE("private", "is_private", false)
+  "private" = COALESCE("private", false)
 WHERE
-  "title" IS NULL
-  OR "link" IS NULL;
+  "private" IS NULL;
 
 ALTER TABLE "repositories"
 ALTER COLUMN "title" SET NOT NULL,
