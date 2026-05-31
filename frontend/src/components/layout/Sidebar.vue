@@ -37,7 +37,7 @@ const sidebarItems = [
   { label: 'Getting started', icon: Compass, path: '/getting-started' },
   { label: 'Profile', icon: UserRound },
   { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
-  { label: 'Settings', icon: Settings },
+  { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
 const selected = ref(
