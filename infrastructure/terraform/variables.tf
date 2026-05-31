@@ -57,3 +57,24 @@ variable "your_ip" {
   type        = string
   default     = "160.177.124.101"
 }
+
+
+variable "supabase_service_role_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "jwt_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "jwt_refresh_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "github_client_secret" {
+  type      = string
+  sensitive = true
+}

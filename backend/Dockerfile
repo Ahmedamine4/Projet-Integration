@@ -36,5 +36,6 @@ COPY . .
 
 EXPOSE 3000 
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+#CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+CMD ["npm", "start"]
 ## "deploy" lit les fichiers dans prisma/migrations/ , npm start avec moins de dependences

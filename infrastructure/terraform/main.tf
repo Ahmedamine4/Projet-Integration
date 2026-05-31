@@ -35,13 +35,15 @@ resource "aws_key_pair" "deployer" {
 # --- ✅ TEMPLATE DE LANCEMENT (LAUNCH TEMPLATE) POUR EC2 ---
 resource "aws_launch_template" "app" {
   name_prefix   = "${var.project_name}-${var.environment}-lt-"
-  image_id      = "ami-00ac45f3035ff009e" # Ubuntu 22.04 LTS eu-west-3
+  image_id      = "ami-090543c0c8acd0a28" # Debian 12 eu-west 3
   instance_type = "t3.medium"
   key_name      = aws_key_pair.deployer.key_name
-
+  /*iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_profile.name
+  }*/
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
-  user_data = base64encode(<<-EOF
+  /*user_data = base64encode(<<-EOF
     #!/bin/bash
     set -e
     apt-get update -y
@@ -62,7 +64,41 @@ resource "aws_launch_template" "app" {
     
     echo "✅ Backend EC2 prêt"
   EOF
-  )
+  )*/
+user_data = base64encode(<<-EOF
+  #!/bin/bash
+  set -e
+  apt-get update -y
+  apt-get install -y curl
+  
+  # Installer Docker
+  curl -fsSL https://get.docker.com | sh
+  systemctl start docker
+  systemctl enable docker
+  
+  # Créer le dossier pour l'env
+  mkdir -p /etc/portfolio
+  
+  # Créer le fichier .env
+  cat > /etc/portfolio/.env << 'ENVFILE'
+DATABASE_URL="postgresql://portfolio_user:${var.db_password}@${aws_db_instance.postgres.endpoint}/portfolio_db?schema=public"
+PORT=3000
+NODE_ENV=production
+SUPABASE_URL=https://xfnburehcqkcmebvpfqh.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=${var.supabase_service_role_key}
+JWT_SECRET=${var.jwt_secret}
+JWT_EXPIRES_IN=2h
+JWT_REFRESH_SECRET=${var.jwt_refresh_secret}
+JWT_REFRESH_EXPIRES_IN=7d
+GITHUB_CLIENT_ID=Ov23liLr8BGE52aNeqd9
+GITHUB_CLIENT_SECRET=${var.github_client_secret}
+GITHUB_REDIRECT_URI=http://portfolio-prod-alb-201423850.eu-west-3.elb.amazonaws.com/api/github/callback
+AI_API_URL=portfolio-prod-alb-201423850.eu-west-3.elb.amazonaws.com
+ENVFILE
+  
+  echo "✅ Instance prête. Docker installé, .env créé"
+EOF
+)
 
   tag_specifications {
     resource_type = "instance"
@@ -216,3 +252,110 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     cloudfront_default_certificate = true
   }
 }
+
+resource "aws_cloudfront_distribution" "api_distribution" {
+  origin {
+    domain_name = aws_lb.main.dns_name
+    origin_id   = "ALB"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  enabled = true
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "ALB"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+      cookies { forward = "all" }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+  }
+
+  restrictions {
+    geo_restriction { restriction_type = "none" }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+}
+
+output "api_cloudfront_domain" {
+  value = aws_cloudfront_distribution.api_distribution.domain_name
+}
+
+
+#pour session manager
+/*
+
+resource "aws_iam_role" "ec2_role" {
+  name = "${var.project_name}-${var.environment}-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+
+
+resource "aws_iam_role_policy_attachment" "ssm_policy" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "${var.project_name}-${var.environment}-ec2-profile"
+  role = aws_iam_role.ec2_role.name
+}
+
+resource "aws_iam_role_policy" "ssm_inline_policy" {
+  name   = "${var.project_name}-${var.environment}-ssm-policy"
+  role   = aws_iam_role.ec2_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:UpdateInstanceInformation",
+          "ssmmessages:AcknowledgeMessage",
+          "ssmmessages:GetEndpoint",
+          "ssmmessages:GetMessages",
+          "ec2messages:AcknowledgeMessage",
+          "ec2messages:GetEndpoint",
+          "ec2messages:GetMessages"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject"
+        ]
+        Resource = "arn:aws:s3:::aws-ssm-${data.aws_region.current.name}/*"
+      }
+    ]
+  })
+}
+
+data "aws_region" "current" {}*/
