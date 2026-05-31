@@ -1,4 +1,4 @@
-import { formatLocalDate } from '@/utils/date';
+import { addDays, formatLocalDate } from '@/utils/date';
 
 export function normalizeUser(data) {
   if (!data) return null;
@@ -82,6 +82,40 @@ export function normalizeCertification(item) {
   };
 }
 
+export function normalizeInternship(item) {
+  const experience = getExperience(item);
+  const stage = experience.stage ?? item?.stage ?? {};
+  const startDate = formatLocalDate(experience.date_experience);
+  const endDate = addDays(experience.date_experience, stage.duree);
+
+  return {
+    id: experience.experience_id,
+    type: 'internship',
+    title: experience.titre ?? '',
+    date: startDate,
+    startDate,
+    endDate,
+    description: experience.description ?? '',
+    visibleToEveryone: experience.visibilite ?? false,
+    company: stage.company ?? stage.entreprise ?? '',
+    location: stage.location ?? stage.lieu ?? '',
+    missions: stage.missions_realisees ?? '',
+    report: stage.rapport_stage ?? '',
+    technologies: getCompetenceNames(experience, 'technologie'),
+    domains: getCompetenceNames(experience, 'domaine'),
+    imagePreview: experience.documentations?.[0]?.captures ?? '',
+  };
+}
+
+export function normalizeCreatedInternship(data) {
+  return normalizeInternship({
+    ...data?.experience,
+    stage: data?.stage,
+    competences: data?.competences ?? [],
+    documentations: data?.documentation ? [data.documentation] : [],
+  });
+}
+
 export function normalizeEducation(institutions = []) {
   return institutions.map((entry) => ({
     id: entry.institution_id,
@@ -116,7 +150,8 @@ export function normalizePortfolio(data) {
   const projects = (data?.projets ?? []).map(normalizeProject);
   const activities = (data?.activites ?? []).map(normalizeActivity);
   const certifications = (data?.certifications ?? []).map(normalizeCertification);
-  const experiences = [...projects, ...activities, ...certifications];
+  const internships = (data?.stages ?? []).map(normalizeInternship);
+  const experiences = [...projects, ...activities, ...certifications, ...internships];
 
   return {
     id: data?.etudiant_utilisateur_id ?? user.utilisateur_id ?? '',
@@ -139,6 +174,7 @@ export function normalizePortfolio(data) {
     badges: data?.badges ?? [],
     education: normalizeEducation(data?.institutions ?? []),
     projects,
+    internships,
     activities,
     certifications,
     skills: sortByFrequency(experiences.flatMap((item) => item.technologies ?? [])),

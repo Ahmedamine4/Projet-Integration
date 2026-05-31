@@ -11,12 +11,14 @@ import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { useActivityStore } from '@/stores/activity';
 import { useCertificationStore } from '@/stores/certification';
+import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
+import InternshipsSection from '@/components/portfolio/internships/InternshipsSection.vue';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -38,10 +40,12 @@ const portfolioStore = usePortfolioStore();
 const projectStore = useProjectStore();
 const activityStore = useActivityStore();
 const certificationStore = useCertificationStore();
+const internshipStore = useInternshipStore();
 
 const projects = ref([]);
 const activities = ref([]);
 const certifications = ref([]);
+const internships = ref([]);
 
 const userId = computed(() => authStore.user?.utilisateur_id);
 
@@ -88,6 +92,7 @@ watch(
     projects.value = value?.projects ?? [];
     activities.value = value?.activities ?? [];
     certifications.value = value?.certifications ?? [];
+    internships.value = value?.internships ?? [];
   },
   { immediate: true }
 );
@@ -130,6 +135,12 @@ const visibleCertifications = computed(() => {
   return certifications.value.filter(certification => certification.visibleToEveryone);
 });
 
+const visibleInternships = computed(() => {
+  if (isOwnPortfolio.value) return internships.value;
+
+  return internships.value.filter(internship => internship.visibleToEveryone);
+});
+
 const shouldShowProjectSection = computed(() => {
 	return isOwnPortfolio.value || visibleProjects.value.length > 0;
 });
@@ -142,8 +153,13 @@ const shouldShowCertificationSection = computed(() => {
   return isOwnPortfolio.value || visibleCertifications.value.length > 0;
 });
 
+const shouldShowInternshipSection = computed(() => {
+  return isOwnPortfolio.value || visibleInternships.value.length > 0;
+});
+
 const experienceErrors = ref({
   project: '',
+  internship: '',
   activity: '',
   certificate: '',
 });
@@ -154,6 +170,17 @@ const experienceModal = ref({
   mode: 'create',
   selected: null,
 });
+
+const experienceLoadingByType = computed(() => ({
+  project: projectStore.loading,
+  activity: activityStore.loading,
+  internship: internshipStore.loading,
+  certificate: certificationStore.loading,
+}));
+
+const experienceModalLoading = computed(() =>
+  experienceLoadingByType.value[experienceModal.value.type] ?? false
+);
 
 function openExperienceModal(type) {
   experienceErrors.value[type] = '';
@@ -241,6 +268,26 @@ async function handleExperienceSubmit(experience) {
       const createdActivity = await activityStore.createActivity(experience);
       activities.value = [createdActivity, ...activities.value];
       closeExperienceModal();
+    }
+
+    if (type === 'internship') {
+      if (isEdit) {
+        const updatedInternship = await internshipStore.editInternship({
+          ...experience,
+          id: selectedId,
+        });
+
+        internships.value = internships.value.map((internship) =>
+          internship.id === selectedId ? updatedInternship : internship
+        );
+        closeExperienceModal();
+        return;
+      }
+
+      const createdInternship = await internshipStore.createInternship(experience);
+      internships.value = [createdInternship, ...internships.value];
+      closeExperienceModal();
+      return;
     }
 
     if (type === 'certificate') {
@@ -445,6 +492,21 @@ onUnmounted(() => {
         </BaseError>
       </div>
       <div
+        v-if="shouldShowInternshipSection"
+        class="portfolio-section-wrapper"
+      >
+        <InternshipsSection
+          :internships="visibleInternships"
+          :can-add="isOwnPortfolio"
+          @add-internship="openExperienceModal('internship')"
+          @edit-internship="internship => openEditExperienceModal('internship', internship)"
+        />
+
+        <BaseError v-if="experienceErrors.internship">
+          {{ experienceErrors.internship }}
+        </BaseError>
+      </div>
+      <div
         v-if="shouldShowActivitySection || shouldShowCertificationSection"
         class="portfolio-split-sections"
       >
@@ -505,11 +567,7 @@ onUnmounted(() => {
       :mode="experienceModal.mode"
       :type="experienceModal.type"
       :initial-value="experienceModal.selected"
-      :loading="experienceModal.type === 'project'
-        ? projectStore.loading
-        : experienceModal.type === 'activity'
-          ? activityStore.loading
-          : certificationStore.loading"
+      :loading="experienceModalLoading"
       :school-options="[]"
       :professor-emails="professorEmails"
       @close="closeExperienceModal"
