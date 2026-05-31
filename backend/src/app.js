@@ -14,6 +14,7 @@ import notificationRoutes from './routes/notification.routes.js';
 import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
 import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
 import githubRoutes from './routes/github.route.js';
+import socialMediaRoutes from './routes/social_media.routes.js';
 //import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
@@ -52,6 +53,8 @@ app.use('/api/github', githubRoutes);
 app.use('/api/users', updateUtilisateurRoutes);
 
 app.use('/api', ValidationProjetRoutes);
+
+app.use('/api/users', socialMediaRoutes);
 
 // Route de test
 app.get("/", (req, res) => {
