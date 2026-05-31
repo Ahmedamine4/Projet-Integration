@@ -1,12 +1,11 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, onUnmounted, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import src from '@/assets/images/profile-photo.png'
 import AboutMe from '@/components/portfolio/profile/AboutMe.vue';
 import PortfolioEducation from '@/components/portfolio/profile/PortfolioEducation.vue';
 import PortfolioSkills from '@/components/portfolio/profile/PortfolioSkills.vue';
 import ProjectsSection from '@/components/portfolio/projects/ProjectsSection.vue';
-import { QrCode } from 'lucide-vue-next';
+import { QrCode, UserRound } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/contact/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
@@ -75,7 +74,10 @@ const profileHeadline = computed(() => {
 
   return 'Student';
 });
-const profilePhoto = computed(() => profile.value?.photo || src);
+const profilePhoto = computed(() => profile.value?.photo || '');
+const localProfilePhoto = ref('');
+const profilePhotoInput = ref(null);
+const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
 const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
 const recommendationsCount = computed(() => portfolio.value?.recommendations?.length ?? 0);
@@ -305,6 +307,29 @@ const activityMaxCardHeight = ref(0);
 function updateActivityMaxCardHeight(height) {
   activityMaxCardHeight.value = height;
 }
+
+function openProfilePhotoPicker() {
+  if (!isOwnPortfolio.value) return;
+
+  profilePhotoInput.value?.click();
+}
+
+function handleProfilePhotoChange(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  if (localProfilePhoto.value) {
+    URL.revokeObjectURL(localProfilePhoto.value);
+  }
+
+  localProfilePhoto.value = URL.createObjectURL(file);
+}
+
+onUnmounted(() => {
+  if (localProfilePhoto.value) {
+    URL.revokeObjectURL(localProfilePhoto.value);
+  }
+});
 </script>
 
 <template>
@@ -319,14 +344,37 @@ function updateActivityMaxCardHeight(height) {
         {{ portfolioStore.error }}
       </BaseError>
       <div class="profile">
-        <div class="profile__photo">
+        <div
+          class="profile__photo"
+          :class="{ 'profile__photo--editable': isOwnPortfolio }"
+          @click="openProfilePhotoPicker"
+        >
           <img
-            :src="profilePhoto"
+            v-if="displayedProfilePhoto"
+            :src="displayedProfilePhoto"
             alt="photo"
+          >
+          <div
+            v-else
+            class="profile__photo-fallback"
+          >
+            <UserRound
+              :size="54"
+              :stroke-width="1.55"
+            />
+          </div>
+          <input
+            v-if="isOwnPortfolio"
+            ref="profilePhotoInput"
+            class="profile__photo-input"
+            type="file"
+            accept="image/*"
+            @click.stop
+            @change="handleProfilePhotoChange"
           >
           <button
             class="qr-button"
-            @click="openQRModal"
+            @click.stop="openQRModal"
           >
             <QrCode
               :size="15"
@@ -530,6 +578,40 @@ function updateActivityMaxCardHeight(height) {
 	object-position: center top;
 }
 
+.profile__photo--editable {
+  cursor: pointer;
+}
+
+.profile__photo--editable:hover img,
+.profile__photo--editable:hover .profile__photo-fallback {
+  filter: brightness(0.94);
+}
+
+.profile__photo-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile__photo-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--color-secondary-rgb), 0.26),
+      rgba(var(--color-surface-rgb), 0.88) 58%,
+      rgba(var(--color-background-rgb), 0.92)
+    );
+  color: rgba(var(--color-primary-rgb), 0.58);
+}
+
+
 .profile__info {
 	display: flex;
 	font-family: var(--font-ui);
@@ -558,8 +640,7 @@ function updateActivityMaxCardHeight(height) {
 
 .statistics {
 	margin-top: var(--space-sm);
-	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
+	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	gap: 2rem;

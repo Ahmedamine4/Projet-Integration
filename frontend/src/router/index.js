@@ -65,15 +65,6 @@ const routes = [
     },
   },
   {
-    path: '/test',
-    name: 'test',
-    component: () => import('@/views/app/TestView.vue'),
-    meta: {
-      requiresAuth: true,
-      layout: 'app',
-    },
-  },
-  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: NotFoundView,

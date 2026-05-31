@@ -94,6 +94,23 @@ export function normalizeEducation(institutions = []) {
   }));
 }
 
+function sortByFrequency(values = []) {
+  const frequencies = values.reduce((counts, value) => {
+    if (!value) return counts;
+
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+    return counts;
+  }, new Map());
+
+  return [...frequencies]
+    .sort(([firstValue, firstCount], [secondValue, secondCount]) => {
+      if (firstCount < secondCount) return 1;
+      if (firstCount > secondCount) return -1;
+      return firstValue.localeCompare(secondValue);
+    })
+    .map(([value]) => value);
+}
+
 export function normalizePortfolio(data) {
   const user = normalizeUser(data?.utilisateur) ?? {};
   const projects = (data?.projets ?? []).map(normalizeProject);
@@ -124,8 +141,8 @@ export function normalizePortfolio(data) {
     projects,
     activities,
     certifications,
-    skills: [...new Set(experiences.flatMap((item) => item.technologies ?? []))],
-    domains: [...new Set(experiences.flatMap((item) => item.domains ?? []))],
+    skills: sortByFrequency(experiences.flatMap((item) => item.technologies ?? [])),
+    domains: sortByFrequency(experiences.flatMap((item) => item.domains ?? [])),
     recommendations: data?.recommandations ?? [],
   };
 }
