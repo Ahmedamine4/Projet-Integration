@@ -1,22 +1,12 @@
 // Done
 
 import * as githubService from '../services/github.service.js';
-<<<<<<< HEAD
 import prisma from '../config/prisma.js';     
   // je vais enlever n'import qu'elle attribut lier a prismer 
   // et je vais le faire dans git.service.js
 
 export const githubLogin = async (req, res) => {
   const etudiantId = req.user.utilisateur_id ;
-=======
-import prisma from '../config/prisma.js';
-import * as projetService from '../services/projet.service.js';
-// je vais enlever n'import qu'elle attribut lier a prismer 
-// et je vais le faire dans git.service.js
-
-export const githubLogin = async (req, res) => {
-  const etudiantId = req.user.utilisateur_id;
->>>>>>> origin/develop
   const authUrl = githubService.getOAuthUrl(etudiantId);
 
   res.json({
@@ -62,11 +52,7 @@ export const githubCallback = async (req, res) => {
 };
 
 export const getMyRepositories = async (req, res) => {
-<<<<<<< HEAD
   const etudiantId =  req.user.utilisateur_id ;
-=======
-  const etudiantId = req.user.utilisateur_id;
->>>>>>> origin/develop
 
   const repositories = await prisma.repository.findMany({
     where: { etudiant_id: etudiantId },
@@ -89,21 +75,12 @@ export const getMyRepositories = async (req, res) => {
     count: repositories.length,
     data: repositories
   });
-<<<<<<< HEAD
 //const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 //res.redirect(`${frontendUrl}/getting-started?github=connected`);
 };
 
 export const syncRepositories = async (req, res) => {
   const etudiantId = req.user.utilisateur_id ;
-=======
-  //const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  //res.redirect(`${frontendUrl}/getting-started?github=connected`);
-};
-
-export const syncRepositories = async (req, res) => {
-  const etudiantId = req.user.utilisateur_id;
->>>>>>> origin/develop
 
   const repoWithToken = await prisma.repository.findFirst({
     where: { etudiant_id: etudiantId },
@@ -137,8 +114,4 @@ export const syncRepositories = async (req, res) => {
       draftProjects,
     },
   });
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> origin/develop
