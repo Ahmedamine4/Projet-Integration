@@ -7,6 +7,6 @@ const router = express.Router();
 router.get('/:id/about', getAbout);
 
 router.put('/:id/about', authMiddleware, updateAbout);
-router.get('/portfolio/:etudiantId', getPortfolioEtudiantController);
+router.get('/portfolio/:etudiantId', authMiddleware, getPortfolioEtudiantController);
 
 export default router;

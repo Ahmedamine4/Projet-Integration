@@ -1,10 +1,9 @@
 import {
-  createStage,
   uploadPhoto,
+  creeStage,
   getStagesByEtudiant,
-  updateStage,
-  getDemandesValidationProfesseur,
-  traiterValidationStage,
+  editStage,
+  updateVisibiliteStageService,
 } from '../services/stage.service.js';
 
 export const addStage = async (req, res) => {
@@ -42,7 +41,7 @@ export const addStage = async (req, res) => {
     }
 
 
-    if (req.body.is_academique === 'true' || req.body.is_academique === true) {
+    if (req.body.is_academique === 'true') {
       if (!req.body.email_professeur) {
         return res.status(400).json({ 
           success: false, 
@@ -53,16 +52,16 @@ export const addStage = async (req, res) => {
 
     let photoUrl = null;
     if (req.file) {
-      console.log('Photo reçue:', req.file.originalname); // ← AJOUTER
+      console.log('Photo reçue:', req.file.originalname); 
       photoUrl = await uploadPhoto(req.file);
-      console.log('Photo URL:', photoUrl); // ← AJOUTER
+      console.log('Photo URL:', photoUrl);
     }
 
-    const result = await createStage(etudiantId, req.body, photoUrl);
+    const result = await creeStage(etudiantId, req.body, photoUrl);
     res.status(201).json({ success: true, data: result });
 
   } catch (error) {
-    console.error('Erreur addStage:', error);
+    console.error('Error addStage:', error);
 
     if (error.message === 'Professeur non trouvé avec cet email') {
       return res.status(404).json({ success: false, message: 'Aucun professeur trouvé avec cet email' });
@@ -81,12 +80,12 @@ export const getStages = async (req, res) => {
     const stages = await getStagesByEtudiant(req.user.utilisateur_id);
     res.status(200).json({ success: true, data: stages });
   } catch (error) {
-    console.error('Erreur getStages:', error);
+    console.error('Error getStages:', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
-export const editStage = async (req, res) => {
+export const updateStage = async (req, res) => {
   try {
     const etudiantId = req.user.utilisateur_id;
     const { experienceId } = req.params;
@@ -100,61 +99,42 @@ export const editStage = async (req, res) => {
     let photoUrl = null;
     if (req.file) photoUrl = await uploadPhoto(req.file);
 
-    const result = await updateStage(etudiantId, experienceId, req.body, photoUrl);
+    const result = await editStage(etudiantId, experienceId, req.body, photoUrl);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error('Erreur editStage:', error);
-    if (error.message === 'Stage non trouvé') {
-      return res.status(404).json({ success: false, message: 'Stage non trouvé' });
-    }
-    if (error.message === 'Professeur non trouvé avec cet email') {
-      return res.status(404).json({ success: false, message: 'Aucun professeur trouvé avec cet email' });
-    }
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-};
-
-//pour prof
-
-export const getDemandesValidation = async (req, res) => {
-  try {
-    const demandes = await getDemandesValidationProfesseur(req.user.utilisateur_id);
-    res.status(200).json({ success: true, data: demandes });
-  } catch (error) {
-    console.error('Erreur getDemandesValidation:', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-};
-
-export const traiterValidation = async (req, res) => {
-  try {
-    const profId = req.user.utilisateur_id;
-    const { experienceId } = req.params;
-    const { statut, commentaire } = req.body;
-
-    if (!statut) {
-      return res.status(400).json({ success: false, message: 'Le statut est requis' });
-    }
-
-    if (!['valide', 'refuse'].includes(statut)) {
-      return res.status(400).json({ success: false, message: 'Statut invalide. Valeurs acceptées : valide, refuse' });
-    }
-
-    if (statut === 'refuse' && !commentaire?.trim()) {
-      return res.status(400).json({ success: false, message: 'Un commentaire est requis pour un refus' });
-    }
-
-    const result = await traiterValidationStage(profId, experienceId, statut, commentaire);
-    res.status(200).json({ success: true, data: result });
-  } catch (error) {
-    console.error('Erreur traiterValidation:', error);
+    console.error('Erreur updateStage:', error);
     const errorsMap = {
-      'Demande de validation non trouvée': 404,
-      'Accès refusé': 403,
-      'Cette demande a déjà été traitée': 409,
+      'Stage déjà existant': 409,
+      'Stage not found': 404,
+      'Professeur non trouvé avec cet email': 404,
+      'Ce stage a déjà été traité par le professeur, vous ne pouvez plus le modifier': 403,
     };
     const status = errorsMap[error.message];
     if (status) return res.status(status).json({ success: false, message: error.message });
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+export const updateVisibiliteStage = async (req, res) => {
+  try {
+    const etudiantId = req.user.utilisateur_id;
+    const { experienceId } = req.params;
+    const { visibilite } = req.body;
+
+    if (typeof visibilite !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'visibilite doit être un boolean' });
+    }
+
+    const result = await updateVisibiliteStageService(etudiantId, experienceId, visibilite);
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error('Erreur updateVisibiliteStage:', error);
+    const errorsMap = {
+      'Stage non trouvé': 404,
+      'Vous ne pouvez changer la visibilité que si le stage académique est validé': 403,
+    };
+    const status = errorsMap[error.message];
+    if (status) return res.status(status).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };

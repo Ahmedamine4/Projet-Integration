@@ -103,7 +103,8 @@ export const updateAbout = async (req, res) => {
 export const getPortfolioEtudiantController = async (req, res) => {
   try {
     const { etudiantId } = req.params;
-    const data = await getPortfolioEtudiant(etudiantId);
+    const isOwner = req.user.utilisateur_id === etudiantId;
+    const data = await getPortfolioEtudiant(etudiantId, isOwner);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     console.error('Erreur getPortfolioEtudiant:', error);

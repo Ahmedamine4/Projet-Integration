@@ -12,10 +12,13 @@ export function normalizeUser(data) {
 }
 
 export const getCompetenceNames = (item, type) =>
-  item?.competences
-    ?.filter((competence) => competence.type === type)
+  [
+    ...(item?.competences ?? []),
+    ...(item?.competence_dev ?? []).map((entry) => entry.competence),
+  ]
+    .filter((competence) => competence?.type === type)
     .map((competence) => competence.nom)
-    .filter(Boolean) ?? [];
+    .filter(Boolean);
 
 const getExperience = (item) => item?.experience ?? item ?? {};
 
@@ -23,7 +26,7 @@ const getProject = (item) => item?.projet ?? {};
 
 const getActivity = (item) => item?.activite ?? item ?? {};
 
-const getCertification = (item) => item?.certification ?? {};
+const getCertification = (item) => item?.certification ?? item ?? {};
 
 export function normalizeProject(item) {
   const experience = getExperience(item);
@@ -39,7 +42,7 @@ export function normalizeProject(item) {
     githubLink: project.lien_github ?? '',
     technologies: project.technologies ?? getCompetenceNames(experience, 'technologie'),
     domains: project.domains ?? getCompetenceNames(experience, 'domaine'),
-    imagePreview: project.photo ?? experience.documentations?.[0]?.captures ?? '',
+    imagePreview: experience.photo ?? project.photo ?? experience.documentations?.[0]?.captures ?? '',
   };
 }
 
@@ -59,7 +62,7 @@ export function normalizeActivity(item) {
     club: activity.clubs?.[0]?.nom ?? '',
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
-    imagePreview: experience.documentations?.[0]?.captures ?? '',
+    imagePreview: experience.photo ?? experience.documentations?.[0]?.captures ?? '',
   };
 }
 
@@ -79,6 +82,7 @@ export function normalizeCertification(item) {
     certificateURL: certification.lien_URL ?? certification.document ?? '',
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
+    imagePreview: experience.photo ?? experience.documentations?.[0]?.captures ?? '',
   };
 }
 

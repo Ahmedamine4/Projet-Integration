@@ -1,8 +1,8 @@
 import prisma from '../config/prisma.js';
-import { getStagesVisiblesByEtudiant } from './stage.service.js';
-import { getProjetsVisiblesByEtudiant } from './projet.service.js';
-import { getActivitesVisiblesByEtudiant } from './activite.service.js';
-import { getCertificationsVisiblesByEtudiant } from './certification.service.js';
+import { getStagesVisiblesByEtudiant, getStagesByEtudiant } from './stage.service.js';
+import { getProjetsVisiblesByEtudiant, getProjetsByEtudiant } from './projet.service.js';
+import { getActivitesVisiblesByEtudiant, getActivitesByEtudiant } from './activite.service.js';
+import { getCertificationsVisiblesByEtudiant, getCertificationsByEtudiant } from './certification.service.js';
 
 // Recuperer "a_propos" d'un utilisateur par son id
 export async function getAboutByUserId(userId) {
@@ -25,7 +25,7 @@ export async function updateUserAboutByUserId(userId, aboutText) {
   });
 }
 
-export async function getPortfolioEtudiant(etudiantId) {
+export async function getPortfolioEtudiant(etudiantId, isOwner) {
   const etudiant = await prisma.etudiant.findUnique({
     where: { etudiant_utilisateur_id: etudiantId },
     include: {
@@ -36,39 +36,30 @@ export async function getPortfolioEtudiant(etudiantId) {
           email: true,
           telephone: true,
           a_propos: true,
+          github: true,
+          instagram: true,
+          x: true,
+          linkedin: true,
         },
       },
       portfolio: true,
       badges: true,
       clubs: true,
-      recommandations: {
-        select: {
-          type_candidature: true,
-          fichier: true,
-          statut: true,
-          date_lettre: true,
-          commentaire: true,
-          professeur: {
-            include: {
-              utilisateur: { select: { nom: true, prenom: true, email: true } },
-            },
-          },
-        },
-      },
     },
   });
 
   if (!etudiant) throw new Error('Étudiant non trouvé');
 
   const [stages, projets, activites, certifications] = await Promise.all([
-    getStagesVisiblesByEtudiant(etudiantId),
-    getProjetsVisiblesByEtudiant(etudiantId),
-    getActivitesVisiblesByEtudiant(etudiantId),
-    getCertificationsVisiblesByEtudiant(etudiantId),
+    isOwner ? getStagesByEtudiant(etudiantId) : getStagesVisiblesByEtudiant(etudiantId),
+    isOwner ? getProjetsByEtudiant(etudiantId) : getProjetsVisiblesByEtudiant(etudiantId),
+    isOwner ? getActivitesByEtudiant(etudiantId) : getActivitesVisiblesByEtudiant(etudiantId),
+    isOwner ? getCertificationsByEtudiant(etudiantId) : getCertificationsVisiblesByEtudiant(etudiantId),
   ]);
 
   return {
     ...etudiant,
+    isOwner,
     stages,
     projets,
     activites,

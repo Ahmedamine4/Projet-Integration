@@ -1,4 +1,5 @@
 import { generateLocalToken, generateRefreshToken, verifyRefreshToken} from '../config/jwt.js';
+import { loggerSession } from '../services/session.service.js';
 import { supabase } from '../config/supabase.js';
 import {
   registerLocalUser,// pour cree un user local
@@ -36,6 +37,8 @@ export async function register(req, res) {
         maxAge: 7 * 24 * 60 * 60 * 1000 
     });
 
+    loggerSession(user.utilisateur_id, 'LOGIN', req).catch(console.error);
+
     return res.status(201).json({
       success: true,
       message: 'Inscription réussie',
@@ -70,6 +73,8 @@ export async function login(req, res) {
         ...cookieOptions, 
         maxAge: 7 * 24 * 60 * 60 * 1000 
     });
+
+    loggerSession(resultat.user.utilisateur_id, 'LOGIN', req).catch(console.error);
 
     return res.status(200).json({
       success: true,
@@ -141,6 +146,8 @@ export async function googleAuth(req, res) {
         ...cookieOptions, 
         maxAge: 7 * 24 * 60 * 60 * 1000 
     });
+
+    loggerSession(user.utilisateur_id, 'LOGIN', req).catch(console.error);
 
     return res.status(200).json({
       success: true,
@@ -239,6 +246,28 @@ export async function getAllUsers(req, res) {
     return res.status(500).json({
       success: false,
       error: error.message || 'Erreur lors de la récupération des utilisateurs',
+    });
+  }
+}
+
+export async function logout(req, res) {
+  try {
+    
+    const userId = req.user.utilisateur_id;
+
+    loggerSession(userId, 'LOGOUT', req).catch(console.error);
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    return res.status(200).json({ 
+      success: true, 
+      message: "Déconnecté avec succès" 
+    });
+  } catch (error) {
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur lors de la déconnexion' 
     });
   }
 }

@@ -15,8 +15,9 @@ import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
 import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
 import githubRoutes from './routes/github.route.js';
 import lettreRecommandationRoutes from './routes/lettre_recommandation.routes.js';
-
-
+import socialMediaRoutes from './routes/social_media.routes.js';
+import certificationRoutes from './routes/certification.route.js';
+//import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
 app.use(cors({
@@ -32,6 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/users', portfolioRoutes);
 app.use('/api/lettre-recommandation', lettreRecommandationRoutes);
+app.use('/api/certifications', certificationRoutes);
 
 // Branchement des routes de gestion des stages
 app.use('/api/stages', stageRoutes);
@@ -56,11 +58,17 @@ app.use('/api/users', updateUtilisateurRoutes);
 
 app.use('/api', ValidationProjetRoutes);
 
+app.use('/api/users', socialMediaRoutes);
 
 // Route de test
 app.get("/", (req, res) => {
   res.send('<h1> Hello, API is running maintenant ! </h1>');
 });
+
+//app.use('/api/admin', adminRoutes);
+app.set('trust proxy', true);
+
+
 
 // Exportation aux normes ES Modules
 export default app;

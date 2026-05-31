@@ -115,8 +115,8 @@ const { handleDoubleTap } = useDoubleTap(() => {
           rel="noopener noreferrer"
           @click.stop
         >
-          View report
-          <ExternalLink :size="13" />
+          View internship details
+          <ExternalLink :size="14" />
         </a>
         <span
           v-if="canEdit"
@@ -259,8 +259,8 @@ const { handleDoubleTap } = useDoubleTap(() => {
 
 .internship-card__footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-md);
 }
 
@@ -268,10 +268,18 @@ const { handleDoubleTap } = useDoubleTap(() => {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  color: var(--color-secondary);
-  font-size: var(--font-size-xxs);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-bold);
   text-decoration: none;
+  transition:
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.internship-card__report:hover {
+  color: var(--color-secondary);
+  transform: translate(1px, -1px);
 }
 
 .internship-card__hint {

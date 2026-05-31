@@ -3,15 +3,34 @@ import { ref } from 'vue';
 import api from '@/services/api';
 import { normalizeCertification } from '@/utils/portfolioNormalizers';
 
-function buildCertificationPayload(certification) {
-  return {
-    title: certification.title,
-    issueDate: certification.date,
-    credentialUrl: certification.certificateURL,
-    description: certification.description,
-    code: certification.certificateCode,
-    visibleToEveryone: certification.visibleToEveryone,
-  };
+function buildCertificationFormData(certification) {
+  const formData = new FormData();
+
+  formData.append('titre', certification.title);
+  formData.append('date', certification.date);
+  formData.append('credentialUrl', certification.certificateURL);
+  formData.append('description', certification.description);
+  formData.append('code', certification.certificateCode);
+  formData.append('visibleToEveryone', String(certification.visibleToEveryone));
+  formData.append(
+    'competences',
+    JSON.stringify([
+      ...(certification.technologies ?? []).map((nom) => ({
+        nom,
+        type: 'technologie',
+      })),
+      ...(certification.domains ?? []).map((nom) => ({
+        nom,
+        type: 'domaine',
+      })),
+    ])
+  );
+
+  if (certification.image) {
+    formData.append('photo', certification.image);
+  }
+
+  return formData;
 }
 
 export const useCertificationStore = defineStore('certification', () => {
@@ -26,7 +45,12 @@ export const useCertificationStore = defineStore('certification', () => {
     try {
       const response = await api.post(
         '/certifications',
-        buildCertificationPayload(certification)
+        buildCertificationFormData(certification),
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
 
       const createdCertification = normalizeCertification(response.data.data);

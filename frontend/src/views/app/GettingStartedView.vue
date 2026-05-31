@@ -33,11 +33,10 @@ const steps = [
     title: 'Connect your GitHub account',
     description: 'Connect your GitHub account to your profile',
   },
-  
   {
-  key: 'phone',
-  title: 'Add your phone number',
-  description: 'Add a phone number to secure your profile',
+    key: 'phone',
+    title: 'Add your phone number',
+    description: 'Add a phone number to secure your profile',
   },
 ];
 
@@ -294,7 +293,7 @@ function savePhoneNumber() {
 
 .step-action-panel p {
   margin: 0;
-  color: rgba(var(--color-primary-rgb),0.6);
+  color: rgba(var(--color-primary-rgb), 0.6);
   font-size: var(--font-size-sm);
 }
 
@@ -382,7 +381,7 @@ function savePhoneNumber() {
 .getting-started-illustration {
   position: absolute;
   top: clamp(-3rem, -6vw, -1.5rem);
- right: clamp(1rem, 4vw, 2rem);
+  right: clamp(1rem, 4vw, 2rem);
   width: clamp(8rem, 14vw, 14rem);
   pointer-events: none;
   z-index: 2;
