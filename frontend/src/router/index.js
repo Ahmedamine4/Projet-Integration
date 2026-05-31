@@ -14,6 +14,11 @@ const routes = [
   name: 'test-recommendation-request',
   component: TestRecommandationRequestView,
 },
+{
+  path: '/project-card-preview',
+  name: 'project-card-preview',
+  component: () => import('@/views/ProjectCardPreview.vue'),
+},
   {
     path: '/',
     name: 'home',
