@@ -47,11 +47,7 @@ export const importReposToDB = async (etudiantId, repos, accessToken) => {
         language: repo.language,
         stars: repo.stargazers_count || 0,
         forks: repo.forks_count || 0,
-<<<<<<< HEAD
-        private: repo.is_private,
-=======
         private: repo.private,
->>>>>>> origin/develop
         github_access_token: accessToken,
         last_synced: new Date(),
       },
@@ -64,11 +60,7 @@ export const importReposToDB = async (etudiantId, repos, accessToken) => {
         language: repo.language,
         stars: repo.stargazers_count || 0,
         forks: repo.forks_count || 0,
-<<<<<<< HEAD
-        private: repo.is_private,
-=======
         private: repo.private,
->>>>>>> origin/develop
         github_access_token: accessToken,
         last_synced: new Date(),
       },
