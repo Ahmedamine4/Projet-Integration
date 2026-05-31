@@ -14,8 +14,6 @@ datasource db {
 
 // ENUMS
 
-<<<<<<< HEAD
-=======
 enum TypeCompetence {
   technologie
   domaine
@@ -26,7 +24,6 @@ LOGIN
 LOGOUT
 }
 
->>>>>>> origin/develop
 enum TypeExperience {
   certification
   projet
@@ -291,18 +288,6 @@ model Certification {
 
 
 model Projet {
-<<<<<<< HEAD
-  experience_id    String        @id
-  lien_github      String?
-  lien_youtube     String?
-  resultat_obtenus String?
-  role             String?       @db.VarChar(50)
-  photo            String?
-  technologies     String[]
-  domains          String[]
-  experience       Experience    @relation(fields: [experience_id], references: [experience_id])
-  validation       ValideProjet?
-=======
   experience_id        String      @id
   repository_id        String?     @unique
   lien_github          String?
@@ -311,7 +296,6 @@ model Projet {
   experience           Experience  @relation(fields: [experience_id], references: [experience_id])
   repository           Repository? @relation(fields: [repository_id], references: [repository_id], onDelete: SetNull)
   validation           ValideProjet?
->>>>>>> origin/develop
 
   @@map("projets")
 }
@@ -328,10 +312,7 @@ model Activite {
 
 model Stage {
   experience_id      String       @id
-<<<<<<< HEAD
-=======
   date_fin           DateTime?
->>>>>>> origin/develop
   duree              String?      @db.VarChar(50)
   missions_realisees String?
   rapport_stage      String?
@@ -474,12 +455,8 @@ model Repository {
   last_synced         DateTime @default(now())
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
-<<<<<<< HEAD
-  etudiants           Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
-=======
   etudiant            Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
   projets             Projet[]
->>>>>>> origin/develop
 
   @@map("repositories")
 }
