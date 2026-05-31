@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 import { supabase } from '../config/supabase.js';
+import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
 
 export const uploadPhoto = async (file) => {
   const fileName = `${Date.now()}_${file.originalname}`;
@@ -34,6 +35,7 @@ export const creeCertification = async (etudiantId, data, photoUrl) => {
         type: 'certification',
         description: data.description,
         utilisateur_id: etudiantId,
+        photo: photoUrl ?? null,
       },
     });
 
@@ -47,30 +49,16 @@ export const creeCertification = async (etudiantId, data, photoUrl) => {
 
     await Promise.all(
       competences.map(({ nom, type }) =>
-        tx.competence.create({
-          data: {
-            type,
-            nom,
-            experiences: { connect: { experience_id: experience.experience_id } },
-          },
-        })
+        lierCompetencesExperience(tx, experience.experience_id, etudiantId, [nom], type)
       )
     );
-
-    let documentation = null;
-    if (photoUrl) {
-      documentation = await tx.documentation.create({
-        data: { captures: photoUrl, experience_id: experience.experience_id },
-      });
-    }
 
     return tx.certification.findUnique({
       where: { experience_id: experience.experience_id },
       include: {
         experience: {
           include: {
-            competences: true,
-            documentations: true,
+            competence_dev: { include: { competence: true } },
           },
         },
       },
@@ -84,8 +72,7 @@ export const getCertificationsByEtudiant = async (etudiantId) => {
     include: {
       experience: {
         include: {
-          competences: true,
-          documentations: true,
+          competence_dev: { include: { competence: true } },
         },
       },
     },
@@ -109,8 +96,7 @@ export const editCertification = async (etudiantId, experienceId, data, photoUrl
       where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'certification' },
       include: {
         certification: true,
-        competences: true,
-        documentations: true,
+        competence_dev: true,
       },
     });
 
@@ -123,6 +109,7 @@ export const editCertification = async (etudiantId, experienceId, data, photoUrl
         date_experience: data.date ? new Date(data.date) : experience.date_experience,
         description: data.description ?? experience.description,
         visibilite: false,
+        photo: photoUrl ?? experience.photo,
       },
     });
 
@@ -137,35 +124,13 @@ export const editCertification = async (etudiantId, experienceId, data, photoUrl
     if (data.competences !== undefined) {
       const competences = JSON.parse(data.competences || '[]');
 
-      await tx.competence.deleteMany({
-        where: { experiences: { some: { experience_id: experienceId } } },
-      });
+      await supprimerCompetencesDeveloppees(tx, experienceId, etudiantId);
 
       await Promise.all(
         competences.map(({ nom, type }) =>
-          tx.competence.create({
-            data: {
-              type,
-              nom,
-              experiences: { connect: { experience_id: experienceId } },
-            },
-          })
+          lierCompetencesExperience(tx, experienceId, etudiantId, [nom], type)
         )
       );
-    }
-
-    if (photoUrl) {
-      const docExistante = await tx.documentation.findFirst({ where: { experience_id: experienceId } });
-      if (docExistante) {
-        await tx.documentation.update({
-          where: { documentation_id: docExistante.documentation_id },
-          data: { captures: photoUrl },
-        });
-      } else {
-        await tx.documentation.create({
-          data: { captures: photoUrl, experience_id: experienceId },
-        });
-      }
     }
 
     return tx.certification.findUnique({
@@ -173,8 +138,7 @@ export const editCertification = async (etudiantId, experienceId, data, photoUrl
       include: {
         experience: {
           include: {
-            competences: true,
-            documentations: true,
+            competence_dev: { include: { competence: true } },
           },
         },
       },
@@ -201,8 +165,7 @@ export const getCertificationsVisiblesByEtudiant = async (etudiantId) => {
     where: { utilisateur_id: etudiantId, type: 'certification', visibilite: true },
     include: {
       certification: { include: { validation: true } },
-      competences: true,
-      documentations: true,
+      competence_dev: { include: { competence: true } },
     },
     orderBy: { date_experience: 'desc' },
   });

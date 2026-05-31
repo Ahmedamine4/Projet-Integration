@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 import { supabase } from '../config/supabase.js';
+import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
 
 export const uploadPhoto = async (file) => {
   const fileName = `${Date.now()}_${file.originalname}`;
@@ -17,7 +18,7 @@ export const uploadPhoto = async (file) => {
   return data.publicUrl;
 };
 
-export const creeActivite = async (etudiantId, data, imageUrl) => {
+export const creeActivite = async (etudiantId, data, photoUrl) => {
   const activiteExistante = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'activite', titre: data.titre },
   });
@@ -34,6 +35,7 @@ export const creeActivite = async (etudiantId, data, imageUrl) => {
         type: 'activite',
         description: data.description,
         utilisateur_id: etudiantId,
+        photo: photoUrl ?? null,
       },
     });
 
@@ -47,30 +49,16 @@ export const creeActivite = async (etudiantId, data, imageUrl) => {
 
     await Promise.all(
       competences.map(({ nom, type }) =>
-        tx.competence.create({
-          data: {
-            type,
-            nom,
-            experiences: { connect: { experience_id: experience.experience_id } },
-          },
-        })
+        lierCompetencesExperience(tx, experience.experience_id, etudiantId, [nom], type)
       )
     );
-
-    let documentation = null;
-    if (imageUrl) {
-      documentation = await tx.documentation.create({
-        data: { captures: imageUrl, experience_id: experience.experience_id },
-      });
-    }
 
     return await tx.activite.findUnique({
       where: { experience_id: experience.experience_id },
       include: {
         experience: {
           include: {
-            competences: true,
-            documentations: true,
+            competence_dev: { include: { competence: true } },
           },
         },
       },
@@ -84,8 +72,7 @@ export const getActivitesByEtudiant = async (etudiantId) => {
     include: {
       experience: {
         include: {
-          competences: true,
-          documentations: true,
+          competence_dev: { include: { competence: true } },
         },
       },
     },
@@ -93,7 +80,7 @@ export const getActivitesByEtudiant = async (etudiantId) => {
   });
 };
 
-export const editActivite = async (etudiantId, experienceId, data, imageUrl) => {
+export const editActivite = async (etudiantId, experienceId, data, photoUrl) => {
   const activiteExistante = await prisma.experience.findFirst({
     where: {
       utilisateur_id: etudiantId,
@@ -109,8 +96,7 @@ export const editActivite = async (etudiantId, experienceId, data, imageUrl) => 
       where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'activite' },
       include: {
         activite: true,
-        competences: true,
-        documentations: true,
+        competence_dev: true,
       },
     });
 
@@ -123,6 +109,7 @@ export const editActivite = async (etudiantId, experienceId, data, imageUrl) => 
         date_experience: data.date_experience ? new Date(data.date_experience) : experience.date_experience,
         description: data.description ?? experience.description,
         visibilite: false,
+        photo: photoUrl ?? experience.photo,
       },
     });
 
@@ -137,44 +124,22 @@ export const editActivite = async (etudiantId, experienceId, data, imageUrl) => 
     if (data.competences !== undefined) {
       const competences = JSON.parse(data.competences || '[]');
 
-      await tx.competence.deleteMany({
-        where: { experiences: { some: { experience_id: experienceId } } },
-      });
+      await supprimerCompetencesDeveloppees(tx, experienceId, etudiantId);
 
       await Promise.all(
         competences.map(({ nom, type }) =>
-          tx.competence.create({
-            data: {
-              type,
-              nom,
-              experiences: { connect: { experience_id: experienceId } },
-            },
-          })
+          lierCompetencesExperience(tx, experienceId, etudiantId, [nom], type)
         )
       );
     }
 
-    if (imageUrl) {
-      const docExistante = await tx.documentation.findFirst({ where: { experience_id: experienceId } });
-      if (docExistante) {
-        await tx.documentation.update({
-          where: { documentation_id: docExistante.documentation_id },
-          data: { captures: imageUrl },
-        });
-      } else {
-        await tx.documentation.create({
-          data: { captures: imageUrl, experience_id: experienceId },
-        });
-      }
-    }
 
     return tx.activite.findUnique({
       where: { experience_id: experienceId },
       include: {
         experience: {
           include: {
-            competences: true,
-            documentations: true,
+            competence_dev: { include: { competence: true } },
           },
         },
       },
@@ -201,8 +166,7 @@ export async function getActivitesVisiblesByEtudiant(etudiantId) {
     where: { utilisateur_id: etudiantId, type: 'activite', visibilite: true },
     include: {
       activite: { include: { validation: true, clubs: true } },
-      competences: true,
-      documentations: true,
+      competence_dev: { include: { competence: true } },
     },
     orderBy: { date_experience: 'desc' },
   });

@@ -2,6 +2,7 @@ import prisma from '../config/prisma.js';
 import { supabase } from '../config/supabase.js';
 import { creerNotification } from './notification.service.js';
 import { TypeExperience, TypeSpecifique } from '@prisma/client';
+import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
 
 //upload photo sur supabase et collection de url
 export const uploadPhoto = async (file) => {
@@ -20,7 +21,7 @@ export const uploadPhoto = async (file) => {
   return data.publicUrl;
 };
 
-export const creeProjet = async (etudiantId, data, imageUrl) => {
+export const creeProjet = async (etudiantId, data, photoUrl) => {
 
   const projetExistant = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle },
@@ -41,6 +42,7 @@ export const creeProjet = async (etudiantId, data, imageUrl) => {
         description: data.description,
         type_specifique: isAcademique ? 'academique' : 'personnel',
         utilisateur_id: etudiantId,
+        photo: photoUrl ?? null,
       },
     });
 
@@ -51,28 +53,11 @@ export const creeProjet = async (etudiantId, data, imageUrl) => {
       },
     });
 
-    const competencesTech = await Promise.all(
-      technologies.map(nom =>
-        tx.competence.create({
-          data: {
-            type: 'technologie',
-            nom: nom,
-            experiences: { connect: { experience_id: experience.experience_id } },
-          },
-        })
-      )
+    const competencesTech = await lierCompetencesExperience(
+      tx, experience.experience_id, etudiantId, technologies, 'technologie'
     );
-
-    const competencesDomaines = await Promise.all(
-      domaines.map(nom =>
-        tx.competence.create({
-          data: {
-            type: 'domaine',
-            nom,
-            experiences: { connect: { experience_id: experience.experience_id } },
-          },
-        })
-      )
+    const competencesDomaines = await lierCompetencesExperience(
+      tx, experience.experience_id, etudiantId, domaines, 'domaine'
     );
 
     //si projet académique creer valideProjet avec statut en_attend et envoyer notification au prof
@@ -105,14 +90,8 @@ export const creeProjet = async (etudiantId, data, imageUrl) => {
       );
     }
 
-    let documentation = null;
-    if (imageUrl) {
-      documentation = await tx.documentation.create({
-        data: { captures: imageUrl, experience_id: experience.experience_id },
-      });
-    }
 
-    return { experience, projet, competences: [...competencesTech, ...competencesDomaines], validation, documentation };
+    return { experience, projet, competences: [...competencesTech, ...competencesDomaines], validation };
   });
 };
 
@@ -121,14 +100,13 @@ export const getProjetsByEtudiant = async (etudiantId) => {
     where: { utilisateur_id: etudiantId, type: 'projet' },
     include: {
       projet: { include: { validation: true } },
-      competences: true,
-      documentations: true,
+      competence_dev: { include: { competence: true } },
     },
     orderBy: { date_experience: 'desc' },
   });
 };
 
-export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
+export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
   const projetExistant = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle, experience_id: { not: experienceId } },
   });
@@ -147,7 +125,7 @@ export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
     const isAcademique = data.projetType ? data.projetType === 'academique' : experience.type_specifique === 'academique';
 
     if (
-      experience.projet?.technologies_locked &&
+      experience.technologies_locked &&
       data.technologies !== undefined
     ) {
       throw new Error('Les technologies importées depuis GitHub sont verrouillées');
@@ -161,6 +139,7 @@ export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
         description: data.description ?? experience.description,
         visibilite: false,
         type_specifique: data.projetType ? (data.projetType === 'academique' ? 'academique' : 'personnel') : experience.type_specifique,
+        photo: photoUrl ?? experience.photo,
       },
     });
 
@@ -175,30 +154,10 @@ export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
       const technologies = JSON.parse(data.technologies || '[]');
       const domaines = JSON.parse(data.domains || '[]');
 
-      await tx.competence.deleteMany({
-        where: { experiences: { some: { experience_id: experienceId } } },
-      });
+      await supprimerCompetencesDeveloppees(tx, experienceId, etudiantId);
 
-      await Promise.all([
-        ...technologies.map(nom =>
-          tx.competence.create({
-            data: {
-              type: 'technologie',
-              nom,
-              experiences: { connect: { experience_id: experienceId } },
-            },
-          })
-        ),
-        ...domaines.map(nom =>
-          tx.competence.create({
-            data: {
-              type: 'domaine',
-              nom,
-              experiences: { connect: { experience_id: experienceId } },
-            },
-          })
-        ),
-      ]);
+      await lierCompetencesExperience(tx, experienceId, etudiantId, technologies, 'technologie');
+      await lierCompetencesExperience(tx, experienceId, etudiantId, domaines, 'domaine');
     }
 
     if (experience.projet.validation) {
@@ -257,26 +216,11 @@ export const editProjet = async (etudiantId, experienceId, data, imageUrl) => {
       );
     }
 
-    if (imageUrl) {
-      const docExistante = await tx.documentation.findFirst({ where: { experience_id: experienceId } });
-      if (docExistante) {
-        await tx.documentation.update({
-          where: { documentation_id: docExistante.documentation_id },
-          data: { captures: imageUrl },
-        });
-      } else {
-        await tx.documentation.create({
-          data: { captures: imageUrl, experience_id: experienceId },
-        });
-      }
-    }
-
     return tx.experience.findUnique({
       where: { experience_id: experienceId },
       include: {
         projet: { include: { validation: true } },
-        competences: true,
-        documentations: true,
+        competence_dev: { include: { competence: true } },
       },
     });
   });
@@ -291,8 +235,7 @@ export const getProjetsVisiblesByEtudiant = async (etudiantId) => {
     },
     include: {
       projet: { include: { validation: true } },
-      competences: true,
-      documentations: true,
+      competence_dev: { include: { competence: true } },
     },
     orderBy: { date_experience: 'desc' },
   });
@@ -331,6 +274,8 @@ export const createDraftProjetFromRepository = async (repository, etudiantId) =>
         type: TypeExperience.projet,
         type_specifique: TypeSpecifique.personnel,
         utilisateur_id: etudiantId,
+        is_draft: true,
+        technologies_locked: true,
       },
     });
 
@@ -339,12 +284,14 @@ export const createDraftProjetFromRepository = async (repository, etudiantId) =>
         experience_id: experience.experience_id,
         repository_id: repository.repository_id,
         lien_github: repository.link,
-        technologies: repository.language ? [repository.language] : [],
-        domains: [],
-        is_draft: true,
-        technologies_locked: true,
       },
     });
+
+    if (repository.language) {
+      await lierCompetencesExperience(
+        tx, experience.experience_id, etudiantId, [repository.language], 'technologie'
+      );
+    }
 
     return { experience, projet };
   });

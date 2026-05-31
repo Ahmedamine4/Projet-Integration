@@ -17,10 +17,9 @@ export const getDemandes = async (profId) => {
       experience: {
         select: {
           titre: true,
-          utilisateur: {
-            select: {
-              nom: true,
-              prenom: true,
+          etudiant: {
+            include: {
+              utilisateur: { select: { nom: true, prenom: true } },
             },
           },
         },
@@ -41,10 +40,9 @@ export const getDemandes = async (profId) => {
       experience: {
         select: {
           titre: true,
-          utilisateur: {
-            select: {
-              nom: true,
-              prenom: true,
+          etudiant: {
+            include: {
+              utilisateur: { select: { nom: true, prenom: true } },
             },
           },
         },
@@ -59,8 +57,8 @@ export const getDemandes = async (profId) => {
     statut: item.statut,
     date_d_action: item.date_d_action,
     etudiant: {
-      nom: item.experience?.utilisateur?.nom,
-      prenom: item.experience?.utilisateur?.prenom,
+      nom: item.experience?.etudiant?.utilisateur?.nom,
+      prenom: item.experience?.etudiant?.utilisateur?.prenom,
     },
   }));
 };
@@ -82,8 +80,10 @@ export const getStagesProf = async (profId, statut, commente) => {
       experience: {
         select: {
           titre: true,
-          utilisateur: {
-            select: { nom: true, prenom: true },
+          etudiant: {
+            include: {
+              utilisateur: { select: { nom: true, prenom: true } },
+            },
           },
         },
       },
@@ -97,8 +97,8 @@ export const getStagesProf = async (profId, statut, commente) => {
     statut: item.statut,
     date_d_action: item.date_d_action,
     etudiant: {
-      nom: item.experience?.utilisateur?.nom ?? null,
-      prenom: item.experience?.utilisateur?.prenom ?? null,
+      nom: item.experience?.etudiant?.utilisateur?.nom ?? null,
+      prenom: item.experience?.etudiant?.utilisateur?.prenom ?? null,
     },
   }));
 };
@@ -120,8 +120,10 @@ export const getProjetsProf = async (profId, statut, commente) => {
       experience: {
         select: {
           titre: true,
-          utilisateur: {
-            select: { nom: true, prenom: true },
+          etudiant: {
+            include: {
+              utilisateur: { select: { nom: true, prenom: true } },
+            },
           },
         },
       },
@@ -135,8 +137,8 @@ export const getProjetsProf = async (profId, statut, commente) => {
     statut: item.statut,
     date_d_action: item.date_d_action,
     etudiant: {
-      nom: item.experience?.utilisateur?.nom ?? null,
-      prenom: item.experience?.utilisateur?.prenom ?? null,
+      nom: item.experience?.etudiant?.utilisateur?.nom ?? null,
+      prenom: item.experience?.etudiant?.utilisateur?.prenom ?? null,
     },
   }));
 };
@@ -147,9 +149,12 @@ export const getStageById = async (profId, experienceId) => {
     include: {
       experience: {
         include: {
-          utilisateur: true,
-          documentations: true,
-          competences: true,
+          etudiant: {
+            include: { utilisateur: true },
+          },
+          competence_dev: {
+            include: { competence: true },
+          },
         },
       },
       stage: true,
@@ -168,9 +173,12 @@ export const getProjetById = async (profId, experienceId) => {
     include: {
       experience: {
         include: {
-          utilisateur: true,
-          documentations: true,
-          competences: true,
+          etudiant: {
+            include: { utilisateur: true },
+          },
+          competence_dev: {
+            include: { competence: true },
+          },
         },
       },
       projet: true,
@@ -186,7 +194,15 @@ export const getProjetById = async (profId, experienceId) => {
 export const traiterValidationProjet = async (profId, experienceId, statut, commentaire) => {
   const validation = await prisma.valideProjet.findUnique({
     where: { experience_id: experienceId },
-    include: { experience: true },
+    include: { 
+      experience: {
+        include: {
+          etudiant: {
+            include: { utilisateur: true }
+          }
+        }
+      }
+    },
   });
 
   if (!validation) throw new Error('Demande de validation non trouvée');
@@ -205,7 +221,7 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
     });
 
     await creerNotification(
-      validation.experience.utilisateur_id,
+      validation.experience.etudiant.utilisateur.utilisateur_id,
       `Votre professeur a laissé un commentaire sur votre projet "${validation.experience.titre}".`,
       'commentaire_projet'
     );
@@ -224,7 +240,12 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
   const msg = statut === 'valide'
     ? `Votre projet "${validation.experience.titre}" a été validé par votre professeur.`
     : `Votre projet "${validation.experience.titre}" a été refusé. Motif : ${commentaire}`;
-  await creerNotification(validation.experience.utilisateur_id, msg, 'validation_projet');
+
+  await creerNotification(
+    validation.experience.etudiant.utilisateur.utilisateur_id, 
+    msg, 
+    'validation_projet'
+  );
 
   return updated;
 };
@@ -232,7 +253,15 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
 export const traiterValidationStageProf = async (profId, experienceId, statut, commentaire) => {
   const validation = await prisma.valideStage.findUnique({
     where: { experience_id: experienceId },
-    include: { experience: true },
+    include: { 
+      experience: {
+        include: {
+          etudiant: {
+            include: { utilisateur: true }
+          }
+        }
+      }
+    },
   });
 
   if (!validation) throw new Error('Demande de validation non trouvée');
@@ -249,7 +278,7 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
     });
 
     await creerNotification(
-      validation.experience.utilisateur_id,
+      validation.experience.etudiant.utilisateur.utilisateur_id,
       `Votre professeur a laissé un commentaire sur votre stage "${validation.experience.titre}".`,
       'commentaire_stage'
     );
@@ -268,7 +297,12 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
   const msg = statut === 'valide'
     ? `Votre stage "${validation.experience.titre}" a été validé par votre professeur.`
     : `Votre stage "${validation.experience.titre}" a été refusé. Motif : ${commentaire}`;
-  await creerNotification(validation.experience.utilisateur_id, msg, 'validation_stage');
+  
+  await creerNotification(
+    validation.experience.etudiant.utilisateur.utilisateur_id, 
+    msg, 
+    'validation_stage'
+  );
 
   return updated;
 };

@@ -3,7 +3,7 @@ import geoip from 'geoip-lite';
 
 export const parseSessionInfo = (req) => {
 
-  const ua = new UAParser(req.headers);
+  const ua = new UAParser(req.headers['user-agent']);
 
   const browser = ua.getBrowser().name ?? 'Inconnu';
   const browser_version = ua.getBrowser().version ?? "Inconnu";

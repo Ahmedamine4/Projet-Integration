@@ -59,5 +59,9 @@ app.get("/", (req, res) => {
 });
 
 //app.use('/api/admin', adminRoutes);
+app.set('trust proxy', true);
+
+
+
 // Exportation aux normes ES Modules
 export default app;

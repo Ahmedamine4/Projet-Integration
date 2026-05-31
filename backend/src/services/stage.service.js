@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.js';
 import { supabase } from '../config/supabase.js';
 import { creerNotification } from './notification.service.js';
+import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
 
 //upload photo sur supabase et collection de url
 export const uploadPhoto = async (file) => {
@@ -45,6 +46,7 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
         description: data.description,
         type_specifique: data.is_academique === 'true' ? 'academique' : 'personnel',
         utilisateur_id: etudiantId,
+        photo: photoUrl ?? null,
       },
     });
 
@@ -57,33 +59,12 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
         rapport_stage: data.rapport_stage ?? null,
       },
     });
-
-    const competencesTech = await Promise.all(
-      technologies.map(nom =>
-        tx.competence.create({
-          data: {
-            type: 'technologie',
-            nom: nom,
-            experiences: {
-              connect: { experience_id: experience.experience_id }
-            }
-          }
-        })
-      )
+    
+    const competencesTech = await lierCompetencesExperience(
+      tx, experience.experience_id, etudiantId, technologies, 'technologie'
     );
-
-    const competencesDomaines = await Promise.all(
-      domaines.map(nom =>
-        tx.competence.create({
-          data: {
-            type: 'domaine',
-            nom: nom,
-            experiences: {
-              connect: { experience_id: experience.experience_id }
-            }
-          }
-        })
-      )
+    const competencesDomaines = await lierCompetencesExperience(
+      tx, experience.experience_id, etudiantId, domaines, 'domaine'
     );
 
     //si stage est academique
@@ -120,22 +101,11 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
       );
     }
 
-    let documentation = null;
-    if (photoUrl) {
-      documentation = await tx.documentation.create({
-        data: {
-          captures: photoUrl,
-          experience_id: experience.experience_id,
-        },
-      });
-    }
-
     return { 
       experience, 
       stage, 
       competences: [...competencesTech, ...competencesDomaines],
       validation, 
-      documentation 
     };
   });
 };
@@ -145,8 +115,7 @@ export const getStagesByEtudiant = async (etudiantId) => {
     where: { utilisateur_id: etudiantId, type: 'stage' },
     include: {
       stage: { include: { validation: true } },
-      competences: true,
-      documentations: true,
+      competence_dev: { include: { competence: true } },
     },
     orderBy: { date_experience: 'desc' },
   });
@@ -154,11 +123,11 @@ export const getStagesByEtudiant = async (etudiantId) => {
 
 export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
   const stageExistant = await prisma.experience.findFirst({
-        where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre, experience_id: { not: experienceId } },
-      });
-      if (stageExistant) {
-        throw new Error('Stage déjà existant');
-      }
+    where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre, experience_id: { not: experienceId } },
+  });
+  if (stageExistant) {
+    throw new Error('Stage déjà existant');
+  }
 
   return await prisma.$transaction(async (tx) => {
     //verifier que le stage appartient vrai a l'etudiant
@@ -192,6 +161,7 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
         description: data.description ?? experience.description,
         visibilite: false, //invisible
         type_specifique: data.is_academique ? (data.is_academique === 'true' ? 'academique' : 'personnel') : experience.type_specifique,
+        photo: photoUrl ?? experience.photo,
       },
     });
 
@@ -205,41 +175,17 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
       },
     });
 
-    //update les competances
+    //update les competences
     if (data.technologies !== undefined || data.domaines !== undefined) {
       const technologies = JSON.parse(data.technologies || '[]');
       const domaines = JSON.parse(data.domaines || '[]');
 
-      //supprimer les anciennes car c'est facile que de faire un update pour les anciennes
-      await tx.competence.deleteMany({
-        where: {
-          experiences: {
-            some: { experience_id: experienceId },
-          },
-        },
-      });
+      // Supprimer les anciennes liaisons de cette expérience
+      await supprimerCompetencesDeveloppees(tx, experienceId, etudiantId);
 
-      //creer les nouvelles
-      await Promise.all([
-        ...technologies.map((nom) =>
-          tx.competence.create({
-            data: {
-              type: 'technologie',
-              nom,
-              experiences: { connect: { experience_id: experienceId } },
-            },
-          })
-        ),
-        ...domaines.map((nom) =>
-          tx.competence.create({
-            data: {
-              type: 'domaine',
-              nom,
-              experiences: { connect: { experience_id: experienceId } },
-            },
-          })
-        ),
-      ]);
+      // Recréer avec la logique de niveau
+      await lierCompetencesExperience(tx, experienceId, etudiantId, technologies, 'technologie');
+      await lierCompetencesExperience(tx, experienceId, etudiantId, domaines, 'domaine');
     }
 
     //si deja le stage est dans la table du valideStage
@@ -315,28 +261,11 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
       );
     }
 
-    if (photoUrl) {
-      const docExistante = await tx.documentation.findFirst({
-        where: { experience_id: experienceId },
-      });
-      if (docExistante) {
-        await tx.documentation.update({
-          where: { documentation_id: docExistante.documentation_id },
-          data: { captures: photoUrl },
-        });
-      } else {
-        await tx.documentation.create({
-          data: { captures: photoUrl, experience_id: experienceId },
-        });
-      }
-    }
-
     return tx.experience.findUnique({
       where: { experience_id: experienceId },
       include: {
         stage: { include: { validation: true } },
-        competences: true,
-        documentations: true,
+        competence_dev: { include: { competence: true } },
       },
     });
   });
@@ -347,8 +276,7 @@ export const getStagesVisiblesByEtudiant = async (etudiantId) => {
     where: { utilisateur_id: etudiantId, type: 'stage', visibilite: true },
     include: {
       stage: { include: { validation: true } },
-      competences: true,
-      documentations: true,
+      competence_dev: { include: { competence: true } },
     },
     orderBy: { date_experience: 'desc' },
   });
@@ -371,8 +299,8 @@ export const updateVisibiliteStageService = async (etudiantId, experienceId, vis
       throw new Error('Vous ne pouvez changer la visibilité que si le stage académique est validé');
     }
   }
+  
   //si personnel
-
   return prisma.experience.update({
     where: { experience_id: experienceId },
     data: { visibilite },
