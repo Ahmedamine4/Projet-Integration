@@ -14,7 +14,8 @@ import notificationRoutes from './routes/notification.routes.js';
 import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
 import ValidationProjetRoutes from './routes/ValidationProjet.routes.js';
 import githubRoutes from './routes/github.route.js';
-import adminRoutes from './routes/admin.routes.js';
+import socialMediaRoutes from './routes/social_media.routes.js';
+//import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
 app.use(cors({
@@ -58,11 +59,17 @@ app.use('/api/users', updateUtilisateurRoutes);
 
 app.use('/api', ValidationProjetRoutes);
 
+app.use('/api/users', socialMediaRoutes);
+
 // Route de test
 app.get("/", (req, res) => {
   res.send('<h1> Hello, API is running maintenant ! </h1>');
 });
 
-app.use('/api/admin', adminRoutes);
+//app.use('/api/admin', adminRoutes);
+app.set('trust proxy', true);
+
+
+
 // Exportation aux normes ES Modules
 export default app;

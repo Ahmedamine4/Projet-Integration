@@ -1,78 +1,132 @@
 ---
-# System update
 - name: Update apt cache
   apt:
     update_cache: true
     cache_valid_time: 3600
 
-- name: Upgrade all installed packages
-  apt:
-    upgrade: dist
-
-# PostgreSQL
-- name: Install PostgreSQL
+- name: Install required and security packages
   apt:
     name:
-      - postgresql
-      - postgresql-contrib
+      - curl
+      - git
+      - net-tools
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - docker.io
+      - docker-compose
+      - prometheus-node-exporter
     state: present
 
-- name: Ensure PostgreSQL is running and enabled
+- name: Disable SSH root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+    backup: true
+
+- name: Reload SSH
   service:
-    name: postgresql
+    name: ssh
+    state: reloaded
+
+- name: Enable unattended security upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+- name: Enable and start fail2ban
+  service:
+    name: fail2ban
+    enabled: true
+    state: started
+
+- name: Enable and start Docker
+  service:
+    name: docker
     state: started
     enabled: true
 
-- name: Locate postgresql.conf
-  find:
-    paths: /etc/postgresql
-    patterns: "postgresql.conf"
-    recurse: true
-  register: pg_conf_search
+- name: Add vagrant user to docker group
+  user:
+    name: vagrant
+    groups: docker
+    append: true
 
-- name: Set PostgreSQL config directory fact
-  set_fact:
-    pg_conf_dir: "{{ pg_conf_search.files[0].path | dirname }}"
+- name: Create VM3 docker-compose.yml
+  copy:
+    dest: /home/vagrant/docker-compose.yml
+    owner: vagrant
+    group: vagrant
+    mode: "0644"
+    content: |
+      services:
+        postgres:
+          image: postgres:16-alpine
+          container_name: postgres-db-container
+          restart: unless-stopped
+          env_file:
+            - .env
+          environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+          ports:
+            - "{{ vm3_ip }}:5432:5432"
+          volumes:
+            - postgres_data:/var/lib/postgresql/data
 
-# Listen on all interfaces — UFW below enforces who can actually reach 5432
-- name: Configure listen_addresses
-  lineinfile:
-    path:   "{{ pg_conf_dir }}/postgresql.conf"
-    regexp: "^#?listen_addresses"
-    line:   "listen_addresses = '*'"
-    backup: true
-  notify: restart postgresql
+      volumes:
+        postgres_data:
 
-# Allow VM2 to authenticate; UFW blocks everyone else at the network level
-- name: Add VM2 to pg_hba.conf
-  lineinfile:
-    path:        "{{ pg_conf_dir }}/pg_hba.conf"
-    line:        "host  all  all  {{ vm2_ip }}/32  md5"
-    insertafter: "^# IPv4 local connections"
-    backup: true
-  notify: restart postgresql
+- name: Copy .env to VM with restricted permissions
+  copy:
+    src: /vagrant/.env
+    dest: /home/vagrant/.env
+    owner: vagrant
+    group: vagrant
+    mode: "0600"
 
-# Firewall (UFW)
-- name: Install UFW
-  apt:
-    name: ufw
-    state: present
-
-- name: Allow SSH (keep Vagrant connection alive)
+- name: Allow SSH
   ufw:
-    rule:  allow
-    port:  "22"
+    rule: allow
+    port: "22"
     proto: tcp
 
-- name: Allow PostgreSQL ONLY from VM2
+- name: Allow PostgreSQL only from VM2
   ufw:
-    rule:  allow
-    src:   "{{ vm2_ip }}"
-    port:  "5432"
+    rule: allow
+    src: "{{ vm2_ip }}"
+    port: "5432"
     proto: tcp
 
-- name: Enable UFW with default-deny incoming
+- name: Allow Node Exporter only from VM1
   ufw:
-    state:     enabled
-    policy:    deny
+    rule: allow
+    src: "{{ vm1_ip }}"
+    port: "9100"
+    proto: tcp
+
+- name: Enable firewall
+  ufw:
+    state: enabled
+    policy: deny
     direction: incoming
+
+- name: Recreate clean Docker stack
+  shell: |
+    docker-compose down
+    docker-compose up -d --force-recreate --remove-orphans
+  args:
+    chdir: /home/vagrant
+
+- name: Enable and start Node Exporter
+  service:
+    name: prometheus-node-exporter
+    enabled: true
+    state: started

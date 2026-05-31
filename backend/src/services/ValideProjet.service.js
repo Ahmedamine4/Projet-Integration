@@ -32,7 +32,7 @@ export const validerProjetService = async ({
   
   let nouveauStatut = projet.statut;
 
-  // si aucun statut envoyé mais commentaire existe
+  //si aucun statut envoyé mais commentaire existe
   if (statut === undefined || statut === null) {
 
     if (commentaireProf) {

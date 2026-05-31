@@ -1,17 +1,27 @@
 // Done
 
 import * as githubService from '../services/github.service.js';
+<<<<<<< HEAD
 import prisma from '../config/prisma.js';     
   // je vais enlever n'import qu'elle attribut lier a prismer 
   // et je vais le faire dans git.service.js
 
 export const githubLogin = async (req, res) => {
   const etudiantId = req.user.utilisateur_id ;
+=======
+import prisma from '../config/prisma.js';
+import * as projetService from '../services/projet.service.js';
+// je vais enlever n'import qu'elle attribut lier a prismer 
+// et je vais le faire dans git.service.js
+
+export const githubLogin = async (req, res) => {
+  const etudiantId = req.user.utilisateur_id;
+>>>>>>> origin/develop
   const authUrl = githubService.getOAuthUrl(etudiantId);
 
   res.json({
     success: true,
-    message: "Redirection vers GitHub ",
+    message: "Redirect to GitHub ",
     url: authUrl
   });
 };
@@ -22,27 +32,28 @@ export const githubCallback = async (req, res) => {
   if (!code) {
     return res.status(400).json({
       success: false,
-      message: "Code d'autorisation GitHub manquant"
+      message: "Code manquant"
     });
   }
 
   const accessToken = await githubService.getAccessToken(code);
   const repos = await githubService.getUserRepos(accessToken);
 
-  const etudiantId = state || req.user?.utilisateur_id ;
+  const etudiantId = state || req.user?.utilisateur_id;
 
   if (!etudiantId) {
     return res.status(400).json({
       success: false,
-      message: "Identifiant étudiant non trouvé"
+      message: "id étudiant non trouvé"
     });
   }
 
   const imported = await githubService.importReposToDB(etudiantId, repos, accessToken);
+  await projetService.createDraftProjectsFromRepos(etudiantId, imported);
 
   /*res.json({
     success: true,
-    message: `${imported.length} repositories importés avec succès`,
+    message: `${imported.length} repositories importés `,
     count: imported.length,
     data: imported
   });*/
@@ -51,12 +62,16 @@ export const githubCallback = async (req, res) => {
 };
 
 export const getMyRepositories = async (req, res) => {
+<<<<<<< HEAD
   const etudiantId =  req.user.utilisateur_id ;
+=======
+  const etudiantId = req.user.utilisateur_id;
+>>>>>>> origin/develop
 
   const repositories = await prisma.repository.findMany({
-        where: { etudiant_id: etudiantId },
-        orderBy: { last_synced: 'desc' },
-        select: {
+    where: { etudiant_id: etudiantId },
+    orderBy: { last_synced: 'desc' },
+    select: {
       repository_id: true,
       title: true,
       description: true,
@@ -74,12 +89,21 @@ export const getMyRepositories = async (req, res) => {
     count: repositories.length,
     data: repositories
   });
+<<<<<<< HEAD
 //const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 //res.redirect(`${frontendUrl}/getting-started?github=connected`);
 };
 
 export const syncRepositories = async (req, res) => {
   const etudiantId = req.user.utilisateur_id ;
+=======
+  //const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  //res.redirect(`${frontendUrl}/getting-started?github=connected`);
+};
+
+export const syncRepositories = async (req, res) => {
+  const etudiantId = req.user.utilisateur_id;
+>>>>>>> origin/develop
 
   const repoWithToken = await prisma.repository.findFirst({
     where: { etudiant_id: etudiantId },
@@ -93,10 +117,28 @@ export const syncRepositories = async (req, res) => {
   }
 
   const repos = await githubService.getUserRepos(repoWithToken.github_access_token);
-  const updated = await githubService.importReposToDB(etudiantId, repos, repoWithToken.github_access_token);
+  const updated = await githubService.importReposToDB(
+    etudiantId,
+    repos,
+    repoWithToken.github_access_token
+  );
+  /**Le déclenchement après sync GitHub
+   après le sync des repos, j’ai aussi ajouté
+  createDraftProjectsFromRepos(etudiantId, updated)
+  Donc si un nouveau repo apparaît plus tard sur GitHub, il génère aussi un nouveau brouillon au prochain sync.*/
+  const draftProjects = await projetService.createDraftProjectsFromRepos(etudiantId, updated);
 
   res.json({
     success: true,
-    count: updated.length
+    repositoriesCount: updated.length,
+    draftProjectsCount: draftProjects.length,
+    data: {
+      repositories: updated,
+      draftProjects,
+    },
   });
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/develop

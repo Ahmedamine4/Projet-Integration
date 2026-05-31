@@ -1,13 +1,18 @@
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
 
-# Installation de openssl pour la génération des clés
+USER root
+
 RUN apk add --no-cache openssl
 
-# Copie de la config
-# COPY default.conf /etc/nginx/conf.d/default.conf    on gère la config via les volumes dans docker-compose pour pouvoir switch entre dev et prod facilement
+RUN mkdir -p /etc/nginx/ssl \
+    && chown -R nginx:nginx /etc/nginx/ssl /etc/nginx/conf.d /var/cache/nginx /var/run
 
-# Copie et préparation du script d'entrée
 COPY entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+
+RUN sed -i 's/\r$//' /entrypoint.sh \
+    && chmod +x /entrypoint.sh \
+    && chown nginx:nginx /entrypoint.sh
+
+USER nginx
 
 ENTRYPOINT ["/entrypoint.sh"]

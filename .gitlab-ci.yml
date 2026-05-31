@@ -1,6 +1,29 @@
 stages:
+  - lint
   - quality
+  - security
   - test
+  - build
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - when: never
+
+default:
+  interruptible: true
+  retry:
+    max: 1
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+
+variables:
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  TRIVY_CACHE_DIR: "$CI_PROJECT_DIR/.trivycache"
+  TRIVY_IMAGE: "aquasec/trivy:0.70.0"
 
 # SONARQUBE
 sonarqube:
@@ -10,41 +33,190 @@ sonarqube:
     entrypoint: [""]
 
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    SONAR_USER_HOME: "$CI_PROJECT_DIR/.sonar"
     GIT_DEPTH: "0"
 
   cache:
-    key: "${CI_JOB_NAME}"
+    key: sonarqube-cache
     paths:
       - .sonar/cache
 
   script:
-    - sonar-scanner -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORGANIZATION -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+    - sonar-scanner
+      -Dsonar.projectKey="$SONAR_PROJECT_KEY"
+      -Dsonar.organization="$SONAR_ORGANIZATION"
+      -Dsonar.sources=.
+      -Dsonar.host.url="$SONAR_HOST_URL"
+      -Dsonar.token="$SONAR_TOKEN"
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
-# BACKEND TESTS
-backend-tests:
-  stage: test
+# BACKEND LINT
+backend-lint:
+  stage: lint
   image: node:24-alpine
 
   cache:
-    key: backend-${CI_COMMIT_REF_SLUG}
+    key:
+      files:
+        - backend/package-lock.json
     paths:
-      - backend/node_modules/
+      - .npm/
 
   before_script:
     - cd backend
-    - npm ci
+    - npm install --cache "$NPM_CONFIG_CACHE" --prefer-offline
 
   script:
-    - npm run test
+    - npm run lint
 
   rules:
+    - changes:
+        - backend/**/*
+
+# FRONTEND LINT
+frontend-lint:
+  stage: lint
+  image: node:24-alpine
+
+  cache:
+    key:
+      files:
+        - frontend/package-lock.json
+    paths:
+      - .npm/
+
+  before_script:
+    - cd frontend
+    - npm install --cache "$NPM_CONFIG_CACHE" --prefer-offline
+
+  script:
+    - npm run lint
+
+  rules:
+    - changes:
+        - frontend/**/*
+
+# TRIVY - REPOSITORY, DEPENDENCIES, AND SECRETS
+trivy-fs:
+  stage: security
+  image:
+    name: "$TRIVY_IMAGE"
+    entrypoint: [""]
+
+  cache:
+    key: trivy-cache
+    paths:
+      - .trivycache/
+
+  script:
+    - trivy --version
+    - trivy fs
+      --scanners vuln,secret
+      --severity HIGH,CRITICAL
+      --ignore-unfixed
+      --exit-code 1
+      --no-progress
+      .
+
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - trivy-fs-report.json
+
+  after_script:
+    - trivy fs
+      --scanners vuln,secret
+      --severity HIGH,CRITICAL
+      --ignore-unfixed
+      --format json
+      --output trivy-fs-report.json
+      --no-progress
+      .
+
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
-      changes:
-        - backend/**
+
+# TRIVY - DOCKER, TERRAFORM, NGINX, AND INFRA MISCONFIGURATION
+trivy-config:
+  stage: security
+  image:
+    name: "$TRIVY_IMAGE"
+    entrypoint: [""]
+
+  cache:
+    key: trivy-cache
+    paths:
+      - .trivycache/
+
+  script:
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 infrastructure/
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 backend/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 frontend/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 ai/Dockerfile
+
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - trivy-config-infrastructure.json
+      - trivy-config-backend.json
+      - trivy-config-frontend.json
+      - trivy-config-ai.json
+
+  after_script:
+    - trivy config --severity HIGH,CRITICAL --format json --output trivy-config-infrastructure.json infrastructure/
+    - trivy config --severity HIGH,CRITICAL --format json --output trivy-config-backend.json backend/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --format json --output trivy-config-frontend.json frontend/Dockerfile
+    - trivy config --severity HIGH,CRITICAL --format json --output trivy-config-ai.json ai/Dockerfile
+
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
+# TRIVY - CONTAINER IMAGE SCAN
+trivy-images:
+  stage: security
+  image:
+    name: "$TRIVY_IMAGE"
+    entrypoint: [""]
+
+  cache:
+    key: trivy-cache
+    paths:
+      - .trivycache/
+
+  script:
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table tijabdel/backend:prod
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table tijabdel/frontend:prod
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table tijabdel/nginx:prod
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table tijabdel/ai:prod
+
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - trivy-image-backend.json
+      - trivy-image-frontend.json
+      - trivy-image-nginx.json
+      - trivy-image-ai.json
+
+  after_script:
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-backend.json tijabdel/backend:prod
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-frontend.json tijabdel/frontend:prod
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-nginx.json tijabdel/nginx:prod
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-ai.json tijabdel/ai:prod
+
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 # FRONTEND TESTS
 frontend-tests:
@@ -52,38 +224,80 @@ frontend-tests:
   image: node:24-alpine
 
   cache:
-    key: frontend-${CI_COMMIT_REF_SLUG}
+    key:
+      files:
+        - frontend/package-lock.json
     paths:
-      - frontend/node_modules/
+      - .npm/
 
   before_script:
     - cd frontend
-    - npm ci
+    - npm ci --cache "$NPM_CONFIG_CACHE" --prefer-offline
 
   script:
-    - npm run test
+    - npm run test -- --run
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
       changes:
-        - frontend/**
+        - frontend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - frontend/**/*
 
-docker-build:
+# BACKEND TEST PLACEHOLDER
+backend-tests:
+  stage: test
+  image: node:24-alpine
+
+  cache:
+    key:
+      files:
+        - backend/package-lock.json
+    paths:
+      - .npm/
+
+  before_script:
+    - cd backend
+    - npm ci --cache "$NPM_CONFIG_CACHE" --prefer-offline
+
+  script:
+    - npm run test --if-present
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - backend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - backend/**/*
+
+# PRODUCTION DOCKER BUILD
+docker-build-prod:
   stage: build
 
-  image: docker:latest
+  image: docker:27-cli
 
   services:
-    - docker:dind
+    - name: docker:27-dind
+      alias: docker
 
   variables:
-    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: "1"
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+
+  before_script:
+    - docker version
+    - docker compose version
 
   script:
     - docker compose
       -f infrastructure/docker/docker-compose.yml
       -f infrastructure/docker/docker-compose.prod.yml
       build
+      --pull
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'

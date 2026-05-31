@@ -1,23 +1,33 @@
-FROM node:24-alpine AS base  
-#modification de la version node de 20 --> 24
-WORKDIR /app
-COPY package*.json .
+FROM node:24-alpine AS base
 
-FROM base AS development   
-RUN npm install 
- #  npm install pour dev (flexibilité)
+WORKDIR /app
+COPY package*.json ./
+
+FROM base AS development
+
+RUN npm install
+
 COPY . .
+
 EXPOSE 5173
-CMD ["npm", "run", "dev"]     
+
+CMD ["npm", "run", "dev"]
 
 
 FROM base AS build
+
 RUN npm install
+
 COPY . .
+
 RUN npm run build
 
-FROM nginx:alpine AS production
+
+FROM nginxinc/nginx-unprivileged:alpine AS production
+
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+
+EXPOSE 8080
+
 CMD ["nginx", "-g", "daemon off;"]

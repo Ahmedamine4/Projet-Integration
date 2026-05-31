@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import {
   getAboutByUserId,
   updateUserAboutByUserId,
+  getPortfolioEtudiant,
 } from '../services/portfolio.service.js';
 
 import {
@@ -96,5 +97,20 @@ export const updateAbout = async (req, res) => {
   } catch (error) {
     console.error('Error in updateAbout:', error);
     return res.status(500).json({ success: false, error: error.message || 'Server error' });
+  }
+};
+
+export const getPortfolioEtudiantController = async (req, res) => {
+  try {
+    const { etudiantId } = req.params;
+    const isOwner = req.user.utilisateur_id === etudiantId;
+    const data = await getPortfolioEtudiant(etudiantId, isOwner);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error('Erreur getPortfolioEtudiant:', error);
+    if (error.message === 'Étudiant non trouvé') {
+      return res.status(404).json({ success: false, message: error.message });
+    }
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };

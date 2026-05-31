@@ -2,9 +2,8 @@ import express from 'express';
 import {
   addStage,
   getStages,
-  editStage,
-  getDemandesValidation,
-  traiterValidation,
+  updateStage,
+  updateVisibiliteStage
 } from '../controllers/stage.controller.js';
 import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
@@ -12,14 +11,12 @@ import { upload } from '../middlewares/upload.middleware.js';
 const router = express.Router();
 
 router.use(authMiddleware);
+router.use(authorizeRoles(ROLES.ETUDIANT));
 
 //etudiant
-router.post('/add-stage', authorizeRoles(ROLES.ETUDIANT), upload.single('photo'), addStage);
-router.get('/stages', authorizeRoles(ROLES.ETUDIANT), getStages);
-router.put('/stages/:experienceId', authorizeRoles(ROLES.ETUDIANT), upload.single('photo'), editStage);
-
-//prof
-router.get('/validations', authorizeRoles(ROLES.PROFESSEUR), getDemandesValidation);
-router.patch('/validations/:experienceId', authorizeRoles(ROLES.PROFESSEUR), traiterValidation);
+router.post('/add-stage', upload.single('photo'), addStage);
+router.get('/stages', getStages);
+router.patch('/stages/:experienceId', upload.single('photo'), updateStage);
+router.patch('/stages/:experienceId/visibilite', updateVisibiliteStage);
 
 export default router;

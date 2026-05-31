@@ -49,7 +49,7 @@ const routes = [
     },
   },
   {
-    path: '/portfolio',
+    path: '/portfolio/:id?',
     name: 'portfolio',
     component: () => import('@/views/app/PortfolioView.vue'),
     meta: {
