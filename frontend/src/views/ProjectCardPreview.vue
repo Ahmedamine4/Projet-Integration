@@ -54,58 +54,96 @@ const mockProjects = [
     <Sidebar :user="mockUser" />
 
     <main class="feed-page">
-      <header class="feed-header">
-        <div class="feed-header-main">
-          <div>
-            <span class="feed-eyebrow">Project Feed</span>
-
-            <h1>Projects from your network</h1>
-
-            <p>
-              Discover recent projects from students in your school and people you follow.
-            </p>
-          </div>
+      <header class="feed-topbar">
+        <div class="feed-title">
+          <h1>Explore</h1>
+          <p>
+            Discover verified projects from your school and people you follow.
+          </p>
         </div>
 
-        <div class="feed-toolbar">
+        <div class="feed-search">
           <input
             type="text"
-            placeholder="Search by project, student, technology..."
+            placeholder="Search projects, students or technologies..."
           >
-
-          <select>
-            <option>All projects</option>
-            <option>Same school</option>
-            <option>Following</option>
-            <option>Most recent</option>
-          </select>
-
-          <select>
-            <option>All technologies</option>
-            <option>Vue.js</option>
-            <option>Express.js</option>
-            <option>PostgreSQL</option>
-          </select>
-        </div>
-
-        <div class="feed-active-context">
-          <span>
-            Showing projects related to your school and followed students
-          </span>
         </div>
       </header>
 
-      <section class="feed-project-list">
-        <FeedProject
-          v-for="project in mockProjects"
-          :key="project.id"
-          :project="project"
-        />
-      </section>
+      <div class="feed-layout">
+        <section class="feed-list">
+          <FeedProject
+            v-for="project in mockProjects"
+            :key="project.id"
+            :project="project"
+          />
+        </section>
+
+        <aside class="feed-filters">
+          <div class="filters-header">
+            <h2>Filters</h2>
+            <button type="button">
+              Reset
+            </button>
+          </div>
+
+          <div class="filter-group">
+            <label>Project source</label>
+
+            <select>
+              <option>All projects</option>
+              <option>Same school</option>
+              <option>Following</option>
+              <option>Most recent</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Technologies</label>
+
+            <div class="filter-chips">
+              <button type="button">Vue.js</button>
+              <button type="button">Express.js</button>
+              <button type="button">PostgreSQL</button>
+              <button type="button">Docker</button>
+              <button type="button">Python</button>
+              <button type="button">FastAPI</button>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label>Domains</label>
+
+            <div class="filter-chips">
+              <button type="button">Web Development</button>
+              <button type="button">DevOps</button>
+              <button type="button">Artificial Intelligence</button>
+              <button type="button">Data Science</button>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label>Score</label>
+
+            <select>
+              <option>Any score</option>
+              <option>80+ credibility score</option>
+              <option>60+ credibility score</option>
+              <option>Verified only</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            class="apply-filters"
+          >
+            Apply filters
+          </button>
+        </aside>
+      </div>
     </main>
   </div>
 </template>
-
 
 <style scoped>
 .test-layout {
@@ -117,86 +155,172 @@ const mockProjects = [
 .feed-page {
   flex: 1;
   min-width: 0;
-  padding: 2.5rem;
+  padding: 2rem;
   overflow-x: hidden;
 }
 
-.feed-header {
-  margin-bottom: var(--space-xl);
-  padding: var(--space-xl);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  background-color: rgba(var(--color-surface-rgb), 0.48);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.045);
-}
-
-.feed-header-main {
+.feed-topbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-xl);
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
-.feed-eyebrow {
-  display: inline-block;
-  margin-bottom: var(--space-xs);
-  color: rgba(var(--color-primary-rgb), 0.52);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.feed-header h1 {
+.feed-title h1 {
   margin: 0;
   color: rgba(var(--color-primary-rgb), 0.96);
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: var(--font-bold);
-  line-height: 1.1;
+  line-height: 1;
 }
 
-.feed-header p {
-  max-width: 38rem;
-  margin: var(--space-sm) 0 0;
-  color: rgba(var(--color-primary-rgb), 0.6);
+.feed-title p {
+  margin: var(--space-xs) 0 0;
+  color: rgba(var(--color-primary-rgb), 0.56);
   font-size: var(--font-size-sm);
-  line-height: 1.6;
 }
-.feed-toolbar {
+
+.feed-search {
+  width: min(100%, 28rem);
+}
+
+.feed-search input {
+  width: 100%;
+  height: 2.9rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  background-color: rgba(var(--color-surface-rgb), 0.55);
+  color: rgba(var(--color-primary-rgb), 0.88);
+  font-size: var(--font-size-sm);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.035);
+}
+
+.feed-search input::placeholder {
+  color: rgba(var(--color-primary-rgb), 0.42);
+}
+
+.feed-layout {
   display: grid;
-  grid-template-columns: minmax(16rem, 1fr) auto auto;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  align-items: start;
+  gap: var(--space-xl);
 }
 
-.feed-toolbar input,
-.feed-toolbar select {
-  height: 2.6rem;
-  padding: 0 0.9rem;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
-  background-color: rgba(var(--color-background-rgb), 0.55);
-  color: rgba(var(--color-primary-rgb), 0.85);
-  font-size: var(--font-size-sm);
-}
-
-.feed-active-context {
-  padding-top: var(--space-sm);
-  border-top: 1px solid rgba(var(--color-primary-rgb), 0.07);
-}
-
-.feed-active-context span {
-  color: rgba(var(--color-primary-rgb), 0.52);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-medium);
-}
-
-.feed-project-list {
+.feed-list {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+}
+
+.feed-filters {
+  position: sticky;
+  top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  background-color: rgba(var(--color-surface-rgb), 0.55);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.045);
+}
+
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.filters-header h2 {
+  margin: 0;
+  color: rgba(var(--color-primary-rgb), 0.95);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-bold);
+}
+
+.filters-header button {
+  border: none;
+  background: transparent;
+  color: rgba(var(--color-primary-rgb), 0.48);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+}
+
+.filter-group {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.filter-group label {
+  color: rgba(var(--color-primary-rgb), 0.58);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filter-group select {
+  width: 100%;
+  height: 2.55rem;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  background-color: rgba(var(--color-background-rgb), 0.5);
+  color: rgba(var(--color-primary-rgb), 0.82);
+  font-size: var(--font-size-sm);
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.filter-chips button {
+  padding: 0.45rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  background-color: rgba(var(--color-background-rgb), 0.5);
+  color: rgba(var(--color-primary-rgb), 0.58);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+}
+
+.filter-chips button:hover {
+  border-color: rgba(var(--color-primary-rgb), 0.22);
+  color: rgba(var(--color-primary-rgb), 0.9);
+}
+
+.apply-filters {
+  height: 2.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.35);
+  background-color: rgba(var(--color-secondary-rgb), 0.16);
+  color: rgba(var(--color-primary-rgb), 0.9);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-bold);
+  cursor: pointer;
+}
+
+.apply-filters:hover {
+  background-color: rgba(var(--color-secondary-rgb), 0.24);
+}
+
+@media (max-width: 1050px) {
+  .feed-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .feed-filters {
+    position: static;
+    order: -1;
+  }
 }
 
 @media (max-width: 760px) {
@@ -205,20 +329,16 @@ const mockProjects = [
   }
 
   .feed-page {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
-  .feed-header-main {
+  .feed-topbar {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .feed-summary {
+  .feed-search {
     width: 100%;
-    text-align: left;
-  }
-
-  .feed-toolbar {
-    grid-template-columns: 1fr;
   }
 }
 </style>
