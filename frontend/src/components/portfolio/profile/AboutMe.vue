@@ -3,8 +3,9 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import BaseButton from '@/components/common/actions/BaseButton.vue';
-import { FileText, ChevronUp, ChevronDown } from 'lucide-vue-next';
+import { ChevronUp, ChevronDown } from 'lucide-vue-next';
 import { useDoubleTap } from '@/composables/useDoubleTap';
+import PortfolioEmptyState from '@/components/portfolio/shared/PortfolioEmptyState.vue';
 
 const props = defineProps({
   userId: { type: String, required: true },
@@ -136,12 +137,10 @@ watch(() => props.userId, fetchAbout);
       <p v-else-if="!isEdit && aboutMe">
         {{ displayedAbtMe }}
       </p>
-      <span v-else-if="!isEdit">
-        <FileText :size="18" />
-        <strong>
-          No professional summary has been added yet.
-        </strong>
-      </span>
+      <PortfolioEmptyState
+        v-else-if="!isEdit"
+        message="No professional summary has been added yet."
+      />
       <textarea
         v-else
         ref="textareaElem"
@@ -292,22 +291,6 @@ watch(() => props.userId, fetchAbout);
   border-top: var(--border);
   margin-top: var(--space-lg);
   background: rgba(var(--color-background-rgb), 0.28);
-}
-
-.about-me__body > span {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  background-color: rgba(var(--color-surface-rgb), 0.42);
-  border: 1.5px dashed rgba(var(--color-primary-rgb), 0.22);
-  border-radius: var(--radius-sm);
-  padding: var(--space-md);
-  color: rgba(var(--color-primary-rgb), 0.68);
-}
-
-.about-me__body strong {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-regular);
 }
 
 .about-me__body.edit {

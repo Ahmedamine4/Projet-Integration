@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import api from '@/services/api';
-import { addDays, formatLocalDate } from '@/utils/date';
+import {
+  normalizeCreatedInternship,
+  normalizeInternship,
+} from '@/utils/portfolioNormalizers';
 
 function buildInternshipFormData(internship) {
   const formData = new FormData();
@@ -22,39 +25,6 @@ function buildInternshipFormData(internship) {
   }
 
   return formData;
-}
-
-function normalizeInternship(data) {
-  const startDate = formatLocalDate(data.date_experience);
-  const endDate = addDays(data.date_experience, data.stage?.duree);
-
-  return {
-    id: data.experience_id,
-    type: 'internship',
-    title: data.titre ?? '',
-    date: startDate,
-    startDate,
-    endDate,
-    description: data.description ?? '',
-    missions: data.stage?.missions_realisees ?? '',
-    report: data.stage?.rapport_stage ?? '',
-    technologies: data.competences
-      ?.filter((competence) => competence.type === 'technologie')
-      .map((technology) => technology.nom) ?? [],
-    domains: data.competences
-      ?.filter((competence) => competence.type === 'domaine')
-      .map((domain) => domain.nom) ?? [],
-    imagePreview: data.documentations?.[0]?.captures ?? '',
-  };
-}
-
-function normalizeCreatedInternship(data) {
-  return normalizeInternship({
-    ...data.experience,
-    stage: data.stage,
-    competences: data.competences ?? [],
-    documentations: data.documentation ? [data.documentation] : [],
-  });
 }
 
 export const useInternshipStore = defineStore('internship', () => {

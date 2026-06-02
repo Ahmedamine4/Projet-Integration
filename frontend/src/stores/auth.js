@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import api from '@/services/api';
 import { supabase } from '@/services/supabase';
 import { ref, computed } from 'vue';
+import { normalizeUser } from '@/utils/portfolioNormalizers';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
@@ -11,7 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchProfile() { // Appelé au démarrage pour vérifier si l'utilisateur est déjà connecté (cookie valide)
       try {
           const { data } = await api.get('/auth/profile');
-          user.value = data.user;
+          user.value = normalizeUser(data.user);
       } catch {
           user.value = null; // Cookie expiré ou absent
       }
@@ -38,7 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
       password,
     });
 
-    user.value = data.user;
+    user.value = normalizeUser(data.user);
   }
 
   async function register(userData) {
@@ -51,7 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
       password,
     });
 
-    user.value = data.user;
+    user.value = normalizeUser(data.user);
   }
 
   async function startGoogleAuth() {
@@ -83,7 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
       access_token: supabaseToken,
     });
 
-    user.value = response.data.user;
+    user.value = normalizeUser(response.data.user);
   }
 
   async function logout() {

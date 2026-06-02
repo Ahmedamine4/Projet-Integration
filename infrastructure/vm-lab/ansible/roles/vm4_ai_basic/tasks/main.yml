@@ -4,15 +4,47 @@
     update_cache: true
     cache_valid_time: 3600
 
-- name: Install required packages
+- name: Install required and security packages
   apt:
     name:
       - curl
       - git
       - net-tools
+      - ufw
+      - fail2ban
+      - unattended-upgrades
       - docker.io
       - docker-compose
+      - prometheus-node-exporter
     state: present
+
+- name: Disable SSH root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+    backup: true
+
+- name: Reload SSH
+  service:
+    name: ssh
+    state: reloaded
+
+- name: Enable unattended security upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+- name: Enable and start fail2ban
+  service:
+    name: fail2ban
+    enabled: true
+    state: started
 
 - name: Enable and start Docker
   service:
@@ -39,11 +71,45 @@
           container_name: ai-container
           restart: unless-stopped
           ports:
-            - "192.168.56.13:8000:8000"
+            - "{{ vm4_ip }}:8000:8000"
           environment:
             - ENV=production
 
-- name: Start VM4 AI container
-  shell: docker-compose up -d
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow AI API only from VM2
+  ufw:
+    rule: allow
+    src: "{{ vm2_ip }}"
+    port: "8000"
+    proto: tcp
+
+- name: Allow Node Exporter only from VM1
+  ufw:
+    rule: allow
+    src: "{{ vm1_ip }}"
+    port: "9100"
+    proto: tcp
+
+- name: Enable firewall
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Recreate clean Docker stack
+  shell: |
+    docker-compose down
+    docker-compose up -d --force-recreate --remove-orphans
   args:
     chdir: /home/vagrant
+
+- name: Enable and start Node Exporter
+  service:
+    name: prometheus-node-exporter
+    enabled: true
+    state: started

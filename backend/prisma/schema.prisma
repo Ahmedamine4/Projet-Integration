@@ -14,6 +14,16 @@ datasource db {
 
 // ENUMS
 
+enum TypeCompetence {
+  technologie
+  domaine
+}
+
+enum ActionSession {
+LOGIN
+LOGOUT
+}
+
 enum TypeExperience {
   certification
   projet
@@ -54,6 +64,10 @@ model Utilisateur {
   telephone        String?         @db.VarChar(20)
   a_propos         String?
   date_de_creation DateTime?       @default(now())
+  github           String?
+  instagram        String?
+  x                String?
+  linkedin         String?
 
   // Relations d'héritage (1-to-1)
   administrateur Administrateur?
@@ -127,7 +141,7 @@ model Professeur {
 model Professionnel {
   professionnel_utilisateur_id String            @id
   entreprise                   String?           @db.VarChar(100)
-  post                         String?           @db.VarChar(50)
+  poste                        String?           @db.VarChar(50)
   email_professionnel          String?           @db.VarChar(100)
   statut                       StatutValidation?
   admin_id                     String?
@@ -165,12 +179,11 @@ model Badge {
 }
 
 model Competence {
-  competence_id String       @id @default(cuid())
-  type          String?      @db.VarChar(50)
-  nom           String?      @db.VarChar(50)
-  description   String?
-  niveau        String?      @db.VarChar(50)
-  experiences   Experience[]
+  competence_id         String       @id @default(cuid())
+  type                  TypeCompetence
+  nom                   String?      @db.VarChar(50)
+  description           String?
+  competence_dev        CompetenceDeveloppee[]
 
   @@map("competences")
 }
@@ -202,12 +215,18 @@ model Notification {
 }
 
 model Connexion {
-  connexion_id      String      @id @default(cuid())
-  ip_address        String?     @db.VarChar(50)
-  statut            Boolean?
-  date_de_connexion DateTime?
-  utilisateur_id    String
-  utilisateur       Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  connexion_id          String      @id @default(cuid())
+  utilisateur_id        String
+  action                ActionSession
+  browser               String?
+  device_type           String?
+  os                    String?
+  browser_version       String?
+  ip                    String?
+  ville                 String?
+  pays                  String?
+  date_action           DateTime @default(now())
+  utilisateur           Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
 
   @@map("connexions")
 }
@@ -215,7 +234,7 @@ model Connexion {
 model Institution {
   institution_id String  @id @default(cuid())
   nom            String  @db.VarChar(50)
-  address        String? @db.VarChar(50)
+  addresse       String? @db.VarChar(50)
   email          String  @db.VarChar(255)
   description    String?
 
@@ -239,6 +258,9 @@ model Experience {
   type            TypeExperience
   type_specifique TypeSpecifique?
   description     String?
+  photo                String?
+  is_draft             Boolean    @default(false)
+  technologies_locked  Boolean    @default(false)
   utilisateur_id  String
 
   etudiant      Etudiant       @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
@@ -247,9 +269,8 @@ model Experience {
   activite      Activite?
   stage         Stage?
 
-  documentations Documentation[]
-  interactions   Interaction[]
-  competences    Competence[]
+  interactions      Interaction[]
+  competence_dev    CompetenceDeveloppee[]
 
   @@map("experiences")
 }
@@ -265,31 +286,19 @@ model Certification {
   @@map("certifications")
 }
 
-model Documentation {
-  documentation_id String     @id @default(cuid())
-  captures         String?
-  pdf              String?
-  experience_id    String
-  experience       Experience @relation(fields: [experience_id], references: [experience_id])
-
-  @@map("documentations")
-}
 
 model Projet {
-  experience_id    String        @id
-  lien_github      String?
-  lien_youtube     String?
-  resultat_obtenus String?
-  role             String?       @db.VarChar(50)
-  photo            String?
-  technologies     String[]
-  domains          String[]
-  experience       Experience    @relation(fields: [experience_id], references: [experience_id])
-  validation       ValideProjet?
+  experience_id        String      @id
+  repository_id        String?     @unique
+  lien_github          String?
+  lien_youtube         String?
+  resultat_obtenu      String?
+  experience           Experience  @relation(fields: [experience_id], references: [experience_id])
+  repository           Repository? @relation(fields: [repository_id], references: [repository_id], onDelete: SetNull)
+  validation           ValideProjet?
 
   @@map("projets")
 }
-
 model Activite {
   experience_id String          @id
   type          String?         @db.VarChar(50)
@@ -303,6 +312,7 @@ model Activite {
 
 model Stage {
   experience_id      String       @id
+  date_fin           DateTime?
   duree              String?      @db.VarChar(50)
   missions_realisees String?
   rapport_stage      String?
@@ -334,10 +344,11 @@ model Interaction {
 model LettresDeRecommendations {
   utilisateur_id      String
   prof_utilisateur_id String
-  type_candidature    String?           @db.VarChar(50)
+  objet               String?              @db.VarChar(255)
+  description         String?
   fichier             String?
-  statut              StatutValidation?
-  date_lettre         DateTime?
+  statut              StatutValidation?    @default(en_attente)
+  date_lettre         DateTime?            @default(now())
   commentaire         String?
 
   etudiant   Etudiant   @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
@@ -345,6 +356,18 @@ model LettresDeRecommendations {
 
   @@id([utilisateur_id, prof_utilisateur_id])
   @@map("lettres_de_recommendations")
+}
+
+model CompetenceDeveloppee {
+  experience_id String
+  competence_id String
+  niveau        String?
+
+  experience    Experience @relation(fields: [experience_id], references: [experience_id])
+  competence    Competence @relation(fields: [competence_id], references: [competence_id])
+
+  @@id([experience_id, competence_id])
+  @@map("Competences_Developpees")
 }
 
 model ValideActivite {
@@ -406,7 +429,9 @@ model ValideEtudiant {
   utilisateur_id String
   institution_id String
   statut         StatutValidation?
-  date_d_action  DateTime?
+  date           DateTime?
+  description    String?
+  niveau         String?
 
   etudiant    Etudiant    @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
   institution Institution @relation(fields: [institution_id], references: [institution_id])
@@ -430,7 +455,8 @@ model Repository {
   last_synced         DateTime @default(now())
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
-  etudiants           Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
+  etudiant            Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
+  projets             Projet[]
 
   @@map("repositories")
 }

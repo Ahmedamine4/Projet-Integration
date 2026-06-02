@@ -98,7 +98,7 @@ onMounted(() => {
 .activities-scroll-frame::after {
   content: "";
   position: absolute;
-  inset-inline: 0;
+  inset-inline: 0 var(--space-sm);
   z-index: 2;
   height: 0;
   pointer-events: none;

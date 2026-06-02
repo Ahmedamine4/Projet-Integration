@@ -1,21 +1,24 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import src from '@/assets/images/profile-photo.png'
 import AboutMe from '@/components/portfolio/profile/AboutMe.vue';
 import PortfolioEducation from '@/components/portfolio/profile/PortfolioEducation.vue';
 import PortfolioSkills from '@/components/portfolio/profile/PortfolioSkills.vue';
 import ProjectsSection from '@/components/portfolio/projects/ProjectsSection.vue';
-import { QrCode } from 'lucide-vue-next';
+import { QrCode, UserRound } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/contact/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
 import { useActivityStore } from '@/stores/activity';
+import { useCertificationStore } from '@/stores/certification';
+import { useInternshipStore } from '@/stores/internship';
+import { usePortfolioStore } from '@/stores/portfolio';
 import BaseError from '@/components/common/feedback/BaseError.vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
+import InternshipsSection from '@/components/portfolio/internships/InternshipsSection.vue';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -30,305 +33,89 @@ const professorEmails = [
   'omar.benali@uae.ac.ma'
 ];
 
-const projects = ref([
-  {
-    id: "cmpgz1ulc0003pn3vmqh9f6l8",
-    type: "project",
-    title: "TaskFlow Board",
-    date: "2026-05-11T23:00:00.000Z",
-    description: "A collaborative project management dashboard that helps teams organize tasks, track progress, manage deadlines, and centralize project files in one visual workspace. It includes board and table views, task assignments, due dates, status labels, and progress tracking to make team coordination easier and more transparent.",
-    visibleToEveryone: true,
-    githubLink: "https://github.com/sweta-devnani/taskflow-board",
-    technologies: [],
-    domains: ["Web Frontend", "Web Backend"],
-    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779457499504-54-Best-Project-Management-Tools-for-2023.webp",
-  },
-  {
-    id: "cmph6v6c90005pn3vbyk3swuf",
-    type: "project",
-    title: "OpenPlan Suite",
-    date: "2021-08-16T23:00:00.000Z",
-    description: "A secure open-source project management platform designed to help teams plan, organize, and track complex workflows. It includes task scheduling, timeline visualization, milestone tracking, collaboration tools, and progress monitoring through an intuitive Gantt-style interface.",
-    visibleToEveryone: true,
-    githubLink: "https://github.com/mcpem/openplan-suite",
-    technologies: ["Gantt"],
-    domains: ["Web Frontend", "Web Backend"],
-    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779470624965-openproject-home-5ab8cc23.jpg",
-  },
-  {
-    id: "cmph7hxhj0007pn3v91xci94u",
-    type: "project",
-    title: "MPP Project Viewer",
-    date: "2018-05-15T00:00:00.000Z",
-    description: "A project file viewer that allows users to open, browse, and manage Microsoft Project files from multiple sources. It supports recent project access, cloud storage integrations, local files, shared workspaces, and project server connections to make project planning files easier to access from anywhere.",
-    visibleToEveryone: true,
-    githubLink: "https://github.com/mcpem/mpp-project-viewer",
-    technologies: ["Microsoft Project"],
-    domains: ["Web Frontend", "Web Backend", "DevOps and Cloud Infrastructure"],
-    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779471686171-image.png",
-  },
-  {
-    id: "cmph7mvph0009pn3v2pp6qr8l",
-    type: "project",
-    title: "BitrixFlow Workspace",
-    date: "2019-05-21T00:00:00.000Z",
-    description: "A collaborative task and project management workspace that helps teams organize deadlines, track project stages, assign responsibilities, and monitor progress across Kanban-style boards. The platform supports task prioritization, team communication, mobile access, and real-time workflow visibility.",
-    visibleToEveryone: false,
-    githubLink: "https://github.com/mcpem/bitrixflow-workspace",
-    technologies: ["Kanban"],
-    domains: ["Web Backend"],
-    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779471917635-Screenshot%202026-05-22%20184412.png",
-  },
-  {
-    id: "cmphatcyz000bpn3vjzn4mly5",
-    type: "project",
-    title: "Creative Task Studio",
-    date: "2024-08-07T23:00:00.000Z",
-    description: "Creative Task Studio is a Vue.js and Pinia web application for project management and creative collaboration. It helps teams organize tasks, manage project assets, track deadlines, and monitor work progress through a clean dashboard. The backend is built with Express and PostgreSQL to support task storage, team workflows, and project data management.",
-    visibleToEveryone: true,
-    githubLink: "https://github.com/mcpem/creative-task-studio",
-    technologies: ["Vue.js", "Pinia", "Express", "PostgreSQL"],
-    domains: ["Web Frontend", "Web Backend"],
-    imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/projets/1779477258526-9a9cf2a5-2f09-4e63-ad2e-e1a4b893e7f0.avif",
-  },
-]);
-
-const activities = ref([
-  {
-    id: 'cmpinjxs9000dpn3vy78amjjl',
-    type: 'activity',
-    title: 'Territory Development Challenge',
-    date: '2024-06-12',
-    description: 'Participated in the Territory Development Challenge, an international community innovation competition focused on proposing creative solutions for territorial development in the Tanger-Tetouan-Al Hoceima region.',
-    visibleToEveryone: true,
-    activityType: 'Competition',
-    location: 'Tanger, Morocco',
-    club: 'Open Innovation Club',
-    technologies: [
-      'Digital Innovation',
-      'Open Innovation',
-    ],
-    domains: [
-      'Territorial Development',
-      'Community Innovation',
-      'Sustainable Development',
-      'Entrepreneurship',
-    ],
-    imagePreview: 'https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779559120094-maroc-Lancement-premier-concours-international-communautaire-innovation-Tanger-Tetouan-Al-Hoceima-696x385.png',
-  },
-	{
-		id: "cmplih13f0001nj3u0e7ftmc6",
-		type: "activity",
-		title: "Hackathon Sportech 2025-2030",
-		date: "2025-08-07",
-		description: "I participated in a SportTech hackathon for CAN 2025 where I worked on a digital sports innovation project. The project used Vue.js, React, Express.js, Node.js, PostgreSQL, Supabase, artificial intelligence, data analysis, Figma, and Blender to design and prototype a smart sports platform. The main domains were sports technology, web development, UI/UX design, artificial intelligence, event management, fan engagement, digital innovation, and entrepreneurship.",
-		visibleToEveryone: true,
-		activityType: "Hackathon",
-		location: "Cité de l'Innovation, Marrakech",
-		club: "",
-		technologies: [
-			"Vue.js",
-			"Express",
-			"Node.js",
-			"PostgreSQL",
-			"Supabase",
-			"Figma"
-		],
-		domains: [
-			"Web Frontend",
-			"Web Backend",
-			"DevOps and Cloud Infrastructure"
-		],
-		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779731984359-MAFIorhaZdSYcGV0OQ2LzP9tkCVobKpJI2irJjun.jpg"
-	},
-	{
-		id: "cmpljioa7000onj3unqh65d4n",
-		type: "activity",
-		title: "Python Coding Workshop",
-		date: "2021-08-11",
-		description: "Participated in a Python coding workshop focused on learning programming fundamentals and building practical scripts using Python. The workshop covered variables, functions, loops, data structures, problem solving, debugging, and beginner-friendly automation tasks. It helped improve skills in software development, computational thinking, and practical coding.",
-		visibleToEveryone: true,
-		activityType: "Workshop",
-		location: "Marrakech, Morocco",
-		club: "",
-		technologies: [
-			"Python"
-		],
-		domains: [
-			"High Performance and Quantum Computing"
-		],
-		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779734528830-python-coding-workshop.webp"
-	},
-	{
-		id: "cmpljsjbx000tnj3uusx5yaw7",
-		type: "activity",
-		title: "Programming Contest 2026",
-		date: "2021-05-05",
-		description: "Participated in the Programming Contest 2026 organized by CSTE Club at the Department of CSTE. The contest focused on algorithmic problem solving, competitive programming, coding challenges, debugging, data structures, and efficient solution design using programming languages such as C++, Python, and Java.",
-		visibleToEveryone: true,
-		activityType: "Competition",
-		location: "Department of CSTE",
-		club: "",
-		technologies: [
-			"C++",
-			"Python",
-			"Java"
-		],
-		domains: [
-			"Web Backend",
-			"Machine Learning and AI"
-		],
-		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779734201639-688618993_1843327400402382_5603243728201965829_n.jpg"
-	},
-	{
-		id: "cmplk9oew0011nj3u6b1ptlvp",
-		type: "activity",
-		title: "Morocco Social Tech Hackathon 2018: Smart Region",
-		date: "2018-01-01",
-		description: "Participated in the Morocco Social Tech Hackathon 2018 focused on Smart Region solutions at Technopark Casablanca. The hackathon centered on designing digital solutions for smart cities, connected regions, social innovation, IoT systems, mobile applications, web platforms, data analysis, and civic technology to improve regional services and community impact.",
-		visibleToEveryone: false,
-		activityType: "Hackathon",
-		location: "Technopark Casablanca",
-		club: "",
-		technologies: [
-			"Technopark",
-			"Casablanca"
-		],
-		domains: [
-			"Mobile Development"
-		],
-		imagePreview: "https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/activites/1779735001446-maxresdefault.jpg"
-	},
-]);
-
-const certifications = ref([
-  {
-    id: 'cert-aws-solutions-architect',
-    type: 'certificate',
-    title: 'AWS Certified Solutions Architect - Associate',
-    date: '2025-04-18',
-    description: 'Validated skills in designing secure, resilient, high-performing, and cost-optimized cloud architectures on AWS.',
-    visibleToEveryone: true,
-    institution: 'Amazon Web Services',
-    certificateCode: 'AWS-SAA-2025-0418',
-    certificateURL: 'https://aws.amazon.com/certification/certified-solutions-architect-associate/',
-    technologies: ['AWS', 'Cloud Architecture', 'IAM'],
-    domains: ['DevOps and Cloud Infrastructure'],
-  },
-  {
-    id: 'cert-google-data-analytics',
-    type: 'certificate',
-    title: 'Google Data Analytics Professional Certificate',
-    date: '2024-11-06',
-    description: 'Completed practical training in data cleaning, analysis, visualization, spreadsheets, SQL, and dashboard storytelling.',
-    visibleToEveryone: true,
-    institution: 'Google',
-    certificateCode: 'GDA-2024-1106',
-    certificateURL: 'https://www.coursera.org/professional-certificates/google-data-analytics',
-    technologies: ['SQL', 'Tableau', 'Spreadsheets'],
-    domains: ['Data Science and Analytics'],
-  },
-  {
-    id: 'cert-vue-developer',
-    type: 'certificate',
-    title: 'Vue.js Developer Certification',
-    date: '2024-06-12',
-    description: 'Demonstrated knowledge of Vue components, reactivity, routing, state management, composables, and production application structure.',
-    visibleToEveryone: true,
-    institution: 'Vue School',
-    certificateCode: 'VUE-DEV-0612',
-    certificateURL: 'https://vueschool.io/',
-    technologies: ['Vue.js', 'Pinia', 'Vue Router'],
-    domains: ['Web Frontend'],
-  },
-  {
-    id: 'cert-node-api',
-    type: 'certificate',
-    title: 'Node.js API Development',
-    date: '2024-03-15',
-    description: 'Covered REST API design, Express middleware, authentication, validation, database access, and deployment practices.',
-    visibleToEveryone: true,
-    institution: 'OpenClassrooms',
-    certificateCode: 'NODE-API-2024',
-    certificateURL: 'https://openclassrooms.com/',
-    technologies: ['Node.js', 'Express', 'REST'],
-    domains: ['Web Backend'],
-  },
-  {
-    id: 'cert-git-github',
-    type: 'certificate',
-    title: 'Git and GitHub Version Control',
-    date: '2023-07-19',
-    description: 'Completed hands-on training in branching, pull requests, conflict resolution, collaboration workflows, and repository hygiene.',
-    visibleToEveryone: true,
-    institution: 'GitHub',
-    certificateCode: 'GH-GIT-0719',
-    certificateURL: 'https://github.com/',
-    technologies: ['Git', 'GitHub'],
-    domains: ['Software Engineering'],
-  },
-  {
-    id: 'cert-python',
-    type: 'certificate',
-    title: 'Python for Everybody',
-    date: '2023-05-04',
-    description: 'Studied Python fundamentals, data structures, files, web data access, APIs, and beginner automation scripting.',
-    visibleToEveryone: true,
-    institution: 'University of Michigan',
-    certificateCode: 'PY4E-2023',
-    certificateURL: 'https://www.py4e.com/',
-    technologies: ['Python'],
-    domains: ['Software Engineering', 'Data Science and Analytics'],
-  },
-  {
-    id: 'cert-linux',
-    type: 'certificate',
-    title: 'Linux Command Line Basics',
-    date: '2022-11-24',
-    description: 'Practiced shell navigation, file permissions, process inspection, package management, scripting basics, and server workflows.',
-    visibleToEveryone: true,
-    institution: 'Linux Foundation',
-    certificateCode: 'LNX-CLI-2022',
-    certificateURL: 'https://training.linuxfoundation.org/',
-    technologies: ['Linux', 'Bash'],
-    domains: ['DevOps and Cloud Infrastructure'],
-  },
-  {
-    id: 'cert-figma',
-    type: 'certificate',
-    title: 'UI/UX Design with Figma',
-    date: '2022-09-13',
-    description: 'Completed design exercises covering wireframes, components, prototyping, layout systems, visual hierarchy, and usability review.',
-    visibleToEveryone: true,
-    institution: 'Coursera Project Network',
-    certificateCode: 'FIGMA-UX-2022',
-    certificateURL: 'https://www.coursera.org/',
-    technologies: ['Figma', 'Prototyping'],
-    domains: ['UI UX Design'],
-  },
-  {
-    id: 'cert-java',
-    type: 'certificate',
-    title: 'Java Programming Foundations',
-    date: '2022-03-10',
-    description: 'Practiced object-oriented programming, collections, exceptions, file handling, testing basics, and simple console applications.',
-    visibleToEveryone: true,
-    institution: 'Oracle Academy',
-    certificateCode: 'JAVA-FND-2022',
-    certificateURL: 'https://academy.oracle.com/',
-    technologies: ['Java', 'OOP'],
-    domains: ['Software Engineering'],
-  },
-]);
-
+const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
+const portfolioStore = usePortfolioStore();
+const projectStore = useProjectStore();
+const activityStore = useActivityStore();
+const certificationStore = useCertificationStore();
+const internshipStore = useInternshipStore();
+
+const projects = ref([]);
+const activities = ref([]);
+const certifications = ref([]);
+const internships = ref([]);
+
 const userId = computed(() => authStore.user?.utilisateur_id);
 
-const route = useRoute();
-const portfolioUserId = computed(() => route.params.id ?? userId.value);
+const portfolio = computed(() => portfolioStore.portfolio);
+const isResolvingPortfolio = ref(false);
+const portfolioUserId = computed(() =>
+  route.params.id ||
+  portfolio.value?.id ||
+  userId.value ||
+  null
+);
 const isOwnPortfolio = computed(() => {
 	return String(portfolioUserId.value) === String(userId.value);
 });
+
+const profile = computed(() => portfolio.value?.user ?? authStore.user ?? {});
+const profileName = computed(() => {
+  const firstName = profile.value?.firstName ?? '';
+  const lastName = profile.value?.lastName ?? '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  return fullName || 'Name not provided';
+});
+const profileHeadline = computed(() => {
+  const headline = portfolio.value?.headline;
+  const school = portfolio.value?.school;
+
+  if (headline && school) return `${headline} at ${school}`;
+  if (headline) return headline;
+  if (school) return `Student at ${school}`;
+
+  return 'Student';
+});
+const profilePhoto = computed(() => profile.value?.photo || '');
+const localProfilePhoto = ref('');
+const profilePhotoInput = ref(null);
+const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
+const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
+const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
+const recommendationsCount = computed(() => portfolio.value?.recommendations?.length ?? 0);
+
+watch(
+  portfolio,
+  (value) => {
+    projects.value = value?.projects ?? [];
+    activities.value = value?.activities ?? [];
+    certifications.value = value?.certifications ?? [];
+    internships.value = value?.internships ?? [];
+  },
+  { immediate: true }
+);
+
+watch(
+  portfolioUserId,
+  async (id) => {
+    if (!id) return;
+
+    isResolvingPortfolio.value = true;
+
+    try {
+      await portfolioStore.fetchPortfolio(id);
+    } catch (error) {
+      if (error.response?.status === 404) {
+        await router.replace({ name: 'not-found' });
+      }
+    } finally {
+      isResolvingPortfolio.value = false;
+    }
+  },
+  { immediate: true }
+);
 
 const visibleProjects = computed(() => {
 	if (isOwnPortfolio.value) return projects.value;
@@ -348,6 +135,12 @@ const visibleCertifications = computed(() => {
   return certifications.value.filter(certification => certification.visibleToEveryone);
 });
 
+const visibleInternships = computed(() => {
+  if (isOwnPortfolio.value) return internships.value;
+
+  return internships.value.filter(internship => internship.visibleToEveryone);
+});
+
 const shouldShowProjectSection = computed(() => {
 	return isOwnPortfolio.value || visibleProjects.value.length > 0;
 });
@@ -360,12 +153,15 @@ const shouldShowCertificationSection = computed(() => {
   return isOwnPortfolio.value || visibleCertifications.value.length > 0;
 });
 
-const projectStore = useProjectStore();
-const activityStore = useActivityStore();
+const shouldShowInternshipSection = computed(() => {
+  return isOwnPortfolio.value || visibleInternships.value.length > 0;
+});
 
 const experienceErrors = ref({
   project: '',
+  internship: '',
   activity: '',
+  certificate: '',
 });
 
 const experienceModal = ref({
@@ -374,6 +170,17 @@ const experienceModal = ref({
   mode: 'create',
   selected: null,
 });
+
+const experienceLoadingByType = computed(() => ({
+  project: projectStore.loading,
+  activity: activityStore.loading,
+  internship: internshipStore.loading,
+  certificate: certificationStore.loading,
+}));
+
+const experienceModalLoading = computed(() =>
+  experienceLoadingByType.value[experienceModal.value.type] ?? false
+);
 
 function openExperienceModal(type) {
   experienceErrors.value[type] = '';
@@ -462,6 +269,50 @@ async function handleExperienceSubmit(experience) {
       activities.value = [createdActivity, ...activities.value];
       closeExperienceModal();
     }
+
+    if (type === 'internship') {
+      if (isEdit) {
+        const updatedInternship = await internshipStore.editInternship({
+          ...experience,
+          id: selectedId,
+        });
+
+        internships.value = internships.value.map((internship) =>
+          internship.id === selectedId ? updatedInternship : internship
+        );
+        closeExperienceModal();
+        return;
+      }
+
+      const createdInternship = await internshipStore.createInternship(experience);
+      internships.value = [createdInternship, ...internships.value];
+      closeExperienceModal();
+      return;
+    }
+
+    if (type === 'certificate') {
+      if (isEdit) {
+        const index = certifications.value.findIndex(item => item.id === selectedId);
+
+        if (index !== -1) {
+          certifications.value = certifications.value.map((certification, currentIndex) =>
+            currentIndex === index
+              ? {
+                  ...certification,
+                  ...experience,
+                }
+              : certification
+          );
+        }
+
+        closeExperienceModal();
+        return;
+      }
+
+      const createdCertification = await certificationStore.createCertification(experience);
+      certifications.value = [createdCertification, ...certifications.value];
+      closeExperienceModal();
+    }
   }
   catch (error) {
     experienceErrors.value[type] = error.response?.data?.message ||
@@ -479,22 +330,22 @@ const links = computed(() => [
   {
     platform: 'github',
     label: 'GitHub',
-    href: "https://github.com",
+    href: profile.value?.github,
   },
   {
     platform: 'linkedin',
     label: 'LinkedIn',
-    href: "https://linkedin.com",
+    href: profile.value?.linkedin,
   },
   {
     platform: 'x',
     label: 'Twitter / X',
-    href: authStore.user?.twitter,
+    href: profile.value?.twitter,
   },
   {
     platform: 'instagram',
     label: 'Instagram',
-    href: authStore.user?.instagram,
+    href: profile.value?.instagram,
   },
 ].filter(link => link.href));
 
@@ -503,22 +354,74 @@ const activityMaxCardHeight = ref(0);
 function updateActivityMaxCardHeight(height) {
   activityMaxCardHeight.value = height;
 }
+
+function openProfilePhotoPicker() {
+  if (!isOwnPortfolio.value) return;
+
+  profilePhotoInput.value?.click();
+}
+
+function handleProfilePhotoChange(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  if (localProfilePhoto.value) {
+    URL.revokeObjectURL(localProfilePhoto.value);
+  }
+
+  localProfilePhoto.value = URL.createObjectURL(file);
+}
+
+onUnmounted(() => {
+  if (localProfilePhoto.value) {
+    URL.revokeObjectURL(localProfilePhoto.value);
+  }
+});
 </script>
 
 <template>
-  <div class="portfolio">
+  <div
+    v-if="!isResolvingPortfolio"
+    class="portfolio"
+  >
     <div class="portfolio__banner" />
 
     <main>
+      <BaseError v-if="portfolioStore.error">
+        {{ portfolioStore.error }}
+      </BaseError>
       <div class="profile">
-        <div class="profile__photo">
+        <div
+          class="profile__photo"
+          :class="{ 'profile__photo--editable': isOwnPortfolio }"
+          @click="openProfilePhotoPicker"
+        >
           <img
-            :src
+            v-if="displayedProfilePhoto"
+            :src="displayedProfilePhoto"
             alt="photo"
+          >
+          <div
+            v-else
+            class="profile__photo-fallback"
+          >
+            <UserRound
+              :size="54"
+              :stroke-width="1.55"
+            />
+          </div>
+          <input
+            v-if="isOwnPortfolio"
+            ref="profilePhotoInput"
+            class="profile__photo-input"
+            type="file"
+            accept="image/*"
+            @click.stop
+            @change="handleProfilePhotoChange"
           >
           <button
             class="qr-button"
-            @click="openQRModal"
+            @click.stop="openQRModal"
           >
             <QrCode
               :size="15"
@@ -529,21 +432,21 @@ function updateActivityMaxCardHeight(height) {
         </div>
         <div class="profile__info">
           <h2 class="name">
-            Elon Musk
+            {{ profileName }}
           </h2>
-          <span>Engineering Student at <strong>ENSAT</strong></span>
+          <span>{{ profileHeadline }}</span>
           <div class="statistics">
             <div>
               <span>Followers</span>
-              <h2>439</h2>
+              <h2>{{ followersCount }}</h2>
             </div>
             <div>
-              <span>Followings</span>
-              <h2>102</h2>
+              <span>Recommendations</span>
+              <h2>{{ recommendationsCount }}</h2>
             </div>
             <div>
               <span>Score</span>
-              <h2>152</h2>
+              <h2>{{ portfolioScore }}</h2>
             </div>
           </div>
           <div class="actions">
@@ -556,11 +459,21 @@ function updateActivityMaxCardHeight(height) {
           </div>
         </div>
       </div>
-      <div class="about">
-        <AboutMe :user-id="userId" />
+      <div
+        v-if="portfolioUserId"
+        class="about"
+      >
+        <AboutMe :user-id="portfolioUserId" />
         <div class="education-skills-wrapper">
-          <PortfolioEducation :user-id="userId" />
-          <PortfolioSkills :user-id="userId" />
+          <PortfolioEducation
+            :user-id="portfolioUserId"
+            :items="portfolio?.education ?? []"
+          />
+          <PortfolioSkills
+            :user-id="portfolioUserId"
+            :skills="portfolio?.skills ?? []"
+            :domains="portfolio?.domains ?? []"
+          />
         </div>
       </div>
       <div
@@ -576,6 +489,21 @@ function updateActivityMaxCardHeight(height) {
 
         <BaseError v-if="experienceErrors.project">
           {{ experienceErrors.project }}
+        </BaseError>
+      </div>
+      <div
+        v-if="shouldShowInternshipSection"
+        class="portfolio-section-wrapper"
+      >
+        <InternshipsSection
+          :internships="visibleInternships"
+          :can-add="isOwnPortfolio"
+          @add-internship="openExperienceModal('internship')"
+          @edit-internship="internship => openEditExperienceModal('internship', internship)"
+        />
+
+        <BaseError v-if="experienceErrors.internship">
+          {{ experienceErrors.internship }}
         </BaseError>
       </div>
       <div
@@ -610,13 +538,17 @@ function updateActivityMaxCardHeight(height) {
             @add-certification="openExperienceModal('certificate')"
             @edit-certification="certification => openEditExperienceModal('certificate', certification)"
           />
+
+          <BaseError v-if="experienceErrors.certificate">
+            {{ experienceErrors.certificate }}
+          </BaseError>
         </div>
       </div>
     </main>
 
     <footer>
       <PortfolioContact
-        :email="authStore.user?.email"
+        :email="profile?.email"
         :canedit="isOwnPortfolio"
         :links="links"
       />
@@ -625,7 +557,7 @@ function updateActivityMaxCardHeight(height) {
     <QRcodeModal
       :open="isQRModalOpen"
       title="Share your portfolio"
-      :username="authStore.user?.utilisateur_id"
+      :username="portfolioUserId"
       @close="isQRModalOpen = false"
     />
 
@@ -635,9 +567,7 @@ function updateActivityMaxCardHeight(height) {
       :mode="experienceModal.mode"
       :type="experienceModal.type"
       :initial-value="experienceModal.selected"
-      :loading="experienceModal.type === 'project'
-        ? projectStore.loading
-        : activityStore.loading"
+      :loading="experienceModalLoading"
       :school-options="[]"
       :professor-emails="professorEmails"
       @close="closeExperienceModal"
@@ -706,6 +636,40 @@ function updateActivityMaxCardHeight(height) {
 	object-position: center top;
 }
 
+.profile__photo--editable {
+  cursor: pointer;
+}
+
+.profile__photo--editable:hover img,
+.profile__photo--editable:hover .profile__photo-fallback {
+  filter: brightness(0.94);
+}
+
+.profile__photo-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile__photo-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--color-secondary-rgb), 0.26),
+      rgba(var(--color-surface-rgb), 0.88) 58%,
+      rgba(var(--color-background-rgb), 0.92)
+    );
+  color: rgba(var(--color-primary-rgb), 0.58);
+}
+
+
 .profile__info {
 	display: flex;
 	font-family: var(--font-ui);
@@ -734,8 +698,7 @@ function updateActivityMaxCardHeight(height) {
 
 .statistics {
 	margin-top: var(--space-sm);
-	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
+	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	gap: 2rem;
@@ -768,8 +731,8 @@ function updateActivityMaxCardHeight(height) {
 
 .actions {
 	margin-top: var(--space-xs);
-	display: grid;
-	grid-template-columns: 1fr 1.3fr;
+	display: flex;
+	align-items: center;
 	gap: var(--space-lg);
 }
 
@@ -820,6 +783,7 @@ function updateActivityMaxCardHeight(height) {
 }
 
 .follow-button {
+	min-width: 6.2rem;
 	border: 1.5px solid var(--color-primary);
 	background-color: var(--color-primary);
 	color: var(--color-background);
@@ -836,6 +800,7 @@ function updateActivityMaxCardHeight(height) {
 }
 
 .recommend-button {
+	min-width: 8.4rem;
 	font-weight: var(--font-bold);
 	border: 1.5px solid rgba(var(--color-primary-rgb), 0.78);
 	background-color: var(--color-background);

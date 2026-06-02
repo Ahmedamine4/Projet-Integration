@@ -23,7 +23,6 @@ export const getAccessToken = async (code) => {
   if (response.data.error) {
     throw new Error(response.data.error_description || 'Failed to get access token');
   }
-
   return response.data.access_token;
 };
 
@@ -48,7 +47,7 @@ export const importReposToDB = async (etudiantId, repos, accessToken) => {
         language: repo.language,
         stars: repo.stargazers_count || 0,
         forks: repo.forks_count || 0,
-        private: repo.is_private,
+        private: repo.private,
         github_access_token: accessToken,
         last_synced: new Date(),
       },
@@ -61,7 +60,7 @@ export const importReposToDB = async (etudiantId, repos, accessToken) => {
         language: repo.language,
         stars: repo.stargazers_count || 0,
         forks: repo.forks_count || 0,
-        private: repo.is_private,
+        private: repo.private,
         github_access_token: accessToken,
         last_synced: new Date(),
       },

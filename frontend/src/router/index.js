@@ -70,9 +70,9 @@ const routes = [
     },
   },
   {
-    path: '/test',
-    name: 'test',
-    component: () => import('@/views/app/TestView.vue'),
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/views/app/SettingsView.vue'),
     meta: {
       requiresAuth: true,
       layout: 'app',

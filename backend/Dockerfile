@@ -6,7 +6,7 @@ WORKDIR /app
 
 FROM base AS development
 
-COPY package*.json .
+COPY package*.json ./
 COPY prisma ./prisma
 
 RUN npm install   
@@ -17,24 +17,21 @@ COPY . .
 EXPOSE 3000
 #changement du port
 
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate dev && npm run dev"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run dev"]
 
 
 FROM base AS production
 
-COPY package.json .
-COPY package-lock.json . 
-# nécessaire pour npm ci
+COPY package*.json ./
 COPY prisma ./prisma
-#le schema doit être dans l'image
 
-RUN npm install --omit=dev 
-# est la version moderne et recommandée pour PROD et CI/CD (better than --only=production)
+RUN npm ci --omit=dev && npm cache clean --force
 RUN npx prisma generate
-#crée le client JS depuis le schema
-COPY . .
 
-EXPOSE 3000 
+COPY --chown=node:node . .
+
+USER node
+
+EXPOSE 3000
 
 CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
-## "deploy" lit les fichiers dans prisma/migrations/ , npm start avec moins de dependences
