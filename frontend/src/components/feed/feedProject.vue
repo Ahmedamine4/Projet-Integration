@@ -1,8 +1,9 @@
 <script setup>
+import { ref } from 'vue';
+import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
 import {
   MessageCircle,
   Share2,
-  Bookmark,
   Award,
   Github,
   ExternalLink,
@@ -14,7 +15,11 @@ const props = defineProps({
     required: true,
   },
 });
+const showShareModal = ref(false);
 
+function getProjectShareLink(project) {
+  return project.shareUrl || `${window.location.origin}/projects/${project.id}`;
+}
 const DESCRIPTION_LIMIT = 420;
 
 function formatDate(date) {
@@ -198,20 +203,21 @@ function getProjectImages(project) {
         <span>GitHub</span>
       </button>
 
-      <button
+            <button
         type="button"
         class="post-icon-action"
+        aria-label="Share project"
+        @click="showShareModal = true"
       >
         <Share2 :size="16" />
       </button>
-
-      <button
-        type="button"
-        class="post-icon-action"
-      >
-        <Bookmark :size="16" />
-      </button>
     </footer>
+
+    <ShareProjectModal
+      :show="showShareModal"
+      :share-link="getProjectShareLink(project)"
+      @close="showShareModal = false"
+    />
   </article>
 </template>
 
