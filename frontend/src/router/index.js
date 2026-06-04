@@ -65,6 +65,15 @@ const routes = [
     },
   },
   {
+    path: '/experience',
+    name: 'experience',
+    component: () => import('@/views/app/ExperienceView.vue'),
+    meta: {
+      requiresAuth: true,
+      layout: 'app',
+    },
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/app/SettingsView.vue'),
