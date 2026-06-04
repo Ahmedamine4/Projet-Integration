@@ -18,8 +18,13 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  userId: {
+    type: [String, Number],
+    required: true,
+  },
 });
 
+const emit = defineEmits(['link-updated']);
 
 const editingPlatform = ref(null);
 
@@ -31,7 +36,8 @@ function stopEdit() {
   editingPlatform.value = null;
 }
 
-function onLinkUpdated() {
+function onLinkUpdated(payload) {
+  emit('link-updated', payload);
   stopEdit();
 }
 
@@ -52,6 +58,7 @@ function onLinkUpdated() {
         :title="link.label"
         :platform="link.platform"
         :href="link.href"
+        :user-id="props.userId"
         :is-owner="props.canedit"
         :is-editing="editingPlatform === link.platform"
         :disabled="editingPlatform !== null && editingPlatform !== link.platform"

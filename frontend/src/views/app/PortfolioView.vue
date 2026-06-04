@@ -57,8 +57,11 @@ const portfolioUserId = computed(() =>
   userId.value ||
   null
 );
+
 const isOwnPortfolio = computed(() => {
-	return String(portfolioUserId.value) === String(userId.value);
+  if (!portfolioUserId.value || !userId.value) return false;
+
+  return String(portfolioUserId.value) === String(userId.value);
 });
 
 const profile = computed(() => portfolio.value?.user ?? authStore.user ?? {});
@@ -340,14 +343,20 @@ const links = computed(() => [
   {
     platform: 'x',
     label: 'Twitter / X',
-    href: profile.value?.twitter,
+    href: profile.value?.x,
   },
   {
     platform: 'instagram',
     label: 'Instagram',
     href: profile.value?.instagram,
   },
-].filter(link => link.href));
+].filter(link => link.href || isOwnPortfolio.value));
+
+async function handleLinkUpdated() {
+  if (!portfolioUserId.value) return;
+
+  await portfolioStore.fetchPortfolio(portfolioUserId.value);
+}
 
 const activityMaxCardHeight = ref(0);
 
@@ -449,7 +458,10 @@ onUnmounted(() => {
               <h2>{{ portfolioScore }}</h2>
             </div>
           </div>
-          <div class="actions">
+          <div
+            v-if="!isOwnPortfolio"
+            class="actions"
+          >
             <button class="follow-button">
               Follow
             </button>
@@ -550,7 +562,9 @@ onUnmounted(() => {
       <PortfolioContact
         :email="profile?.email"
         :canedit="isOwnPortfolio"
-        :links="links"
+        :user-id="portfolioUserId"
+        :links
+        @link-updated="handleLinkUpdated"
       />
     </footer>
 

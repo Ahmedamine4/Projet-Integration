@@ -165,9 +165,9 @@ export function normalizePortfolio(data) {
       email: user.email ?? '',
       phone: user.phone ?? '',
       photo: user.photo ?? '',
-      github: data?.github_API ?? '',
+      github: user.github ?? '',
       linkedin: user.linkedin ?? '',
-      twitter: user.twitter ?? '',
+      x: user.x ?? '',
       instagram: user.instagram ?? '',
     },
     headline: data?.niveau
