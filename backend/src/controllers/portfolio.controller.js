@@ -3,6 +3,7 @@ import {
   getAboutByUserId,
   updateUserAboutByUserId,
   getPortfolioEtudiant,
+  getExperienceById,
 } from '../services/portfolio.service.js';
 
 import {
@@ -111,6 +112,23 @@ export const getPortfolioEtudiantController = async (req, res) => {
     if (error.message === 'Étudiant non trouvé') {
       return res.status(404).json({ success: false, message: error.message });
     }
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+export const getExperienceByIdController = async (req, res) => {
+  try {
+    const { idexperience } = req.params;
+ 
+    const experience = await getExperienceById(idexperience);
+ 
+    if (!experience) {
+      return res.status(404).json({ success: false, message: 'Expérience non trouvée' });
+    }
+ 
+    return res.status(200).json({ success: true, data: experience });
+  } catch (error) {
+    console.error('Erreur getExperienceById:', error);
     return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
