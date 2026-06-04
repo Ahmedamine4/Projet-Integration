@@ -199,8 +199,8 @@ const summaryTitle = computed(() => {
         v-if="canEdit"
         type="button"
         class="experience-page__edit"
-        @click="editExperience"
         aria-label="Edit experience"
+        @click="editExperience"
       >
         <Pencil :size="17" />
       </button>
