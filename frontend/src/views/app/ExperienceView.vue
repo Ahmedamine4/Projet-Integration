@@ -15,7 +15,7 @@ import {
 
 import { computed, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -29,13 +29,13 @@ onMounted(async () => {
   try {
     loading.value = true;
 
-  const experienceId = route.params.experienceId;
+    const experienceId = route.params.experienceId;
 
-  const { data } = await axios.get(
-    `/portfolio/experience/${experienceId}`
-  );
+    const { data } = await api.get(
+      `/users/portfolio/experience/${experienceId}`
+    );
 
-    experience.value = data;
+    experience.value = data.data;
   } catch (err) {
     error.value = 'Failed to load experience.';
     console.error(err);
@@ -335,7 +335,7 @@ const summaryTitle = computed(() => {
                 :key="tech"
                 class="experience-page__tag experience-page__tag--tech"
               >
-                {{ tech }}
+                {{ tech.nom }}
               </span>
             </div>
           </div>
@@ -352,7 +352,7 @@ const summaryTitle = computed(() => {
                 :key="domain"
                 class="experience-page__tag"
               >
-                {{ domain }}
+                {{ domain.nom }}
               </span>
             </div>
           </div>
