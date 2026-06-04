@@ -1,6 +1,9 @@
 <script setup>
 import { CalendarDays, ExternalLink, Eye, EyeOff } from 'lucide-vue-next';
 import { useDoubleTap } from '@/composables/useDoubleTap';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
 
 const props = defineProps({
   internship: {
@@ -35,6 +38,25 @@ const { handleDoubleTap } = useDoubleTap(() => {
 
   emit('edit', props.internship);
 });
+
+function getExperienceRoute(experienceId) {
+  if (route.params.id) {
+    return {
+      name: 'portfolio-experience',
+      params: {
+        id: route.params.id,
+        experienceId,
+      },
+    };
+  }
+
+  return {
+    name: 'my-portfolio-experience',
+    params: {
+      experienceId,
+    },
+  };
+}
 </script>
 
 <template>
@@ -107,17 +129,14 @@ const { handleDoubleTap } = useDoubleTap(() => {
       >
 
       <div class="internship-card__footer">
-        <a
-          v-if="internship.report"
+        <RouterLink
           class="internship-card__report"
-          :href="internship.report"
-          target="_blank"
-          rel="noopener noreferrer"
+          :to="getExperienceRoute(internship.id)"
           @click.stop
         >
           View internship details
           <ExternalLink :size="14" />
-        </a>
+        </RouterLink>
         <span
           v-if="canEdit"
           class="internship-card__hint"

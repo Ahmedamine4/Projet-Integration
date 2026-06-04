@@ -9,6 +9,9 @@ import {
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
 
 const props = defineProps({
   certification: {
@@ -58,6 +61,25 @@ const { handleDoubleTap } = useDoubleTap(() => {
 
   emit('edit', props.certification);
 });
+
+function getExperienceRoute(experienceId) {
+  if (route.params.id) {
+    return {
+      name: 'portfolio-experience',
+      params: {
+        id: route.params.id,
+        experienceId,
+      },
+    };
+  }
+
+  return {
+    name: 'my-portfolio-experience',
+    params: {
+      experienceId,
+    },
+  };
+}
 </script>
 
 <template>
@@ -193,19 +215,17 @@ const { handleDoubleTap } = useDoubleTap(() => {
         </div>
 
         <div class="certification-footer">
-          <a
-            v-if="certification.certificateURL"
+          <RouterLink
             class="certification-link"
-            :href="certification.certificateURL"
-            target="_blank"
-            rel="noreferrer"
+            :to="getExperienceRoute(certification.id)"
+            @click.stop
           >
             Verify certification
             <ExternalLink
               :size="14"
               :stroke-width="2"
             />
-          </a>
+          </RouterLink>
 
           <span
             v-if="canEdit"

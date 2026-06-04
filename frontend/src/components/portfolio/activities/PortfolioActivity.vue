@@ -144,7 +144,10 @@ const { handleDoubleTap } = useDoubleTap(() => {
       </div>
     </div>
     <div class="activity-footer">
-      <ExploreButton experience-type="activity" />
+      <ExploreButton
+        experience-type="activity"
+        :experience-id="activity.id"
+      />
       <span
         v-if="canEdit"
         class="activity-edit-hint"
