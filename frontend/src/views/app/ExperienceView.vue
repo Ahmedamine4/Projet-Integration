@@ -7,58 +7,35 @@ import {
   EyeOff,
   Pencil,
   ExternalLink,
+  BadgeCheck,
+  Trophy,
+  Building2,
+  MapPin,
 } from 'lucide-vue-next';
 
 import { computed, ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
 
+const route = useRoute();
 const router = useRouter();
 
 const experience = ref(null);
-const type = ref('project');
-const canEdit = ref(true);
 const loading = ref(true);
 const error = ref(null);
+const canEdit = ref(true);
 
-const hasGithub = computed(() => !!experience.value?.githubUrl);
-
-onMounted(() => {
+onMounted(async () => {
   try {
     loading.value = true;
 
-    // STATIC TEST DATA
-    // TODO: later replace this with:
-    // const { data } = await axios.get(`/api/experiences/${route.params.id}`);
-    // experience.value = data.experience;
-    // type.value = data.type;
-    // canEdit.value = data.canEdit;
+  const experienceId = route.params.experienceId;
 
-    experience.value = {
-    id: 1,
-    title: 'AI Portfolio Recommendation Platform',
-    date: '2026-05-15',
-    imagePreview:
-      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop',
-    description:
-      'A portfolio platform that helps users showcase projects, internships, certifications, and activities. It includes AI-powered recommendations that match recruiter descriptions with the most relevant technologies and domains.',
-    githubUrl: 'https://github.com/elmozariahimarouane05/projet-integration',
-    visibleToEveryone: true,
-    technologies: [
-      'Vue.js',
-      'Node.js',
-      'Express',
-      'Prisma',
-      'PostgreSQL',
-      'Docker',
-      'ONNX',
-    ],
-    domains: [
-      'Web Development',
-      'AI',
-      'Portfolio',
-      'DevOps',
-    ],
-  };
+  const { data } = await axios.get(
+    `/portfolio/experience/${experienceId}`
+  );
+
+    experience.value = data;
   } catch (err) {
     error.value = 'Failed to load experience.';
     console.error(err);
@@ -72,8 +49,9 @@ function goBack() {
 }
 
 function editExperience() {
-  if (!experience.value?.id) return;
-  router.push(`/dashboard/experiences/${experience.value.id}/edit`);
+  if (!experience.value?.experience_id) return;
+
+  router.push(`/dashboard/experiences/${experience.value.experience_id}/edit`);
 }
 
 function formatDate(date) {
@@ -85,54 +63,99 @@ function formatDate(date) {
   });
 }
 
-const typeLabel = computed(() => {
-  if (!type.value) return null;
+const type = computed(() => experience.value?.type);
 
+const details = computed(() => experience.value?.details || {});
+
+const typeLabel = computed(() => {
   return {
-    project: 'Project',
-    internship: 'Internship',
+    projet: 'Project',
+    stage: 'Internship',
     certification: 'Certification',
-    activity: experience.value?.activityType || 'Activity',
+    activite: experience.value?.type_specifique || details.value?.type || 'Activity',
   }[type.value];
 });
 
+const title = computed(() => experience.value?.titre);
+
+const imageUrl = computed(() => experience.value?.photo);
+
+const isVisible = computed(() => !!experience.value?.visibilite);
+
 const dateLabel = computed(() => {
-  if (!experience.value || !type.value) return null;
+  if (!experience.value) return null;
 
-  if (type.value === 'internship') {
-    const start = formatDate(
-      experience.value.startDate || experience.value.date
-    );
-
-    const end = formatDate(experience.value.endDate);
+  if (type.value === 'stage') {
+    const start = formatDate(experience.value.date_experience);
+    const end = formatDate(details.value?.date_fin);
 
     return end ? `${start} – ${end}` : start;
   }
 
-  return formatDate(experience.value.date);
+  return formatDate(experience.value.date_experience);
 });
 
-const hasImage = computed(() => !!experience.value?.imagePreview);
+const hasImage = computed(() => !!imageUrl.value);
+
+const hasGithub = computed(() => {
+  return type.value === 'projet' && !!details.value?.lien_github;
+});
+
+const hasYoutube = computed(() => {
+  return type.value === 'projet' && !!details.value?.lien_youtube;
+});
 
 const hasTechnologies = computed(() => {
   return experience.value?.technologies?.length > 0;
 });
 
 const hasDomains = computed(() => {
-  return experience.value?.domains?.length > 0;
+  return experience.value?.domaines?.length > 0;
+});
+
+const hasSidebar = computed(() => {
+  return (
+    hasGithub.value ||
+    hasYoutube.value ||
+    hasTechnologies.value ||
+    hasDomains.value
+  );
 });
 
 const primaryAction = computed(() => {
-  if (!experience.value || !type.value) return null;
+  if (!experience.value) return null;
 
-  if (type.value === 'project' && experience.value.report) {
+  if (type.value === 'stage' && details.value?.rapport_stage) {
     return {
-      label: 'View project',
-      href: experience.value.report,
+      label: 'View report',
+      href: details.value.rapport_stage,
+    };
+  }
+
+  if (type.value === 'certification' && details.value?.lien_URL) {
+    return {
+      label: 'Verify certification',
+      href: details.value.lien_URL,
+    };
+  }
+
+  if (type.value === 'certification' && details.value?.document) {
+    return {
+      label: 'View certificate',
+      href: details.value.document,
     };
   }
 
   return null;
+});
+
+const summaryTitle = computed(() => {
+  return {
+    projet: 'Project summary',
+    stage: 'Internship summary',
+    certification: 'Certification summary',
+    activite: 'Activity summary',
+  }[type.value] || 'Summary';
 });
 </script>
 
@@ -147,25 +170,37 @@ const primaryAction = computed(() => {
       Back
     </button>
 
-    <div v-if="loading" class="experience-page__state">
+    <div
+      v-if="loading"
+      class="experience-page__state"
+    >
       Loading experience...
     </div>
 
-    <div v-else-if="error" class="experience-page__state">
+    <div
+      v-else-if="error"
+      class="experience-page__state"
+    >
       {{ error }}
     </div>
 
-    <div v-else-if="!experience" class="experience-page__state">
+    <div
+      v-else-if="!experience"
+      class="experience-page__state"
+    >
       Experience not found.
     </div>
 
-    <article v-else class="experience-page__case-study">
+    <article
+      v-else
+      class="experience-page__case-study"
+    >
       <button
-        v-if="canEdit && experience"
+        v-if="canEdit"
         type="button"
         class="experience-page__edit"
         @click="editExperience"
-        aria-label="Edit project"
+        aria-label="Edit experience"
       >
         <Pencil :size="17" />
       </button>
@@ -173,56 +208,125 @@ const primaryAction = computed(() => {
       <header class="experience-page__header">
         <div class="experience-page__meta">
           <span class="experience-page__type-badge">
+            <BadgeCheck
+              v-if="type === 'certification'"
+              :size="12"
+            />
+            <Trophy
+              v-else-if="type === 'activite'"
+              :size="12"
+            />
+            <Building2
+              v-else-if="type === 'stage'"
+              :size="12"
+            />
             {{ typeLabel }}
           </span>
 
-          <span v-if="dateLabel" class="experience-page__date">
+          <span
+            v-if="dateLabel"
+            class="experience-page__date"
+          >
             <CalendarDays :size="14" />
             {{ dateLabel }}
           </span>
 
-          <span v-if="canEdit" class="experience-page__visibility">
-            <Eye v-if="experience.visibleToEveryone" :size="14" />
-            <EyeOff v-else :size="14" />
+          <span
+            v-if="canEdit"
+            class="experience-page__visibility"
+          >
+            <Eye
+              v-if="isVisible"
+              :size="14"
+            />
+            <EyeOff
+              v-else
+              :size="14"
+            />
           </span>
         </div>
 
         <div class="experience-page__intro">
-          <h1>{{ experience.title }}</h1>
+          <h1>{{ title }}</h1>
+
+          <p
+            v-if="type === 'stage' && details.missions_realisees"
+            class="experience-page__subtitle"
+          >
+            {{ details.missions_realisees }}
+          </p>
+
+          <p
+            v-if="type === 'certification' && details.validation?.institution"
+            class="experience-page__subtitle"
+          >
+            {{ details.validation.institution.nom }}
+          </p>
         </div>
+
+        <a
+          v-if="primaryAction"
+          :href="primaryAction.href"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="experience-page__primary-action"
+        >
+          {{ primaryAction.label }}
+          <ExternalLink :size="14" />
+        </a>
       </header>
 
-      <div v-if="hasImage" class="experience-page__hero">
+      <div
+        v-if="hasImage"
+        class="experience-page__hero"
+      >
         <img
-          :src="experience.imagePreview"
-          :alt="experience.title ? `${experience.title} image` : 'Project image'"
+          :src="imageUrl"
+          :alt="title ? `${title} image` : 'Experience image'"
           draggable="false"
         >
       </div>
 
       <section class="experience-page__content-grid">
         <aside
-          v-if="hasGithub || hasTechnologies || hasDomains"
+          v-if="hasSidebar"
           class="experience-page__sidebar"
         >
           <div
-            v-if="type === 'project' && hasGithub"
+            v-if="hasGithub || hasYoutube"
             class="experience-page__info-block"
           >
-            <h2>Repository</h2>
+            <h2>Links</h2>
 
-            <a
-              :href="experience.githubUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="experience-page__link"
-            >
-              View on GitHub
-              <ExternalLink :size="14" />
-            </a>
+            <div class="experience-page__links">
+              <a
+                v-if="hasGithub"
+                :href="details.lien_github"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="experience-page__link"
+              >
+                GitHub repository
+                <ExternalLink :size="14" />
+              </a>
+
+              <a
+                v-if="hasYoutube"
+                :href="details.lien_youtube"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="experience-page__link"
+              >
+                YouTube demo
+                <ExternalLink :size="14" />
+              </a>
+            </div>
           </div>
 
-          <div v-if="hasTechnologies" class="experience-page__info-block">
+          <div
+            v-if="hasTechnologies"
+            class="experience-page__info-block"
+          >
             <h2>Technologies</h2>
 
             <div class="experience-page__tags">
@@ -236,12 +340,15 @@ const primaryAction = computed(() => {
             </div>
           </div>
 
-          <div v-if="hasDomains" class="experience-page__info-block">
+          <div
+            v-if="hasDomains"
+            class="experience-page__info-block"
+          >
             <h2>Domains</h2>
 
             <div class="experience-page__tags">
               <span
-                v-for="domain in experience.domains"
+                v-for="domain in experience.domaines"
                 :key="domain"
                 class="experience-page__tag"
               >
@@ -255,11 +362,99 @@ const primaryAction = computed(() => {
           <section class="experience-page__section">
             <span class="experience-page__section-label">Overview</span>
 
-            <h2>Project summary</h2>
+            <h2>{{ summaryTitle }}</h2>
 
-            <p>
+            <p v-if="experience.description">
               {{ experience.description }}
             </p>
+          </section>
+
+          <section
+            v-if="type === 'projet' && details.resultat_obtenu"
+            class="experience-page__section"
+          >
+            <span class="experience-page__section-label">Result</span>
+
+            <h2>Result obtained</h2>
+
+            <p>
+              {{ details.resultat_obtenu }}
+            </p>
+          </section>
+
+          <section
+            v-if="type === 'stage' || type === 'activite' || type === 'certification'"
+            class="experience-page__facts"
+          >
+            <template v-if="type === 'stage'">
+              <div
+                v-if="details.duree"
+                class="experience-page__fact"
+              >
+                <span>Duration</span>
+                <span>{{ details.duree }}</span>
+              </div>
+
+              <div
+                v-if="details.validation?.professeur?.utilisateur"
+                class="experience-page__fact"
+              >
+                <span>Validated by</span>
+                <span>
+                  {{ details.validation.professeur.utilisateur.prenom }}
+                  {{ details.validation.professeur.utilisateur.nom }}
+                </span>
+              </div>
+            </template>
+
+            <template v-if="type === 'activite'">
+              <div
+                v-if="details.lieu"
+                class="experience-page__fact"
+              >
+                <span>Location</span>
+                <span>
+                  <MapPin :size="13" />
+                  {{ details.lieu }}
+                </span>
+              </div>
+
+              <div
+                v-if="details.clubs?.length"
+                class="experience-page__fact"
+              >
+                <span>Club / Team</span>
+                <span>
+                  {{ details.clubs.map((club) => club.nom).join(', ') }}
+                </span>
+              </div>
+
+              <div
+                v-if="details.validation?.institution"
+                class="experience-page__fact"
+              >
+                <span>Institution</span>
+                <span>{{ details.validation.institution.nom }}</span>
+              </div>
+            </template>
+
+            <template v-if="type === 'certification'">
+              <div
+                v-if="details.validation?.institution"
+                class="experience-page__fact"
+              >
+                <span>Issuer</span>
+                <span>{{ details.validation.institution.nom }}</span>
+              </div>
+
+              <div
+                v-if="details.code"
+                class="experience-page__fact"
+              >
+                <span>Credential ID</span>
+                <span>{{ details.code }}</span>
+              </div>
+            </template>
           </section>
         </main>
       </section>
@@ -508,6 +703,85 @@ const primaryAction = computed(() => {
 .experience-page__link:hover {
   color: var(--color-secondary);
   transform: translateX(2px);
+}
+
+.experience-page__subtitle {
+  margin: var(--space-sm) 0 0;
+  max-width: 44rem;
+  color: rgba(var(--color-primary-rgb), 0.58);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  line-height: 1.7;
+}
+
+.experience-page__primary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
+  color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), 0.03);
+  text-decoration: none;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-bold);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.experience-page__primary-action:hover {
+  color: var(--color-secondary);
+  background: rgba(var(--color-primary-rgb), 0.07);
+  border-color: rgba(var(--color-primary-rgb), 0.22);
+  transform: translateY(-1px);
+}
+
+.experience-page__links {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.experience-page__facts {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid rgba(var(--color-primary-rgb), 0.07);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.07);
+}
+
+.experience-page__fact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.06);
+}
+
+.experience-page__fact:last-child {
+  border-bottom: none;
+}
+
+.experience-page__fact span:first-child {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-bold);
+  color: rgba(var(--color-primary-rgb), 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.experience-page__fact span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  text-align: right;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  color: rgba(var(--color-primary-rgb), 0.82);
 }
 
 @media (max-width: 980px) {

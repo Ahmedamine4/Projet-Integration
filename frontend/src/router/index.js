@@ -56,18 +56,27 @@ const routes = [
     },
   },
   {
-    path: '/portfolio/:id?',
-    name: 'portfolio',
-    component: () => import('@/views/app/PortfolioView.vue'),
+    path: '/portfolio/experience/:experienceId',
+    name: 'my-portfolio-experience',
+    component: () => import('@/views/app/ExperienceView.vue'),
     meta: {
       requiresAuth: true,
       layout: 'app',
     },
   },
   {
-    path: '/experience',
-    name: 'experience',
+    path: '/portfolio/:id/experience/:experienceId',
+    name: 'portfolio-experience',
     component: () => import('@/views/app/ExperienceView.vue'),
+    meta: {
+      requiresAuth: true,
+      layout: 'app',
+    },
+  },
+  {
+    path: '/portfolio/:id?',
+    name: 'portfolio',
+    component: () => import('@/views/app/PortfolioView.vue'),
     meta: {
       requiresAuth: true,
       layout: 'app',
