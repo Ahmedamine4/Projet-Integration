@@ -32,7 +32,7 @@ resource "aws_key_pair" "deployer" {
   public_key = file("${path.module}/keys/id_rsa.pub")
 }
 
-# --- ✅ TEMPLATE DE LANCEMENT (LAUNCH TEMPLATE) POUR EC2 ---
+# ---  TEMPLATE DE LANCEMENT (LAUNCH TEMPLATE) POUR EC2 ---
 resource "aws_launch_template" "app" {
   name_prefix   = "${var.project_name}-${var.environment}-lt-"
   image_id      = "ami-090543c0c8acd0a28" # Debian 12 eu-west 3
@@ -62,7 +62,7 @@ resource "aws_launch_template" "app" {
     # PM2 pour gérer l'application
     npm install -g pm2
     
-    echo "✅ Backend EC2 prêt"
+    echo " Backend EC2 prêt"
   EOF
   )*/
 user_data = base64encode(<<-EOF
@@ -96,7 +96,7 @@ GITHUB_REDIRECT_URI=http://portfolio-prod-alb-201423850.eu-west-3.elb.amazonaws.
 AI_API_URL=portfolio-prod-alb-201423850.eu-west-3.elb.amazonaws.com
 ENVFILE
   
-  echo "✅ Instance prête. Docker installé, .env créé"
+  echo " Instance prête. Docker installé, .env créé"
 EOF
 )
 

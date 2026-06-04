@@ -44,7 +44,7 @@ resource "aws_security_group" "app_sg" {
     security_groups = [aws_security_group.alb_sg.id]
   }
 
-  # ✅ SSH pour debug (Note: Comme l'EC2 est privée, l'accès SSH se fera via Session Manager ou un Bastion)
+  # SSH pour debug (Note: Comme l'EC2 est privée, l'accès SSH se fera via Session Manager ou un Bastion)
   ingress {
     from_port   = 22
     to_port     = 22
@@ -70,7 +70,7 @@ resource "aws_security_group" "db_sg" {
   vpc_id      = aws_vpc.main.id
   description = "PostgreSQL - only from app tier"
 
-  # ✅ EC2 (ASG) → RDS port 5432
+  # EC2 (ASG) → RDS port 5432
   ingress {
     description     = "PostgreSQL from app tier"
     from_port       = 5432
@@ -79,7 +79,7 @@ resource "aws_security_group" "db_sg" {
     security_groups = [aws_security_group.app_sg.id]
   }
 
-  # 🛑 Règle de l'IP publique supprimée car la DB n'a plus de route vers Internet.
+  #  Règle de l'IP publique supprimée car la DB n'a plus de route vers Internet.
   # Pour exécuter Prisma Migrate, il faudra le lancer depuis l'instance EC2 elle-même.
 
   egress {

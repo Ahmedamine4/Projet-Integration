@@ -107,7 +107,7 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private[count.index].id
 }
 
-# --- ✅ VPC ENDPOINT (S3 GATEWAY) ---
+# ---  VPC ENDPOINT (S3 GATEWAY) ---
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.main.id
   service_name      = "com.amazonaws.eu-west-3.s3"
