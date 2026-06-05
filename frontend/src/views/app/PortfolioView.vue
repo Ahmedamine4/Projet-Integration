@@ -19,6 +19,7 @@ import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSecti
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
 import InternshipsSection from '@/components/portfolio/internships/InternshipsSection.vue';
+import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -588,6 +589,10 @@ onUnmounted(() => {
       @submit="handleExperienceSubmit"
     />
   </div>
+  <div class="ai-orb-container">
+    <AiOrb />
+  </div>
+
 </template>
 
 <style scoped>
@@ -835,6 +840,15 @@ onUnmounted(() => {
   column-gap: calc(var(--space-xl) * 2);
   row-gap: var(--portfolio-section-gap);
 }
+.ai-orb-container {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+  width: 64px;
+  height: 64px;
+  z-index: 999;
+  overflow: visible;
+}
 
 @media (max-width: 980px) {
 	.profile {
@@ -855,8 +869,40 @@ onUnmounted(() => {
 }
 
 @media (max-width: 640px) {
+  .ai-orb-container {
+    right: 1.4rem;
+    bottom: 1rem;
+    width: 56px;
+    height: 56px;
+  }
+
   .portfolio main {
     --portfolio-padding-inline: var(--space-md);
+    padding-bottom: 5rem;
+  }
+
+  .statistics {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+
+  .actions {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .qr-button {
+    font-size: 10px;
+    padding-inline: 0.7rem 0.85rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .ai-orb-container {
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 }
 </style>
