@@ -1,7 +1,7 @@
 import prisma from '../config/prisma.js';
 import { supabase } from '../config/supabase.js';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
-
+import { creerNotification } from './notification.service.js';
 export const uploadPhoto = async (file) => {
   const fileName = `${Date.now()}_${file.originalname}`;
 
@@ -160,6 +160,15 @@ export const updateVisibiliteActiviteService = async (etudiantId, experienceId, 
     data: { visibilite },
     select: { experience_id: true, visibilite: true },
   });
+
+  await creerNotification(
+    etudiantId,
+    'La visibilite de votre activite a ete mise a jour.',
+    'portfolio_visibility',
+    { utilisateurSourceId: etudiantId }
+  );
+
+  return updated;
 };
 
 export async function getActivitesVisiblesByEtudiant(etudiantId) {

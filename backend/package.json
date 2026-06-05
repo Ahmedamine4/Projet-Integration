@@ -10,9 +10,14 @@
     "test": "tests"
   },
   "scripts": {
+    "dev": "node src/server.js",
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "lint": "eslint ."
+    "test": "cross-env NODE_ENV=test vitest --config vitest.config.js",
+    "test:unit": "cross-env NODE_ENV=test vitest --config vitest.config.js",
+    "test:integration": "cross-env NODE_ENV=test vitest --config vitest.integration.config.js",
+    "test:all": "npm run test:unit && npm run test:integration",
+    "test:ui": "vitest --ui",
+    "prisma:generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -30,13 +35,16 @@
     "prisma": "^6.19.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "ua-parser-js": "^2.0.10"
+    "ua-parser-js": "^2.0.10",
+    "vitest": "^4.1.8"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "cross-env": "^10.1.0",
     "eslint": "^10.4.0",
     "globals": "^17.6.0",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   },
   "keywords": []
 }

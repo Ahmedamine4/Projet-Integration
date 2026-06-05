@@ -10,7 +10,7 @@ export const validerProjet = async (req, res) => {
     const { statut, commentaireProf } = req.body;
 
     const projet = await validerProjetService({
-      experience_id: Number(id),
+      experience_id: id,
       utilisateur_id,
       statut,
       commentaireProf,

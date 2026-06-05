@@ -21,20 +21,20 @@ export const uploadPhoto = async (file) => {
 };
 
 export const creeStage = async (etudiantId, data, photoUrl) => {
-  
-    const stageExistant = await prisma.experience.findFirst({
-        where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre },
-      });
-      if (stageExistant) throw new Error('Stage déjà existant');
-    
 
-    const debut = new Date(data.date_debut);
-    const fin = new Date(data.date_fin);
-    const diffMs = fin - debut;
-    const duree = String(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  const stageExistant = await prisma.experience.findFirst({
+    where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre },
+  });
+  if (stageExistant) throw new Error('Stage déjà existant');
 
-    const technologies = JSON.parse(data.technologies || '[]');
-    const domaines = JSON.parse(data.domaines || '[]');
+
+  const debut = new Date(data.date_debut);
+  const fin = new Date(data.date_fin);
+  const diffMs = fin - debut;
+  const duree = String(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+  const technologies = JSON.parse(data.technologies || '[]');
+  const domaines = JSON.parse(data.domaines || '[]');
 
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.create({
@@ -59,7 +59,7 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
         rapport_stage: data.rapport_stage ?? null,
       },
     });
-    
+
     const competencesTech = await lierCompetencesExperience(
       tx, experience.experience_id, etudiantId, technologies, 'technologie'
     );
@@ -97,15 +97,16 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
       await creerNotification(
         professeur.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre}".`,
-        'validation_stage'
+        'validation_stage',
+        { utilisateurSourceId: etudiantId }
       );
     }
 
-    return { 
-      experience, 
-      stage, 
+    return {
+      experience,
+      stage,
       competences: [...competencesTech, ...competencesDomaines],
-      validation, 
+      validation,
     };
   });
 };
@@ -227,10 +228,11 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
       await creerNotification(
         profId,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son stage "${data.titre ?? experience.titre}". Il demande une validation pour un stage.`,
-        'validation_stage'
+        'validation_stage',
+        { utilisateurSourceId: etudiantId }
       );
 
-    // le stage n'a pa de validation et l'etudiant veut ajouter un prof
+      // le stage n'a pa de validation et l'etudiant veut ajouter un prof
     } else if (data.email_professeur) {
       const prof = await tx.utilisateur.findUnique({
         where: { email: data.email_professeur },
@@ -257,7 +259,8 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
       await creerNotification(
         prof.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre ?? experience.titre}".`,
-        'validation_stage'
+        'validation_stage',
+        { utilisateurSourceId: etudiantId }
       );
     }
 
@@ -299,11 +302,20 @@ export const updateVisibiliteStageService = async (etudiantId, experienceId, vis
       throw new Error('Vous ne pouvez changer la visibilité que si le stage académique est validé');
     }
   }
-  
   //si personnel
-  return prisma.experience.update({
+  const updated = await prisma.experience.update({
     where: { experience_id: experienceId },
     data: { visibilite },
     select: { experience_id: true, visibilite: true },
   });
+
+
+  await creerNotification(
+    etudiantId,
+    `La visibilité de votre stage "${experience.titre}" a été mise à jour.`,
+    'portfolio_visibility',
+    { utilisateurSourceId: etudiantId }
+  );
+
+  return updated;
 };

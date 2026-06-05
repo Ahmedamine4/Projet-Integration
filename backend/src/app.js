@@ -17,6 +17,7 @@ import githubRoutes from './routes/github.route.js';
 import lettreRecommandationRoutes from './routes/lettre_recommandation.routes.js';
 import socialMediaRoutes from './routes/social_media.routes.js';
 import certificationRoutes from './routes/certification.route.js';
+import professeurRoutes from './routes/professeur.routes.js';
 //import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
@@ -59,6 +60,7 @@ app.use('/api/users', updateUtilisateurRoutes);
 app.use('/api', ValidationProjetRoutes);
 
 app.use('/api/users', socialMediaRoutes);
+app.use('/api/professeurs', professeurRoutes);
 
 // Route de test
 app.get("/", (req, res) => {

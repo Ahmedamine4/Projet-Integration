@@ -1,7 +1,7 @@
 import prisma from '../config/prisma.js';
 import { supabase } from '../config/supabase.js';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
-
+import { creerNotification } from './notification.service.js';
 export const uploadPhoto = async (file) => {
   const fileName = `${Date.now()}_${file.originalname}`;
 
@@ -42,8 +42,8 @@ export const creeCertification = async (etudiantId, data, photoUrl) => {
     const certification = await tx.certification.create({
       data: {
         experience_id: experience.experience_id,
-        code: data.code ,
-        lien_URL: data.credentialUrl ,
+        code: data.code,
+        lien_URL: data.credentialUrl,
       },
     });
 
@@ -163,7 +163,17 @@ export const updateVisibiliteCertificationService = async (etudiantId, experienc
     data: { visibilite },
     select: { experience_id: true, visibilite: true },
   });
+
+  await creerNotification(
+    etudiantId,
+    'La visibilite de votre certification a ete mise a jour.',
+    'portfolio_visibility',
+    { utilisateurSourceId: etudiantId }
+  );
+
+  return updated;
 };
+
 
 export const getCertificationsVisiblesByEtudiant = async (etudiantId) => {
   return prisma.experience.findMany({

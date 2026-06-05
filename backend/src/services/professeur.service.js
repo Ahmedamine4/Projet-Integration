@@ -70,7 +70,7 @@ export const getStagesProf = async (profId, statut, commente) => {
       statut: statut
         ? statut
         : { in: ['en_attente', 'valide', 'refuse'] },
-      ...(commente === true  && { commentaire: { not: null } }),
+      ...(commente === true && { commentaire: { not: null } }),
       ...(commente === false && { commentaire: null }),
     },
     select: {
@@ -110,7 +110,7 @@ export const getProjetsProf = async (profId, statut, commente) => {
       statut: statut
         ? statut
         : { in: ['en_attente', 'valide', 'refuse'] },
-      ...(commente === true  && { commentaire: { not: null } }),
+      ...(commente === true && { commentaire: { not: null } }),
       ...(commente === false && { commentaire: null }),
     },
     select: {
@@ -194,7 +194,7 @@ export const getProjetById = async (profId, experienceId) => {
 export const traiterValidationProjet = async (profId, experienceId, statut, commentaire) => {
   const validation = await prisma.valideProjet.findUnique({
     where: { experience_id: experienceId },
-    include: { 
+    include: {
       experience: {
         include: {
           etudiant: {
@@ -215,15 +215,17 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
 
     const updated = await prisma.valideProjet.update({
       where: { experience_id: experienceId },
-      data: { 
-        commentaire, 
-        date_d_action: new Date() },
+      data: {
+        commentaire,
+        date_d_action: new Date()
+      },
     });
 
     await creerNotification(
       validation.experience.etudiant.utilisateur.utilisateur_id,
       `Votre professeur a laissé un commentaire sur votre projet "${validation.experience.titre}".`,
-      'commentaire_projet'
+      'commentaire_projet',
+      { utilisateurSourceId: profId }
     );
 
     return updated;
@@ -242,9 +244,10 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
     : `Votre projet "${validation.experience.titre}" a été refusé. Motif : ${commentaire}`;
 
   await creerNotification(
-    validation.experience.etudiant.utilisateur.utilisateur_id, 
-    msg, 
-    'validation_projet'
+    validation.experience.etudiant.utilisateur.utilisateur_id,
+    msg,
+    'validation_projet',
+    { utilisateurSourceId: profId }
   );
 
   return updated;
@@ -253,7 +256,7 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
 export const traiterValidationStageProf = async (profId, experienceId, statut, commentaire) => {
   const validation = await prisma.valideStage.findUnique({
     where: { experience_id: experienceId },
-    include: { 
+    include: {
       experience: {
         include: {
           etudiant: {
@@ -280,7 +283,8 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
     await creerNotification(
       validation.experience.etudiant.utilisateur.utilisateur_id,
       `Votre professeur a laissé un commentaire sur votre stage "${validation.experience.titre}".`,
-      'commentaire_stage'
+      'commentaire_stage',
+      { utilisateurSourceId: profId }
     );
 
     return updated;
@@ -297,11 +301,12 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
   const msg = statut === 'valide'
     ? `Votre stage "${validation.experience.titre}" a été validé par votre professeur.`
     : `Votre stage "${validation.experience.titre}" a été refusé. Motif : ${commentaire}`;
-  
+
   await creerNotification(
-    validation.experience.etudiant.utilisateur.utilisateur_id, 
-    msg, 
-    'validation_stage'
+    validation.experience.etudiant.utilisateur.utilisateur_id,
+    msg,
+    'validation_stage',
+    { utilisateurSourceId: profId }
   );
 
   return updated;

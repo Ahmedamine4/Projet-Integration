@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { creerNotification } from './notification.service.js';
 import { getStagesVisiblesByEtudiant, getStagesByEtudiant } from './stage.service.js';
 import { getProjetsVisiblesByEtudiant, getProjetsByEtudiant } from './projet.service.js';
 import { getActivitesVisiblesByEtudiant, getActivitesByEtudiant } from './activite.service.js';
@@ -19,11 +20,20 @@ export async function getAboutByUserId(userId) {
 
 // modifier le "a_propos" d'un utilisateur par son id
 export async function updateUserAboutByUserId(userId, aboutText) {
-  return prisma.utilisateur.update({
+  const updated = await prisma.utilisateur.update({
     where: { utilisateur_id: userId },
     data: { a_propos: aboutText },
     select: { utilisateur_id: true, a_propos: true },
   });
+
+  await creerNotification(
+    userId,
+    'Votre section A propos a ete mise a jour.',
+    'portfolio_update',
+    { utilisateurSourceId: userId }
+  );
+
+  return updated;
 }
 
 export async function getPortfolioEtudiant(etudiantId, isOwner) {
@@ -69,7 +79,7 @@ export async function getPortfolioEtudiant(etudiantId, isOwner) {
 }
 
 export async function getExperienceById(experienceId) {
-  
+
   const experience = await prisma.experience.findUnique({
     where: { experience_id: experienceId },
     include: {
@@ -90,19 +100,19 @@ export async function getExperienceById(experienceId) {
       },
     },
   });
- 
+
   if (!experience) return null;
- 
+
   const { technologies, domaines } = await getCompetencesByExperience(experienceId);
- 
+
   const typeSpecifique = experience.type;
   let details = null;
- 
+
   if (typeSpecifique === 'stage') details = experience.stage;
   else if (typeSpecifique === 'projet') details = experience.projet;
   else if (typeSpecifique === 'activite') details = experience.activite;
   else if (typeSpecifique === 'certification') details = experience.certification;
- 
+
   return {
     experience_id: experience.experience_id,
     titre: experience.titre,

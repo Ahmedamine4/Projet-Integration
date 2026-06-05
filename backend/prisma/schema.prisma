@@ -77,7 +77,8 @@ model Utilisateur {
   professionnel  Professionnel?
 
   // Autres relations
-  notifications Notification[]
+    notifications_recues Notification[] @relation("NotificationsRecues")
+  notifications_emises Notification[] @relation("NotificationsEmises")
   connexions    Connexion[]
   interactions  Interaction[]
 
@@ -208,9 +209,15 @@ model Notification {
   date_notification DateTime?
   lu                Boolean?
   type              String?     @db.VarChar(50)
-  utilisateur_id    String
-  utilisateur       Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+   utilisateur_cible_id  String  @map("utilisateur_id")
+  utilisateur_source_id String?
 
+  utilisateur_cible  Utilisateur  @relation("NotificationsRecues", fields: [utilisateur_cible_id], references: [utilisateur_id])
+  utilisateur_source Utilisateur? @relation("NotificationsEmises", fields: [utilisateur_source_id], references: [utilisateur_id])
+
+  @@index([utilisateur_cible_id])
+  @@index([utilisateur_source_id])
+  @@index([date_notification])
   @@map("notifications")
 }
 

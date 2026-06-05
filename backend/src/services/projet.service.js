@@ -86,10 +86,10 @@ export const creeProjet = async (etudiantId, data, photoUrl) => {
       await creerNotification(
         professeur.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle}".`,
-        'validation_projet'
+        'validation_projet',
+        { utilisateurSourceId: etudiantId }
       );
     }
-
 
     return { experience, projet, competences: [...competencesTech, ...competencesDomaines], validation };
   });
@@ -189,7 +189,8 @@ export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
       await creerNotification(
         profId,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son projet "${data.projectTitle ?? experience.titre}". Il demande une validation.`,
-        'validation_projet'
+        'validation_projet',
+        { utilisateurSourceId: etudiantId }
       );
 
     } else if (data.professorEmail) {
@@ -212,7 +213,8 @@ export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
       await creerNotification(
         prof.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle ?? experience.titre}".`,
-        'validation_projet'
+        'validation_projet',
+        { utilisateurSourceId: etudiantId }
       );
     }
 
@@ -256,11 +258,20 @@ export const updateVisibiliteProjetService = async (etudiantId, experienceId, vi
     }
   }
 
-  return prisma.experience.update({
+  const updated = await prisma.experience.update({
     where: { experience_id: experienceId },
     data: { visibilite },
     select: { experience_id: true, visibilite: true },
   });
+
+  await creerNotification(
+    etudiantId,
+    'La visibilité de votre projet a été mise à jour.',
+    'portfolio_visibility',
+    { utilisateurSourceId: etudiantId }
+  );
+
+  return updated;
 };
 //cration d'un projet brouillon à partir d'un repo github, avec is_draft à true et technologies_locked à true .
 
@@ -335,6 +346,19 @@ export const createDraftProjectsFromRepos = async (etudiantId, repositories) => 
     // alors on crée un nouveau draft projet.
     const draftProjet = await createDraftProjetFromRepository(repository, etudiantId);
     draftProjects.push(draftProjet);
+  }
+
+  if (draftProjects.length > 0) {
+    const message = draftProjects.length === 1
+      ? 'Votre projet brouillon a ete cree depuis GitHub.'
+      : `${draftProjects.length} projets brouillons ont ete crees depuis GitHub.`;
+
+    await creerNotification(
+      etudiantId,
+      message,
+      'github_import',
+      { utilisateurSourceId: etudiantId }
+    );
   }
 
   return draftProjects;

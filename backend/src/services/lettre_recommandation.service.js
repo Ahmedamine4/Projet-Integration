@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 import { creerNotification } from './notification.service.js';
+import { creerNotification } from './notification.service.js';
 
 export const creerDemandeRecommandation = async (etudiantId, data) => {
   const { objet, description, email_professeur } = data;
@@ -40,7 +41,12 @@ export const creerDemandeRecommandation = async (etudiantId, data) => {
     `L'étudiant ${etudiant.prenom} ${etudiant.nom} vous demande une lettre de recommandation : "${objet}".`,
     'recommandation'
   );
-
+  await creerNotification(
+    professeur.utilisateur_id,
+    `L'étudiant ${etudiant.prenom} ${etudiant.nom} vous demande une lettre de recommandation : "${objet}".`,
+    'recommandation',
+    { utilisateurSourceId: etudiantId }
+  );
   return demande;
 };
 

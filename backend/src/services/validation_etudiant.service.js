@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.js';
+import { creerNotification } from './notification.service.js';
 
-// Récupérer les demandes en attente pour une institution spécifique
+// Recuperer les demandes en attente pour une institution specifique
 export const getPendingValidations = async (institutionId) => {
     return await prisma.valideEtudiant.findMany({
         where: {
@@ -8,24 +9,44 @@ export const getPendingValidations = async (institutionId) => {
             statut: 'en_attente'
         },
         include: {
-            etudiant: true // Pour afficher le nom de l'étudiant
+            etudiant: true
         }
     });
 };
 
-// Mettre à jour le statut (valide / rejete)
-export const updateValidationStatus = async (etudiantId, institutionId, newStatus) => {
-    return await prisma.valideEtudiant.update({
+// Mettre a jour le statut (valide / refuse)
+export const updateValidationStatus = async (
+    etudiantId,
+    institutionId,
+    newStatus,
+    options = {}
+) => {
+    const { utilisateurSourceId = null } = options;
+
+    const updated = await prisma.valideEtudiant.update({
         where: {
-            // Utilisation de la clé composée utilisateur_id_institution_id
             utilisateur_id_institution_id: {
                 utilisateur_id: etudiantId,
-                institution_id: institutionId
-            }
+                institution_id: institutionId,
+            },
         },
         data: {
             statut: newStatus,
-            date_d_action: new Date()
-        }
+            date: new Date(),
+        },
     });
+
+    const message =
+        newStatus === 'valide'
+            ? "Votre demande de liaison a l'institution a ete acceptee."
+            : "Votre demande de liaison a l'institution a ete refusee.";
+
+    await creerNotification(
+        etudiantId,
+        message,
+        'validation_institution',
+        { utilisateurSourceId }
+    );
+
+    return updated;
 };

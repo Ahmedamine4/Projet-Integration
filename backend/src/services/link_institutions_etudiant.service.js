@@ -3,7 +3,7 @@ import prisma from '../config/prisma.js';
 export const LinkInstitutionsToEtudiant = async (etudiantId, institutionId) => {
     // 1. Trouver les institutions correspondantes
     const institutions = await prisma.institution.findMany({
-        where: { 
+        where: {
             institution_id: { in: institutionId }
         },
         select: { nom: true, institution_id: true }
@@ -15,7 +15,7 @@ export const LinkInstitutionsToEtudiant = async (etudiantId, institutionId) => {
 
     // 2. Création sécurisée (évite les crashs si le lien existe déjà)
     const records = await Promise.all(
-        institutions.map(inst => 
+        institutions.map(inst =>
             prisma.valideEtudiant.upsert({
                 where: {
                     // Vérifie le nom exact de ta contrainte unique dans schema.prisma
@@ -29,7 +29,7 @@ export const LinkInstitutionsToEtudiant = async (etudiantId, institutionId) => {
                     utilisateur_id: etudiantId,
                     institution_id: inst.institution_id,
                     statut: 'en_attente',
-                    date_d_action: new Date()
+                    date: new Date()
                 }
             })
         )
