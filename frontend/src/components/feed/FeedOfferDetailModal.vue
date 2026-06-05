@@ -1,75 +1,3 @@
-<template>
-  <div
-    v-if="offer"
-    class="offer-backdrop"
-    @click.self="emit('close')"
-  >
-    <article class="offer-modal">
-      <header class="offer-modal-header">
-        <div>
-          <span class="offer-type">{{ offer.type }}</span>
-          <h2>{{ offer.title }}</h2>
-          <p>{{ offer.company }} · {{ offer.location }}</p>
-        </div>
-
-        <button
-          type="button"
-          class="close-button"
-          aria-label="Close"
-          @click="emit('close')"
-        >
-          ×
-        </button>
-      </header>
-
-      <section class="offer-section">
-        <h3>Description</h3>
-        <p>{{ offer.description }}</p>
-      </section>
-
-      <section class="offer-section">
-        <h3>Required technologies</h3>
-
-        <div class="tech-list">
-          <span
-            v-for="tech in offer.technologies"
-            :key="tech"
-          >
-            {{ tech }}
-          </span>
-        </div>
-      </section>
-
-      <section class="offer-section">
-        <h3>Details</h3>
-
-        <ul>
-          <li>Contract: {{ offer.type }}</li>
-          <li>Duration: {{ offer.duration }}</li>
-          <li>Experience level: {{ offer.level }}</li>
-        </ul>
-      </section>
-
-      <footer class="offer-actions">
-        <button
-          type="button"
-          class="secondary-button"
-          @click="emit('close')"
-        >
-          Close
-        </button>
-
-        <button
-          type="button"
-          class="primary-button"
-        >
-          Apply
-        </button>
-      </footer>
-    </article>
-  </div>
-</template>
-
 <script setup>
 defineProps({
   offer: {
@@ -81,17 +9,129 @@ defineProps({
 const emit = defineEmits(['close']);
 </script>
 
+<template>
+  <Teleport to="body">
+    <Transition name="modal">
+      <div
+        v-if="offer"
+        class="offer-backdrop"
+        @click.self="emit('close')"
+      >
+        <article class="offer-modal">
+          <header class="offer-modal-header">
+            <div>
+              <h2>{{ offer.title }}</h2>
+              <p>{{ offer.company }} · {{ offer.location }}</p>
+            </div>
+
+            <button
+              type="button"
+              class="close-button"
+              aria-label="Close"
+              @click="emit('close')"
+            >
+              ×
+            </button>
+          </header>
+
+          <section class="offer-section">
+            <h3>Description</h3>
+            <p>{{ offer.description || 'No description available.' }}</p>
+          </section>
+
+          <section class="offer-section">
+            <h3>Required technologies</h3>
+            <div class="tech-list">
+              <span
+                v-for="tech in (offer.technologies || [])"
+                :key="tech"
+              >
+                {{ tech }}
+              </span>
+            </div>
+          </section>
+
+          <section class="offer-section">
+            <h3>Details</h3>
+            <ul>
+              <li>Duration: {{ offer.duration || 'Not specified' }}</li>
+              <li>Experience level: {{ offer.level || 'Not specified' }}</li>
+            </ul>
+          </section>
+
+          <footer class="offer-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              @click="emit('close')"
+            >
+              Close
+            </button>
+
+            <button
+              type="button"
+              class="primary-button"
+            >
+              Apply
+            </button>
+          </footer>
+        </article>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+
 <style scoped>
+/* Transition */
+.modal-enter-active {
+  transition: opacity 200ms ease;
+}
+.modal-leave-active {
+  transition: opacity 160ms ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-active .offer-modal {
+  animation: modal-slide-in 200ms ease forwards;
+}
+.modal-leave-active .offer-modal {
+  animation: modal-slide-out 160ms ease forwards;
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modal-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
 .offer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 2200;
+  z-index: 9999;
   display: grid;
   place-items: center;
   padding: var(--space-lg);
-  background: rgba(var(--color-primary-rgb), 0.32);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(var(--color-primary-rgb), 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .offer-modal {
@@ -105,26 +145,13 @@ const emit = defineEmits(['close']);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(var(--color-primary-rgb), 0.1);
   background: rgba(var(--color-surface-rgb), 0.98);
-  box-shadow: 0 24px 60px rgba(var(--color-primary-rgb), 0.22);
+  box-shadow: 0 24px 60px rgba(var(--color-primary-rgb), 0.18);
 }
 
 .offer-modal-header {
   display: flex;
   justify-content: space-between;
   gap: var(--space-md);
-}
-
-.offer-type {
-  display: inline-flex;
-  width: fit-content;
-  margin-bottom: var(--space-xs);
-  padding: 0.18rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.24);
-  background: rgba(var(--color-secondary-rgb), 0.09);
-  color: rgba(var(--color-secondary-rgb), 0.95);
-  font-size: 10px;
-  font-weight: var(--font-bold);
 }
 
 .offer-modal-header h2 {
@@ -146,12 +173,18 @@ const emit = defineEmits(['close']);
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  border: none;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
   border-radius: 999px;
-  background: rgba(var(--color-primary-rgb), 0.06);
-  color: rgba(var(--color-primary-rgb), 0.62);
+  background: rgba(var(--color-primary-rgb), 0.04);
+  color: rgba(var(--color-primary-rgb), 0.5);
   font-size: var(--font-size-md);
   cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.close-button:hover {
+  background: rgba(var(--color-primary-rgb), 0.09);
+  color: rgba(var(--color-primary-rgb), 0.82);
 }
 
 .offer-section {
@@ -203,6 +236,7 @@ const emit = defineEmits(['close']);
   justify-content: flex-end;
   gap: var(--space-sm);
   padding-top: var(--space-sm);
+  border-top: 1px solid rgba(var(--color-primary-rgb), 0.07);
 }
 
 .primary-button,
@@ -213,6 +247,7 @@ const emit = defineEmits(['close']);
   font-size: var(--font-size-xxs);
   font-weight: var(--font-bold);
   cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
 }
 
 .primary-button {
@@ -221,9 +256,18 @@ const emit = defineEmits(['close']);
   color: rgba(var(--color-secondary-rgb), 0.98);
 }
 
+.primary-button:hover {
+  background: rgba(var(--color-secondary-rgb), 0.24);
+  transform: translateY(-1px);
+}
+
 .secondary-button {
   border: 1px solid rgba(var(--color-primary-rgb), 0.1);
   background: transparent;
   color: rgba(var(--color-primary-rgb), 0.62);
+}
+
+.secondary-button:hover {
+  background: rgba(var(--color-primary-rgb), 0.05);
 }
 </style>

@@ -12,6 +12,7 @@
       />
 
       <div class="feed-content">
+        <!-- Offers carousel: full width above projects + filters -->
         <section class="offers-row">
           <FeedOffersCarousel
             :offers="mockOffers"
@@ -19,6 +20,7 @@
           />
         </section>
 
+        <!-- Projects + filters start under the offers -->
         <div class="feed-grid">
           <section class="feed-list">
             <template v-if="filteredProjects.length">
@@ -245,17 +247,6 @@ const mockOffers = [
     description:
       'Assist the DevOps team with deployment pipelines, containerized environments and monitoring improvements.',
   },
-  {
-    id: 5,
-    title: 'Backend Developer Intern',
-    company: 'SQLI',
-    location: 'Casablanca',
-    duration: '5 months',
-    level: 'Student',
-    technologies: ['Node.js', 'Express', 'PostgreSQL', 'Docker'],
-    description:
-      'Support backend API development, database integration and technical documentation for web applications.',
-  },
 ];
 
 const allTechnologies = computed(() => {
@@ -394,71 +385,41 @@ const filteredProjects = computed(() => {
   z-index: 50;
 }
 
-/* MAIN LAYOUT */
 .feed-content {
   width: 100%;
   max-width: 1220px;
   margin-inline: auto;
-  display: grid;
-  grid-template-columns: minmax(0, 820px) 300px;
-  column-gap: calc(var(--space-xl) * 1.15);
-  row-gap: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
   padding: var(--space-md) var(--space-xl) var(--space-xl);
 }
 
-/* OFFERS FULL HORIZONTAL WIDTH: project column + filter column */
 .offers-row {
-  grid-column: 1 / -1;
   width: 100%;
   min-width: 0;
+  flex-shrink: 0;
   overflow: hidden;
 }
 
-/* FORCE CHILD CAROUSEL TO USE FULL WIDTH */
-.offers-row :deep(.offers-section),
-.offers-row :deep(.offers-scroll-frame) {
-  width: 100%;
+.offers-row :deep(*) {
   max-width: none;
-  margin-inline: 0;
 }
 
-/* FORCE HORIZONTAL SCROLL INSIDE THE OFFERS */
+.offers-row :deep(.offers-section),
+.offers-row :deep(.offers-scroll-frame),
 .offers-row :deep(.offers-list) {
   width: 100%;
   max-width: none;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  gap: var(--space-lg);
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-block: var(--space-sm);
-  overscroll-behavior-x: contain;
-  cursor: grab;
-  scrollbar-width: none;
-  scroll-behavior: smooth;
 }
 
-.offers-row :deep(.offers-list:active) {
-  cursor: grabbing;
-}
-
-.offers-row :deep(.offers-list::-webkit-scrollbar) {
-  display: none;
-}
-
-.offers-row :deep(.offer-card) {
-  flex: 0 0 17rem;
-}
-
-/* PROJECTS + FILTERS UNDER OFFERS */
 .feed-grid {
-  grid-column: 1 / -1;
   width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 820px) 300px;
+  justify-content: center;
   align-items: start;
-  column-gap: calc(var(--space-xl) * 1.15);
+  gap: calc(var(--space-xl) * 1.15);
 }
 
 .feed-list {
@@ -515,17 +476,10 @@ const filteredProjects = computed(() => {
 @media (max-width: 1050px) {
   .feed-content {
     max-width: 720px;
-    display: flex;
-    flex-direction: column;
     padding-inline: var(--space-md);
   }
 
-  .offers-row {
-    width: 100%;
-  }
-
   .feed-grid {
-    display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -559,14 +513,6 @@ const filteredProjects = computed(() => {
 
   .feed-grid {
     gap: var(--space-sm);
-  }
-
-  .offers-row :deep(.offer-card) {
-    flex-basis: 14rem;
-  }
-
-  .offers-row :deep(.offers-list) {
-    gap: var(--space-md);
   }
 }
 </style>

@@ -11,7 +11,7 @@
         <input
           class="search-input"
           type="text"
-          placeholder="Rechercher un projet, un étudiant ou une technologie..."
+          placeholder="Search projects, students or technologies..."
           :value="search"
           @input="emit('update:search', $event.target.value)"
         />
