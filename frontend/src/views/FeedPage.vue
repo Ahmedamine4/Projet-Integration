@@ -15,9 +15,9 @@
         <!-- Offers carousel: full width above projects + filters -->
         <section class="offers-row">
           <FeedOffersCarousel
-            :offers="mockOffers"
-            @select-offer="selectedOffer = $event"
-          />
+  :offers="mockOffers"
+  @select-offer="openOfferDetail"
+/>
         </section>
 
         <!-- Projects + filters start under the offers -->
@@ -61,9 +61,9 @@
     />
 
     <FeedOfferDetailModal
-      :offer="selectedOffer"
-      @close="selectedOffer = null"
-    />
+  :offer="selectedOffer"
+  @close="closeOfferDetail"
+/>
   </div>
 </template>
 
@@ -117,6 +117,13 @@ const suggestedStudents = [
 const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
+function openOfferDetail(offer) {
+  selectedOffer.value = offer;
+}
+
+function closeOfferDetail() {
+  selectedOffer.value = null;
+}
 
 const defaultFilters = () => ({
   certifiedOnly: false,

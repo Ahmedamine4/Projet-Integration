@@ -1,6 +1,5 @@
 <script setup>
 import { MapPin } from 'lucide-vue-next';
-import HorizontalScroll from '@/components/feed/HorizontalScroll.vue';
 
 defineProps({
   offers: {
@@ -28,42 +27,49 @@ function handleOfferClick(offer) {
       </div>
     </div>
 
-    <HorizontalScroll>
-      <button
-        v-for="offer in offers"
-        :key="offer.id"
-        type="button"
-        class="offer-card"
-        @click="handleOfferClick(offer)"
-      >
-        <div class="offer-card-top">
-          <span class="offer-type">{{ offer.duration }}</span>
-          <span class="offer-location">
-            <MapPin :size="11" />
-            {{ offer.location }}
-          </span>
-        </div>
+    <div class="offers-scroll-frame">
+      <div class="offers-list">
+        <button
+          v-for="offer in offers"
+          :key="offer.id"
+          type="button"
+          class="offer-card"
+          @click.stop="handleOfferClick(offer)"
+        >
+          <div class="offer-card-top">
+            <span class="offer-location">
+              <MapPin :size="11" />
+              {{ offer.location }}
+            </span>
+          </div>
 
-        <div class="offer-card-content">
-          <h3>{{ offer.title }}</h3>
-          <p class="offer-company">{{ offer.company }}</p>
-        </div>
+          <div class="offer-card-content">
+            <h3>{{ offer.title }}</h3>
 
-        <div class="offer-techs">
-          <span
-            v-for="tech in (offer.technologies || []).slice(0, 3)"
-            :key="tech"
-          >
-            {{ tech }}
-          </span>
-          <span v-if="(offer.technologies || []).length > 3">
-            +{{ offer.technologies.length - 3 }}
-          </span>
-        </div>
+            <p class="offer-company">
+              {{ offer.company }}
+            </p>
+          </div>
 
-        <span class="offer-hint">View details →</span>
-      </button>
-    </HorizontalScroll>
+          <div class="offer-techs">
+            <span
+              v-for="tech in (offer.technologies || []).slice(0, 3)"
+              :key="tech"
+            >
+              {{ tech }}
+            </span>
+
+            <span v-if="(offer.technologies || []).length > 3">
+              +{{ offer.technologies.length - 3 }}
+            </span>
+          </div>
+
+          <span class="offer-hint">
+            Click to view details
+          </span>
+        </button>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -97,6 +103,31 @@ function handleOfferClick(offer) {
   font-size: var(--font-size-xxs);
 }
 
+.offers-scroll-frame {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.offers-list {
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: var(--space-lg);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: var(--space-sm);
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+.offers-list::-webkit-scrollbar {
+  display: none;
+}
+
 .offer-card {
   flex: 0 0 17rem;
   min-height: 9.5rem;
@@ -107,51 +138,31 @@ function handleOfferClick(offer) {
   border-radius: var(--radius-lg);
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   background-color: rgba(var(--color-surface-rgb), 0.92);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.04);
   text-align: left;
   user-select: none;
   cursor: pointer;
   appearance: none;
   font: inherit;
   transition:
-    transform 150ms ease,
-    box-shadow 150ms ease,
-    border-color 150ms ease;
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal),
+    border-color var(--transition-normal),
+    background-color var(--transition-normal);
 }
 
 .offer-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(var(--color-secondary-rgb), 0.28);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
-}
-
-.offer-card:active {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
-  transition-duration: 80ms;
+  transform: scale(1.008);
+  border-color: rgba(var(--color-secondary-rgb), 0.22);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
+  background-color: rgba(var(--color-surface-rgb), 0.98);
 }
 
 .offer-card-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-xs);
-}
-
-.offer-type {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.12rem 0.4rem;
-  border-radius: 999px;
-  background: rgba(var(--color-secondary-rgb), 0.08);
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.16);
-  color: rgba(var(--color-secondary-rgb), 0.85);
-  font-size: 9px;
-  font-weight: var(--font-semibold);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 8rem;
 }
 
 .offer-location {
@@ -168,7 +179,6 @@ function handleOfferClick(offer) {
 .offer-card-content {
   display: grid;
   gap: 2px;
-  flex: 1;
 }
 
 .offer-card h3 {
@@ -210,22 +220,18 @@ function handleOfferClick(offer) {
 
 .offer-hint {
   margin-top: var(--space-xs);
-  color: rgba(var(--color-secondary-rgb), 0.8);
+  color: rgba(var(--color-secondary-rgb), 0.95);
   font-size: 10px;
   font-weight: var(--font-semibold);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 150ms ease, transform 150ms ease;
-}
-
-.offer-card:hover .offer-hint {
-  opacity: 1;
-  transform: translateX(0);
 }
 
 @media (max-width: 640px) {
   .offer-card {
     flex-basis: 14rem;
+  }
+
+  .offers-list {
+    gap: var(--space-md);
   }
 }
 </style>
