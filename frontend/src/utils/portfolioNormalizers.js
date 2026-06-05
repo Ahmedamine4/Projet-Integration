@@ -163,6 +163,22 @@ export function normalizeEducation(institutions = []) {
   }));
 }
 
+export function normalizeRecommendation(item, index = 0) {
+  const professorUser = item?.professeur?.utilisateur ?? item?.professor?.user ?? {};
+  const firstName = item?.authorFirstName ?? professorUser.prenom ?? professorUser.firstName ?? '';
+  const lastName = item?.authorLastName ?? professorUser.nom ?? professorUser.lastName ?? '';
+  const authorName = item?.authorName ?? `${firstName} ${lastName}`.trim();
+
+  return {
+    id: item?.id ?? `${item?.utilisateur_id ?? 'recommendation'}-${item?.prof_utilisateur_id ?? index}`,
+    authorName: authorName || item?.professeur?.utilisateur?.email || 'Professor',
+    authorRole: item?.authorRole ?? item?.professeur?.specialite ?? 'Recommendation',
+    content: item?.content ?? item?.commentaire ?? item?.description ?? item?.objet ?? '',
+    date: item?.date ?? item?.date_lettre ?? '',
+    status: item?.statut ?? 'valide',
+  };
+}
+
 function sortByFrequency(values = []) {
   const frequencies = values.reduce((counts, value) => {
     if (!value) return counts;
@@ -214,6 +230,6 @@ export function normalizePortfolio(data) {
     certifications,
     skills: sortByFrequency(experiences.flatMap((item) => item.technologies ?? [])),
     domains: sortByFrequency(experiences.flatMap((item) => item.domains ?? [])),
-    recommendations: data?.recommandations ?? [],
+    recommendations: (data?.recommandations ?? []).map(normalizeRecommendation),
   };
 }

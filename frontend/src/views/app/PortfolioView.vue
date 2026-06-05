@@ -20,6 +20,8 @@ import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSecti
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
 import InternshipsSection from '@/components/portfolio/internships/InternshipsSection.vue';
+import RecommendationsSection from '@/components/portfolio/recommendations/RecommendationsSection.vue';
+import { placeholderRecommendations } from '@/tmp/portfolioRecommendations';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -89,7 +91,14 @@ const profilePhotoInput = ref(null);
 const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
 const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
-const recommendationsCount = computed(() => portfolio.value?.recommendations?.length ?? 0);
+const displayRecommendations = computed(() => {
+  const recommendations = (portfolio.value?.recommendations ?? []).filter((recommendation) => {
+    return !recommendation.status || recommendation.status === 'valide';
+  });
+
+  return recommendations.length ? recommendations : placeholderRecommendations;
+});
+const recommendationsCount = computed(() => displayRecommendations.value.length);
 const schoolOptions = computed(() =>
   institutionStore.institutions.map((institution) => institution.nom).filter(Boolean)
 );
@@ -571,6 +580,10 @@ onUnmounted(() => {
           </BaseError>
         </div>
       </div>
+      <RecommendationsSection
+        :recommendations="displayRecommendations"
+        :is-owner="isOwnPortfolio"
+      />
     </main>
 
     <footer>
