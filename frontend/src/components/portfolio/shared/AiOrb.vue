@@ -14,6 +14,7 @@ const isAnalyzingDescription = ref(false);
 const analysisError = ref('');
 const userMessage = ref('');
 const descriptionInput = ref(null);
+const emit = defineEmits(['filters-detected']);
 
 const resizeDescriptionInput = () => {
   if (!descriptionInput.value) return;
@@ -43,6 +44,10 @@ const analyzeDescription = async () => {
 
     technologies.value = createSelectableItems(data.technologies);
     domains.value = createSelectableItems(data.domains);
+    emit('filters-detected', {
+        technologies: technologies.value.map(item => item.name),
+        domaines: domains.value.map(item => item.name),
+    });
     triggerAiSpeaking(3000);
 
     form.description = '';

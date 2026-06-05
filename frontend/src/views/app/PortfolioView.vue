@@ -387,6 +387,12 @@ onUnmounted(() => {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
 });
+
+async function handleAiFiltersDetected(filters) {
+  if (!portfolioUserId.value) return;
+
+  await portfolioStore.fetchPortfolio(portfolioUserId.value, filters);
+}
 </script>
 
 <template>
@@ -590,7 +596,7 @@ onUnmounted(() => {
     />
   </div>
   <div class="ai-orb-container">
-    <AiOrb />
+    <AiOrb @filters-detected="handleAiFiltersDetected" />
   </div>
 
 </template>

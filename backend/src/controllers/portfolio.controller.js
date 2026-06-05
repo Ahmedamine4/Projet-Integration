@@ -119,7 +119,7 @@ export const getPortfolioEtudiantController = async (req, res) => {
           : [domaines]
         : [],
     };
-    const data = await getPortfolioEtudiant(etudiantId, isOwner, { technologies, domaines });
+    const data = await getPortfolioEtudiant(etudiantId, isOwner, filters);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     console.error('Erreur getPortfolioEtudiant:', error);
