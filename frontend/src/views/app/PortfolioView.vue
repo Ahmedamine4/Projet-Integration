@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import AboutMe from '@/components/portfolio/profile/AboutMe.vue';
 import PortfolioEducation from '@/components/portfolio/profile/PortfolioEducation.vue';
@@ -13,6 +13,7 @@ import { useActivityStore } from '@/stores/activity';
 import { useCertificationStore } from '@/stores/certification';
 import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
+import { useInstitutionStore } from '@/stores/institution';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
@@ -37,6 +38,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const portfolioStore = usePortfolioStore();
+const institutionStore = useInstitutionStore();
 const projectStore = useProjectStore();
 const activityStore = useActivityStore();
 const certificationStore = useCertificationStore();
@@ -88,6 +90,13 @@ const displayedProfilePhoto = computed(() => localProfilePhoto.value || profileP
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
 const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
 const recommendationsCount = computed(() => portfolio.value?.recommendations?.length ?? 0);
+const schoolOptions = computed(() =>
+  institutionStore.institutions.map((institution) => institution.nom).filter(Boolean)
+);
+
+onMounted(() => {
+  institutionStore.fetchInstitutions();
+});
 
 watch(
   portfolio,
@@ -582,7 +591,7 @@ onUnmounted(() => {
       :type="experienceModal.type"
       :initial-value="experienceModal.selected"
       :loading="experienceModalLoading"
-      :school-options="[]"
+      :school-options="schoolOptions"
       :professor-emails="professorEmails"
       @close="closeExperienceModal"
       @submit="handleExperienceSubmit"
