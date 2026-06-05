@@ -1,4 +1,4 @@
-sstages:
+stages:
   - lint
   - quality
   - security
