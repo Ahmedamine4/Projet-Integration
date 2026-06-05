@@ -1,0 +1,98 @@
+/* ==========================================================================
+   GLOBAL TABLE STYLES
+   ========================================================================== */
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.09);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table th {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  color: var(--color-primary-hover);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid rgba(var(--color-primary-rgb), 0.06);
+  background: rgba(var(--color-primary-rgb), 0.02);
+}
+
+.data-table td {
+  padding: var(--space-sm) var(--space-md);
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.06);
+  transition: background var(--transition-fast);
+}
+
+.table-row {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.table-row:hover td {
+  background: rgba(var(--color-secondary-rgb), 0.03);
+}
+
+.table-row:last-child td {
+  border-bottom: none;
+}
+
+/* ── Table Cell Contents ── */
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.student-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+}
+
+.cell-title {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-sm);
+  color: rgba(var(--color-primary-rgb), 0.8);
+}
+
+.cell-date {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-hover);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.status-badge--pending { 
+  background: rgba(var(--color-secondary-rgb), 0.13); 
+  color: #7a4700; 
+}
+.status-badge--validated { 
+  background: rgba(var(--color-success-rgb), 0.12);  
+  color: var(--color-success); 
+}
+.status-badge--refused { 
+  background: rgba(var(--color-error-rgb), 0.1);      
+  color: var(--color-error); 
+}
