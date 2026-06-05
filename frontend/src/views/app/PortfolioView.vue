@@ -132,13 +132,13 @@ watch(
 const visibleProjects = computed(() => {
 	if (isOwnPortfolio.value) return projects.value;
 
-	return projects.value.filter(project => project.visibleToEveryone);
+	return projects.value.filter(project => project.effectiveVisibleToEveryone);
 });
 
 const visibleActivities = computed(() => {
   if (isOwnPortfolio.value) return activities.value;
 
-  return activities.value.filter(activity => activity.visibleToEveryone);
+  return activities.value.filter(activity => activity.effectiveVisibleToEveryone);
 });
 
 const visibleCertifications = computed(() => {
@@ -150,7 +150,7 @@ const visibleCertifications = computed(() => {
 const visibleInternships = computed(() => {
   if (isOwnPortfolio.value) return internships.value;
 
-  return internships.value.filter(internship => internship.visibleToEveryone);
+  return internships.value.filter(internship => internship.effectiveVisibleToEveryone);
 });
 
 const shouldShowProjectSection = computed(() => {
@@ -205,6 +205,8 @@ function openExperienceModal(type) {
 }
 
 function openEditExperienceModal(type, experience) {
+  if (isRejectedExperience(experience)) return;
+
   experienceErrors.value[type] = '';
   experienceModal.value = {
     open: true,
@@ -212,6 +214,10 @@ function openEditExperienceModal(type, experience) {
     mode: 'edit',
     selected: experience,
   };
+}
+
+function isRejectedExperience(experience) {
+  return experience?.validationStatus === 'refuse';
 }
 
 function closeExperienceModal() {

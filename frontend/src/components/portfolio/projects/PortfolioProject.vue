@@ -1,5 +1,6 @@
 <script setup>
-import { Eye, EyeOff } from 'lucide-vue-next';
+import { BadgeCheck, Clock3, Eye, EyeOff, XCircle } from 'lucide-vue-next';
+import { computed } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 import ExploreButton from '@/components/portfolio/shared/ExploreButton.vue';
 
@@ -16,6 +17,10 @@ const props = defineProps({
 
 const emit = defineEmits(['edit']);
 
+const canEditExperience = computed(() => {
+  return props.canEdit && props.project.validationStatus !== 'refuse';
+});
+
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'long',
@@ -24,7 +29,7 @@ function formatDate(date) {
 }
 
 const { handleDoubleTap } = useDoubleTap(() => {
-  if (!props.canEdit) return;
+  if (!canEditExperience.value) return;
 
   emit('edit', props.project);
 });
@@ -33,10 +38,32 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <template>
   <article 
     class="project-card"
-    :class="{ 'project-card--editable': canEdit }"
-    @dblclick="canEdit && emit('edit', project)"
+    :class="{ 'project-card--editable': canEditExperience }"
+    @dblclick="canEditExperience && emit('edit', project)"
     @click="handleDoubleTap"
   >
+    <div
+      v-if="project.isAcademic && project.validationStatus"
+      class="project-validation-badge"
+      :class="`project-validation-badge--${project.validationStatus}`"
+      :title="`Academic experience ${project.validationStatus === 'en_attente' ? 'pending validation' : project.validationStatus === 'valide' ? 'validated' : 'rejected'}`"
+    >
+      <BadgeCheck
+        v-if="project.validationStatus === 'valide'"
+        :size="22"
+        :stroke-width="2.3"
+      />
+      <Clock3
+        v-else-if="project.validationStatus === 'en_attente'"
+        :size="21"
+        :stroke-width="2.3"
+      />
+      <XCircle
+        v-else
+        :size="21"
+        :stroke-width="2.3"
+      />
+    </div>
     <div class="project-preview">
       <img
         v-if="project.imagePreview"
@@ -54,7 +81,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
             class="project-visibility"
           >
             <Eye
-              v-if="project.visibleToEveryone"
+              v-if="project.effectiveVisibleToEveryone"
               :size="14"
             />
             <EyeOff
@@ -106,7 +133,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
           :experience-id="project.id"
         />
         <span
-          v-if="canEdit"
+          v-if="canEditExperience"
           class="project-edit-hint"
         >
           Double-click to edit
@@ -119,6 +146,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <style scoped>
 .project-card {
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  position: relative;
   flex-shrink: 0;
   flex-grow: 0;
   width: min(100%, 26rem);
@@ -202,6 +230,37 @@ const { handleDoubleTap } = useDoubleTap(() => {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   color: rgba(var(--color-primary-rgb), 0.68);
+}
+
+.project-validation-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-validation-badge {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 2;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 12%, var(--color-background));
+  box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
+}
+
+.project-validation-badge--valide {
+  color: var(--color-success);
+}
+
+.project-validation-badge--en_attente {
+  color: rgb(245, 158, 11);
+}
+
+.project-validation-badge--refuse {
+  color: var(--color-error);
 }
 
 .project-visibility {

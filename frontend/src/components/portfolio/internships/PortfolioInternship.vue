@@ -1,5 +1,6 @@
 <script setup>
 import { CalendarDays, ExternalLink, Eye, EyeOff } from 'lucide-vue-next';
+import { computed } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 import { useRoute } from 'vue-router';
 
@@ -18,6 +19,10 @@ const props = defineProps({
 
 const emit = defineEmits(['edit']);
 
+const canEditExperience = computed(() => {
+  return props.canEdit && props.internship.validationStatus !== 'refuse';
+});
+
 function formatDate(date) {
   if (!date) return '';
 
@@ -33,8 +38,16 @@ function getYear(date) {
   return new Date(date).getFullYear();
 }
 
+function getValidationLabel(status) {
+  return {
+    en_attente: 'Pending',
+    refuse: 'Rejected',
+    valide: 'Validated',
+  }[status] ?? '';
+}
+
 const { handleDoubleTap } = useDoubleTap(() => {
-  if (!props.canEdit) return;
+  if (!canEditExperience.value) return;
 
   emit('edit', props.internship);
 });
@@ -62,8 +75,8 @@ function getExperienceRoute(experienceId) {
 <template>
   <article
     class="internship-card"
-    :class="{ 'internship-card--editable': canEdit }"
-    @dblclick="canEdit && emit('edit', internship)"
+    :class="{ 'internship-card--editable': canEditExperience }"
+    @dblclick="canEditExperience && emit('edit', internship)"
     @click="handleDoubleTap"
   >
     <div class="internship-card__year">
@@ -85,19 +98,28 @@ function getExperienceRoute(experienceId) {
           <h3>{{ internship.title }}</h3>
           <span v-if="internship.missions">{{ internship.missions }}</span>
         </div>
-        <span
-          v-if="canEdit"
-          class="internship-card__visibility"
-        >
-          <Eye
-            v-if="internship.visibleToEveryone"
-            :size="14"
-          />
-          <EyeOff
-            v-else
-            :size="14"
-          />
-        </span>
+        <div class="internship-card__controls">
+          <span
+            v-if="internship.isAcademic && internship.validationStatus"
+            class="internship-card__validation-status"
+            :class="`internship-card__validation-status--${internship.validationStatus}`"
+          >
+            {{ getValidationLabel(internship.validationStatus) }}
+          </span>
+          <span
+            v-if="canEdit"
+            class="internship-card__visibility"
+          >
+            <Eye
+              v-if="internship.effectiveVisibleToEveryone"
+              :size="14"
+            />
+            <EyeOff
+              v-else
+              :size="14"
+            />
+          </span>
+        </div>
       </div>
 
       <div
@@ -138,7 +160,7 @@ function getExperienceRoute(experienceId) {
           <ExternalLink :size="14" />
         </RouterLink>
         <span
-          v-if="canEdit"
+          v-if="canEditExperience"
           class="internship-card__hint"
         >
           Double-click to edit
@@ -241,6 +263,40 @@ function getExperienceRoute(experienceId) {
 .internship-card__visibility {
   display: inline-flex;
   color: rgba(var(--color-primary-rgb), 0.56);
+}
+
+.internship-card__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.internship-card__validation-status {
+  min-height: 1.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.56rem;
+  border-radius: 999px;
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.internship-card__validation-status--en_attente {
+  background: rgba(245, 158, 11, 0.14);
+  color: rgb(245, 158, 11);
+}
+
+.internship-card__validation-status--valide {
+  background: rgba(var(--color-success-rgb), 0.12);
+  color: var(--color-success);
+}
+
+.internship-card__validation-status--refuse {
+  background: rgba(var(--color-error-rgb), 0.1);
+  color: var(--color-error);
 }
 
 .internship-card p {

@@ -1,5 +1,6 @@
 <script setup>
 import { MapPin, CalendarDays, Eye, EyeOff } from 'lucide-vue-next';
+import { computed } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 import ExploreButton from '@/components/portfolio/shared/ExploreButton.vue';
 
@@ -16,6 +17,10 @@ const props = defineProps({
 
 const emit = defineEmits(['edit']);
 
+const canEditExperience = computed(() => {
+  return props.canEdit && props.activity.validationStatus !== 'refuse';
+});
+
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'long',
@@ -23,8 +28,16 @@ function formatDate(date) {
   });
 }
 
+function getValidationLabel(status) {
+  return {
+    en_attente: 'Pending',
+    refuse: 'Rejected',
+    valide: 'Validated',
+  }[status] ?? '';
+}
+
 const { handleDoubleTap } = useDoubleTap(() => {
-  if (!props.canEdit) return;
+  if (!canEditExperience.value) return;
 
   emit('edit', props.activity);
 });
@@ -33,12 +46,19 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <template>
   <article
     class="activity-card"
-    @dblclick="canEdit && emit('edit', activity)"
+    @dblclick="canEditExperience && emit('edit', activity)"
     @click="handleDoubleTap"
   >
     <div class="activity-top">
       <div class="activity-info">
         <div class="activity-kicker">
+          <span
+            v-if="activity.isAcademic && activity.validationStatus"
+            class="activity-validation-status"
+            :class="`activity-validation-status--${activity.validationStatus}`"
+          >
+            {{ getValidationLabel(activity.validationStatus) }}
+          </span>
           <span
             v-if="activity.activityType"
             class="activity-type"
@@ -58,7 +78,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
             class="activity-visibility"
           >
             <Eye
-              v-if="activity.visibleToEveryone"
+              v-if="activity.effectiveVisibleToEveryone"
               :size="14"
               :stroke-width="2"
             />
@@ -149,7 +169,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
         :experience-id="activity.id"
       />
       <span
-        v-if="canEdit"
+        v-if="canEditExperience"
         class="activity-edit-hint"
       >
         Double-click to edit
@@ -161,6 +181,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <style scoped>
 .activity-card {
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  position: relative;
   flex-shrink: 0;
   flex-grow: 0;
   width: 100%;
@@ -210,6 +231,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
 
 .activity-type,
 .activity-date,
+.activity-validation-status,
 .activity-visibility {
   width: fit-content;
   padding: 0.4rem 0.64rem;
@@ -224,6 +246,25 @@ const { handleDoubleTap } = useDoubleTap(() => {
   color: var(--color-surface);
   font-weight: var(--font-bold);
   text-transform: uppercase;
+}
+
+.activity-validation-status {
+  font-weight: var(--font-bold);
+}
+
+.activity-validation-status--en_attente {
+  background: rgba(245, 158, 11, 0.14);
+  color: rgb(245, 158, 11);
+}
+
+.activity-validation-status--valide {
+  background: rgba(var(--color-success-rgb), 0.12);
+  color: var(--color-success);
+}
+
+.activity-validation-status--refuse {
+  background: rgba(var(--color-error-rgb), 0.1);
+  color: var(--color-error);
 }
 
 .activity-date {
