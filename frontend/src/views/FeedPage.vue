@@ -12,15 +12,13 @@
       />
 
       <div class="feed-content">
-        <!-- Offers carousel: full width above projects + filters -->
         <section class="offers-row">
           <FeedOffersCarousel
-  :offers="mockOffers"
-  @select-offer="openOfferDetail"
-/>
+            :offers="mockOffers"
+            @select-offer="openOfferDetail"
+          />
         </section>
 
-        <!-- Projects + filters start under the offers -->
         <div class="feed-grid">
           <section class="feed-list">
             <template v-if="filteredProjects.length">
@@ -28,6 +26,7 @@
                 v-for="project in filteredProjects"
                 :key="project.id"
                 :project="project"
+                @click="openProjectDetail(project)"
                 @share="shareProject = $event"
               />
             </template>
@@ -60,16 +59,29 @@
       @close="shareProject = null"
     />
 
+    <ExperienceModal
+      :open="projectModal.open"
+      mode="edit"
+      type="project"
+      :initial-value="projectModal.selected"
+      :loading="false"
+      :school-options="[]"
+      :professor-emails="[]"
+      @close="closeProjectDetail"
+      @submit="handleProjectModalSubmit"
+    />
+
     <FeedOfferDetailModal
-  :offer="selectedOffer"
-  @close="closeOfferDetail"
-/>
+      :offer="selectedOffer"
+      @close="closeOfferDetail"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
 import { SearchX } from 'lucide-vue-next';
+
 import Sidebar from '@/components/layout/AppSidebar.vue';
 import FeedHeader from '@/components/feed/feedHeader.vue';
 import FeedFiltersPanel from '@/components/feed/FeedFiltersPanel.vue';
@@ -77,6 +89,7 @@ import FeedProjectCard from '@/components/feed/feedProject.vue';
 import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
 import FeedOffersCarousel from '@/components/feed/FeedOffersCarousel.vue';
 import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
+import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 
 const mockUser = {
   prenom: 'Wissam',
@@ -117,12 +130,39 @@ const suggestedStudents = [
 const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
+
+const projectModal = ref({
+  open: false,
+  selected: null,
+});
+
+function openProjectDetail(project) {
+  selectedOffer.value = null;
+
+  projectModal.value = {
+    open: true,
+    selected: project,
+  };
+}
+
+function closeProjectDetail() {
+  projectModal.value = {
+    open: false,
+    selected: null,
+  };
+}
+
 function openOfferDetail(offer) {
+  closeProjectDetail();
   selectedOffer.value = offer;
 }
 
 function closeOfferDetail() {
   selectedOffer.value = null;
+}
+
+function handleProjectModalSubmit() {
+  closeProjectDetail();
 }
 
 const defaultFilters = () => ({
