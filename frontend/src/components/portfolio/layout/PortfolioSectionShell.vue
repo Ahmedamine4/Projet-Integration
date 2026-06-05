@@ -42,6 +42,7 @@ const emit = defineEmits(['add']);
         <Plus :size="15" />
         {{ addLabel }}
       </button>
+      <slot name="actions" />
     </div>
 
     <slot v-if="!isEmpty" />

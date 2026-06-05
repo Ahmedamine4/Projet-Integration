@@ -4,19 +4,53 @@ import { ArrowUpRight, Pencil, Check, X } from 'lucide-vue-next';
 import api from '@/services/api';
 
 const props = defineProps({
-  title:    { type: String, required: true },
-  href:     { type: String, default: '' },
-  isOwner:  { type: Boolean, default: false },
-  isEditing: { type: Boolean, default: false },
-  disabled: { type: Boolean, default: false },
-  platform: { type: String, required: true },
+  title: {
+    type: String,
+    required: true
+  },
+  href: {
+    type: String,
+    default: ''
+  },
+  isOwner: {
+    type: Boolean,
+    default: false
+  },
+  isEditing: {
+    type: Boolean,
+    default: false
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  platform: {
+    type: String, 
+    required: true,
+  },
+  userId: {
+    type: [String, Number],
+    required: true,
+  },
 });
 
 const PLATFORMS = {
-  github:    { label: 'GitHub',       pattern: /^https?:\/\/(www\.)?github\.com\/.+/ },
-  twitter:   { label: 'Twitter / X',  pattern: /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/.+/ },
-  instagram: { label: 'Instagram',    pattern: /^https?:\/\/(www\.)?instagram\.com\/.+/ },
-  facebook:  { label: 'Facebook',     pattern: /^https?:\/\/(www\.)?facebook\.com\/.+/ },
+  github: {
+    label: 'GitHub',
+    pattern: /^https?:\/\/(www\.)?github\.com\/.+/
+  },
+  linkedin: {
+    label: 'LinkedIn',
+    pattern: /^https?:\/\/(www\.)?linkedin\.com\/.+/
+  },
+  x: {
+    label: 'Twitter / X',
+    pattern: /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/.+/
+  },
+  instagram: {
+    label: 'Instagram',
+    pattern: /^https?:\/\/(www\.)?instagram\.com\/.+/
+  },
 };
 
 
@@ -31,6 +65,15 @@ const placeholder = computed(() =>
   `https://${props.platform}.com/username`,
 );
 
+function normalizeUrl(value) {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  return /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+}
+
 function openEdit() {
   draft.value = props.href || '';
   error.value = '';
@@ -43,7 +86,7 @@ function cancelEdit() {
 }
 
 function validate() {
-  const val = draft.value.trim();
+  const val = normalizeUrl(draft.value);
   if (!val) return true; 
   const rule = PLATFORMS[props.platform];
   if (rule && !rule.pattern.test(val)) {
@@ -56,17 +99,18 @@ function validate() {
 async function save() {
   if (!validate()) return;
 
+  const href = normalizeUrl(draft.value);
   saving.value = true;
   try {
-    const res = await api.put(`/socials/${props.platform}`, {
-      links: { [props.platform]: draft.value.trim() },
+    const res = await api.put(`/users/${props.userId}/social`, {
+      [props.platform]: href,
     });
 
     if (res.data?.success) {
-        emit('updated', {
+      emit('updated', {
         platform: props.platform,
-        href: draft.value.trim(),
-    });
+        href,
+      });
     } else {
       error.value = 'Failed to save. Try again.';
     }

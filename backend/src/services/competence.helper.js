@@ -1,4 +1,5 @@
 import { TypeCompetence } from '@prisma/client';
+import prisma from '../config/prisma.js';
 
 
 const formaterNomCompetence = (nom) => {
@@ -103,4 +104,29 @@ export const supprimerCompetencesDeveloppees = async (tx, experienceId, etudiant
       });
     }
   }
+};
+
+export const getCompetencesByExperience = async (experienceId) => {
+  const competencesDev = await prisma.competenceDeveloppee.findMany({
+    where: { experience_id: experienceId },
+    include: { competence: true },
+  });
+ 
+  const technologies = competencesDev
+    .filter((cd) => cd.competence.type === TypeCompetence.technologie)
+    .map((cd) => ({
+      competence_id: cd.competence.competence_id,
+      nom: cd.competence.nom,
+      niveau: cd.niveau,
+    }));
+ 
+  const domaines = competencesDev
+    .filter((cd) => cd.competence.type === TypeCompetence.domaine)
+    .map((cd) => ({
+      competence_id: cd.competence.competence_id,
+      nom: cd.competence.nom,
+      niveau: cd.niveau,
+    }));
+ 
+  return { technologies, domaines };
 };

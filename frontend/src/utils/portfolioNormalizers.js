@@ -28,9 +28,29 @@ const getActivity = (item) => item?.activite ?? item ?? {};
 
 const getCertification = (item) => item?.certification ?? item ?? {};
 
+const isAcademicExperience = (experience, validation) =>
+  experience.type_specifique === 'academique' || Boolean(validation);
+
+const getValidationState = (experience, validation) => {
+  const validationStatus = validation?.statut ?? '';
+  const isAcademic = isAcademicExperience(experience, validation);
+  const isValidatedAcademic = isAcademic && validationStatus === 'valide';
+
+  return {
+    isAcademic,
+    validationStatus,
+    isValidatedAcademic,
+    effectiveVisibleToEveryone: Boolean(experience.visibilite) && (!isAcademic || isValidatedAcademic),
+  };
+};
+
 export function normalizeProject(item) {
   const experience = getExperience(item);
   const project = getProject(item);
+  const validationState = getValidationState(
+    experience,
+    project.validation ?? item?.validation
+  );
 
   return {
     id: experience.experience_id,
@@ -43,12 +63,17 @@ export function normalizeProject(item) {
     technologies: project.technologies ?? getCompetenceNames(experience, 'technologie'),
     domains: project.domains ?? getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.photo ?? project.photo ?? experience.documentations?.[0]?.captures ?? '',
+    ...validationState,
   };
 }
 
 export function normalizeActivity(item) {
   const experience = getExperience(item);
   const activity = getActivity(item);
+  const validationState = getValidationState(
+    experience,
+    activity.validation ?? item?.validation
+  );
 
   return {
     id: experience.experience_id,
@@ -63,6 +88,7 @@ export function normalizeActivity(item) {
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.photo ?? experience.documentations?.[0]?.captures ?? '',
+    ...validationState,
   };
 }
 
@@ -89,6 +115,10 @@ export function normalizeCertification(item) {
 export function normalizeInternship(item) {
   const experience = getExperience(item);
   const stage = experience.stage ?? item?.stage ?? {};
+  const validationState = getValidationState(
+    experience,
+    stage.validation ?? item?.validation
+  );
   const startDate = formatLocalDate(experience.date_experience);
   const endDate = addDays(experience.date_experience, stage.duree);
 
@@ -108,6 +138,7 @@ export function normalizeInternship(item) {
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.documentations?.[0]?.captures ?? '',
+    ...validationState,
   };
 }
 
@@ -130,6 +161,22 @@ export function normalizeEducation(institutions = []) {
       ? formatLocalDate(entry.date_d_action)
       : '',
   }));
+}
+
+export function normalizeRecommendation(item, index = 0) {
+  const professorUser = item?.professeur?.utilisateur ?? item?.professor?.user ?? {};
+  const firstName = item?.authorFirstName ?? professorUser.prenom ?? professorUser.firstName ?? '';
+  const lastName = item?.authorLastName ?? professorUser.nom ?? professorUser.lastName ?? '';
+  const authorName = item?.authorName ?? `${firstName} ${lastName}`.trim();
+
+  return {
+    id: item?.id ?? `${item?.utilisateur_id ?? 'recommendation'}-${item?.prof_utilisateur_id ?? index}`,
+    authorName: authorName || item?.professeur?.utilisateur?.email || 'Professor',
+    authorRole: item?.authorRole ?? item?.professeur?.specialite ?? 'Recommendation',
+    content: item?.content ?? item?.commentaire ?? item?.description ?? item?.objet ?? '',
+    date: item?.date ?? item?.date_lettre ?? '',
+    status: item?.statut ?? 'valide',
+  };
 }
 
 function sortByFrequency(values = []) {
@@ -165,9 +212,9 @@ export function normalizePortfolio(data) {
       email: user.email ?? '',
       phone: user.phone ?? '',
       photo: user.photo ?? '',
-      github: data?.github_API ?? '',
+      github: user.github ?? '',
       linkedin: user.linkedin ?? '',
-      twitter: user.twitter ?? '',
+      x: user.x ?? '',
       instagram: user.instagram ?? '',
     },
     headline: data?.niveau
@@ -183,6 +230,6 @@ export function normalizePortfolio(data) {
     certifications,
     skills: sortByFrequency(experiences.flatMap((item) => item.technologies ?? [])),
     domains: sortByFrequency(experiences.flatMap((item) => item.domains ?? [])),
-    recommendations: data?.recommandations ?? [],
+    recommendations: (data?.recommandations ?? []).map(normalizeRecommendation),
   };
 }

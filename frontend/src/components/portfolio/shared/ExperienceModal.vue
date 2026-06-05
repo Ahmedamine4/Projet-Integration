@@ -94,7 +94,7 @@ const experienceConfigs = {
     imageAccept: 'image/*',
     imageRequired: false,
     showGithub: false,
-    showAcademic: false,
+    showAcademic: true,
     showTags: true,
     showMissions: false,
     showActivityFields: true,
@@ -124,6 +124,10 @@ const capitalizedType = computed(() => {
 });
 
 const isEdit = computed(() => props.mode === 'edit');
+
+const requiresAcademicTeacher = computed(() => {
+  return props.type !== 'activity';
+});
 
 const errors = reactive({
   title: '',
@@ -340,9 +344,10 @@ const submitExperience = () => {
     if (form.isAcademic && !form.institution)
       errors.institution = `Institution is required for academic ${props.type}s`;
 
-    if (form.isAcademic && !trimmedTeacherEmail)
+    if (requiresAcademicTeacher.value && form.isAcademic && !trimmedTeacherEmail)
       errors.teacherEmail = `Teacher email is required for academic ${props.type}s`;
     else if (
+      requiresAcademicTeacher.value &&
       form.isAcademic &&
       !props.professorEmails.includes(trimmedTeacherEmail)
     )
@@ -395,6 +400,7 @@ const submitExperience = () => {
       ? trimmedReport
       : '',
     teacherEmail: config.showAcademic && form.isAcademic
+      && requiresAcademicTeacher.value
       ? trimmedTeacherEmail
       : '',
     visibleToEveryone: form.visibleToEveryone,
@@ -766,7 +772,10 @@ const existingImageName = computed(() => {
                       {{ errors.institution }}
                     </BaseError>
                   </div>
-                  <div class="field">
+                  <div
+                    v-if="requiresAcademicTeacher"
+                    class="field"
+                  >
                     <BaseDropdown
                       v-model="form.teacherEmail"
                       :options="professorEmails"

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import AboutMe from '@/components/portfolio/profile/AboutMe.vue';
 import PortfolioEducation from '@/components/portfolio/profile/PortfolioEducation.vue';
@@ -13,12 +13,16 @@ import { useActivityStore } from '@/stores/activity';
 import { useCertificationStore } from '@/stores/certification';
 import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
+import { useInstitutionStore } from '@/stores/institution';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
 import InternshipsSection from '@/components/portfolio/internships/InternshipsSection.vue';
+import RecommendationsSection from '@/components/portfolio/recommendations/RecommendationsSection.vue';
+import { placeholderRecommendations } from '@/tmp/portfolioRecommendations';
+import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -37,6 +41,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const portfolioStore = usePortfolioStore();
+const institutionStore = useInstitutionStore();
 const projectStore = useProjectStore();
 const activityStore = useActivityStore();
 const certificationStore = useCertificationStore();
@@ -57,8 +62,11 @@ const portfolioUserId = computed(() =>
   userId.value ||
   null
 );
+
 const isOwnPortfolio = computed(() => {
-	return String(portfolioUserId.value) === String(userId.value);
+  if (!portfolioUserId.value || !userId.value) return false;
+
+  return String(portfolioUserId.value) === String(userId.value);
 });
 
 const profile = computed(() => portfolio.value?.user ?? authStore.user ?? {});
@@ -84,7 +92,21 @@ const profilePhotoInput = ref(null);
 const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
 const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
-const recommendationsCount = computed(() => portfolio.value?.recommendations?.length ?? 0);
+const displayRecommendations = computed(() => {
+  const recommendations = (portfolio.value?.recommendations ?? []).filter((recommendation) => {
+    return !recommendation.status || recommendation.status === 'valide';
+  });
+
+  return recommendations.length ? recommendations : placeholderRecommendations;
+});
+const recommendationsCount = computed(() => displayRecommendations.value.length);
+const schoolOptions = computed(() =>
+  institutionStore.institutions.map((institution) => institution.nom).filter(Boolean)
+);
+
+onMounted(() => {
+  institutionStore.fetchInstitutions();
+});
 
 watch(
   portfolio,
@@ -120,13 +142,13 @@ watch(
 const visibleProjects = computed(() => {
 	if (isOwnPortfolio.value) return projects.value;
 
-	return projects.value.filter(project => project.visibleToEveryone);
+	return projects.value.filter(project => project.effectiveVisibleToEveryone);
 });
 
 const visibleActivities = computed(() => {
   if (isOwnPortfolio.value) return activities.value;
 
-  return activities.value.filter(activity => activity.visibleToEveryone);
+  return activities.value.filter(activity => activity.effectiveVisibleToEveryone);
 });
 
 const visibleCertifications = computed(() => {
@@ -138,7 +160,7 @@ const visibleCertifications = computed(() => {
 const visibleInternships = computed(() => {
   if (isOwnPortfolio.value) return internships.value;
 
-  return internships.value.filter(internship => internship.visibleToEveryone);
+  return internships.value.filter(internship => internship.effectiveVisibleToEveryone);
 });
 
 const shouldShowProjectSection = computed(() => {
@@ -193,6 +215,8 @@ function openExperienceModal(type) {
 }
 
 function openEditExperienceModal(type, experience) {
+  if (isRejectedExperience(experience)) return;
+
   experienceErrors.value[type] = '';
   experienceModal.value = {
     open: true,
@@ -200,6 +224,10 @@ function openEditExperienceModal(type, experience) {
     mode: 'edit',
     selected: experience,
   };
+}
+
+function isRejectedExperience(experience) {
+  return experience?.validationStatus === 'refuse';
 }
 
 function closeExperienceModal() {
@@ -340,14 +368,20 @@ const links = computed(() => [
   {
     platform: 'x',
     label: 'Twitter / X',
-    href: profile.value?.twitter,
+    href: profile.value?.x,
   },
   {
     platform: 'instagram',
     label: 'Instagram',
     href: profile.value?.instagram,
   },
-].filter(link => link.href));
+].filter(link => link.href || isOwnPortfolio.value));
+
+async function handleLinkUpdated() {
+  if (!portfolioUserId.value) return;
+
+  await portfolioStore.fetchPortfolio(portfolioUserId.value);
+}
 
 const activityMaxCardHeight = ref(0);
 
@@ -377,6 +411,12 @@ onUnmounted(() => {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
 });
+
+async function handleAiFiltersDetected(filters) {
+  if (!portfolioUserId.value) return;
+
+  await portfolioStore.fetchPortfolio(portfolioUserId.value, filters);
+}
 </script>
 
 <template>
@@ -449,7 +489,10 @@ onUnmounted(() => {
               <h2>{{ portfolioScore }}</h2>
             </div>
           </div>
-          <div class="actions">
+          <div
+            v-if="!isOwnPortfolio"
+            class="actions"
+          >
             <button class="follow-button">
               Follow
             </button>
@@ -544,13 +587,19 @@ onUnmounted(() => {
           </BaseError>
         </div>
       </div>
+      <RecommendationsSection
+        :recommendations="displayRecommendations"
+        :is-owner="isOwnPortfolio"
+      />
     </main>
 
     <footer>
       <PortfolioContact
         :email="profile?.email"
         :canedit="isOwnPortfolio"
-        :links="links"
+        :user-id="portfolioUserId"
+        :links
+        @link-updated="handleLinkUpdated"
       />
     </footer>
 
@@ -568,12 +617,16 @@ onUnmounted(() => {
       :type="experienceModal.type"
       :initial-value="experienceModal.selected"
       :loading="experienceModalLoading"
-      :school-options="[]"
+      :school-options="schoolOptions"
       :professor-emails="professorEmails"
       @close="closeExperienceModal"
       @submit="handleExperienceSubmit"
     />
   </div>
+  <div class="ai-orb-container">
+    <AiOrb @filters-detected="handleAiFiltersDetected" />
+  </div>
+
 </template>
 
 <style scoped>
@@ -821,6 +874,15 @@ onUnmounted(() => {
   column-gap: calc(var(--space-xl) * 2);
   row-gap: var(--portfolio-section-gap);
 }
+.ai-orb-container {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+  width: 64px;
+  height: 64px;
+  z-index: 999;
+  overflow: visible;
+}
 
 @media (max-width: 980px) {
 	.profile {
@@ -841,8 +903,40 @@ onUnmounted(() => {
 }
 
 @media (max-width: 640px) {
+  .ai-orb-container {
+    right: 1.4rem;
+    bottom: 1rem;
+    width: 56px;
+    height: 56px;
+  }
+
   .portfolio main {
     --portfolio-padding-inline: var(--space-md);
+    padding-bottom: 5rem;
+  }
+
+  .statistics {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+
+  .actions {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .qr-button {
+    font-size: 10px;
+    padding-inline: 0.7rem 0.85rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .ai-orb-container {
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 }
 </style>

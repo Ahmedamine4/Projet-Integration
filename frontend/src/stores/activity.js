@@ -11,7 +11,9 @@ function buildActivityFormData(activity) {
   formData.append('description', activity.description);
   formData.append('type', activity.activityType);
   formData.append('lieu', activity.location);
-  formData.append('typeActivite', 'personnelle');
+  formData.append('typeActivite', activity.isAcademic ? 'academique' : 'personnelle');
+  formData.append('isAcademic', String(Boolean(activity.isAcademic)));
+  formData.append('institution', activity.institution ?? '');
   formData.append('visibilite', String(activity.visibleToEveryone));
   formData.append(
     'competences',

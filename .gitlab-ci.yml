@@ -1,9 +1,10 @@
-stages:
+sstages:
   - lint
   - quality
   - security
   - test
   - build
+  - deploy
 
 workflow:
   rules:
@@ -272,6 +273,36 @@ backend-tests:
       changes:
         - backend/**/*
 
+# DEVELOPMENT DOCKER BUILD
+docker-build-dev:
+  stage: build
+
+  image: docker:27-cli
+
+  services:
+    - name: docker:27-dind
+      alias: docker
+
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: "1"
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+
+  before_script:
+    - docker version
+    - docker compose version
+
+  script:
+    - docker compose \
+      -f infrastructure/docker/docker-compose.yml \
+      -f infrastructure/docker/docker-compose.dev.yml \
+      build \
+      --pull
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
 # PRODUCTION DOCKER BUILD
 docker-build-prod:
   stage: build
@@ -293,11 +324,43 @@ docker-build-prod:
     - docker compose version
 
   script:
-    - docker compose
-      -f infrastructure/docker/docker-compose.yml
-      -f infrastructure/docker/docker-compose.prod.yml
-      build
+    - docker compose \
+      -f infrastructure/docker/docker-compose.yml \
+      -f infrastructure/docker/docker-compose.prod.yml \
+      build \
       --pull
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+docker-push-prod:
+  stage: deploy
+
+  image: docker:27-cli
+
+  services:
+    - name: docker:27-dind
+      alias: docker
+
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: "1"
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+  script:
+    - docker compose \
+      -f infrastructure/docker/docker-compose.yml \
+      -f infrastructure/docker/docker-compose.prod.yml \
+      build
+
+    - docker push tijabdel/backend:prod
+    - docker push tijabdel/frontend:prod
+    - docker push tijabdel/nginx:prod
+    - docker push tijabdel/ai:prod
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'

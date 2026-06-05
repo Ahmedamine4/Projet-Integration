@@ -1,23 +1,63 @@
 <script setup>
 import { ArrowUpRight } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
-defineProps({
+const props = defineProps({
   experienceType: {
     type: String,
     required: true,
   },
+  experienceId: {
+    type: [String, Number],
+    required: true,
+  },
+  label: {
+    type: String,
+    default: '',
+  },
 });
+
+const route = useRoute();
+const router = useRouter();
+
+const buttonLabel = computed(() => {
+  return props.label || `Explore ${props.experienceType}`;
+});
+
+const experienceRoute = computed(() => {
+  if (route.params.id) {
+    return {
+      name: 'portfolio-experience',
+      params: {
+        id: route.params.id,
+        experienceId: props.experienceId,
+      },
+    };
+  }
+
+  return {
+    name: 'my-portfolio-experience',
+    params: {
+      experienceId: props.experienceId,
+    },
+  };
+});
+
+function openExperience() {
+  router.push(experienceRoute.value);
+}
 </script>
 
 <template>
   <button
     type="button"
     class="explore-button"
-    @click.stop
+    @click.stop="openExperience"
   >
     <span class="explore-button-label-track">
       <span class="explore-button-label">
-        Explore {{ experienceType }}
+        {{ buttonLabel }}
       </span>
     </span>
 
