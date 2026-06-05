@@ -1,43 +1,35 @@
-output "test_message" {
-  value = " Terraform est bien initialisé et respecte le schéma !"
+
+output "instance_1_ip" {
+  value = aws_instance.app_1.public_ip
 }
 
-output "vpc_id" {
-  value = aws_vpc.main.id
+output "instance_2_ip" {
+  value = aws_instance.app_2.public_ip
 }
 
-output "public_subnet_ids" {
-  value = aws_subnet.public[*].id
-}
-
-output "private_subnet_ids" {
-  value = aws_subnet.private[*].id
-}
-
-#  URL du Load Balancer
-output "api_url" {
-  description = "URL publique du backend Node.js (ALB)"
-  value       = "http://${aws_lb.main.dns_name}"
+output "alb_dns_name" {
+  value = aws_lb.app.dns_name
 }
 
 output "database_endpoint" {
-  description = "Endpoint RDS PostgreSQL (Privé)"
-  value       = aws_db_instance.postgres.endpoint
+  value = aws_db_instance.postgres.endpoint
 }
 
-#  S3 Frontend
+output "cloudfront_frontend_domain" {
+  value = aws_cloudfront_distribution.frontend.domain_name
+}
+
+output "cloudfront_api_domain" {
+  value = aws_cloudfront_distribution.api.domain_name
+}
+
 output "s3_bucket_name" {
-  description = "Nom du bucket S3 pour uploader Vue.js"
-  value       = aws_s3_bucket.frontend.bucket
+  value = aws_s3_bucket.frontend.bucket
 }
 
-output "cloudfront_domain_name" {
-  description = "URL CloudFront HTTPS du frontend"
-  value       = aws_cloudfront_distribution.s3_distribution.domain_name
-}
 
 #  Résumé mis à jour
-output "resume" {
+/*output "resume" {
   value = <<-EOT
 
 ╔═══════════════════════════════════════════════════════════╗
@@ -54,4 +46,4 @@ output "resume" {
 ║ 3. Déploiement/CI-CD du code backend sur les instances de l'ASG.
 ╚═══════════════════════════════════════════════════════════╝
   EOT
-}
+}*/

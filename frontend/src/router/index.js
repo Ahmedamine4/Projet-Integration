@@ -5,6 +5,7 @@ import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
 import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
+//import DashboardView from '@/views/DashboardView.vue';
 
 const routes = [
   {

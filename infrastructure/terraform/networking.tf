@@ -1,4 +1,8 @@
-# --- VPC ---
+
+# ============================================================================
+# VPC & NETWORKING
+# ============================================================================
+
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -9,114 +13,163 @@ resource "aws_vpc" "main" {
   }
 }
 
-# --- Internet Gateway ---
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
-
   tags = {
     Name = "${var.project_name}-igw"
   }
 }
 
-# --- SUBNETS PUBLIQUES ---
-resource "aws_subnet" "public" {
-  count                   = length(var.public_subnet_cidrs)
+resource "aws_subnet" "public_1" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = var.availability_zones[count.index]
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = true
-
   tags = {
-    Name = "${var.project_name}-public-subnet-${count.index + 1}"
+    Name = "${var.project_name}-public-1a"
   }
 }
 
-# --- SUBNETS PRIVÉES ---
-resource "aws_subnet" "private" {
-  count             = length(var.private_subnet_cidrs)
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.5.0/24"
+  availability_zone       = "${var.aws_region}b"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "${var.project_name}-public-1b"
+  }
+}
+
+resource "aws_subnet" "private_1" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidrs[count.index]
-  availability_zone = var.availability_zones[count.index]
-
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "${var.aws_region}a"
   tags = {
-    Name = "${var.project_name}-private-subnet-${count.index + 1}"
+    Name = "${var.project_name}-private-1a"
   }
 }
 
-# --- ROUTE TABLE PUBLIQUE ---
+resource "aws_subnet" "private_2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.4.0/24"
+  availability_zone = "${var.aws_region}b"
+  tags = {
+    Name = "${var.project_name}-private-1b"
+  }
+}
+
+resource "aws_subnet" "db_1" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.3.0/24"
+  availability_zone = "${var.aws_region}a"
+  tags = {
+    Name = "${var.project_name}-db-1a"
+  }
+}
+
+resource "aws_subnet" "db_2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.6.0/24"
+  availability_zone = "${var.aws_region}b"
+  tags = {
+    Name = "${var.project_name}-db-1b"
+  }
+}
+
+# NAT Gateways
+resource "aws_eip" "nat_1" {
+  domain = "vpc"
+  tags = {
+    Name = "${var.project_name}-nat-eip-1"
+  }
+  depends_on = [aws_internet_gateway.main]
+}
+
+resource "aws_eip" "nat_2" {
+  domain = "vpc"
+  tags = {
+    Name = "${var.project_name}-nat-eip-2"
+  }
+  depends_on = [aws_internet_gateway.main]
+}
+
+resource "aws_nat_gateway" "nat_1" {
+  subnet_id     = aws_subnet.public_1.id
+  allocation_id = aws_eip.nat_1.id
+  tags = {
+    Name = "${var.project_name}-nat-1"
+  }
+}
+
+resource "aws_nat_gateway" "nat_2" {
+  subnet_id     = aws_subnet.public_2.id
+  allocation_id = aws_eip.nat_2.id
+  tags = {
+    Name = "${var.project_name}-nat-2"
+  }
+}
+
+# Route Tables
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
-
   route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
+    cidr_block      = "0.0.0.0/0"
+    gateway_id      = aws_internet_gateway.main.id
   }
-
   tags = {
     Name = "${var.project_name}-public-rt"
   }
 }
 
-resource "aws_route_table_association" "public" {
-  count          = length(aws_subnet.public)
-  subnet_id      = aws_subnet.public[count.index].id
+resource "aws_route_table_association" "public_1" {
+  subnet_id      = aws_subnet.public_1.id
   route_table_id = aws_route_table.public.id
 }
 
-# --- ELASTIC IPs POUR NAT ---
-resource "aws_eip" "nat" {
-  count  = length(var.public_subnet_cidrs)
-  domain = "vpc"
-
-  tags = {
-    Name = "${var.project_name}-nat-eip-${count.index + 1}"
-  }
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
+  route_table_id = aws_route_table.public.id
 }
 
-# --- NAT GATEWAYS ---
-resource "aws_nat_gateway" "main" {
-  count         = length(var.public_subnet_cidrs)
-  allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public[count.index].id
-
-  depends_on = [aws_internet_gateway.main]
-
-  tags = {
-    Name = "${var.project_name}-nat-gateway-${count.index + 1}"
-  }
-}
-
-# --- ROUTE TABLES PRIVÉES ---
-resource "aws_route_table" "private" {
-  count  = length(var.private_subnet_cidrs)
+resource "aws_route_table" "private_1" {
   vpc_id = aws_vpc.main.id
-
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[count.index].id
+    nat_gateway_id = aws_nat_gateway.nat_1.id
   }
-
   tags = {
-    Name = "${var.project_name}-private-rt-${count.index + 1}"
+    Name = "${var.project_name}-private-rt-1a"
   }
 }
 
-resource "aws_route_table_association" "private" {
-  count          = length(aws_subnet.private)
-  subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private[count.index].id
+resource "aws_route_table_association" "private_1" {
+  subnet_id      = aws_subnet.private_1.id
+  route_table_id = aws_route_table.private_1.id
 }
 
-# ---  VPC ENDPOINT (S3 GATEWAY) ---
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id            = aws_vpc.main.id
-  service_name      = "com.amazonaws.eu-west-3.s3"
-  vpc_endpoint_type = "Gateway"
+resource "aws_route_table_association" "db_1" {
+  subnet_id      = aws_subnet.db_1.id
+  route_table_id = aws_route_table.private_1.id
+}
 
-  # Associe l'endpoint à toutes les tables de routage (Publiques et Privées)
-  route_table_ids = concat([aws_route_table.public.id], aws_route_table.private[*].id)
-
+resource "aws_route_table" "private_2" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_2.id
+  }
   tags = {
-    Name = "${var.project_name}-s3-endpoint"
+    Name = "${var.project_name}-private-rt-1b"
   }
 }
+
+resource "aws_route_table_association" "private_2" {
+  subnet_id      = aws_subnet.private_2.id
+  route_table_id = aws_route_table.private_2.id
+}
+
+resource "aws_route_table_association" "db_2" {
+  subnet_id      = aws_subnet.db_2.id
+  route_table_id = aws_route_table.private_2.id
+}
+
