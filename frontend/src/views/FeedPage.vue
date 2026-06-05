@@ -11,43 +11,45 @@
         @create-project="handleCreateProject"
       />
 
-      <div class="feed-grid">
-        <section class="feed-list">
-          <!-- Offers carousel -->
+      <div class="feed-content">
+        <section class="offers-row">
           <FeedOffersCarousel
             :offers="mockOffers"
             @select-offer="selectedOffer = $event"
           />
-
-          <!-- Projects feed -->
-          <template v-if="filteredProjects.length">
-            <FeedProjectCard
-              v-for="project in filteredProjects"
-              :key="project.id"
-              :project="project"
-              @share="shareProject = $event"
-            />
-          </template>
-
-          <div
-            v-else
-            class="feed-empty"
-          >
-            <SearchX :size="32" />
-            <p>Aucun projet ne correspond à vos filtres.</p>
-          </div>
         </section>
 
-        <FeedFiltersPanel
-          class="sticky-filters"
-          :filters="filters"
-          :technologies="allTechnologies"
-          :domains="allDomains"
-          :trending-techs="trendingTechs"
-          :suggested-students="suggestedStudents"
-          @update:filters="filters = $event"
-          @reset="resetFilters"
-        />
+        <div class="feed-grid">
+          <section class="feed-list">
+            <template v-if="filteredProjects.length">
+              <FeedProjectCard
+                v-for="project in filteredProjects"
+                :key="project.id"
+                :project="project"
+                @share="shareProject = $event"
+              />
+            </template>
+
+            <div
+              v-else
+              class="feed-empty"
+            >
+              <SearchX :size="32" />
+              <p>Aucun projet ne correspond à vos filtres.</p>
+            </div>
+          </section>
+
+          <FeedFiltersPanel
+            class="sticky-filters"
+            :filters="filters"
+            :technologies="allTechnologies"
+            :domains="allDomains"
+            :trending-techs="trendingTechs"
+            :suggested-students="suggestedStudents"
+            @update:filters="filters = $event"
+            @reset="resetFilters"
+          />
+        </div>
       </div>
     </main>
 
@@ -64,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { SearchX } from 'lucide-vue-next';
 import Sidebar from '@/components/layout/AppSidebar.vue';
 import FeedHeader from '@/components/feed/feedHeader.vue';
@@ -74,11 +76,11 @@ import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
 import FeedOffersCarousel from '@/components/feed/FeedOffersCarousel.vue';
 import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
 
-// ─── Mock user ────────────────────────────────────────────────────────────────
 const mockUser = {
   prenom: 'Wissam',
   nom: 'Bakkali',
 };
+
 const trendingTechs = [
   { name: 'Vue 3', projectsCount: 18 },
   { name: 'FastAPI', projectsCount: 14 },
@@ -87,14 +89,32 @@ const trendingTechs = [
 ];
 
 const suggestedStudents = [
-  { id: 1, initials: 'SI', name: 'Sara Idrissi', speciality: 'Dev Web', stack: ['Vue', 'Node'] },
-  { id: 2, initials: 'YK', name: 'Yassine Karim', speciality: 'IA & Data', stack: ['Python', 'FastAPI'] },
-  { id: 3, initials: 'AB', name: 'Amal Benali', speciality: 'DevOps', stack: ['Docker', 'CI/CD'] },
+  {
+    id: 1,
+    initials: 'SI',
+    name: 'Sara Idrissi',
+    speciality: 'Dev Web',
+    stack: ['Vue', 'Node'],
+  },
+  {
+    id: 2,
+    initials: 'YK',
+    name: 'Yassine Karim',
+    speciality: 'IA & Data',
+    stack: ['Python', 'FastAPI'],
+  },
+  {
+    id: 3,
+    initials: 'AB',
+    name: 'Amal Benali',
+    speciality: 'DevOps',
+    stack: ['Docker', 'CI/CD'],
+  },
 ];
 
-// ─── Page state ───────────────────────────────────────────────────────────────
 const search = ref('');
 const shareProject = ref(null);
+const selectedOffer = ref(null);
 
 const defaultFilters = () => ({
   certifiedOnly: false,
@@ -103,7 +123,7 @@ const defaultFilters = () => ({
   technology: null,
   domain: null,
 });
-const selectedOffer = ref(null);
+
 const filters = ref(defaultFilters());
 
 function resetFilters() {
@@ -114,16 +134,17 @@ function handleCreateProject() {
   console.log('Create project clicked');
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
 const mockProjects = [
   {
     id: 1,
     campusRankScore: 94,
     credibilityScore: 4.8,
     title: 'SmartStudyRoom Platform',
-    description: 'Une plateforme collaborative qui utilise l\'IA pour optimiser les espaces d\'étude partagés. Les étudiants peuvent réserver des salles, former des groupes d\'étude et recevoir des recommandations de ressources personnalisées en fonction de leur cours et de leurs objectifs.',
+    description:
+      'Une plateforme collaborative qui utilise l\'IA pour optimiser les espaces d\'étude partagés. Les étudiants peuvent réserver des salles, former des groupes d\'étude et recevoir des recommandations de ressources personnalisées en fonction de leur cours et de leurs objectifs.',
     date: '2025-05-18',
-    imagePreview: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80',
+    imagePreview:
+      'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80',
     shareUrl: null,
     studentName: 'Amine Kettani',
     schoolName: 'ENSA Casablanca',
@@ -140,9 +161,11 @@ const mockProjects = [
     campusRankScore: 88,
     credibilityScore: 4.5,
     title: 'AI Portfolio Recommendation System',
-    description: 'Un système intelligent qui analyse les projets académiques des étudiants et propose des recommandations de compétences à acquérir, ainsi que des profils d\'entreprises susceptibles d\'être intéressées par leur profil. Utilise des embeddings NLP pour comparer les portfolios.',
+    description:
+      'Un système intelligent qui analyse les projets académiques des étudiants et propose des recommandations de compétences à acquérir, ainsi que des profils d\'entreprises susceptibles d\'être intéressées par leur profil. Utilise des embeddings NLP pour comparer les portfolios.',
     date: '2025-06-02',
-    imagePreview: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80',
+    imagePreview:
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80',
     shareUrl: null,
     studentName: 'Sara Idrissi',
     schoolName: 'ENSIAS Rabat',
@@ -159,9 +182,11 @@ const mockProjects = [
     campusRankScore: 72,
     credibilityScore: 3.9,
     title: 'Campus Event Aggregator',
-    description: 'Application mobile et web qui centralise tous les événements du campus — workshops, hackathons, séminaires — et envoie des notifications personnalisées aux étudiants selon leurs centres d\'intérêt et leur parcours académique.',
+    description:
+      'Application mobile et web qui centralise tous les événements du campus — workshops, hackathons, séminaires — et envoie des notifications personnalisées aux étudiants selon leurs centres d\'intérêt et leur parcours académique.',
     date: '2025-04-30',
-    imagePreview: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
+    imagePreview:
+      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
     shareUrl: null,
     studentName: 'Youssef Benmoussa',
     schoolName: 'ENSA Casablanca',
@@ -174,10 +199,10 @@ const mockProjects = [
     domains: ['Mobile', 'Événements'],
   },
 ];
+
 const mockOffers = [
   {
     id: 1,
-    type: 'Internship',
     title: 'Frontend Developer Intern',
     company: 'Capgemini',
     location: 'Casablanca',
@@ -189,7 +214,6 @@ const mockOffers = [
   },
   {
     id: 2,
-    type: 'Job',
     title: 'Junior Full-Stack Developer',
     company: 'Inetum',
     location: 'Rabat',
@@ -201,7 +225,6 @@ const mockOffers = [
   },
   {
     id: 3,
-    type: 'Internship',
     title: 'AI Engineering Intern',
     company: 'OCP Solutions',
     location: 'Hybrid',
@@ -213,7 +236,6 @@ const mockOffers = [
   },
   {
     id: 4,
-    type: 'Internship',
     title: 'DevOps Intern',
     company: 'Orange Business',
     location: 'Casablanca',
@@ -223,54 +245,104 @@ const mockOffers = [
     description:
       'Assist the DevOps team with deployment pipelines, containerized environments and monitoring improvements.',
   },
+  {
+    id: 5,
+    title: 'Backend Developer Intern',
+    company: 'SQLI',
+    location: 'Casablanca',
+    duration: '5 months',
+    level: 'Student',
+    technologies: ['Node.js', 'Express', 'PostgreSQL', 'Docker'],
+    description:
+      'Support backend API development, database integration and technical documentation for web applications.',
+  },
 ];
-// ─── Derived filter options ───────────────────────────────────────────────────
+
 const allTechnologies = computed(() => {
   const set = new Set();
-  mockProjects.forEach((p) => p.technologies.forEach((t) => set.add(t)));
+
+  mockProjects.forEach((project) => {
+    project.technologies.forEach((technology) => set.add(technology));
+  });
+
   return [...set];
 });
 
 const allDomains = computed(() => {
   const set = new Set();
-  mockProjects.forEach((p) => p.domains.forEach((d) => set.add(d)));
+
+  mockProjects.forEach((project) => {
+    project.domains.forEach((domain) => set.add(domain));
+  });
+
   return [...set];
 });
 
-// ─── Filtered + sorted projects ───────────────────────────────────────────────
 const filteredProjects = computed(() => {
-  const kw = search.value.trim().toLowerCase();
-  const f = filters.value;
+  const keyword = search.value.trim().toLowerCase();
+  const currentFilters = filters.value;
 
-  let result = mockProjects.filter((p) => {
-    // Keyword search
-    if (kw) {
-      const hay = [
-        p.title, p.description, p.studentName, p.schoolName,
-        ...(p.technologies || []), ...(p.domains || [])
-      ].join(' ').toLowerCase();
-      if (!hay.includes(kw)) return false;
+  let result = mockProjects.filter((project) => {
+    if (keyword) {
+      const searchableText = [
+        project.title,
+        project.description,
+        project.studentName,
+        project.schoolName,
+        ...(project.technologies || []),
+        ...(project.domains || []),
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      if (!searchableText.includes(keyword)) return false;
     }
-    // Certified only
-    if (f.certifiedOnly && !p.isVerified) return false;
-    // Source
-    if (f.source === 'same-school' && p.feedReason !== 'Même école') return false;
-    if (f.source === 'following' && p.feedReason !== 'Abonnement') return false;
-    // Technology
-    if (f.technology && !p.technologies.includes(f.technology)) return false;
-    // Domain
-    if (f.domain && !p.domains.includes(f.domain)) return false;
+
+    if (currentFilters.certifiedOnly && !project.isVerified) return false;
+
+    if (
+      currentFilters.source === 'same-school' &&
+      project.feedReason !== 'Même école'
+    ) {
+      return false;
+    }
+
+    if (
+      currentFilters.source === 'following' &&
+      project.feedReason !== 'Abonnement'
+    ) {
+      return false;
+    }
+
+    if (
+      currentFilters.technology &&
+      !project.technologies.includes(currentFilters.technology)
+    ) {
+      return false;
+    }
+
+    if (
+      currentFilters.domain &&
+      !project.domains.includes(currentFilters.domain)
+    ) {
+      return false;
+    }
 
     return true;
   });
 
-  // Sort
-  if (f.sort === 'trending') {
-    result = [...result].sort((a, b) => b.campusRankScore - a.campusRankScore);
-  } else if (f.sort === 'recent') {
-    result = [...result].sort((a, b) => new Date(b.date) - new Date(a.date));
-  } else if (f.sort === 'top-month') {
-    result = [...result].sort((a, b) => b.recommendationsCount - a.recommendationsCount);
+  if (currentFilters.sort === 'trending') {
+    result = [...result].sort(
+      (a, b) => b.campusRankScore - a.campusRankScore
+    );
+  } else if (currentFilters.sort === 'recent') {
+    result = [...result].sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
+  } else if (currentFilters.sort === 'top-month') {
+    result = [...result].sort(
+      (a, b) => b.recommendationsCount - a.recommendationsCount
+    );
   }
 
   return result;
@@ -282,79 +354,144 @@ const filteredProjects = computed(() => {
   height: 100vh;
   display: flex;
   overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    rgba(var(--color-primary-rgb), 0.045),
-    rgba(var(--color-primary-rgb), 0.07)
-  );
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--color-primary-rgb), 0.045),
+      rgba(var(--color-primary-rgb), 0.07)
+    );
 }
 
-/* Le scroll s'effectue maintenant sur TOUTE la page centrale */
 .feed-page {
   flex: 1;
   min-width: 0;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; 
+  overflow-y: auto;
   overflow-x: hidden;
   background-color: rgba(var(--color-primary-rgb), 0.018);
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--color-primary-rgb), 0.18) transparent;
 }
 
-/* Scrollbar custom pour la zone centrale */
-.feed-page::-webkit-scrollbar { width: 6px; }
-.feed-page::-webkit-scrollbar-thumb { background: rgba(var(--color-primary-rgb), 0.18); border-radius: 999px; }
-.feed-page::-webkit-scrollbar-track { background: transparent; }
+.feed-page::-webkit-scrollbar {
+  width: 6px;
+}
 
-/* Le Header reste fixé en haut de l'écran pendant le scroll */
+.feed-page::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.18);
+  border-radius: 999px;
+}
+
+.feed-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .sticky-header {
   position: sticky;
   top: 0;
   z-index: 50;
 }
 
-.feed-grid {
-  flex: 1;
+/* MAIN LAYOUT */
+.feed-content {
+  width: 100%;
+  max-width: 1220px;
+  margin-inline: auto;
   display: grid;
-  grid-template-columns: minmax(0, 660px) 300px;
-  justify-content: center;
-  align-items: start; /* Permet aux colonnes de ne pas s'étirer et rend le sticky possible */
-  gap: calc(var(--space-xl) * 1.15);
+  grid-template-columns: minmax(0, 820px) 300px;
+  column-gap: calc(var(--space-xl) * 1.15);
+  row-gap: var(--space-sm);
   padding: var(--space-md) var(--space-xl) var(--space-xl);
 }
 
-/* La liste des projets grandit naturellement selon son contenu */
+/* OFFERS FULL HORIZONTAL WIDTH: project column + filter column */
+.offers-row {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* FORCE CHILD CAROUSEL TO USE FULL WIDTH */
+.offers-row :deep(.offers-section),
+.offers-row :deep(.offers-scroll-frame) {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+
+/* FORCE HORIZONTAL SCROLL INSIDE THE OFFERS */
+.offers-row :deep(.offers-list) {
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: var(--space-lg);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: var(--space-sm);
+  overscroll-behavior-x: contain;
+  cursor: grab;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+.offers-row :deep(.offers-list:active) {
+  cursor: grabbing;
+}
+
+.offers-row :deep(.offers-list::-webkit-scrollbar) {
+  display: none;
+}
+
+.offers-row :deep(.offer-card) {
+  flex: 0 0 17rem;
+}
+
+/* PROJECTS + FILTERS UNDER OFFERS */
+.feed-grid {
+  grid-column: 1 / -1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 820px) 300px;
+  align-items: start;
+  column-gap: calc(var(--space-xl) * 1.15);
+}
+
 .feed-list {
   width: 100%;
-  max-width: 660px;
-  justify-self: center;
+  max-width: 820px;
+  justify-self: stretch;
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  min-width: 0;
 }
 
 .feed-list :deep(.project-card) {
   width: 100%;
-  max-width: 660px;
+  max-width: 820px;
   margin-inline: auto;
 }
 
-/* Les filtres restent visibles (fixés) pendant la lecture des projets */
-.feed-grid :deep(.filters-panel),
 .sticky-filters {
   width: 300px;
   position: sticky;
-  top: 90px; /* Ajuste cette valeur si ton header est plus ou moins haut */
-  max-height: calc(100vh - 110px);
+  top: 90px;
   align-self: start;
   justify-self: end;
+  max-height: calc(100vh - 110px);
   overflow-y: auto;
   scrollbar-width: thin;
 }
 
-/* Empty state */
+.feed-grid :deep(.filters-panel) {
+  width: 100%;
+}
+
 .feed-empty {
   min-height: 16rem;
   display: flex;
@@ -375,25 +512,33 @@ const filteredProjects = computed(() => {
   margin: 0;
 }
 
-/* Tablet */
 @media (max-width: 1050px) {
-  .feed-grid {
-    grid-template-columns: minmax(0, 660px);
-    justify-content: center;
+  .feed-content {
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
     padding-inline: var(--space-md);
   }
 
-  .feed-grid :deep(.filters-panel),
+  .offers-row {
+    width: 100%;
+  }
+
+  .feed-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .sticky-filters {
     display: none;
   }
 
-  .feed-list, .feed-list :deep(.project-card) {
-    max-width: 660px;
+  .feed-list,
+  .feed-list :deep(.project-card) {
+    max-width: 100%;
   }
 }
 
-/* Mobile */
 @media (max-width: 760px) {
   .feed-shell {
     height: 100vh;
@@ -407,14 +552,21 @@ const filteredProjects = computed(() => {
     overflow-x: hidden;
   }
 
-  .feed-grid {
-    grid-template-columns: 1fr;
+  .feed-content {
     padding: var(--space-sm);
     gap: var(--space-sm);
   }
 
-  .feed-list, .feed-list :deep(.project-card) {
-    max-width: 100%;
+  .feed-grid {
+    gap: var(--space-sm);
+  }
+
+  .offers-row :deep(.offer-card) {
+    flex-basis: 14rem;
+  }
+
+  .offers-row :deep(.offers-list) {
+    gap: var(--space-md);
   }
 }
 </style>

@@ -1,6 +1,6 @@
 <script setup>
-import { nextTick, onMounted, ref } from 'vue';
-import { Briefcase, MapPin } from 'lucide-vue-next';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { MapPin } from 'lucide-vue-next';
 
 defineProps({
   offers: {
@@ -15,6 +15,7 @@ const offersRef = ref(null);
 const canScrollLeft = ref(false);
 const canScrollRight = ref(false);
 const isDragging = ref(false);
+const hasMoved = ref(false);
 const lastX = ref(0);
 const lastTime = ref(0);
 const velocity = ref(0);
@@ -36,6 +37,7 @@ function updateScrollFades() {
 
 function handleMouseDown(event) {
   isDragging.value = true;
+  hasMoved.value = false;
   velocity.value = 0;
 
   if (animationFrame.value) {
@@ -48,11 +50,15 @@ function handleMouseDown(event) {
 }
 
 function handleMouseMove(event) {
-  if (!isDragging.value) return;
+  if (!isDragging.value || !offersRef.value) return;
 
   event.preventDefault();
 
   const deltaX = event.clientX - lastX.value;
+
+  if (Math.abs(deltaX) > 3) {
+    hasMoved.value = true;
+  }
 
   offersRef.value.scrollBy({
     left: -deltaX * dragSpeed,
@@ -81,16 +87,14 @@ function handleMouseUp() {
 }
 
 function applyMomentum(currentTime) {
-  const el = offersRef.value;
-
-  if (!el || Math.abs(velocity.value) < minReleaseVelocity) {
+  if (!offersRef.value || Math.abs(velocity.value) < minReleaseVelocity) {
     animationFrame.value = null;
     return;
   }
 
   const deltaTime = currentTime - lastTime.value;
 
-  el.scrollBy({
+  offersRef.value.scrollBy({
     left: -velocity.value * deltaTime,
   });
 
@@ -101,13 +105,22 @@ function applyMomentum(currentTime) {
 }
 
 function handleOfferClick(offer) {
-  if (isDragging.value) return;
+  if (hasMoved.value) {
+    hasMoved.value = false;
+    return;
+  }
 
   emit('select-offer', offer);
 }
 
 onMounted(() => {
   nextTick(updateScrollFades);
+});
+
+onBeforeUnmount(() => {
+  if (animationFrame.value) {
+    cancelAnimationFrame(animationFrame.value);
+  }
 });
 </script>
 
@@ -146,11 +159,6 @@ onMounted(() => {
           @click="handleOfferClick(offer)"
         >
           <div class="offer-card-top">
-            <span class="offer-type">
-              <Briefcase :size="12" />
-              {{ offer.type }}
-            </span>
-
             <span class="offer-location">
               <MapPin :size="11" />
               {{ offer.location }}
@@ -167,13 +175,13 @@ onMounted(() => {
 
           <div class="offer-techs">
             <span
-              v-for="tech in offer.technologies.slice(0, 3)"
+              v-for="tech in (offer.technologies || []).slice(0, 3)"
               :key="tech"
             >
               {{ tech }}
             </span>
 
-            <span v-if="offer.technologies.length > 3">
+            <span v-if="(offer.technologies || []).length > 3">
               +{{ offer.technologies.length - 3 }}
             </span>
           </div>
@@ -190,8 +198,8 @@ onMounted(() => {
 <style scoped>
 .offers-section {
   width: 100%;
-  max-width: 580px;
-  margin-inline: auto;
+  max-width: none;
+  margin-inline: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
@@ -217,14 +225,11 @@ onMounted(() => {
   font-size: var(--font-size-xxs);
 }
 
-/* Same visual logic as portfolio */
 .offers-scroll-frame {
   --offer-fade-width: clamp(2rem, 6vw, 4rem);
   position: relative;
-  overflow: hidden;
 }
 
-/* Fade effect like portfolio */
 .offers-scroll-frame::before,
 .offers-scroll-frame::after {
   content: "";
@@ -241,7 +246,7 @@ onMounted(() => {
   left: 0;
   background: linear-gradient(
     to right,
-    rgba(var(--color-background-rgb), 1),
+    var(--color-background),
     rgba(var(--color-background-rgb), 0)
   );
 }
@@ -250,7 +255,7 @@ onMounted(() => {
   right: 0;
   background: linear-gradient(
     to left,
-    rgba(var(--color-background-rgb), 1),
+    var(--color-background),
     rgba(var(--color-background-rgb), 0)
   );
 }
@@ -260,13 +265,15 @@ onMounted(() => {
   width: var(--offer-fade-width);
 }
 
-/* Horizontal scroll */
 .offers-list {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   box-sizing: border-box;
   position: relative;
   z-index: 1;
-  gap: var(--space-md);
+  gap: var(--space-lg);
+  height: fit-content;
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
@@ -285,11 +292,8 @@ onMounted(() => {
   display: none;
 }
 
-/* Card */
 .offer-card {
-  flex-shrink: 0;
-  flex-grow: 0;
-  width: min(100%, 17rem);
+  flex: 0 0 17rem;
   min-height: 9.5rem;
   display: flex;
   flex-direction: column;
@@ -319,31 +323,19 @@ onMounted(() => {
 .offer-card-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-xs);
 }
 
-.offer-type,
 .offer-location {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   width: fit-content;
   white-space: nowrap;
+  color: rgba(var(--color-primary-rgb), 0.42);
   font-size: 9px;
   font-weight: var(--font-semibold);
-}
-
-.offer-type {
-  padding: 0.18rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.24);
-  background: rgba(var(--color-secondary-rgb), 0.09);
-  color: rgba(var(--color-secondary-rgb), 0.95);
-}
-
-.offer-location {
-  color: rgba(var(--color-primary-rgb), 0.42);
 }
 
 .offer-card-content {
@@ -396,8 +388,12 @@ onMounted(() => {
 }
 
 @media (max-width: 640px) {
+  .offers-list {
+    gap: var(--space-md);
+  }
+
   .offer-card {
-    width: 14rem;
+    flex-basis: 14rem;
   }
 }
 </style>
