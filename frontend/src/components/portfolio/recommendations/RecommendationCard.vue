@@ -129,6 +129,7 @@ const emit = defineEmits(['toggle-visibility']);
   height: 2.2rem;
   border: none;
   border-radius: var(--radius-sm);
+  background-color: transparent;
   color: rgba(var(--color-primary-rgb), 0.72);
   cursor: pointer;
   transition:
