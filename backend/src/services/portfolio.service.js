@@ -26,7 +26,10 @@ export async function updateUserAboutByUserId(userId, aboutText) {
   });
 }
 
-export async function getPortfolioEtudiant(etudiantId, isOwner) {
+export async function getPortfolioEtudiant(etudiantId, isOwner, filters = {}) {
+  const { technologies = [], domaines = [] } = filters;
+  const totalFiltres = technologies.length + domaines.length;
+
   const etudiant = await prisma.etudiant.findUnique({
     where: { etudiant_utilisateur_id: etudiantId },
     include: {
@@ -58,13 +61,42 @@ export async function getPortfolioEtudiant(etudiantId, isOwner) {
     isOwner ? getCertificationsByEtudiant(etudiantId) : getCertificationsVisiblesByEtudiant(etudiantId),
   ]);
 
+  if (!technologies.length && !domaines.length) {
+    return { ...etudiant, isOwner, stages, projets, activites, certifications };
+  }
+
+  const highlight = (list) => {
+    return list
+      .map(item => {
+        const competences = item.competence_dev ?? [];
+
+        const techCount = competences.filter(cd =>
+          cd.competence.type === 'technologie' && technologies.includes(cd.competence.nom)
+        ).length;
+
+        const domaineCount = competences.filter(cd =>
+          cd.competence.type === 'domaine' && domaines.includes(cd.competence.nom)
+        ).length;
+        const score =totalFiltres > 0? Math.round(((techCount + domaineCount) / totalFiltres) * 100): 0;
+
+        return {
+          ...item,
+          highlighted: techCount + domaineCount > 0,
+          score,
+          techCount,
+          domaineCount,
+        };
+      })
+      .sort((a, b) => b.techCount - a.techCount || b.domaineCount - a.domaineCount);
+  };
+
   return {
     ...etudiant,
     isOwner,
-    stages,
-    projets,
-    activites,
-    certifications,
+    stages: highlight(stages),
+    projets: highlight(projets),
+    activites: highlight(activites),
+    certifications: highlight(certifications),
   };
 }
 
