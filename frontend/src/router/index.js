@@ -17,7 +17,7 @@ const routes = [
 {
   path: '/project-card-preview',
   name: 'project-card-preview',
-  component: () => import('@/views/ProjectCardPreview.vue'),
+  component: () => import('@/views/FeedPage.vue'),
 },
   {
     path: '/',

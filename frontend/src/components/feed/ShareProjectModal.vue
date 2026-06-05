@@ -1,191 +1,209 @@
-<script setup>
-import { ref, watch } from 'vue';
-import { X, Link } from 'lucide-vue-next';
-
-const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false,
-  },
-  shareLink: {
-    type: String,
-    required: true,
-  },
-});
-
-const emit = defineEmits(['close']);
-
-const copied = ref(false);
-
-watch(
-  () => props.show,
-  () => {
-    copied.value = false;
-  }
-);
-
-async function copyLink() {
-  try {
-    await navigator.clipboard.writeText(props.shareLink);
-    copied.value = true;
-  } catch {
-    const textarea = document.createElement('textarea');
-    textarea.value = props.shareLink;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    copied.value = true;
-  }
-
-  setTimeout(() => {
-    copied.value = false;
-  }, 1500);
-}
-</script>
-
 <template>
-  <Teleport to="body">
-    <div
-      v-if="show"
-      class="share-backdrop"
-      @click.self="emit('close')"
-    >
-      <div class="share-modal">
-        <div class="share-header">
-          <div>
-            <h2>Share project</h2>
-            <p>Copy this link to share the project.</p>
-          </div>
-
-          <button
-            type="button"
-            class="share-close"
-            @click="emit('close')"
-          >
-            <X :size="16" />
-          </button>
+  <div v-if="project" class="modal-backdrop" @click.self="emit('close')">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <div class="modal-icon">
+          <Share2 :size="18" />
         </div>
+        <div>
+          <h2 id="modal-title" class="modal-title">Partager le projet</h2>
+          <p class="modal-subtitle">Copiez ce lien pour partager le projet.</p>
+        </div>
+        <button class="modal-close" @click="emit('close')" aria-label="Fermer">
+          <X :size="18" />
+        </button>
+      </div>
 
-        <div class="share-link-box">
-          <Link :size="16" />
-
+      <div class="modal-body">
+        <div class="link-row">
           <input
-            :value="shareLink"
+            ref="inputRef"
+            class="link-input"
+            type="text"
             readonly
+            :value="shareLink"
             @focus="$event.target.select()"
-          >
-
-          <button
-            type="button"
-            @click="copyLink"
-          >
-            {{ copied ? 'Copied' : 'Copy link' }}
+          />
+          <button class="copy-btn" :class="{ copied }" @click="copyLink">
+            <CheckCheck v-if="copied" :size="15" />
+            <Copy v-else :size="15" />
+            <span>{{ copied ? 'Copié !' : 'Copier le lien' }}</span>
           </button>
         </div>
       </div>
     </div>
-  </Teleport>
+  </div>
 </template>
 
+<script setup>
+import { ref, computed } from 'vue';
+import { Share2, X, Copy, CheckCheck } from 'lucide-vue-next';
+
+const props = defineProps({
+  project: { type: Object, default: null },
+});
+
+const emit = defineEmits(['close']);
+
+const inputRef = ref(null);
+const copied = ref(false);
+
+const shareLink = computed(() => {
+  if (!props.project) return '';
+  return props.project.shareUrl || `${window.location.origin}/projects/${props.project.id}`;
+});
+
+async function copyLink() {
+  const text = shareLink.value;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  copied.value = true;
+  setTimeout(() => {
+    copied.value = false;
+  }, 2200);
+}
+</script>
+
 <style scoped>
-.share-backdrop {
+.modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 2000;
-  display: grid;
-  place-items: center;
-  padding: var(--space-lg);
-  background-color: rgba(var(--color-primary-rgb), 0.28);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(10px);
-  animation: fadeIn var(--transition-fast) ease-out;
-}
-
-.share-modal {
-  width: min(100%, 30rem);
-  padding: var(--space-lg);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-  background-color: rgba(var(--color-surface-rgb), 0.96);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
-  animation: modalPop var(--transition-fast) ease-out;
-}
-
-.share-header {
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
-}
-
-.share-header h2 {
-  margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.95);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-bold);
-}
-
-.share-header p {
-  margin: var(--space-xs) 0 0;
-  color: rgba(var(--color-primary-rgb), 0.55);
-  font-size: var(--font-size-sm);
-}
-
-.share-close {
-  width: 2rem;
-  height: 2rem;
-  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  border-radius: 999px;
-  background-color: rgba(var(--color-primary-rgb), 0.06);
-  color: rgba(var(--color-primary-rgb), 0.65);
-  cursor: pointer;
+  padding: var(--space-md);
 }
 
-.share-link-box {
+.modal-box {
+  background: rgba(var(--color-surface-rgb), 1);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+}
+
+.modal-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-secondary-rgb), 0.12);
+  color: rgba(var(--color-secondary-rgb), 1);
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-  background-color: rgba(var(--color-background-rgb), 0.55);
-}
-
-.share-link-box svg {
+  justify-content: center;
   flex-shrink: 0;
-  color: rgba(var(--color-primary-rgb), 0.48);
 }
 
-.share-link-box input {
-  min-width: 0;
-  flex: 1;
-  height: 2.25rem;
+.modal-title {
+  margin: 0 0 3px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-bold);
+  color: rgba(var(--color-primary-rgb), 0.9);
+}
+
+.modal-subtitle {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: rgba(var(--color-primary-rgb), 0.5);
+}
+
+.modal-close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
   border: none;
   background: transparent;
-  color: rgba(var(--color-primary-rgb), 0.78);
+  color: rgba(var(--color-primary-rgb), 0.4);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: rgba(var(--color-primary-rgb), 0.07);
+  color: rgba(var(--color-primary-rgb), 0.75);
+}
+
+.modal-body {
+  padding: 0 var(--space-md) var(--space-md);
+}
+
+.link-row {
+  display: flex;
+  gap: 8px;
+}
+
+.link-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
+  background: rgba(var(--color-background-rgb), 0.7);
   font-size: var(--font-size-xs);
+  color: rgba(var(--color-primary-rgb), 0.7);
   outline: none;
 }
 
-.share-link-box button {
-  height: 2.25rem;
-  padding: 0 0.85rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.35);
-  background-color: rgba(var(--color-secondary-rgb), 0.16);
-  color: rgba(var(--color-primary-rgb), 0.9);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-bold);
-  white-space: nowrap;
+.copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: rgba(var(--color-secondary-rgb), 1);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-semibold);
   cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--transition-fast), background var(--transition-normal);
+  flex-shrink: 0;
 }
 
-.share-link-box button:hover {
-  background-color: rgba(var(--color-secondary-rgb), 0.24);
+.copy-btn:hover {
+  opacity: 0.88;
+}
+
+.copy-btn.copied {
+  background: #16a34a;
+}
+
+@media (max-width: 480px) {
+  .link-row {
+    flex-direction: column;
+  }
+  .copy-btn {
+    justify-content: center;
+  }
 }
 </style>

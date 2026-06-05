@@ -1,12 +1,155 @@
+<template>
+  <article class="project-card">
+    <!-- Author header -->
+    <div class="card-author">
+      <div
+        class="avatar"
+        :class="avatarToneClass"
+      >
+        {{ initials }}
+      </div>
+
+      <div class="author-info">
+        <span class="author-name">{{ project.studentName }}</span>
+        <span class="author-meta">{{ project.schoolName }} · {{ formattedDate }}</span>
+      </div>
+
+      <span class="feed-reason-pill">{{ project.feedReason }}</span>
+
+      <span class="credibility-pill">
+        {{ project.credibilityScore }}
+      </span>
+    </div>
+
+    <!-- Title and certification -->
+    <div class="card-title-row">
+      <h3 class="card-title">
+        {{ project.title }}
+      </h3>
+
+      <span
+        v-if="project.isVerified"
+        class="certified-pill"
+      >
+        <BadgeCheck :size="13" />
+        Certified project
+      </span>
+    </div>
+
+    <p class="card-description">
+      {{ project.description }}
+    </p>
+
+    <div
+      v-if="project.imagePreview"
+      class="post-media"
+    >
+      <img
+        :src="project.imagePreview"
+        :alt="project.title"
+        loading="lazy"
+      >
+    </div>
+
+    <!-- Tags -->
+    <div
+      v-if="project.technologies?.length || project.domains?.length"
+      class="card-tags"
+    >
+      <span
+        v-for="tech in project.technologies"
+        :key="'t-' + tech"
+        class="tag tag--tech"
+      >
+        {{ tech }}
+      </span>
+
+      <span
+        v-for="domain in project.domains"
+        :key="'d-' + domain"
+        class="tag tag--domain"
+      >
+        {{ domain }}
+      </span>
+    </div>
+
+    <!-- Stats -->
+    <div class="card-stats">
+      <span class="stat">
+        <ThumbsUp :size="13" />
+        {{ project.recommendationsCount }}
+      </span>
+
+      <span class="stat">
+        <MessageCircle :size="13" />
+        {{ project.commentsCount }}
+      </span>
+
+      <span class="stat">
+        <GitBranch :size="13" />
+        {{ project.githubReposCount }}
+      </span>
+    </div>
+
+    <div class="card-divider" />
+
+    <!-- Actions -->
+    <div class="card-actions">
+      <button
+        type="button"
+        class="action-btn"
+      >
+        <ThumbsUp :size="14" />
+        <span>Recommend</span>
+      </button>
+
+      <button
+        type="button"
+        class="action-btn"
+      >
+        <MessageCircle :size="14" />
+        <span>Comment</span>
+      </button>
+
+      <button
+        type="button"
+        class="action-btn action-btn--primary"
+      >
+        <ExternalLink :size="14" />
+        <span>View project</span>
+      </button>
+
+      <button
+        v-if="project.githubReposCount > 0"
+        type="button"
+        class="action-btn"
+        aria-label="Open GitHub repository"
+      >
+        <Github :size="14" />
+      </button>
+
+      <button
+        type="button"
+        class="action-btn action-btn--icon"
+        aria-label="Share project"
+        @click="emit('share', project)"
+      >
+        <Share2 :size="14" />
+      </button>
+    </div>
+  </article>
+</template>
+
 <script setup>
-import { ref } from 'vue';
-import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
+import { computed } from 'vue';
 import {
+  ThumbsUp,
   MessageCircle,
-  Share2,
-  Award,
-  Github,
+  GitBranch,
   ExternalLink,
+  Github,
+  Share2,
+  BadgeCheck,
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -15,502 +158,308 @@ const props = defineProps({
     required: true,
   },
 });
-const showShareModal = ref(false);
 
-function getProjectShareLink(project) {
-  return project.shareUrl || `${window.location.origin}/projects/${project.id}`;
-}
-const DESCRIPTION_LIMIT = 420;
+const emit = defineEmits(['share']);
 
-function formatDate(date) {
-  if (!date) return '';
+const initials = computed(() => {
+  const parts = (props.project.studentName || '').split(' ');
 
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'long',
+  return parts
+    .map((part) => part[0]?.toUpperCase() || '')
+    .slice(0, 2)
+    .join('');
+});
+
+const avatarToneClass = computed(() => {
+  const toneIndex = Number(props.project.id || 0) % 4;
+
+  return `avatar--tone-${toneIndex + 1}`;
+});
+
+const formattedDate = computed(() => {
+  if (!props.project.date) return '';
+
+  const date = new Date(props.project.date);
+
+  return date.toLocaleDateString('en-US', {
     day: 'numeric',
+    month: 'short',
     year: 'numeric',
   });
-}
-
-function getStudentName(project) {
-  return project.student?.name || project.studentName || 'Unknown student';
-}
-
-function getSchoolName(project) {
-  return project.student?.school || project.schoolName || 'Unknown school';
-}
-
-function getProjectDescription(project) {
-  if (!project.description) return '';
-
-  if (project.description.length <= DESCRIPTION_LIMIT) {
-    return project.description;
-  }
-
-  return `${project.description.slice(0, DESCRIPTION_LIMIT).trim()}...`;
-}
-
-function hasDescription(project) {
-  return Boolean(project.description?.trim());
-}
-
-function hasCredibilityScore(project) {
-  return project.credibilityScore !== undefined && project.credibilityScore !== null;
-}
-
-function getProjectImages(project) {
-  if (project.images?.length) return project.images;
-  if (project.imagePreview) return [project.imagePreview];
-
-  return [];
-}
+});
 </script>
 
-<template>
-  <article class="feed-post-card">
-    <header class="post-header">
-      <div class="post-author">
-        <div class="post-avatar">
-          {{ getStudentName(project).charAt(0) }}
-        </div>
-
-        <div class="post-author-info">
-          <div class="post-author-line">
-            <span class="post-author-name">
-              {{ getStudentName(project) }}
-            </span>
-
-            <span
-              v-if="project.feedReason"
-              class="post-feed-reason"
-            >
-              {{ project.feedReason }}
-            </span>
-          </div>
-
-          <div class="post-author-meta">
-            <span>{{ getSchoolName(project) }}</span>
-
-            <template v-if="project.date">
-              <span>•</span>
-              <span>{{ formatDate(project.date) }}</span>
-            </template>
-          </div>
-        </div>
-      </div>
-
-      <div
-        v-if="hasCredibilityScore(project)"
-        class="post-score"
-      >
-        <Award :size="15" />
-        <span>{{ project.credibilityScore }}/100</span>
-      </div>
-    </header>
-
-    <section class="post-body">
-      <div class="post-title-row">
-        <h3>{{ project.title }}</h3>
-
-        <span
-          v-if="project.isVerified"
-          class="post-verified"
-        >
-          Verified by institution
-        </span>
-      </div>
-
-      <p
-        v-if="hasDescription(project)"
-        class="post-description"
-      >
-        {{ getProjectDescription(project) }}
-      </p>
-
-      <div
-        v-if="project.technologies?.length || project.domains?.length"
-        class="post-tags"
-      >
-        <span
-          v-for="technology in project.technologies?.slice(0, 5)"
-          :key="technology"
-        >
-          {{ technology }}
-        </span>
-
-        <span
-          v-for="domain in project.domains?.slice(0, 3)"
-          :key="domain"
-          class="post-tag-domain"
-        >
-          {{ domain }}
-        </span>
-      </div>
-    </section>
-
-    <section
-      v-if="getProjectImages(project).length"
-      class="post-media"
-      :class="{
-        'post-media--grid': getProjectImages(project).length > 1,
-      }"
-    >
-      <img
-        v-for="image in getProjectImages(project).slice(0, 4)"
-        :key="image"
-        :src="image"
-        :alt="project.title ? `${project.title} preview` : 'Project preview'"
-        draggable="false"
-      >
-    </section>
-
-    <section class="post-stats">
-      <span>{{ project.recommendationsCount || 0 }} recommendations</span>
-      <span>{{ project.commentsCount || 0 }} comments</span>
-      <span>{{ project.githubReposCount || 0 }} GitHub repos</span>
-    </section>
-
-    <footer class="post-actions">
-      <button
-        type="button"
-        class="post-action post-action--primary"
-      >
-        <Award :size="16" />
-        <span>Recommend</span>
-      </button>
-
-      <button
-        type="button"
-        class="post-action"
-      >
-        <MessageCircle :size="16" />
-        <span>Comment</span>
-      </button>
-
-      <button
-        type="button"
-        class="post-action"
-      >
-        <ExternalLink :size="16" />
-        <span>View portfolio</span>
-      </button>
-
-      <button
-        type="button"
-        class="post-action"
-      >
-        <Github :size="16" />
-        <span>GitHub</span>
-      </button>
-
-            <button
-        type="button"
-        class="post-icon-action"
-        aria-label="Share project"
-        @click="showShareModal = true"
-      >
-        <Share2 :size="16" />
-      </button>
-    </footer>
-
-    <ShareProjectModal
-      :show="showShareModal"
-      :share-link="getProjectShareLink(project)"
-      @close="showShareModal = false"
-    />
-  </article>
-</template>
-
 <style scoped>
-.feed-post-card {
-  width: min(100%, 46rem);
+.project-card {
+  width: 100%;
+  max-width: 580px;
   margin-inline: auto;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  border-radius: var(--radius-lg);
-  background-color: rgba(var(--color-surface-rgb), 0.58);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.055);
-  overflow: hidden;
-  transition:
-    transform var(--transition-normal),
-    box-shadow var(--transition-normal);
-}
-
-.feed-post-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.075);
-}
-
-.post-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-md);
-  padding: var(--space-lg) var(--space-lg) var(--space-md);
-}
-
-.post-author {
-  min-width: 0;
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.07);
+  background: rgba(var(--color-surface-rgb), 0.96);
+  box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.04);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
-.post-avatar {
-  width: 2.35rem;
-  height: 2.35rem;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-  background-color: rgba(var(--color-primary-rgb), 0.06);
-  color: rgba(var(--color-primary-rgb), 0.88);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-bold);
-  text-transform: uppercase;
+.project-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(var(--color-primary-rgb), 0.06);
 }
 
-.post-author-info {
-  min-width: 0;
-  display: grid;
-  gap: 0.15rem;
-}
-
-.post-author-line {
+/* Author */
+.card-author {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  min-width: 0;
 }
 
-.post-author-name {
-  color: rgba(var(--color-primary-rgb), 0.92);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-bold);
-  line-height: 1.2;
-}
-
-.post-feed-reason {
-  padding: 0.25rem 0.5rem;
+.avatar {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
   border-radius: 999px;
-  background-color: rgba(var(--color-secondary-rgb), 0.12);
-  color: rgba(var(--color-primary-rgb), 0.7);
   font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+}
+
+.avatar--tone-1 {
+  background: rgba(var(--color-secondary-rgb), 0.14);
+  color: rgba(var(--color-secondary-rgb), 0.95);
+}
+
+.avatar--tone-2 {
+  background: rgba(var(--color-primary-rgb), 0.07);
+  color: rgba(var(--color-primary-rgb), 0.78);
+}
+
+.avatar--tone-3 {
+  background: rgba(var(--color-surface-rgb), 0.72);
+  color: rgba(var(--color-primary-rgb), 0.72);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+}
+
+.avatar--tone-4 {
+  background: rgba(var(--color-background-rgb), 0.72);
+  color: rgba(var(--color-secondary-rgb), 0.9);
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.16);
+}
+
+.author-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.author-name {
+  color: rgba(var(--color-primary-rgb), 0.9);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-semibold);
-  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.author-meta {
+  color: rgba(var(--color-primary-rgb), 0.42);
+  font-size: var(--font-size-xxs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-reason-pill,
+.credibility-pill,
+.certified-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  flex-shrink: 0;
+  border-radius: 999px;
   white-space: nowrap;
 }
 
-.post-author-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+.feed-reason-pill {
+  padding: 0.15rem 0.45rem;
+  background: rgba(var(--color-primary-rgb), 0.055);
   color: rgba(var(--color-primary-rgb), 0.52);
-  font-size: var(--font-size-xxs);
+  font-size: 9px;
   font-weight: var(--font-medium);
 }
 
-.post-score {
-  flex-shrink: 0;
-  display: inline-flex;
+.credibility-pill {
+  padding: 0.18rem 0.45rem;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.22);
+  background: rgba(var(--color-secondary-rgb), 0.09);
+  color: rgba(var(--color-secondary-rgb), 0.95);
+  font-size: 9px;
+  font-weight: var(--font-semibold);
+}
+
+/* Title */
+.card-title-row {
+  display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.28);
-  background-color: rgba(var(--color-secondary-rgb), 0.13);
-  color: rgba(var(--color-primary-rgb), 0.88);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-bold);
-}
-
-.post-body {
-  display: grid;
-  gap: var(--space-md);
-  padding: 0 var(--space-lg) var(--space-md);
-}
-
-.post-title-row {
-  display: grid;
+  flex-wrap: wrap;
   gap: var(--space-xs);
 }
 
-.post-title-row h3 {
+.card-title {
   margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.97);
-  font-size: clamp(1.25rem, 2.3vw, 1.7rem);
-  font-weight: var(--font-bold);
-  line-height: 1.18;
-  overflow-wrap: anywhere;
-}
-
-.post-verified {
-  width: fit-content;
-  padding: 0.35rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.24);
-  background-color: rgba(var(--color-secondary-rgb), 0.09);
-  color: rgba(var(--color-primary-rgb), 0.72);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-semibold);
-  line-height: 1;
-}
-
-.post-description {
-  margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.82);
+  color: rgba(var(--color-primary-rgb), 0.92);
   font-size: var(--font-size-sm);
-  line-height: 1.6;
+  font-weight: var(--font-bold);
+  line-height: 1.24;
+}
+
+.certified-pill {
+  gap: 4px;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.28);
+  background: rgba(var(--color-secondary-rgb), 0.08);
+  color: rgba(var(--color-secondary-rgb), 0.95);
+  font-size: 9px;
+  font-weight: var(--font-semibold);
+}
+
+/* Description */
+.card-description {
+  margin: 0;
+  color: rgba(var(--color-primary-rgb), 0.68);
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
   display: -webkit-box;
-  line-clamp: 5;
-  -webkit-line-clamp: 5;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.post-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-}
-
-.post-tags span {
-  padding: 0.35rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.11);
-  background-color: rgba(var(--color-background-rgb), 0.45);
-  color: rgba(var(--color-primary-rgb), 0.55);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-medium);
-  line-height: 1;
-}
-
-.post-tags .post-tag-domain {
-  color: rgba(var(--color-primary-rgb), 0.66);
-}
-
+/* Image */
 .post-media {
   width: 100%;
-  max-height: 27rem;
+  aspect-ratio: 2.35 / 1;
   overflow: hidden;
-  border-block: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  background-color: rgba(var(--color-primary-rgb), 0.04);
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.06);
+  background: rgba(var(--color-background-rgb), 0.75);
 }
 
 .post-media img {
   width: 100%;
   height: 100%;
-  max-height: 27rem;
   display: block;
   object-fit: cover;
-  -webkit-user-drag: none;
+  object-position: center 20%;
+  transition: transform var(--transition-normal);
 }
 
-.post-media--grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2px;
+.project-card:hover .post-media img {
+  transform: scale(1.015);
 }
 
-.post-media--grid img {
-  height: 13rem;
-}
-
-.post-stats {
+/* Tags */
+.card-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-md);
-  padding: var(--space-md) var(--space-lg);
-  color: rgba(var(--color-primary-rgb), 0.54);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-medium);
-  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.07);
+  gap: 4px;
 }
 
-.post-actions {
+.tag {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: var(--font-medium);
+  white-space: nowrap;
+}
+
+.tag--tech {
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  background: rgba(var(--color-primary-rgb), 0.055);
+  color: rgba(var(--color-primary-rgb), 0.6);
+}
+
+.tag--domain {
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.2);
+  background: rgba(var(--color-secondary-rgb), 0.08);
+  color: rgba(var(--color-secondary-rgb), 0.85);
+}
+
+/* Stats */
+.card-stats {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-lg);
+  gap: var(--space-md);
 }
 
-.post-action,
-.post-icon-action {
-  height: 2.35rem;
+.stat {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background-color: transparent;
+  gap: 4px;
+  color: rgba(var(--color-primary-rgb), 0.45);
+  font-size: var(--font-size-xxs);
+}
+
+.card-divider {
+  height: 1px;
+  background: rgba(var(--color-primary-rgb), 0.07);
+}
+
+/* Actions */
+.card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  background: transparent;
   color: rgba(var(--color-primary-rgb), 0.62);
   font-size: var(--font-size-xxs);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-medium);
   cursor: pointer;
   transition:
-    transform var(--transition-fast),
-    background-color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast),
     color var(--transition-fast),
-    border-color var(--transition-fast);
+    transform var(--transition-fast);
 }
 
-.post-action {
-  padding: 0 0.8rem;
-}
-
-.post-icon-action {
-  width: 2.35rem;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-.post-icon-action + .post-icon-action {
-  margin-left: 0;
-}
-
-.post-action:hover,
-.post-icon-action:hover {
+.action-btn:hover {
   transform: translateY(-1px);
-  background-color: rgba(var(--color-primary-rgb), 0.055);
-  color: rgba(var(--color-primary-rgb), 0.9);
+  background: rgba(var(--color-primary-rgb), 0.05);
+  color: rgba(var(--color-primary-rgb), 0.86);
 }
 
-.post-action--primary {
-  border-color: rgba(var(--color-secondary-rgb), 0.28);
-  background-color: rgba(var(--color-secondary-rgb), 0.15);
-  color: rgba(var(--color-primary-rgb), 0.95);
-  box-shadow: 0 8px 18px rgba(var(--color-secondary-rgb), 0.13);
+.action-btn--primary {
+  border-color: rgba(var(--color-secondary-rgb), 0.25);
+  background: rgba(var(--color-secondary-rgb), 0.1);
+  color: rgba(var(--color-secondary-rgb), 0.98);
 }
 
-.post-action--primary:hover {
-  background-color: rgba(var(--color-secondary-rgb), 0.24);
+.action-btn--primary:hover {
+  background: rgba(var(--color-secondary-rgb), 0.16);
 }
 
-@media (max-width: 760px) {
-  .feed-post-card {
-    width: 100%;
-  }
-
-  .post-header {
-    flex-direction: column;
-  }
-
-  .post-actions {
-    flex-wrap: wrap;
-  }
-
-  .post-icon-action {
-    margin-left: 0;
-  }
-
-  .post-media--grid {
-    grid-template-columns: 1fr;
-  }
-
-  .post-media--grid img {
-    height: 12rem;
-  }
+.action-btn--icon {
+  margin-left: auto;
+  padding-inline: 0.45rem;
 }
 </style>
