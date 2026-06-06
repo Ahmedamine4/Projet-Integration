@@ -80,11 +80,10 @@ const profileHeadline = computed(() => {
   const headline = portfolio.value?.headline;
   const school = portfolio.value?.school;
 
+  if (!school) return '';
   if (headline && school) return `${headline} at ${school}`;
-  if (headline) return headline;
-  if (school) return `Student at ${school}`;
 
-  return 'Student';
+  return `Student at ${school}`;
 });
 const profilePhoto = computed(() => profile.value?.photo || '');
 const localProfilePhoto = ref('');
@@ -475,7 +474,7 @@ async function handleAiFiltersDetected(filters) {
           <h2 class="name">
             {{ profileName }}
           </h2>
-          <span>{{ profileHeadline }}</span>
+          <span class="profile__headline">{{ profileHeadline }}</span>
           <div class="statistics">
             <div>
               <span>Followers</span>
@@ -669,6 +668,7 @@ async function handleAiFiltersDetected(filters) {
 }
 
 .profile {
+  margin-top: var(--space-md);
 	display: flex;
 	gap: 2.5rem;
 }
@@ -746,8 +746,11 @@ async function handleAiFiltersDetected(filters) {
 	line-height: 1;
 }
 
-.profile__info > span {
+.profile__headline {
+	display: block;
+	min-height: var(--font-size-xs);
 	font-size: var(--font-size-xs);
+	line-height: 1;
 	color: rgba(var(--color-primary-rgb), 0.7);
 }
 

@@ -219,7 +219,7 @@ export function normalizePortfolio(data) {
     },
     headline: data?.niveau
       ? `${data.niveau} Student`
-      : 'Student',
+      : '',
     school: data?.institutions?.[0]?.institution?.nom ?? '',
     portfolio: data?.portfolio ?? null,
     badges: data?.badges ?? [],
