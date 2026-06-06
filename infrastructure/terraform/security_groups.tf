@@ -1,8 +1,11 @@
-# Security Group Public (pour ALB / Load Balancer)
-resource "aws_security_group" "public" {
-  name        = "${var.project_name}-sg-public"
-  description = "Public security group for ALB"
-  vpc_id      = aws_vpc.main.id
+
+# ============================================================================
+# SECURITY GROUPS
+# ============================================================================
+
+resource "aws_security_group" "alb" {
+  name   = "${var.project_name}-alb-sg"
+  vpc_id = aws_vpc.main.id
 
   ingress {
     from_port   = 80
@@ -26,29 +29,40 @@ resource "aws_security_group" "public" {
   }
 
   tags = {
-    Name        = "${var.project_name}-sg-public"
-    Environment = var.environment
+    Name = "${var.project_name}-alb-sg"
   }
 }
 
-# Security Group Backend (pour ton application)
-resource "aws_security_group" "backend" {
-  name        = "${var.project_name}-sg-backend"
-  description = "Security group for backend application"
-  vpc_id      = aws_vpc.main.id
+resource "aws_security_group" "app" {
+  name   = "${var.project_name}-app-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   ingress {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
-    security_groups = [aws_security_group.public.id]
+    security_groups = [aws_security_group.alb.id]
   }
 
   ingress {
-    from_port       = 3000        # ← Change avec le vrai port de ton backend
+    from_port       = 3000
     to_port         = 3000
     protocol        = "tcp"
-    security_groups = [aws_security_group.public.id]
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  ingress {
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
   }
 
   egress {
@@ -59,7 +73,29 @@ resource "aws_security_group" "backend" {
   }
 
   tags = {
-    Name        = "${var.project_name}-sg-backend"
-    Environment = var.environment
+    Name = "${var.project_name}-app-sg"
+  }
+}
+
+resource "aws_security_group" "db" {
+  name   = "${var.project_name}-db-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-db-sg"
   }
 }
