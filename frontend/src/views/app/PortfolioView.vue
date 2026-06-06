@@ -14,6 +14,7 @@ import { useCertificationStore } from '@/stores/certification';
 import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
 import { useInstitutionStore } from '@/stores/institution';
+import api from '@/services/api';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
@@ -23,6 +24,7 @@ import InternshipsSection from '@/components/portfolio/internships/InternshipsSe
 import RecommendationsSection from '@/components/portfolio/recommendations/RecommendationsSection.vue';
 import { placeholderRecommendations } from '@/tmp/portfolioRecommendations';
 import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
+import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -192,6 +194,8 @@ const experienceErrors = ref({
   activity: '',
   certificate: '',
 });
+const schoolPathError = ref('');
+const isSchoolModalOpen = ref(false);
 
 const experienceModal = ref({
   open: false,
@@ -352,6 +356,48 @@ async function handleExperienceSubmit(experience) {
 const isQRModalOpen = ref(false);
 function openQRModal() {
   isQRModalOpen.value = true;
+}
+
+function openSchoolModal() {
+  if (!isOwnPortfolio.value) return;
+
+  schoolPathError.value = '';
+  isSchoolModalOpen.value = true;
+}
+
+async function completeSchoolPath(schoolData) {
+  schoolPathError.value = '';
+
+  try {
+    institutionStore.setSchoolPath(schoolData.schoolPath);
+
+    const institutionIds = [
+      ...new Set(
+        Object.values(schoolData.schoolPath ?? {})
+          .map((school) => school?.institutionId)
+          .filter(Boolean)
+      ),
+    ];
+
+    if (institutionIds.length && userId.value) {
+      await api.post('/select-institutions', {
+        etudiantId: userId.value,
+        institutionId: institutionIds,
+      });
+    }
+
+    isSchoolModalOpen.value = false;
+
+    if (portfolioUserId.value) {
+      await portfolioStore.fetchPortfolio(portfolioUserId.value);
+    }
+  }
+  catch (error) {
+    schoolPathError.value = error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'Failed to save academic path';
+  }
 }
 
 const links = computed(() => [
@@ -516,7 +562,12 @@ async function handleAiFiltersDetected(filters) {
             v-if="shouldShowEducation"
             :user-id="portfolioUserId"
             :items="educationItems"
+            :can-add="isOwnPortfolio"
+            @add-education="openSchoolModal"
           />
+          <BaseError v-if="schoolPathError">
+            {{ schoolPathError }}
+          </BaseError>
           <PortfolioSkills
             v-if="shouldShowSkills"
             :user-id="portfolioUserId"
@@ -627,6 +678,14 @@ async function handleAiFiltersDetected(filters) {
       :professor-emails="professorEmails"
       @close="closeExperienceModal"
       @submit="handleExperienceSubmit"
+    />
+
+    <SchoolPathModal
+      v-if="isOwnPortfolio"
+      :open="isSchoolModalOpen"
+      :schools="institutionStore.institutions"
+      @close="isSchoolModalOpen = false"
+      @complete="completeSchoolPath"
     />
   </div>
   <div class="ai-orb-container">
