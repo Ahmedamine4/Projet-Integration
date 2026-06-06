@@ -96,7 +96,7 @@ export async function rejecterProfessionnel({ utilisateur_id, admin_id }) {
     professionnel,
   };
 }
-// j' ai ajouter un attribut bloque dans la table utilisateur 
+// un attribut bloque doit etre ajouter dans la table utilisateur 
 export async function bloquerUtilisateur({ utilisateur_id }) {
   const utilisateur = await prisma.utilisateur.update({
     where: { utilisateur_id },
