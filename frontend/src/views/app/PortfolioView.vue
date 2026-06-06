@@ -100,6 +100,14 @@ const displayRecommendations = computed(() => {
   return recommendations.length ? recommendations : placeholderRecommendations;
 });
 const recommendationsCount = computed(() => displayRecommendations.value.length);
+const educationItems = computed(() => portfolio.value?.education ?? []);
+const skillItems = computed(() => portfolio.value?.skills ?? []);
+const domainItems = computed(() => portfolio.value?.domains ?? []);
+const hasEducation = computed(() => educationItems.value.length > 0);
+const hasSkills = computed(() => skillItems.value.length > 0 || domainItems.value.length > 0);
+const shouldShowEducation = computed(() => isOwnPortfolio.value || hasEducation.value);
+const shouldShowSkills = computed(() => isOwnPortfolio.value || hasSkills.value);
+const hasProfileDetails = computed(() => shouldShowEducation.value || shouldShowSkills.value);
 const schoolOptions = computed(() =>
   institutionStore.institutions.map((institution) => institution.nom).filter(Boolean)
 );
@@ -498,17 +506,23 @@ async function handleAiFiltersDetected(filters) {
       <div
         v-if="portfolioUserId"
         class="about"
+        :class="{ 'about--solo': !hasProfileDetails }"
       >
         <AboutMe :user-id="portfolioUserId" />
-        <div class="education-skills-wrapper">
+        <div
+          v-if="hasProfileDetails"
+          class="education-skills-wrapper"
+        >
           <PortfolioEducation
+            v-if="shouldShowEducation"
             :user-id="portfolioUserId"
-            :items="portfolio?.education ?? []"
+            :items="educationItems"
           />
           <PortfolioSkills
+            v-if="shouldShowSkills"
             :user-id="portfolioUserId"
-            :skills="portfolio?.skills ?? []"
-            :domains="portfolio?.domains ?? []"
+            :skills="skillItems"
+            :domains="domainItems"
           />
         </div>
       </div>
@@ -773,6 +787,10 @@ async function handleAiFiltersDetected(filters) {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: var(--space-lg);
+}
+
+.about--solo {
+	grid-template-columns: 1fr;
 }
 
 .actions {
