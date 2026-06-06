@@ -63,6 +63,10 @@ export function normalizeProject(item) {
     technologies: project.technologies ?? getCompetenceNames(experience, 'technologie'),
     domains: project.domains ?? getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.photo ?? project.photo ?? experience.documentations?.[0]?.captures ?? '',
+    highlighted: Boolean(item?.highlighted ?? experience.highlighted),
+    score: item?.score ?? experience.score ?? 0,
+    techCount: item?.techCount ?? experience.techCount ?? 0,
+    domaineCount: item?.domaineCount ?? experience.domaineCount ?? 0,
     ...validationState,
   };
 }

@@ -1,9 +1,9 @@
 <script setup>
-import { nextTick, onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import PortfolioSectionShell from '@/components/portfolio/layout/PortfolioSectionShell.vue';
 import PortfolioProject from '@/components/portfolio/projects/PortfolioProject.vue';
 import { useHorizontalDragScroll } from '@/composables/useHorizontalDragScroll';
-defineProps({
+const props = defineProps({
   projects: {
     type: Array,
     default: () => [],
@@ -40,6 +40,12 @@ const {
 onMounted(() => {
   nextTick(updateScrollFades);
 });
+
+watch(
+  () => props.projects,
+  () => nextTick(updateScrollFades),
+  { deep: true }
+);
 </script>
 
 <template>

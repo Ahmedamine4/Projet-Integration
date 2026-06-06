@@ -148,10 +148,22 @@ watch(
   { immediate: true }
 );
 
-const visibleProjects = computed(() => {
-	if (isOwnPortfolio.value) return projects.value;
+function sortHighlightedProjects(list) {
+  return [...list].sort((firstProject, secondProject) => {
+    if (firstProject.highlighted !== secondProject.highlighted) {
+      return firstProject.highlighted ? -1 : 1;
+    }
 
-	return projects.value.filter(project => project.effectiveVisibleToEveryone);
+    return (secondProject.score ?? 0) - (firstProject.score ?? 0);
+  });
+}
+
+const visibleProjects = computed(() => {
+	if (isOwnPortfolio.value) return sortHighlightedProjects(projects.value);
+
+	return sortHighlightedProjects(
+    projects.value.filter(project => project.effectiveVisibleToEveryone)
+  );
 });
 
 const visibleActivities = computed(() => {
