@@ -77,7 +77,7 @@ export const useInternshipStore = defineStore('internship', () => {
     error.value = '';
 
     try {
-      const response = await api.put(
+      const response = await api.patch(
         `/stages/stages/${internship.id}`,
         buildInternshipFormData(internship),
         {

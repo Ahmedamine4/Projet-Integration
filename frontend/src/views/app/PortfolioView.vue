@@ -249,17 +249,14 @@ async function handleExperienceSubmit(experience) {
 
     if (type === 'project') {
       if (isEdit) {
-        const index = projects.value.findIndex(item => item.id === selectedId);
+        const updatedProject = await projectStore.editProject({
+          ...experience,
+          id: selectedId,
+        });
 
-        if (index !== -1) {
-          projects.value[index] = {
-            ...projects.value[index],
-            ...experience,
-            imagePreview: experience.image
-              ? URL.createObjectURL(experience.image)
-              : projects.value[index].imagePreview,
-          };
-        }
+        projects.value = projects.value.map((project) =>
+          project.id === selectedId ? updatedProject : project
+        );
 
         closeExperienceModal();
         return;
@@ -273,21 +270,14 @@ async function handleExperienceSubmit(experience) {
 
     if (type === 'activity') {
       if (isEdit) {
-        const index = activities.value.findIndex(item => item.id === selectedId);
+        const updatedActivity = await activityStore.editActivity({
+          ...experience,
+          id: selectedId,
+        });
 
-        if (index !== -1) {
-          activities.value = activities.value.map((activity, currentIndex) =>
-            currentIndex === index
-              ? {
-                  ...activity,
-                  ...experience,
-                  imagePreview: experience.image
-                    ? URL.createObjectURL(experience.image)
-                    : activity.imagePreview,
-                }
-              : activity
-          );
-        }
+        activities.value = activities.value.map((activity) =>
+          activity.id === selectedId ? updatedActivity : activity
+        );
 
         closeExperienceModal();
         return;
@@ -320,18 +310,14 @@ async function handleExperienceSubmit(experience) {
 
     if (type === 'certificate') {
       if (isEdit) {
-        const index = certifications.value.findIndex(item => item.id === selectedId);
+        const updatedCertification = await certificationStore.editCertification({
+          ...experience,
+          id: selectedId,
+        });
 
-        if (index !== -1) {
-          certifications.value = certifications.value.map((certification, currentIndex) =>
-            currentIndex === index
-              ? {
-                  ...certification,
-                  ...experience,
-                }
-              : certification
-          );
-        }
+        certifications.value = certifications.value.map((certification) =>
+          certification.id === selectedId ? updatedCertification : certification
+        );
 
         closeExperienceModal();
         return;

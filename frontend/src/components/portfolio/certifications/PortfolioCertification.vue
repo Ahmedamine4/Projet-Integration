@@ -85,7 +85,10 @@ function getExperienceRoute(experienceId) {
 <template>
   <article
     class="certification"
-    :class="{ 'is-expanded': isExpanded }"
+    :class="{
+      'is-expanded': isExpanded,
+      'certification--hidden': !certification.visibleToEveryone,
+    }"
   >
     <button
       type="button"
@@ -255,9 +258,14 @@ function getExperienceRoute(experienceId) {
     rgba(var(--color-surface-rgb), 0.34);
   box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.075);
   transition:
+    opacity var(--transition-fast),
     border-color var(--transition-fast),
     box-shadow var(--transition-fast),
     transform var(--transition-fast);
+}
+
+.certification--hidden {
+  opacity: 0.58;
 }
 
 .certification::before {

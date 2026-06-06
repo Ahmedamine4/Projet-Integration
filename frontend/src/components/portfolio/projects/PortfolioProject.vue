@@ -38,7 +38,10 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <template>
   <article 
     class="project-card"
-    :class="{ 'project-card--editable': canEditExperience }"
+    :class="{
+      'project-card--editable': canEditExperience,
+      'project-card--hidden': !project.effectiveVisibleToEveryone,
+    }"
     @dblclick="canEditExperience && emit('edit', project)"
     @click="handleDoubleTap"
   >
@@ -159,8 +162,13 @@ const { handleDoubleTap } = useDoubleTap(() => {
   overflow: hidden;
   user-select: none;
   transition:
+    opacity var(--transition-fast),
     transform var(--transition-normal),
     box-shadow var(--transition-normal);
+}
+
+.project-card--hidden {
+  opacity: 0.58;
 }
 
 .project-card:hover {

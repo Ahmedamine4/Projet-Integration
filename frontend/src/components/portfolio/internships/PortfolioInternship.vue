@@ -75,7 +75,9 @@ function getExperienceRoute(experienceId) {
 <template>
   <article
     class="internship-card"
-    :class="{ 'internship-card--editable': canEditExperience }"
+    :class="{
+      'internship-card--editable': canEditExperience,
+    }"
     @dblclick="canEditExperience && emit('edit', internship)"
     @click="handleDoubleTap"
   >
