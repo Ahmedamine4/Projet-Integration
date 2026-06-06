@@ -16,7 +16,7 @@ import {
 import { getAllUsers } from '../controllers/auth.controller.js';
 
 const router = express.Router();
-//router.use(authMiddleware, authorizeRoles(ROLES.ADMIN));
+router.use(authMiddleware, authorizeRoles(ROLES.ADMIN));
 router.post('/assigner-directeur', ajoutDirecteur);
 router.post('/admins', ajouterAdmin);
 router.get('/professionnels/en-attente', listProfessionnelsEnAttente);
