@@ -282,6 +282,19 @@ onUnmounted(() => {
 });
 
 const todayValue = computed(() => formatLocalDate(new Date()));
+const formBodyRef = ref(null);
+const errorFieldOrder = [
+  'title',
+  'date',
+  'startDate',
+  'endDate',
+  'image',
+  'description',
+  'certificateURL',
+  'githubLink',
+  'institution',
+  'teacherEmail',
+];
 
 function invalidDateRange(startDate, endDate) {
   return (
@@ -289,6 +302,20 @@ function invalidDateRange(startDate, endDate) {
     endDate &&
     new Date(endDate) < new Date(startDate)
   );
+}
+
+async function scrollToFirstError() {
+  await nextTick();
+
+  const firstErrorKey = errorFieldOrder.find((key) => errors[key]);
+  const formBody = formBodyRef.value;
+  if (!firstErrorKey || !formBody) return;
+
+  const field = formBody.querySelector(`[data-error-field="${firstErrorKey}"]`);
+  if (!field) return;
+
+  const focusTarget = field.querySelector('input, textarea, button, [tabindex]:not([tabindex="-1"])');
+  focusTarget?.focus?.({ preventScroll: false });
 }
 
 const submitExperience = () => {
@@ -354,7 +381,10 @@ const submitExperience = () => {
       errors.teacherEmail = 'Select a valid teacher email';
   }
 
-  if (hasErrors()) return;
+  if (hasErrors()) {
+    scrollToFirstError();
+    return;
+  }
 
   emit('submit', {
     title: trimmedTitle,
@@ -486,7 +516,10 @@ const existingImageName = computed(() => {
           class="experience-form"
           @submit.prevent="submitExperience"
         >
-          <div class="experience-form__body">
+          <div
+            ref="formBodyRef"
+            class="experience-form__body"
+          >
             <ModificationRequest
               v-if="
                 props.mode === 'edit' &&
@@ -497,7 +530,10 @@ const existingImageName = computed(() => {
             >
               {{ message.content }}
             </ModificationRequest>
-            <div class="field">
+            <div
+              class="field"
+              data-error-field="title"
+            >
               <BaseInput
                 v-model="form.title"
                 :label="`${capitalizedType} title`"
@@ -514,6 +550,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.dateMode === 'single'"
               class="field"
+              data-error-field="date"
             >
               <DatePicker
                 v-model="form.date"
@@ -534,7 +571,10 @@ const existingImageName = computed(() => {
               v-else
               class="form-group"
             >
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="startDate"
+              >
                 <DatePicker
                   v-model="form.startDate"
                   label="Start date"
@@ -549,7 +589,10 @@ const existingImageName = computed(() => {
                 </BaseError>
               </div>
 
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="endDate"
+              >
                 <DatePicker
                   v-model="form.endDate"
                   label="End date"
@@ -568,6 +611,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.showImageUpload"
               class="field"
+              data-error-field="image"
             >
               <ImageDropzone
                 v-model="form.image"
@@ -584,7 +628,10 @@ const existingImageName = computed(() => {
               </BaseError>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+              data-error-field="description"
+            >
               <div class="form-group-textarea">
                 <label for="description">Description</label>
                 <textarea
@@ -703,7 +750,10 @@ const existingImageName = computed(() => {
                 />
               </div>
 
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="certificateURL"
+              >
                 <BaseInput
                   v-model="form.certificateURL"
                   label="Certificate URL"
@@ -730,6 +780,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.showGithub"
               class="field"
+              data-error-field="githubLink"
             >
               <BaseInput
                 v-model="form.githubLink"
@@ -758,7 +809,10 @@ const existingImageName = computed(() => {
                   v-if="form.isAcademic"
                   class="academic-form-group"
                 >
-                  <div class="institution-field">
+                  <div
+                    class="institution-field"
+                    data-error-field="institution"
+                  >
                     <BaseSelect
                       v-model="form.institution"
                       :options="schoolOptions"
@@ -775,6 +829,7 @@ const existingImageName = computed(() => {
                   <div
                     v-if="requiresAcademicTeacher"
                     class="field"
+                    data-error-field="teacherEmail"
                   >
                     <BaseDropdown
                       v-model="form.teacherEmail"
@@ -916,6 +971,7 @@ const existingImageName = computed(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scroll-behavior: smooth;
   display: grid;
   gap: var(--modal-field-gap);
   padding: var(--modal-edge-space);

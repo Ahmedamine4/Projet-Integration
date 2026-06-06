@@ -98,7 +98,6 @@ function getExperienceRoute(experienceId) {
             </span>
           </div>
           <h3>{{ internship.title }}</h3>
-          <span v-if="internship.missions">{{ internship.missions }}</span>
         </div>
         <div class="internship-card__controls">
           <span
@@ -231,6 +230,11 @@ function getExperienceRoute(experienceId) {
 .internship-card__heading h3,
 .internship-card p {
   margin: 0;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .internship-card__heading h3 {

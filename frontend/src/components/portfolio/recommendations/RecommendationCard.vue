@@ -1,6 +1,6 @@
 <script setup>
-import { CalendarDays, Eye, EyeOff, Quote } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { CalendarDays, ChevronDown, ChevronUp, Eye, EyeOff, Quote } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
   recommendation: {
@@ -18,6 +18,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['toggle-visibility']);
+const TRUNCATE_LEN = 250;
+const isExpanded = ref(false);
 
 const dateLabel = computed(() => {
   if (!props.recommendation.date) return '';
@@ -27,9 +29,20 @@ const dateLabel = computed(() => {
 
   return date.toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric',
     year: 'numeric',
   });
+});
+
+const isTruncated = computed(() => props.recommendation.content.length > TRUNCATE_LEN);
+
+const displayedContent = computed(() => {
+  if (!props.recommendation.content) return '';
+
+  if (isExpanded.value || !isTruncated.value) {
+    return props.recommendation.content;
+  }
+
+  return `${props.recommendation.content.slice(0, TRUNCATE_LEN).trim()}...`;
 });
 </script>
 
@@ -47,41 +60,68 @@ const dateLabel = computed(() => {
         <small>{{ recommendation.authorRole }}</small>
       </div>
 
+      <div class="recommendation-card__meta">
+        <span
+          v-if="dateLabel"
+          class="recommendation-card__date"
+        >
+          <CalendarDays :size="13" />
+          <time :datetime="recommendation.date">{{ dateLabel }}</time>
+        </span>
+
+        <button
+          v-if="canManageVisibility"
+          type="button"
+          class="recommendation-card__visibility"
+          :aria-pressed="isVisible"
+          :aria-label="isVisible ? 'Hide recommendation from public' : 'Show recommendation to public'"
+          @pointerdown.stop
+          @click.stop="emit('toggle-visibility')"
+        >
+          <Eye
+            v-if="isVisible"
+            :size="17"
+          />
+          <EyeOff
+            v-else
+            :size="17"
+          />
+        </button>
+      </div>
+    </header>
+    <div class="recommendation-card__content">
+      <p>{{ displayedContent }}</p>
+
       <button
-        v-if="canManageVisibility"
+        v-if="isTruncated"
         type="button"
-        class="recommendation-card__visibility"
-        :aria-pressed="isVisible"
-        :aria-label="isVisible ? 'Hide recommendation from public' : 'Show recommendation to public'"
+        class="recommendation-card__toggle"
         @pointerdown.stop
-        @click.stop="emit('toggle-visibility')"
+        @click.stop="isExpanded = !isExpanded"
       >
-        <Eye
-          v-if="isVisible"
-          :size="17"
+        <span>{{ isExpanded ? 'See less' : 'See more' }}</span>
+        <ChevronUp
+          v-if="isExpanded"
+          :size="15"
         />
-        <EyeOff
+        <ChevronDown
           v-else
-          :size="17"
+          :size="15"
         />
       </button>
-    </header>
-    <p>{{ recommendation.content }}</p>
-    <footer v-if="dateLabel">
-      <CalendarDays :size="13" />
-      <time :datetime="recommendation.date">{{ dateLabel }}</time>
-    </footer>
+    </div>
+
   </article>
 </template>
 
 <style scoped>
 .recommendation-card {
   position: relative;
-  flex: 0 0 clamp(18rem, 30vw, 24rem);
+  flex: 0 0 clamp(22rem, 38vw, 31rem);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--space-md);
-  height: clamp(16rem, 28vw, 19rem);
+  min-height: clamp(13rem, 22vw, 15.5rem);
   padding: var(--space-lg);
   border: 1px solid rgba(var(--color-primary-rgb), 0.11);
   border-radius: var(--radius-md);
@@ -154,7 +194,7 @@ const dateLabel = computed(() => {
   gap: 0.2rem;
 }
 
-.recommendation-card span {
+.recommendation-card__author span {
   overflow-wrap: anywhere;
   color: var(--color-primary);
   font-size: var(--font-size-sm);
@@ -169,9 +209,36 @@ const dateLabel = computed(() => {
   line-height: 1.35;
 }
 
+.recommendation-card__meta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.recommendation-card__date,
+.recommendation-card__visibility {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recommendation-card__date {
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0.4rem 0.64rem;
+  border-radius: 999px;
+  background-color: rgba(var(--color-primary-rgb), 0.055);
+  color: rgba(var(--color-primary-rgb), 0.62);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .recommendation-card__visibility {
   display: inline-grid;
-  flex: 0 0 auto;
   place-items: center;
   width: 2.2rem;
   height: 2.2rem;
@@ -190,48 +257,44 @@ const dateLabel = computed(() => {
   color: var(--color-primary);
 }
 
+.recommendation-card__content {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--space-sm);
+}
+
 .recommendation-card p {
   margin: 0;
   color: rgba(var(--color-primary-rgb), 0.78);
   font-size: var(--font-size-sm);
-  line-height: 1.72;
-  overflow-y: auto;
-  padding-right: var(--space-sm);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--color-primary-rgb), 0.2) transparent;
+  line-height: 1.58;
+  overflow-wrap: anywhere;
 }
 
-.recommendation-card p::-webkit-scrollbar {
-  width: 0.32rem;
-}
-
-.recommendation-card p::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(var(--color-primary-rgb), 0.22);
-}
-
-.recommendation-card footer {
+.recommendation-card__toggle {
   display: inline-flex;
   align-items: center;
+  justify-self: start;
   gap: var(--space-xs);
-  width: fit-content;
-  min-height: 1.7rem;
-  padding: 0.35rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(var(--color-primary-rgb), 0.045);
-  color: rgba(var(--color-primary-rgb), 0.58);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-medium);
-  line-height: 1;
-  white-space: nowrap;
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: rgba(var(--color-primary-rgb), 0.68);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-bold);
+  cursor: pointer;
+}
+
+.recommendation-card__toggle:hover {
+  color: var(--color-primary);
 }
 
 @media (max-width: 640px) {
   .recommendation-card {
     padding: var(--space-lg);
-    flex-basis: min(82vw, 22rem);
-    height: 17rem;
+    flex-basis: min(88vw, 26rem);
+    min-height: 15rem;
   }
 }
 </style>

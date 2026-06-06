@@ -193,6 +193,8 @@ const experienceModal = ref({
   selected: null,
 });
 
+const isExperienceSubmitting = ref(false);
+
 const experienceLoadingByType = computed(() => ({
   project: projectStore.loading,
   activity: activityStore.loading,
@@ -201,7 +203,8 @@ const experienceLoadingByType = computed(() => ({
 }));
 
 const experienceModalLoading = computed(() =>
-  experienceLoadingByType.value[experienceModal.value.type] ?? false
+  isExperienceSubmitting.value ||
+  (experienceLoadingByType.value[experienceModal.value.type] ?? false)
 );
 
 function openExperienceModal(type) {
@@ -242,6 +245,7 @@ function closeExperienceModal() {
 async function handleExperienceSubmit(experience) {
   const type = experienceModal.value.type;
   experienceErrors.value[type] = '';
+  isExperienceSubmitting.value = true;
 
   try {
     const isEdit = experienceModal.value.mode === 'edit';
@@ -332,6 +336,9 @@ async function handleExperienceSubmit(experience) {
     experienceErrors.value[type] = error.response?.data?.message ||
       error.message ||
       `Failed to save ${type}`;
+  }
+  finally {
+    isExperienceSubmitting.value = false;
   }
 }
 
