@@ -40,16 +40,57 @@
             </div>
           </section>
 
-          <FeedFiltersPanel
-            class="sticky-filters"
-            :filters="filters"
-            :technologies="allTechnologies"
-            :domains="allDomains"
-            :trending-techs="trendingTechs"
-            :suggested-students="suggestedStudents"
-            @update:filters="filters = $event"
-            @reset="resetFilters"
-          />
+          <aside class="feed-sidebar sticky-filters">
+            <FeedFiltersPanel
+              :filters="filters"
+              :technologies="allTechnologies"
+              :domains="allDomains"
+              :trending-techs="trendingTechs"
+              :suggested-students="[]"
+              @update:filters="filters = $event"
+              @reset="resetFilters"
+            />
+
+            <section class="suggested-students-card">
+              <header class="suggested-students-header">
+                <h2>Suggested students</h2>
+                <p>Profiles you may want to follow.</p>
+              </header>
+
+              <div class="suggested-students-list">
+                <article
+                  v-for="student in suggestedStudents"
+                  :key="student.id"
+                  class="suggested-student"
+                >
+                  <div class="suggested-avatar">
+                    {{ student.initials }}
+                  </div>
+
+                  <div class="suggested-info">
+                    <strong>{{ student.name }}</strong>
+                    <span>{{ student.speciality }}</span>
+
+                    <div class="suggested-stack">
+                      <small
+                        v-for="item in student.stack"
+                        :key="item"
+                      >
+                        {{ item }}
+                      </small>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="follow-mini-button"
+                  >
+                    Follow
+                  </button>
+                </article>
+              </div>
+            </section>
+          </aside>
         </div>
       </div>
     </main>
@@ -59,29 +100,29 @@
       @close="shareProject = null"
     />
 
-    <ExperienceModal
-      :open="projectModal.open"
-      mode="edit"
-      type="project"
-      :initial-value="projectModal.selected"
-      :loading="false"
-      :school-options="[]"
-      :professor-emails="[]"
-      @close="closeProjectDetail"
-      @submit="handleProjectModalSubmit"
-    />
-
     <FeedOfferDetailModal
       :offer="selectedOffer"
       @close="closeOfferDetail"
     />
+    <ExperienceModal
+  :open="projectModal.open"
+  mode="create"
+  type="project"
+  :initial-value="null"
+  :loading="false"
+  :school-options="[]"
+  :professor-emails="professorEmails"
+  @close="closeProjectModal"
+  @submit="handleProjectSubmit"
+/>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
 import { SearchX } from 'lucide-vue-next';
-
+import { useRouter } from 'vue-router';
+import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 import Sidebar from '@/components/layout/AppSidebar.vue';
 import FeedHeader from '@/components/feed/feedHeader.vue';
 import FeedFiltersPanel from '@/components/feed/FeedFiltersPanel.vue';
@@ -89,7 +130,8 @@ import FeedProjectCard from '@/components/feed/feedProject.vue';
 import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
 import FeedOffersCarousel from '@/components/feed/FeedOffersCarousel.vue';
 import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
-import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
+
+const router = useRouter();
 
 const mockUser = {
   prenom: 'Wissam',
@@ -130,39 +172,56 @@ const suggestedStudents = [
 const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
+const professorEmails = [
+  'ahmed.elamrani@ensat.ac.ma',
+  'fatima.zahra@ensat.ac.ma',
+  'youssef.bennani@uae.ac.ma',
+  'sara.lahlou@fstt.ac.ma',
+  'nour.chaoui@encgt.ac.ma',
+  'karim.boukhari@ensate.uae.ac.ma',
+  'amina.tazi@fs-tanger.ac.ma',
+  'mehdi.elidrissi@ensah.ma',
+  'salma.aitali@fstt.ac.ma',
+  'omar.benali@uae.ac.ma',
+];
 
 const projectModal = ref({
   open: false,
-  selected: null,
 });
 
 function openProjectDetail(project) {
-  selectedOffer.value = null;
+  const ownerId =
+    project.portfolioUserId ||
+    project.userId ||
+    project.utilisateur_id ||
+    project.etudiant_id;
 
-  projectModal.value = {
-    open: true,
-    selected: project,
-  };
-}
+  if (ownerId) {
+    router.push({
+      name: 'portfolio-experience',
+      params: {
+        id: ownerId,
+        experienceId: project.id,
+      },
+    });
 
-function closeProjectDetail() {
-  projectModal.value = {
-    open: false,
-    selected: null,
-  };
+    return;
+  }
+
+  router.push({
+    name: 'my-portfolio-experience',
+    params: {
+      experienceId: project.id,
+    },
+  });
 }
 
 function openOfferDetail(offer) {
-  closeProjectDetail();
   selectedOffer.value = offer;
 }
 
 function closeOfferDetail() {
   selectedOffer.value = null;
-}
-
-function handleProjectModalSubmit() {
-  closeProjectDetail();
 }
 
 const defaultFilters = () => ({
@@ -180,12 +239,22 @@ function resetFilters() {
 }
 
 function handleCreateProject() {
-  console.log('Create project clicked');
+  projectModal.value.open = true;
+}
+
+function closeProjectModal() {
+  projectModal.value.open = false;
+}
+
+function handleProjectSubmit(project) {
+  console.log('Project submitted:', project);
+  closeProjectModal();
 }
 
 const mockProjects = [
   {
-    id: 1,
+    id: 'cmq2w34ze000dug4a8r9byuqb',
+    portfolioUserId: 1,
     campusRankScore: 94,
     credibilityScore: 4.8,
     title: 'SmartStudyRoom Platform',
@@ -200,13 +269,13 @@ const mockProjects = [
     feedReason: 'Même école',
     isVerified: true,
     recommendationsCount: 128,
-    commentsCount: 34,
     githubReposCount: 3,
     technologies: ['Vue 3', 'FastAPI', 'PostgreSQL'],
     domains: ['EdTech', 'IA'],
   },
   {
     id: 2,
+    portfolioUserId: 2,
     campusRankScore: 88,
     credibilityScore: 4.5,
     title: 'AI Portfolio Recommendation System',
@@ -221,13 +290,13 @@ const mockProjects = [
     feedReason: 'Abonnement',
     isVerified: true,
     recommendationsCount: 97,
-    commentsCount: 21,
     githubReposCount: 2,
     technologies: ['Python', 'LangChain', 'React'],
     domains: ['IA', 'Carrière'],
   },
   {
     id: 3,
+    portfolioUserId: 3,
     campusRankScore: 72,
     credibilityScore: 3.9,
     title: 'Campus Event Aggregator',
@@ -242,7 +311,6 @@ const mockProjects = [
     feedReason: 'Même école',
     isVerified: false,
     recommendationsCount: 54,
-    commentsCount: 12,
     githubReposCount: 1,
     technologies: ['Flutter', 'Node.js', 'Firebase'],
     domains: ['Mobile', 'Événements'],
@@ -392,12 +460,7 @@ const filteredProjects = computed(() => {
   height: 100vh;
   display: flex;
   overflow: hidden;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(var(--color-primary-rgb), 0.045),
-      rgba(var(--color-primary-rgb), 0.07)
-    );
+  background: var(--color-background);
 }
 
 .feed-page {
@@ -408,7 +471,7 @@ const filteredProjects = computed(() => {
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: rgba(var(--color-primary-rgb), 0.018);
+  background: var(--color-background);
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--color-primary-rgb), 0.18) transparent;
 }
@@ -455,7 +518,9 @@ const filteredProjects = computed(() => {
 
 .offers-row :deep(.offers-section),
 .offers-row :deep(.offers-scroll-frame),
-.offers-row :deep(.offers-list) {
+.offers-row :deep(.offers-list),
+.offers-row :deep(.offers-frame),
+.offers-row :deep(.offers-scroller) {
   width: 100%;
   max-width: none;
 }
@@ -463,15 +528,15 @@ const filteredProjects = computed(() => {
 .feed-grid {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 820px) 300px;
+  grid-template-columns: minmax(0, 680px) 320px;
   justify-content: center;
   align-items: start;
-  gap: calc(var(--space-xl) * 1.15);
+  gap: var(--space-xl);
 }
 
 .feed-list {
   width: 100%;
-  max-width: 820px;
+  max-width: 680px;
   justify-self: stretch;
   display: flex;
   flex-direction: column;
@@ -481,12 +546,12 @@ const filteredProjects = computed(() => {
 
 .feed-list :deep(.project-card) {
   width: 100%;
-  max-width: 820px;
+  max-width: 680px;
   margin-inline: auto;
 }
 
 .sticky-filters {
-  width: 300px;
+  width: 320px;
   position: sticky;
   top: 90px;
   align-self: start;
@@ -494,6 +559,13 @@ const filteredProjects = computed(() => {
   max-height: calc(100vh - 110px);
   overflow-y: auto;
   scrollbar-width: thin;
+  padding-bottom: var(--space-md);
+}
+
+.feed-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
 .feed-grid :deep(.filters-panel) {
@@ -520,6 +592,121 @@ const filteredProjects = computed(() => {
   margin: 0;
 }
 
+.suggested-students-card {
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--color-surface-rgb), 0.52),
+      rgba(var(--color-background-rgb), 0.84)
+    );
+  overflow: hidden;
+}
+
+.suggested-students-header {
+  padding: 1rem var(--space-lg);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+}
+
+.suggested-students-header h2 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-bold);
+}
+
+.suggested-students-header p {
+  margin: 0.25rem 0 0;
+  color: rgba(var(--color-primary-rgb), 0.48);
+  font-size: var(--font-size-xxs);
+}
+
+.suggested-students-list {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+}
+
+.suggested-student {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  background: rgba(var(--color-background-rgb), 0.36);
+}
+
+.suggested-avatar {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(var(--color-secondary-rgb), 0.12);
+  color: rgba(var(--color-secondary-rgb), 0.96);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+}
+
+.suggested-info {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.suggested-info strong {
+  color: rgba(var(--color-primary-rgb), 0.88);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-bold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggested-info > span {
+  color: rgba(var(--color-primary-rgb), 0.52);
+  font-size: var(--font-size-xxs);
+}
+
+.suggested-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.suggested-stack small {
+  display: inline-flex;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
+  border-radius: 999px;
+  padding: 0.14rem 0.4rem;
+  color: rgba(var(--color-primary-rgb), 0.58);
+  font-size: 9px;
+  font-weight: var(--font-medium);
+}
+
+.follow-mini-button {
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.22);
+  border-radius: 999px;
+  padding: 0.26rem 0.55rem;
+  background: rgba(var(--color-secondary-rgb), 0.08);
+  color: rgba(var(--color-secondary-rgb), 0.96);
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.follow-mini-button:hover {
+  transform: translateY(-1px);
+  background: rgba(var(--color-secondary-rgb), 0.14);
+}
+
 @media (max-width: 1050px) {
   .feed-content {
     max-width: 720px;
@@ -540,26 +727,25 @@ const filteredProjects = computed(() => {
   }
 }
 
-@media (max-width: 760px) {
-  .feed-shell {
-    height: 100vh;
-    display: flex;
-    overflow: hidden;
-  }
-
-  .feed-page {
-    height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
+@media (max-width: 1050px) {
   .feed-content {
-    padding: var(--space-sm);
-    gap: var(--space-sm);
+    max-width: 100%;
+    padding-inline: var(--space-md);
   }
 
   .feed-grid {
-    gap: var(--space-sm);
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: var(--space-md);
+  }
+
+  .sticky-filters {
+    display: flex;
+    width: 300px;
+  }
+
+  .feed-list,
+  .feed-list :deep(.project-card) {
+    max-width: 100%;
   }
 }
 </style>

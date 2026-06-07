@@ -14,25 +14,29 @@
         <span class="author-meta">{{ project.schoolName }} · {{ formattedDate }}</span>
       </div>
 
-      <span class="feed-reason-pill">{{ project.feedReason }}</span>
-
       <span class="credibility-pill">
         {{ project.credibilityScore }}
       </span>
     </div>
 
-    <!-- Title and certification -->
+    <!-- Title -->
     <div class="card-title-row">
       <h3 class="card-title">
         {{ project.title }}
       </h3>
+    </div>
 
+    <!-- Domains under title -->
+    <div
+      v-if="project.domains?.length"
+      class="card-tags card-domains"
+    >
       <span
-        v-if="project.isVerified"
-        class="certified-pill"
+        v-for="domain in project.domains"
+        :key="'d-' + domain"
+        class="tag tag--domain"
       >
-        <BadgeCheck :size="13" />
-        Certified project
+        {{ domain }}
       </span>
     </div>
 
@@ -51,9 +55,9 @@
       >
     </div>
 
-    <!-- Tags -->
+    <!-- Technologies only -->
     <div
-      v-if="project.technologies?.length || project.domains?.length"
+      v-if="project.technologies?.length"
       class="card-tags"
     >
       <span
@@ -63,14 +67,6 @@
       >
         {{ tech }}
       </span>
-
-      <span
-        v-for="domain in project.domains"
-        :key="'d-' + domain"
-        class="tag tag--domain"
-      >
-        {{ domain }}
-      </span>
     </div>
 
     <!-- Stats -->
@@ -78,11 +74,6 @@
       <span class="stat">
         <ThumbsUp :size="13" />
         {{ project.recommendationsCount }}
-      </span>
-
-      <span class="stat">
-        <MessageCircle :size="13" />
-        {{ project.commentsCount }}
       </span>
 
       <span class="stat">
@@ -104,22 +95,6 @@
       </button>
 
       <button
-        type="button"
-        class="action-btn"
-      >
-        <MessageCircle :size="14" />
-        <span>Comment</span>
-      </button>
-
-      <button
-        type="button"
-        class="action-btn action-btn--primary"
-      >
-        <ExternalLink :size="14" />
-        <span>View project</span>
-      </button>
-
-      <button
         v-if="project.githubReposCount > 0"
         type="button"
         class="action-btn"
@@ -132,19 +107,17 @@
         type="button"
         class="action-btn action-btn--icon"
         aria-label="Share project"
-        @click="emit('share', project)"
+        @click.stop="emit('share', project)"
       >
         <Share2 :size="14" />
       </button>
     </div>
   </article>
 </template>
-
 <script setup>
 import { computed } from 'vue';
 import {
   ThumbsUp,
-  MessageCircle,
   GitBranch,
   ExternalLink,
   Github,
@@ -191,6 +164,7 @@ const formattedDate = computed(() => {
 
 <style scoped>
 .project-card {
+  position: relative;
   width: 100%;
   max-width: 580px;
   margin-inline: auto;
@@ -198,18 +172,27 @@ const formattedDate = computed(() => {
   flex-direction: column;
   gap: var(--space-sm);
   padding: var(--space-sm);
+  padding-left: var(--space-sm);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.07);
-  background: rgba(var(--color-surface-rgb), 0.96);
-  box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.04);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--color-surface-rgb), 0.52),
+      rgba(var(--color-background-rgb), 0.84)
+    );
+  box-shadow: none;
+  overflow: hidden;
+  cursor: pointer;
   transition:
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal),
+    border-color var(--transition-normal);
 }
-
 .project-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(var(--color-primary-rgb), 0.06);
+  transform: translateY(-2px);
+  border-color: rgba(var(--color-secondary-rgb), 0.2);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.055);
 }
 
 /* Author */
@@ -351,8 +334,8 @@ const formattedDate = computed(() => {
   overflow: hidden;
   flex-shrink: 0;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.06);
-  background: rgba(var(--color-background-rgb), 0.75);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.07);
+  background: rgba(var(--color-background-rgb), 0.65);
 }
 
 .post-media img {
@@ -384,15 +367,15 @@ const formattedDate = computed(() => {
 }
 
 .tag--tech {
-  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-  background: rgba(var(--color-primary-rgb), 0.055);
-  color: rgba(var(--color-primary-rgb), 0.6);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.09);
+  background: rgba(var(--color-background-rgb), 0.52);
+  color: rgba(var(--color-primary-rgb), 0.58);
 }
 
 .tag--domain {
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.2);
-  background: rgba(var(--color-secondary-rgb), 0.08);
-  color: rgba(var(--color-secondary-rgb), 0.85);
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.14);
+  background: rgba(var(--color-secondary-rgb), 0.07);
+  color: rgba(var(--color-secondary-rgb), 0.92);
 }
 
 /* Stats */
@@ -412,7 +395,7 @@ const formattedDate = computed(() => {
 
 .card-divider {
   height: 1px;
-  background: rgba(var(--color-primary-rgb), 0.07);
+  background: rgba(var(--color-primary-rgb), 0.08);
 }
 
 /* Actions */

@@ -15,7 +15,6 @@
           :value="search"
           @input="emit('update:search', $event.target.value)"
         />
-        <span class="search-hint">Ctrl K</span>
       </div>
     </div>
 
@@ -26,7 +25,7 @@
       </button>
       <button class="create-btn" @click="emit('create-project')">
         <Plus :size="16" />
-        <span>Nouveau Projet</span>
+        <span>New Projet</span>
       </button>
     </div>
   </header>

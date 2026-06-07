@@ -1,7 +1,10 @@
 <script setup>
-import { MapPin } from 'lucide-vue-next';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { MoveHorizontal, Repeat2 } from 'lucide-vue-next';
+import RecommendationCard from '@/components/portfolio/recommendations/RecommendationCard.vue';
+import { useHorizontalDragScroll } from '@/composables/useHorizontalDragScroll';
 
-defineProps({
+const props = defineProps({
   offers: {
     type: Array,
     default: () => [],
@@ -10,14 +13,107 @@ defineProps({
 
 const emit = defineEmits(['select-offer']);
 
-function handleOfferClick(offer) {
+const viewMode = ref('loop');
+const scrollerRef = ref(null);
+const canScrollLeft = ref(false);
+const canScrollRight = ref(false);
+
+const normalizedOffers = computed(() =>
+  props.offers
+    .map((offer, index) => ({
+      id: offer.id ?? `${offer.title}-${index}`,
+      originalOffer: offer,
+      recommendation: {
+        id: offer.id ?? `${offer.title}-${index}`,
+        authorName: offer.company || 'Company',
+        authorRole: [offer.title, offer.location].filter(Boolean).join(' · '),
+        content:
+          offer.description ||
+          `${offer.duration || 'Duration not specified'} · ${offer.level || 'Level not specified'}`,
+      },
+    }))
+    .filter((offer) => offer.recommendation.content)
+);
+
+const canLoop = computed(() => normalizedOffers.value.length >= 4);
+const isLoopMode = computed(() => viewMode.value === 'loop');
+const isScrollMode = computed(() => viewMode.value === 'scroll');
+const shouldLoop = computed(() => isLoopMode.value && canLoop.value);
+
+const modeButtonLabel = computed(() =>
+  isLoopMode.value ? 'Scroll' : 'Loop'
+);
+
+function updateScrollFades() {
+  const scroller = scrollerRef.value;
+
+  if (!scroller || !isScrollMode.value) {
+    canScrollLeft.value = false;
+    canScrollRight.value = false;
+    return;
+  }
+
+  const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+
+  canScrollLeft.value = scroller.scrollLeft > 1;
+  canScrollRight.value = scroller.scrollLeft < maxScrollLeft - 1;
+}
+
+function prepareScrollMode() {
+  const scroller = scrollerRef.value;
+  if (!scroller) return;
+
+  scroller.scrollLeft = 0;
+  updateScrollFades();
+}
+
+function toggleViewMode() {
+  if (isLoopMode.value) {
+    viewMode.value = 'scroll';
+    nextTick(prepareScrollMode);
+    return;
+  }
+
+  viewMode.value = 'loop';
+  updateScrollFades();
+}
+
+function selectOffer(offer) {
   emit('select-offer', offer);
 }
+
+const {
+  isDragging,
+  handlePointerDown,
+  handlePointerMove,
+  handlePointerUp,
+} = useHorizontalDragScroll(scrollerRef, {
+  enabled: isScrollMode,
+  onScroll: updateScrollFades,
+});
+
+watch(
+  () => normalizedOffers.value.length,
+  () => nextTick(updateScrollFades)
+);
+
+watch(isScrollMode, (scrollMode) => {
+  if (!scrollMode) {
+    updateScrollFades();
+    return;
+  }
+
+  nextTick(prepareScrollMode);
+});
+
+onMounted(() => {
+  nextTick(updateScrollFades);
+});
 </script>
 
 <template>
   <section
-    v-if="offers.length"
+    v-if="normalizedOffers.length"
     class="offers-section"
   >
     <div class="offers-section-header">
@@ -25,49 +121,86 @@ function handleOfferClick(offer) {
         <h2>Recommended opportunities</h2>
         <p>Internships and jobs matching your portfolio.</p>
       </div>
+
+      <button
+        type="button"
+        class="offers-toggle"
+        :aria-pressed="isScrollMode"
+        @click="toggleViewMode"
+      >
+        <MoveHorizontal
+          v-if="isLoopMode"
+          :size="15"
+        />
+        <Repeat2
+          v-else
+          :size="15"
+        />
+        {{ modeButtonLabel }}
+      </button>
     </div>
 
-    <div class="offers-scroll-frame">
-      <div class="offers-list">
-        <button
-          v-for="offer in offers"
-          :key="offer.id"
-          type="button"
-          class="offer-card"
-          @click.stop="handleOfferClick(offer)"
-        >
-          <div class="offer-card-top">
-            <span class="offer-location">
-              <MapPin :size="11" />
-              {{ offer.location }}
-            </span>
-          </div>
-
-          <div class="offer-card-content">
-            <h3>{{ offer.title }}</h3>
-
-            <p class="offer-company">
-              {{ offer.company }}
-            </p>
-          </div>
-
-          <div class="offer-techs">
-            <span
-              v-for="tech in (offer.technologies || []).slice(0, 3)"
-              :key="tech"
+    <div
+      class="offers-frame"
+      :class="{
+        'offers-frame--loop': isLoopMode,
+        'offers-frame--scroll': isScrollMode,
+        'offers-frame--moving': shouldLoop,
+        'offers-frame--draggable': isScrollMode,
+        'offers-frame--dragging': isDragging,
+        'has-left-fade': canScrollLeft,
+        'has-right-fade': canScrollRight,
+      }"
+    >
+      <div
+        ref="scrollerRef"
+        class="offers-scroller"
+        @pointerdown="handlePointerDown"
+        @pointermove="handlePointerMove"
+        @pointerup="handlePointerUp"
+        @pointercancel="handlePointerUp"
+        @pointerleave="handlePointerUp"
+        @scroll="updateScrollFades"
+      >
+        <div class="offers-track">
+          <template v-if="shouldLoop">
+            <div
+              v-for="copy in 2"
+              :key="copy"
+              class="offers-loop-set"
             >
-              {{ tech }}
-            </span>
+              <button
+                v-for="(offer, index) in normalizedOffers"
+                :key="`${offer.id}-${copy}-${index}`"
+                type="button"
+                class="offer-card-button"
+                @click.stop="selectOffer(offer.originalOffer)"
+              >
+                <RecommendationCard
+                  :recommendation="offer.recommendation"
+                  :can-manage-visibility="false"
+                  :is-visible="true"
+                />
+              </button>
+            </div>
+          </template>
 
-            <span v-if="(offer.technologies || []).length > 3">
-              +{{ offer.technologies.length - 3 }}
-            </span>
-          </div>
-
-          <span class="offer-hint">
-            Click to view details
-          </span>
-        </button>
+          <template v-else>
+            <button
+              v-for="(offer, index) in normalizedOffers"
+              :key="`${offer.id}-${index}`"
+              type="button"
+              class="offer-card-button"
+              @click.stop="selectOffer(offer.originalOffer)"
+            >
+              <RecommendationCard
+                :recommendation="offer.recommendation"
+                :can-manage-visibility="false"
+                :is-visible="true"
+              />
+            </button>
+          </template>
+        </div>
       </div>
     </div>
   </section>
@@ -103,47 +236,131 @@ function handleOfferClick(offer) {
   font-size: var(--font-size-xxs);
 }
 
-.offers-scroll-frame {
-  width: 100%;
-  min-width: 0;
-  overflow: hidden;
+.offers-toggle {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding-block: var(--space-sm);
+  padding-inline: 0.75rem var(--space-md);
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.26);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-.offers-list {
-  width: 100%;
-  max-width: none;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  gap: var(--space-lg);
+.offers-toggle:hover {
+  background-color: rgba(var(--color-primary-rgb), 0.92);
+  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+}
+
+/* FRAME + SOFT FADE */
+.offers-frame {
+  --offer-fade-width: clamp(2rem, 6vw, 4rem);
+  position: relative;
+  padding-block: var(--space-xs) var(--space-sm);
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+.offers-frame::before,
+.offers-frame::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 0;
+  pointer-events: none;
+  transition: width var(--transition-normal);
+}
+
+.offers-frame::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    var(--color-background),
+    rgba(var(--color-background-rgb), 0)
+  );
+}
+
+.offers-frame::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    var(--color-background),
+    rgba(var(--color-background-rgb), 0)
+  );
+}
+
+.offers-frame--loop::before,
+.offers-frame--loop::after,
+.offers-frame--scroll.has-left-fade::before,
+.offers-frame--scroll.has-right-fade::after {
+  width: var(--offer-fade-width);
+}
+
+.offers-scroller {
   overflow-x: auto;
-  overflow-y: hidden;
-  padding-block: var(--space-sm);
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  scroll-behavior: smooth;
 }
 
-.offers-list::-webkit-scrollbar {
+.offers-scroller::-webkit-scrollbar {
   display: none;
 }
 
-.offer-card {
-  flex: 0 0 17rem;
-  min-height: 9.5rem;
+.offers-track {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  padding: var(--space-sm);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  background-color: rgba(var(--color-surface-rgb), 0.92);
-  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.04);
+  width: max-content;
+  gap: var(--space-md);
+  align-items: stretch;
+}
+
+.offers-loop-set {
+  display: flex;
+  gap: var(--space-md);
+  align-items: stretch;
+}
+
+/* CARD WRAPPER: fixed equal size */
+.offer-card-button {
+  flex: 0 0 15rem;
+  width: 15rem;
+  height: 10rem;
+  display: block;
+  padding: 0;
+  border: none;
+  background: transparent;
   text-align: left;
-  user-select: none;
-  cursor: pointer;
-  appearance: none;
   font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* REUSED RecommendationCard, but compact only here */
+.offer-card-button :deep(.recommendation-card) {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  padding-left: calc(var(--space-md) + 0.45rem);
+  border-radius: var(--radius-md);
+  overflow: hidden;
   transition:
     transform var(--transition-normal),
     box-shadow var(--transition-normal),
@@ -151,87 +368,103 @@ function handleOfferClick(offer) {
     background-color var(--transition-normal);
 }
 
-.offer-card:hover {
-  transform: scale(1.008);
-  border-color: rgba(var(--color-secondary-rgb), 0.22);
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
-  background-color: rgba(var(--color-surface-rgb), 0.98);
+.offer-card-button :deep(.recommendation-card::before) {
+  width: 0.22rem;
 }
 
-.offer-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-xs);
+.offer-card-button :deep(.recommendation-card header) {
+  min-height: 0;
+  padding-bottom: var(--space-sm);
+  gap: var(--space-sm);
 }
 
-.offer-location {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  width: fit-content;
-  white-space: nowrap;
-  color: rgba(var(--color-primary-rgb), 0.42);
-  font-size: 9px;
-  font-weight: var(--font-semibold);
+.offer-card-button :deep(.recommendation-card__author) {
+  min-width: 0;
 }
 
-.offer-card-content {
-  display: grid;
-  gap: 2px;
-}
-
-.offer-card h3 {
-  margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.92);
+.offer-card-button :deep(.recommendation-card span) {
   font-size: var(--font-size-xs);
-  font-weight: var(--font-bold);
-  line-height: 1.25;
+  line-height: 1.2;
   display: -webkit-box;
-  line-clamp: 2;
-  -webkit-line-clamp: 2;
+  line-clamp: 1;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.offer-company {
-  margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.56);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-medium);
-}
-
-.offer-techs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: auto;
-}
-
-.offer-techs span {
-  padding: 0.14rem 0.45rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.09);
-  background: rgba(var(--color-background-rgb), 0.52);
-  color: rgba(var(--color-primary-rgb), 0.58);
-  font-size: 9px;
-  font-weight: var(--font-medium);
-}
-
-.offer-hint {
-  margin-top: var(--space-xs);
-  color: rgba(var(--color-secondary-rgb), 0.95);
+.offer-card-button :deep(.recommendation-card small) {
   font-size: 10px;
-  font-weight: var(--font-semibold);
+  line-height: 1.25;
+  display: -webkit-box;
+  line-clamp: 1;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.offer-card-button :deep(.recommendation-card p) {
+  font-size: var(--font-size-xxs);
+  line-height: 1.45;
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.offer-card-button:hover :deep(.recommendation-card) {
+  transform: translateY(-2px);
+  border-color: rgba(var(--color-secondary-rgb), 0.2);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.055);
+}
+
+/* LOOP ANIMATION */
+.offers-frame--moving .offers-track {
+  animation: offers-marquee 42s linear infinite;
+}
+
+.offers-frame--moving:hover .offers-track {
+  animation-play-state: paused;
+}
+
+.offers-frame--scroll .offers-track {
+  animation: none;
+  transform: none;
+}
+
+.offers-frame--draggable .offers-scroller {
+  cursor: grab;
+}
+
+.offers-frame--dragging .offers-scroller {
+  cursor: grabbing;
+}
+
+@keyframes offers-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - (var(--space-md) / 2)));
+  }
 }
 
 @media (max-width: 640px) {
-  .offer-card {
-    flex-basis: 14rem;
+  .offers-track,
+  .offers-loop-set {
+    gap: var(--space-sm);
   }
 
-  .offers-list {
-    gap: var(--space-md);
+  .offer-card-button {
+    flex-basis: 13.8rem;
+    width: 13.8rem;
+    height: 9.5rem;
+  }
+
+  .offer-card-button :deep(.recommendation-card) {
+    padding: var(--space-sm);
+    padding-left: calc(var(--space-sm) + 0.45rem);
   }
 }
 </style>
