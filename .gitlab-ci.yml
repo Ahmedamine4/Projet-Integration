@@ -1,10 +1,11 @@
 stages:
-  - lint
-  - quality
-  - security
   - test
+  - security
+  - lint
   - build
+  - quality
   - deploy
+
 
 workflow:
   rules:
@@ -194,10 +195,10 @@ trivy-images:
       - .trivycache/
 
   script:
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table tijabdel/backend:prod
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table tijabdel/frontend:prod
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table tijabdel/nginx:prod
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table tijabdel/ai:prod
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:backend
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:frontend
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:nginx
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:ai
 
   artifacts:
     when: always
@@ -209,10 +210,10 @@ trivy-images:
       - trivy-image-ai.json
 
   after_script:
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-backend.json tijabdel/backend:prod
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-frontend.json tijabdel/frontend:prod
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-nginx.json tijabdel/nginx:prod
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-ai.json tijabdel/ai:prod
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-backend.json ahmedamine04/foliocraft:backend
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-frontend.json ahmedamine04/foliocraft:frontend
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-nginx.json ahmedamine04/foliocraft:nginx
+    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-ai.json ahmedamine04/foliocraft:ai
 
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -297,41 +298,11 @@ docker-build-dev:
     - docker compose \
       -f infrastructure/docker/docker-compose.yml \
       -f infrastructure/docker/docker-compose.dev.yml \
-      build \
-      --pull
+      build 
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
-# PRODUCTION DOCKER BUILD
-docker-build-prod:
-  stage: build
-
-  image: docker:27-cli
-
-  services:
-    - name: docker:27-dind
-      alias: docker
-
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: "1"
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-
-  before_script:
-    - docker version
-    - docker compose version
-
-  script:
-    - docker compose \
-      -f infrastructure/docker/docker-compose.yml \
-      -f infrastructure/docker/docker-compose.prod.yml \
-      build \
-      --pull
-
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
 
 docker-push-prod:
   stage: deploy
@@ -357,10 +328,10 @@ docker-push-prod:
       -f infrastructure/docker/docker-compose.prod.yml \
       build
 
-    - docker push tijabdel/backend:prod
-    - docker push tijabdel/frontend:prod
-    - docker push tijabdel/nginx:prod
-    - docker push tijabdel/ai:prod
+    - docker push ahmedamine04/foliocraft:backend
+    - docker push ahmedamine04/foliocraft:frontend
+    - docker push ahmedamine04/foliocraft:ai
+    - docker push ahmedamine04/foliocraft:nginx
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
