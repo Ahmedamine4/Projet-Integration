@@ -1,7 +1,7 @@
 stages:
-  - test
-  - security
   - lint
+  - security
+  - test
   - build
   - quality
   - deploy
