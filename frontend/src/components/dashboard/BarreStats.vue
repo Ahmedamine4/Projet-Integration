@@ -81,71 +81,82 @@ const categoriesWithColors = computed(() => {
 </script>
 
 <template>
-    <div class="storage-content">
-        <div class="storage-bar-container">
-            <div class="storage-bar">
-                <div v-for="category in categoriesWithColors" :key="category.label" class="storage-segment" :class="{
-                    dimmed:
-                        hoveredCategory &&
-                        hoveredCategory !== category.label
-                }" :style="{
-                    '--percent':
-                        (category.percent),
-                    background:
-                        category.color
-                }" @mouseenter="
-                    hoveredCategory =
-                    category.label
-                    " @mouseleave="
-                    hoveredCategory =
-                    null
-                    " />
-
-            </div>
-        </div>
-        <!-- LEGEND -->
-        <div class="legend">
-            <div v-for="
-category
-    in categoriesWithColors
-          " :key="category.label" class="legend-item" :class="{
+  <div class="storage-content">
+    <div class="storage-bar-container">
+      <div class="storage-bar">
+        <div
+          v-for="category in categoriesWithColors"
+          :key="category.label"
+          class="storage-segment"
+          :class="{
             dimmed:
-                hoveredCategory &&
-                hoveredCategory !== category.label,
-
-            active:
-                hoveredCategory ===
-                category.label
-        }" @mouseenter="
+              hoveredCategory &&
+              hoveredCategory !== category.label
+          }"
+          :style="{
+            '--percent':
+              (category.percent),
+            background:
+              category.color
+          }"
+          @mouseenter="
             hoveredCategory =
-            category.label
-            " @mouseleave="
-                hoveredCategory =
-                null
-                ">
-
-                <div class="legend-color" :style="{
-                    background:
-                        category.color
-                }" />
-
-                <div class="legend-info">
-
-                    <span class="legend-label">
-                        {{ category.label }}
-                    </span>
-
-                    <span class="legend-size">
-                        {{ category.value }}%
-                    </span>
-
-                </div>
-
-            </div>
-
-        </div>
-
+              category.label
+          "
+          @mouseleave="
+            hoveredCategory =
+              null
+          "
+        />
+      </div>
     </div>
+    <!-- LEGEND -->
+    <div class="legend">
+      <div
+        v-for="
+          category
+            in categoriesWithColors
+        "
+        :key="category.label"
+        class="legend-item"
+        :class="{
+          dimmed:
+            hoveredCategory &&
+            hoveredCategory !== category.label,
+
+          active:
+            hoveredCategory ===
+            category.label
+        }"
+        @mouseenter="
+          hoveredCategory =
+            category.label
+        "
+        @mouseleave="
+          hoveredCategory =
+            null
+        "
+      >
+        <div
+          class="legend-color"
+          :style="{
+            background:
+              category.color
+          }"
+        />
+
+        <div class="legend-info">
+          <span class="legend-label">
+            {{ category.label }}
+          </span>
+
+          <span class="legend-size">
+            {{ category.value }}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
