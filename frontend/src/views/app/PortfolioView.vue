@@ -156,34 +156,55 @@ watch(
   { immediate: true }
 );
 
-function sortHighlightedProjects(list) {
+function sortVisibleHighlightedExperiences(list, isVisible = (experience) => experience.effectiveVisibleToEveryone) {
   return [...list].sort((firstProject, secondProject) => {
-    if (firstProject.highlighted !== secondProject.highlighted) {
-      return firstProject.highlighted ? -1 : 1;
+    const firstIsVisibleHighlight = Boolean(
+      firstProject.highlighted && isVisible(firstProject)
+    );
+    const secondIsVisibleHighlight = Boolean(
+      secondProject.highlighted && isVisible(secondProject)
+    );
+
+    if (firstIsVisibleHighlight !== secondIsVisibleHighlight) {
+      return firstIsVisibleHighlight ? -1 : 1;
     }
 
-    return (secondProject.score ?? 0) - (firstProject.score ?? 0);
+    if (firstIsVisibleHighlight && secondIsVisibleHighlight) {
+      return (secondProject.score ?? 0) - (firstProject.score ?? 0);
+    }
+
+    return new Date(secondProject.date) - new Date(firstProject.date);
   });
 }
 
 const visibleProjects = computed(() => {
-	if (isOwnPortfolio.value) return sortHighlightedProjects(projects.value);
+	if (isOwnPortfolio.value) return sortVisibleHighlightedExperiences(projects.value);
 
-	return sortHighlightedProjects(
+	return sortVisibleHighlightedExperiences(
     projects.value.filter(project => project.effectiveVisibleToEveryone)
   );
 });
 
 const visibleActivities = computed(() => {
-  if (isOwnPortfolio.value) return activities.value;
+  if (isOwnPortfolio.value) return sortVisibleHighlightedExperiences(activities.value);
 
-  return activities.value.filter(activity => activity.effectiveVisibleToEveryone);
+  return sortVisibleHighlightedExperiences(
+    activities.value.filter(activity => activity.effectiveVisibleToEveryone)
+  );
 });
 
 const visibleCertifications = computed(() => {
-  if (isOwnPortfolio.value) return certifications.value;
+  if (isOwnPortfolio.value) {
+    return sortVisibleHighlightedExperiences(
+      certifications.value,
+      certification => certification.visibleToEveryone
+    );
+  }
 
-  return certifications.value.filter(certification => certification.visibleToEveryone);
+  return sortVisibleHighlightedExperiences(
+    certifications.value.filter(certification => certification.visibleToEveryone),
+    certification => certification.visibleToEveryone
+  );
 });
 
 const visibleInternships = computed(() => {

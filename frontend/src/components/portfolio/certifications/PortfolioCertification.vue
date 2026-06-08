@@ -6,6 +6,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Sparkles,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
@@ -52,6 +53,10 @@ const shortDescription = computed(() => {
   return `${description.slice(0, limit).trim()}...`;
 });
 
+const isVisibleHighlight = computed(() => {
+  return Boolean(props.certification.highlighted && props.certification.visibleToEveryone);
+});
+
 function toggleExpanded() {
   isExpanded.value = !isExpanded.value;
 }
@@ -88,6 +93,7 @@ function getExperienceRoute(experienceId) {
     :class="{
       'is-expanded': isExpanded,
       'certification--hidden': !certification.visibleToEveryone,
+      'certification--highlighted': isVisibleHighlight,
     }"
   >
     <button
@@ -114,6 +120,18 @@ function getExperienceRoute(experienceId) {
       </span>
 
       <span class="certification-controls">
+        <span
+          v-if="isVisibleHighlight"
+          class="certification-match-badge"
+          title="Matched by the current filter"
+        >
+          <Sparkles
+            :size="14"
+            :stroke-width="2.2"
+          />
+          <span>{{ certification.score ? `${certification.score}% match` : 'Match' }}</span>
+        </span>
+
         <span class="certification-date">
           <CalendarDays
             :size="13"
@@ -279,8 +297,50 @@ function getExperienceRoute(experienceId) {
 }
 
 .certification--hidden .certification-summary,
-.certification--hidden .certification-details > :not(.certification-footer) {
+.certification--hidden .certification-details > :not(.certification-footer),
+.certification--hidden .certification-match-badge {
   filter: grayscale(1) saturate(0);
+}
+
+.certification--highlighted {
+  border-color: rgba(var(--color-secondary-rgb), 0.55);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--color-secondary-rgb), 0.12),
+      rgba(var(--color-surface-rgb), 0.46) 46%,
+      rgba(var(--color-background-rgb), 0.84)
+    );
+  box-shadow:
+    0 12px 22px rgba(var(--color-secondary-rgb), 0.14),
+    0 0.85rem 2rem rgba(0, 0, 0, 0.075);
+}
+
+.certification--highlighted:hover {
+  box-shadow:
+    0 14px 26px rgba(var(--color-secondary-rgb), 0.18),
+    0 1rem 2.4rem rgba(0, 0, 0, 0.1);
+}
+
+.certification-match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.44);
+  border-radius: 999px;
+  padding: 0.38rem 0.58rem;
+  background: var(--color-background);
+  color: var(--color-primary);
+  box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.certification-match-badge svg {
+  color: var(--color-secondary);
+  flex-shrink: 0;
 }
 
 .certification::before {

@@ -92,6 +92,10 @@ export function normalizeActivity(item) {
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.photo ?? experience.documentations?.[0]?.captures ?? '',
+    highlighted: Boolean(item?.highlighted ?? experience.highlighted),
+    score: item?.score ?? experience.score ?? 0,
+    techCount: item?.techCount ?? experience.techCount ?? 0,
+    domaineCount: item?.domaineCount ?? experience.domaineCount ?? 0,
     ...validationState,
   };
 }
@@ -113,6 +117,10 @@ export function normalizeCertification(item) {
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.photo ?? experience.documentations?.[0]?.captures ?? '',
+    highlighted: Boolean(item?.highlighted ?? experience.highlighted),
+    score: item?.score ?? experience.score ?? 0,
+    techCount: item?.techCount ?? experience.techCount ?? 0,
+    domaineCount: item?.domaineCount ?? experience.domaineCount ?? 0,
   };
 }
 

@@ -21,6 +21,10 @@ const canEditExperience = computed(() => {
   return props.canEdit && props.project.validationStatus !== 'refuse';
 });
 
+const isVisibleHighlight = computed(() => {
+  return Boolean(props.project.highlighted && props.project.effectiveVisibleToEveryone);
+});
+
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'long',
@@ -41,7 +45,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
     :class="{
       'project-card--editable': canEditExperience,
       'project-card--hidden': !project.effectiveVisibleToEveryone,
-      'project-card--highlighted': project.highlighted,
+      'project-card--highlighted': isVisibleHighlight,
     }"
     @dblclick="canEditExperience && emit('edit', project)"
     @click="handleDoubleTap"
@@ -69,7 +73,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
       />
     </div>
     <div
-      v-if="project.highlighted"
+      v-if="isVisibleHighlight"
       class="project-match-badge"
       title="Matched by the current filter"
     >
