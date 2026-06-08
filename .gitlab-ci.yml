@@ -1,10 +1,10 @@
 stages:
   - lint
-  - quality
+  - security
   - test
   - build
+  - quality
   - deploy
-  - security
 
 
 workflow:
