@@ -46,6 +46,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <template>
   <article
     class="activity-card"
+    :class="{ 'activity-card--hidden': !activity.effectiveVisibleToEveryone }"
     @dblclick="canEditExperience && emit('edit', activity)"
     @click="handleDoubleTap"
   >
@@ -189,6 +190,19 @@ const { handleDoubleTap } = useDoubleTap(() => {
   flex-direction: column;
   gap: 1.1rem;
   padding: var(--space-xl);
+  background: transparent;
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  user-select: none;
+}
+
+.activity-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   background:
     radial-gradient(
       circle at top right,
@@ -200,11 +214,22 @@ const { handleDoubleTap } = useDoubleTap(() => {
       var(--color-surface) 30%,
       var(--color-background)    
     );
-  border: var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  user-select: none;
+  pointer-events: none;
+}
+
+.activity-card--hidden::before {
+  filter: grayscale(1) saturate(0);
+}
+
+.activity-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.activity-card--hidden .activity-info,
+.activity-card--hidden .activity-image,
+.activity-card--hidden .activity-tags span {
+  filter: grayscale(1) saturate(0);
 }
 
 .activity-top {

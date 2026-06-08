@@ -174,13 +174,41 @@ const { handleDoubleTap } = useDoubleTap(() => {
   overflow: hidden;
   user-select: none;
   transition:
-    opacity var(--transition-fast),
+    filter var(--transition-fast),
     transform var(--transition-normal),
     box-shadow var(--transition-normal);
 }
 
 .project-card--hidden {
-  opacity: 0.58;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--color-primary-rgb), 0.08),
+      rgba(var(--color-surface-rgb), 0.34) 46%,
+      rgba(var(--color-background-rgb), 0.84)
+    );
+}
+
+.project-card--hidden .project-preview,
+.project-card--hidden .project-header,
+.project-card--hidden .project-content > p,
+.project-card--hidden .project-tags span,
+.project-card--hidden .project-edit-hint {
+  filter: grayscale(1) saturate(0);
+}
+
+.project-card--hidden.project-card--highlighted {
+  --border: 1px solid rgba(var(--color-primary-rgb), 0.18);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--color-primary-rgb), 0.08),
+      rgba(var(--color-surface-rgb), 0.34) 46%,
+      rgba(var(--color-background-rgb), 0.84)
+    );
+  box-shadow:
+    0 12px 22px rgba(var(--color-primary-rgb), 0.08),
+    0 10px 16px rgba(0, 0, 0, 0.04);
 }
 
 .project-card--highlighted {
@@ -314,7 +342,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
   border: 1px solid rgba(var(--color-secondary-rgb), 0.44);
   border-radius: 999px;
   padding: 0.38rem 0.58rem;
-  background: rgba(var(--color-background-rgb), 0.9);
+  background: var(--color-background);
   color: var(--color-primary);
   box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
   font-size: var(--font-size-xxs);

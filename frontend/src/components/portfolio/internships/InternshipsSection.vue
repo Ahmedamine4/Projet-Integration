@@ -39,27 +39,15 @@ const emit = defineEmits(['add-internship', 'edit-internship']);
 
 <style scoped>
 .internships {
+  --internship-gap: calc(var(--space-xl) * 1.2);
   position: relative;
   display: grid;
-  gap: calc(var(--space-xl) * 1.2);
+  gap: var(--internship-gap);
   padding-block: var(--padding-block);
 }
 
 .internships::before {
-  content: '';
-  position: absolute;
-  top: var(--padding-block);
-  bottom: var(--padding-block);
-  left: calc(clamp(4.6rem, 10vw, 7rem) + 1px);
-  width: 2px;
-  border-radius: 999px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(var(--color-secondary-rgb), 0.16),
-      rgba(var(--color-secondary-rgb), 0.78),
-      rgba(var(--color-secondary-rgb), 0.16)
-    );
+  content: none;
 }
 
 @media (max-width: 640px) {
