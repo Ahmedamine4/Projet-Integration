@@ -4,12 +4,15 @@ import AppSidebar from '@/components/layout/AppSidebar.vue';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
-const { user } = storeToRefs(authStore);
+const { user, profileLoading, profileChecked } = storeToRefs(authStore);
 </script>
 
 <template>
   <main class="app-shell">
-    <AppSidebar :user="user || undefined" />
+    <AppSidebar
+      :user="user || undefined"
+      :loading="profileLoading || !profileChecked"
+    />
     <section class="app-content">
       <slot />
     </section>

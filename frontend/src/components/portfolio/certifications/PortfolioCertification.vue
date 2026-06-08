@@ -258,14 +258,29 @@ function getExperienceRoute(experienceId) {
     rgba(var(--color-surface-rgb), 0.34);
   box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.075);
   transition:
-    opacity var(--transition-fast),
+    filter var(--transition-fast),
     border-color var(--transition-fast),
     box-shadow var(--transition-fast),
     transform var(--transition-fast);
 }
 
 .certification--hidden {
-  opacity: 0.58;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(var(--color-primary-rgb), 0.08),
+      transparent 36%
+    ),
+    rgba(var(--color-surface-rgb), 0.34);
+}
+
+.certification.certification--hidden::before {
+  background: rgba(var(--color-primary-rgb), 0.18);
+}
+
+.certification--hidden .certification-summary,
+.certification--hidden .certification-details > :not(.certification-footer) {
+  filter: grayscale(1) saturate(0);
 }
 
 .certification::before {

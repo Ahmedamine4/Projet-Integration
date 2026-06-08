@@ -140,7 +140,7 @@ const displayedContent = computed(() => {
   overflow: hidden;
   user-select: none;
   transition:
-    opacity var(--transition-fast),
+    filter var(--transition-fast),
     border-color var(--transition-fast),
     box-shadow var(--transition-fast),
     transform var(--transition-fast);
@@ -161,7 +161,24 @@ const displayedContent = computed(() => {
 }
 
 .recommendation-card--hidden {
-  opacity: 0.58;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(var(--color-primary-rgb), 0.08),
+      transparent 38%
+    ),
+    rgba(var(--color-surface-rgb), 0.34);
+}
+
+.recommendation-card--hidden::before {
+  background: rgba(var(--color-primary-rgb), 0.18);
+}
+
+.recommendation-card--hidden .recommendation-card__quote,
+.recommendation-card--hidden .recommendation-card__author,
+.recommendation-card--hidden .recommendation-card__date,
+.recommendation-card--hidden .recommendation-card__content > p {
+  filter: grayscale(1) saturate(0);
 }
 
 .recommendation-card header {
