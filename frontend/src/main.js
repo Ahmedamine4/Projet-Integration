@@ -12,7 +12,17 @@ app.use(pinia);
 
 const authStore = useAuthStore();
 
-authStore.fetchProfile().finally(() => {
-  app.use(router);
-  app.mount("#app");
+app.use(router);
+app.mount("#app");
+
+authStore.fetchProfile().then(() => {
+  const currentRoute = router.currentRoute.value;
+  const requiresAuth = currentRoute.matched.some((record) => record.meta.requiresAuth);
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    router.replace({
+      name: 'login',
+      query: { redirect: currentRoute.fullPath },
+    });
+  }
 });

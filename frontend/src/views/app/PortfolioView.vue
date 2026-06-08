@@ -58,6 +58,12 @@ const userId = computed(() => authStore.user?.utilisateur_id);
 
 const portfolio = computed(() => portfolioStore.portfolio);
 const isResolvingPortfolio = ref(false);
+const isAuthResolving = computed(() => authStore.profileLoading || !authStore.profileChecked);
+const isPortfolioLoading = computed(() =>
+  isAuthResolving.value ||
+  isResolvingPortfolio.value ||
+  portfolioStore.loading
+);
 const portfolioUserId = computed(() =>
   route.params.id ||
   portfolio.value?.id ||
@@ -479,7 +485,90 @@ async function handleAiFiltersDetected(filters) {
 
 <template>
   <div
-    v-if="!isResolvingPortfolio"
+    v-if="isPortfolioLoading"
+    class="portfolio portfolio--loading"
+    aria-busy="true"
+  >
+    <div class="portfolio__banner" />
+
+    <main>
+      <div class="profile profile--skeleton">
+        <div class="profile__photo skeleton" />
+        <div class="profile__info profile__info--skeleton">
+          <span class="skeleton skeleton-line skeleton-line--name" />
+          <span class="skeleton skeleton-line skeleton-line--headline" />
+          <div class="statistics statistics--skeleton">
+            <div
+              v-for="item in 3"
+              :key="item"
+            >
+              <span class="skeleton skeleton-line skeleton-line--stat-label" />
+              <span class="skeleton skeleton-line skeleton-line--stat-value" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="about">
+        <section class="skeleton-panel skeleton-panel--about">
+          <span class="skeleton skeleton-line skeleton-line--section-title" />
+          <span
+            v-for="line in 4"
+            :key="`about-${line}`"
+            class="skeleton skeleton-line"
+            :class="`skeleton-line--copy-${line}`"
+          />
+        </section>
+
+        <div class="education-skills-wrapper">
+          <section class="skeleton-panel skeleton-panel--compact">
+            <span class="skeleton skeleton-line skeleton-line--section-title" />
+            <span
+              v-for="line in 3"
+              :key="`education-${line}`"
+              class="skeleton skeleton-line"
+            />
+          </section>
+
+          <section class="skeleton-panel skeleton-panel--compact">
+            <span class="skeleton skeleton-line skeleton-line--section-title" />
+            <div class="skeleton-tags">
+              <span
+                v-for="tag in 8"
+                :key="`tag-${tag}`"
+                class="skeleton skeleton-tag"
+              />
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section
+        v-for="section in 3"
+        :key="`portfolio-section-${section}`"
+        class="skeleton-section"
+      >
+        <div class="skeleton-section__header">
+          <span class="skeleton skeleton-line skeleton-line--section-heading" />
+          <span class="skeleton skeleton-button" />
+        </div>
+        <div class="skeleton-card-grid">
+          <article
+            v-for="card in 3"
+            :key="`section-${section}-card-${card}`"
+            class="skeleton-card"
+          >
+            <span class="skeleton skeleton-line skeleton-line--card-title" />
+            <span class="skeleton skeleton-line" />
+            <span class="skeleton skeleton-line skeleton-line--copy-2" />
+            <span class="skeleton skeleton-line skeleton-line--copy-3" />
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div
+    v-else
     class="portfolio"
   >
     <div class="portfolio__banner" />
@@ -728,6 +817,10 @@ async function handleAiFiltersDetected(filters) {
   overflow-x: hidden;
 }
 
+.portfolio--loading {
+  min-height: 100vh;
+}
+
 .portfolio main {
 	--portfolio-padding-inline: clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
   --portfolio-section-gap: clamp(calc(var(--space-xl) * 2), 7vw, calc(var(--space-xl) * 3));
@@ -809,6 +902,11 @@ async function handleAiFiltersDetected(filters) {
 	padding: var(--space-sm) 0;
 }
 
+.profile__info--skeleton {
+  width: min(100%, 25rem);
+  gap: var(--space-sm);
+}
+
 .name {
 	margin: 0;
 	font-size: calc(var(--font-size-lg));
@@ -855,6 +953,14 @@ async function handleAiFiltersDetected(filters) {
 	font-size: var(--font-size-md);
 	font-weight: var(--font-bold);
 	color: var(--color-primary);
+}
+
+.statistics--skeleton {
+  justify-content: flex-start;
+}
+
+.statistics--skeleton > div {
+  width: 6.5rem;
 }
 
 .about {
@@ -959,6 +1065,157 @@ async function handleAiFiltersDetected(filters) {
   column-gap: calc(var(--space-xl) * 2);
   row-gap: var(--portfolio-section-gap);
 }
+
+.skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--color-primary-rgb), 0.08);
+}
+
+.profile__photo.skeleton {
+  border-radius: 42%;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--color-background-rgb), 0.72),
+    transparent
+  );
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.skeleton-line {
+  width: 100%;
+  height: 0.85rem;
+}
+
+.skeleton-line--name {
+  width: min(15rem, 78%);
+  height: 1.6rem;
+}
+
+.skeleton-line--headline {
+  width: min(20rem, 92%);
+}
+
+.skeleton-line--stat-label {
+  width: 5.6rem;
+  height: 0.65rem;
+}
+
+.skeleton-line--stat-value {
+  width: 2.4rem;
+  height: 1.25rem;
+}
+
+.skeleton-line--section-title,
+.skeleton-line--section-heading {
+  width: min(13rem, 70%);
+  height: 1.85rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-line--section-heading {
+  height: 2.2rem;
+}
+
+.skeleton-line--card-title {
+  width: 72%;
+  height: 1.15rem;
+}
+
+.skeleton-line--copy-1 {
+  width: 94%;
+}
+
+.skeleton-line--copy-2 {
+  width: 82%;
+}
+
+.skeleton-line--copy-3 {
+  width: 64%;
+}
+
+.skeleton-line--copy-4 {
+  width: 74%;
+}
+
+.skeleton-panel {
+  display: flex;
+  min-height: 17rem;
+  flex-direction: column;
+  gap: var(--space-md);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  padding-block: var(--space-sm) var(--space-xl);
+}
+
+.skeleton-panel--compact {
+  min-height: 8.5rem;
+}
+
+.skeleton-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.skeleton-tag {
+  width: 5.5rem;
+  height: 1.7rem;
+  border-radius: 999px;
+}
+
+.skeleton-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  padding-bottom: var(--space-xl);
+}
+
+.skeleton-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.skeleton-button {
+  width: 7.25rem;
+  height: 2.1rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-lg);
+}
+
+.skeleton-card {
+  display: flex;
+  min-height: 10.5rem;
+  flex-direction: column;
+  gap: var(--space-md);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-surface-rgb), 0.28);
+  padding: var(--space-lg);
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
 .ai-orb-container {
   position: fixed;
   right: 2rem;
@@ -985,6 +1242,14 @@ async function handleAiFiltersDetected(filters) {
 		grid-template-columns: 1fr;
 		gap: var(--space-lg);
 	}
+
+  .profile__info--skeleton {
+    align-items: center;
+  }
+
+  .skeleton-card-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1015,6 +1280,15 @@ async function handleAiFiltersDetected(filters) {
   .qr-button {
     font-size: 10px;
     padding-inline: 0.7rem 0.85rem;
+  }
+
+  .skeleton-section__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .skeleton-button {
+    width: 6.5rem;
   }
 }
 
