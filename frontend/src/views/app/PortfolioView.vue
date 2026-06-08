@@ -25,6 +25,7 @@ import RecommendationsSection from '@/components/portfolio/recommendations/Recom
 import { placeholderRecommendations } from '@/tmp/portfolioRecommendations';
 import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
+import ImageCropperModal from '@/components/common/forms/ImageCropperModal.vue';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -96,6 +97,7 @@ const profileHeadline = computed(() => {
 const profilePhoto = computed(() => profile.value?.photo || '');
 const localProfilePhoto = ref('');
 const profilePhotoInput = ref(null);
+const selectedProfilePhotoFile = ref(null);
 const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
 const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
@@ -461,13 +463,23 @@ function openProfilePhotoPicker() {
 
 function handleProfilePhotoChange(event) {
   const file = event.target.files?.[0];
-  if (!file) return;
+  event.target.value = '';
 
+  if (!file) return;
+  selectedProfilePhotoFile.value = file;
+}
+
+function handleProfilePhotoCropped(file) {
   if (localProfilePhoto.value) {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
 
   localProfilePhoto.value = URL.createObjectURL(file);
+  selectedProfilePhotoFile.value = null;
+}
+
+function closeProfilePhotoCropper() {
+  selectedProfilePhotoFile.value = null;
 }
 
 onUnmounted(() => {
@@ -787,6 +799,16 @@ async function handleAiFiltersDetected(filters) {
       :schools="institutionStore.institutions"
       @close="isSchoolModalOpen = false"
       @complete="completeSchoolPath"
+    />
+
+    <ImageCropperModal
+      :open="Boolean(selectedProfilePhotoFile)"
+      :file="selectedProfilePhotoFile"
+      title="Crop profile photo"
+      :output-width="760"
+      :output-height="820"
+      @close="closeProfilePhotoCropper"
+      @crop="handleProfilePhotoCropped"
     />
   </div>
   <div class="ai-orb-container">

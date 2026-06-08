@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { ImagePlus, Trash2, UploadCloud } from 'lucide-vue-next';
+import ImageCropperModal from '@/components/common/forms/ImageCropperModal.vue';
 
 const model = defineModel({
   type: Object,
@@ -32,30 +33,61 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  cropWidth: {
+    type: Number,
+    default: 0,
+  },
+  cropHeight: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const isDragging = ref(false);
 const isInitialPreviewCleared = ref(false);
+const pendingCropFile = ref(null);
+const shouldCrop = computed(() => props.cropWidth > 0 && props.cropHeight > 0);
 
 const updateFile = (file) => {
   isInitialPreviewCleared.value = false;
   model.value = file || null;
 };
 
+const selectFile = (file) => {
+  if (!file) return;
+
+  if (shouldCrop.value && file.type?.startsWith('image/')) {
+    pendingCropFile.value = file;
+    return;
+  }
+
+  updateFile(file);
+};
+
 const handleFileChange = (event) => {
-  updateFile(event.target.files?.[0]);
+  selectFile(event.target.files?.[0]);
   event.target.value = '';
 };
 
 const handleDrop = (event) => {
   isDragging.value = false;
-  updateFile(event.dataTransfer.files?.[0]);
+  selectFile(event.dataTransfer.files?.[0]);
 };
 
 const clearFile = () => {
   releasePreviewURL();
   isInitialPreviewCleared.value = true;
+  pendingCropFile.value = null;
   model.value = null;
+};
+
+const closeCropper = () => {
+  pendingCropFile.value = null;
+};
+
+const handleCroppedFile = (file) => {
+  updateFile(file);
+  closeCropper();
 };
 
 const previewURL = ref('');
@@ -154,6 +186,15 @@ onUnmounted(releasePreviewURL);
       </p>
     </div>
   </label>
+  <ImageCropperModal
+    :open="Boolean(pendingCropFile)"
+    :file="pendingCropFile"
+    title="Crop uploaded image"
+    :output-width="cropWidth || 1280"
+    :output-height="cropHeight || 720"
+    @close="closeCropper"
+    @crop="handleCroppedFile"
+  />
 </template>
 
 <style scoped>

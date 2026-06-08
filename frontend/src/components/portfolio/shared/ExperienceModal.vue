@@ -63,6 +63,8 @@ const experienceConfigs = {
     imageLabel: 'screenshot',
     imageAccept: 'image/*',
     imageRequired: true,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: true,
     showAcademic: true,
     showTags: true,
@@ -78,6 +80,8 @@ const experienceConfigs = {
     imageLabel: 'photo',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
     showAcademic: true,
     showTags: true,
@@ -93,6 +97,8 @@ const experienceConfigs = {
     imageLabel: 'photo',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
     showAcademic: true,
     showTags: true,
@@ -108,6 +114,8 @@ const experienceConfigs = {
     imageLabel: 'screenshot',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
     showAcademic: false,
     showTags: true,
@@ -619,6 +627,8 @@ const existingImageName = computed(() => {
                 :accept="currentConfig.imageAccept"
                 :initial-preview-url="existingImagePreview"
                 :initial-file-name="existingImageName"
+                :crop-width="currentConfig.cropWidth"
+                :crop-height="currentConfig.cropHeight"
               />
               <BaseError
                 v-if="errors.image"
