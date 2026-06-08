@@ -1,8 +1,8 @@
 <template>
   <header class="feed-header">
     <div class="header-left">
-      <span class="discovery-label">Découverte</span>
-      <h1 class="greeting">Bonjour {{ userName }} 👋</h1>
+      <span class="discovery-label">DISCOVERY</span>
+      <h1 class="greeting">Hello {{ userName }} </h1>
     </div>
 
     <div class="header-center">

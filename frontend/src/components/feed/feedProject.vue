@@ -70,59 +70,47 @@
     </div>
 
     <!-- Stats -->
-    <div class="card-stats">
-      <span class="stat">
-        <ThumbsUp :size="13" />
-        {{ project.recommendationsCount }}
-      </span>
-
-      <span class="stat">
-        <GitBranch :size="13" />
-        {{ project.githubReposCount }}
-      </span>
-    </div>
-
     <div class="card-divider" />
 
-    <!-- Actions -->
-    <div class="card-actions">
-      <button
-        type="button"
-        class="action-btn"
-      >
-        <ThumbsUp :size="14" />
-        <span>Recommend</span>
-      </button>
+<!-- Commits -->
+<div class="card-stats">
+  <span class="stat">
+    <GitBranch :size="13" />
+    {{ project.commitsCount ?? project.githubReposCount ?? 0 }} commits
+  </span>
+</div>
 
-      <button
-        v-if="project.githubReposCount > 0"
-        type="button"
-        class="action-btn"
-        aria-label="Open GitHub repository"
-      >
-        <Github :size="14" />
-      </button>
+<!-- Actions -->
+<div class="card-actions">
+  <button
+    v-if="project.githubReposCount > 0"
+    type="button"
+    class="action-btn"
+    aria-label="Open GitHub repository"
+  >
+    <Github :size="14" />
+    <span>GitHub</span>
+  </button>
 
-      <button
-        type="button"
-        class="action-btn action-btn--icon"
-        aria-label="Share project"
-        @click.stop="emit('share', project)"
-      >
-        <Share2 :size="14" />
-      </button>
-    </div>
+  <button
+  
+    type="button"
+    class="action-btn action-btn--icon"
+    aria-label="Share project"
+    @click.stop="emit('share', project)"
+  >
+    <Share2 :size="14" />
+
+  </button>
+</div>
   </article>
 </template>
 <script setup>
 import { computed } from 'vue';
 import {
-  ThumbsUp,
   GitBranch,
-  ExternalLink,
   Github,
   Share2,
-  BadgeCheck,
 } from 'lucide-vue-next';
 
 const props = defineProps({

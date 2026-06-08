@@ -374,15 +374,17 @@ const allTechnologies = computed(() => {
   return [...set];
 });
 
-const allDomains = computed(() => {
-  const set = new Set();
-
-  mockProjects.forEach((project) => {
-    project.domains.forEach((domain) => set.add(domain));
-  });
-
-  return [...set];
-});
+const allDomains = computed(() => [
+  'Mobile Development',
+  'DevOps & Cloud Infrastructure',
+  'Machine Learning & AI',
+  'High Performance & Quantum Computing',
+  'Data Engineering',
+  'Embedded Systems & IoT',
+  'Web Frontend',
+  'Cybersecurity',
+  'Web Backend',
+]);
 
 const filteredProjects = computed(() => {
   const keyword = search.value.trim().toLowerCase();
