@@ -1,5 +1,11 @@
 import express from 'express';
-import { addActivite, getMesActivites, updateActivite, updateVisibiliteActivite } from '../controllers/activite.controller.js';
+import {
+  addActivite,
+  getActivites,
+  updateActivite,
+  deleteActivite,
+  updateVisibiliteActivite,
+} from '../controllers/activite.controller.js';
 import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/upload.middleware.js';
 
@@ -9,8 +15,9 @@ router.use(authMiddleware);
 router.use(authorizeRoles(ROLES.ETUDIANT));
 
 router.post('/', upload.single('img'), addActivite);
-router.get('/me', getMesActivites);
+router.get('/me', getActivites);
 router.patch('/:experienceId', upload.single('img'), updateActivite);
+router.delete('/:experienceId', deleteActivite);
 router.patch('/:experienceId/visibilite', updateVisibiliteActivite);
 
 export default router;
