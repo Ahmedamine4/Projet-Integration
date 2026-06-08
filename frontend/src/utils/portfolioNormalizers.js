@@ -207,6 +207,9 @@ export function normalizePortfolio(data) {
   const certifications = (data?.certifications ?? []).map(normalizeCertification);
   const internships = (data?.stages ?? []).map(normalizeInternship);
   const experiences = [...projects, ...activities, ...certifications, ...internships];
+  const visibleSkillSources = experiences.filter((item) =>
+    item.effectiveVisibleToEveryone ?? item.visibleToEveryone
+  );
 
   return {
     id: data?.etudiant_utilisateur_id ?? user.utilisateur_id ?? '',
@@ -232,8 +235,8 @@ export function normalizePortfolio(data) {
     internships,
     activities,
     certifications,
-    skills: sortByFrequency(experiences.flatMap((item) => item.technologies ?? [])),
-    domains: sortByFrequency(experiences.flatMap((item) => item.domains ?? [])),
+    skills: sortByFrequency(visibleSkillSources.flatMap((item) => item.technologies ?? [])),
+    domains: sortByFrequency(visibleSkillSources.flatMap((item) => item.domains ?? [])),
     recommendations: (data?.recommandations ?? []).map(normalizeRecommendation),
   };
 }
