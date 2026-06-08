@@ -814,7 +814,6 @@ async function handleAiFiltersDetected(filters) {
   <div class="ai-orb-container">
     <AiOrb @filters-detected="handleAiFiltersDetected" />
   </div>
-
 </template>
 
 <style scoped>

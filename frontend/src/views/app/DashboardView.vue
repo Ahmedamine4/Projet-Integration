@@ -151,80 +151,88 @@ const scoreHistory = [
 </script>
 
 <template>
-
-    <div class="dashboard">
-        <StudentHeader :student="student" :stats="[
-            { label: 'Followers', value: 210 },
-            { label: 'Projects', value: personalProjects.length },
-            { label: 'Internships', value: 1 },
-            { label: 'Letter of \n recommendation', value: 1 },
-            { label: 'Certifications', value: 0 }
+  <div class="dashboard">
+    <StudentHeader
+      :student="student"
+      :stats="[
+        { label: 'Followers', value: 210 },
+        { label: 'Projects', value: personalProjects.length },
+        { label: 'Internships', value: 1 },
+        { label: 'Letter of \n recommendation', value: 1 },
+        { label: 'Certifications', value: 0 }
             
-        ]" />
-        <section class="section">
-            <div class="section-header">
-                <h2>Technologies utilisées</h2>
-                <span>{{ techStack.length }}</span>
-            </div>
+      ]"
+    />
+    <section class="section">
+      <div class="section-header">
+        <h2>Technologies utilisées</h2>
+        <span>{{ techStack.length }}</span>
+      </div>
 
-            <RoundChart :techStack="techStack" />
-        </section>
-        <section class="section">
-            <div class="section-header">
-                <h2>Domains</h2>
-                <span>{{ techStack.length }}</span>
-            </div>
+      <RoundChart :tech-stack="techStack" />
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <h2>Domains</h2>
+        <span>{{ techStack.length }}</span>
+      </div>
 
-            <BarreStats :categories="categories" />
-        </section>
-        <section class="section">
-            <div class="section-header">
-                <h2>Score Evolution</h2>
-                <span>{{ scoreHistory.length }}</span>
-            </div>
+      <BarreStats :categories="categories" />
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <h2>Score Evolution</h2>
+        <span>{{ scoreHistory.length }}</span>
+      </div>
 
-            <ScoreChart :scores="scoreHistory" />
-        </section>
+      <ScoreChart :scores="scoreHistory" />
+    </section>
 
-        <section class="section">
-            <div class="section-header">
-                <h2>Demandes envoyées</h2>
-                <span>
-                    {{ sortedRequests.length }}
+    <section class="section">
+      <div class="section-header">
+        <h2>Demandes envoyées</h2>
+        <span>
+          {{ sortedRequests.length }}
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Professeur</th>
+              <th>Date</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="request in sortedRequests"
+              :key="request.id"
+              class="table-row"
+            >
+              <td><span class="cell-title">{{ request.title }}</span></td>
+              <td><span class="student-name">{{ request.professor }}</span></td>
+              <td><span class="cell-date">{{ request.date }}</span></td>
+              <td>
+                <span
+                  class="status-badge"
+                  :class="{
+                    'status-badge--validated': request.status === 'accepted',
+                    'status-badge--pending': request.status === 'pending',
+                    'status-badge--refused': request.status === 'rejected'
+                  }"
+                >
+                  {{ statusLabel(request.status) }}
                 </span>
-            </div>
-
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Titre</th>
-                            <th>Professeur</th>
-                            <th>Date</th>
-                            <th>Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="request in sortedRequests" :key="request.id" class="table-row">
-                            <td><span class="cell-title">{{ request.title }}</span></td>
-                            <td><span class="student-name">{{ request.professor }}</span></td>
-                            <td><span class="cell-date">{{ request.date }}</span></td>
-                            <td>
-                                <span class="status-badge" :class="{
-                                    'status-badge--validated': request.status === 'accepted',
-                                    'status-badge--pending': request.status === 'pending',
-                                    'status-badge--refused': request.status === 'rejected'
-                                }">
-                                    {{ statusLabel(request.status) }}
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-    </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 </template>
 
 <style scoped>

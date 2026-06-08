@@ -26,7 +26,10 @@ const donutSegments = computed(() => {
 <template>
   <div class="chart-wrapper">
     <div class="donut-container">
-      <svg viewBox="0 0 200 200" class="donut-svg">
+      <svg
+        viewBox="0 0 200 200"
+        class="donut-svg"
+      >
         <circle
           v-for="tech in donutSegments"
           :key="tech.name"
@@ -71,7 +74,10 @@ const donutSegments = computed(() => {
         @mouseenter="hoveredTech = tech.name"
         @mouseleave="hoveredTech = null"
       >
-        <span class="legend-dot" :style="{ background: tech.color }"></span>
+        <span
+          class="legend-dot"
+          :style="{ background: tech.color }"
+        />
         <span class="legend-name">{{ tech.name }}</span>
         <span class="legend-percent">{{ tech.percent }}%</span>
       </li>

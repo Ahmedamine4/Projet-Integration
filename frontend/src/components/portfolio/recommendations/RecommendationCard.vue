@@ -110,7 +110,6 @@ const displayedContent = computed(() => {
         />
       </button>
     </div>
-
   </article>
 </template>
 

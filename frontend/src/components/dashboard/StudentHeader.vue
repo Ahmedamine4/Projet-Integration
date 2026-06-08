@@ -25,7 +25,11 @@ function getStatColor(label ,value) {
   <div class="student-header">
     <!-- BLOC GAUCHE : Profil de l'étudiant -->
     <div class="student-profile">
-      <img :src="student.avatar" class="student-avatar" alt="Avatar" />
+      <img
+        :src="student.avatar"
+        class="student-avatar"
+        alt="Avatar"
+      >
       <div class="profile-info">
         <h2>{{ student.firstName }} {{ student.lastName }}</h2>
         <p>{{ student.major }}</p>
@@ -34,8 +38,15 @@ function getStatColor(label ,value) {
 
     <!-- BLOC DROITE : Conteneur global des statistiques -->
     <div class="student-stats-container">
-      <div v-for="stat in stats" :key="stat.label" class="stat-card">
-        <div class="stat-label" :class="getStatColor(stat.label, stat.value)">
+      <div
+        v-for="stat in stats"
+        :key="stat.label"
+        class="stat-card"
+      >
+        <div
+          class="stat-label"
+          :class="getStatColor(stat.label, stat.value)"
+        >
           {{ stat.label }}
         </div>
 
