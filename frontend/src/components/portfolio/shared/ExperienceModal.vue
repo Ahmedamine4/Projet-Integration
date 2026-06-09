@@ -225,6 +225,59 @@ const toggleLabel = (item) => {
 const getSelectedNames = (items) =>
   items.filter((item) => item.selected).map((item) => item.name);
 
+const normalizeList = (items = []) => [...items].filter(Boolean).sort((a, b) => a.localeCompare(b));
+
+const normalizeComparableValue = (value) => {
+  if (Array.isArray(value)) return normalizeList(value);
+  if (typeof value === 'string') return value.trim();
+  return value ?? '';
+};
+
+function getComparableExperience(source = {}, config = currentConfig.value) {
+  const sourceTechnologies = source === form
+    ? getSelectedNames(technologies.value)
+    : source.technologies ?? [];
+  const sourceDomains = source === form
+    ? getSelectedNames(domains.value)
+    : source.domains ?? [];
+  const isAcademicExperience = config.showAcademic && Boolean(source.isAcademic);
+
+  return {
+    title: normalizeComparableValue(source.title),
+    date: normalizeComparableValue(config.dateMode === 'range' ? source.startDate : source.date),
+    startDate: normalizeComparableValue(source.startDate),
+    endDate: normalizeComparableValue(source.endDate),
+    description: normalizeComparableValue(source.description),
+    technologies: config.showTags ? normalizeList(sourceTechnologies) : [],
+    domains: config.showTags ? normalizeList(sourceDomains) : [],
+    githubLink: config.showGithub ? normalizeComparableValue(source.githubLink) : '',
+    certificateURL: config.showCertificateFields ? normalizeComparableValue(source.certificateURL) : '',
+    certificateCode: config.showCertificateFields ? normalizeComparableValue(source.certificateCode) : '',
+    isAcademic: isAcademicExperience,
+    institution: isAcademicExperience ? normalizeComparableValue(source.institution) : '',
+    teacherEmail: isAcademicExperience && requiresAcademicTeacher.value
+      ? normalizeComparableValue(source.teacherEmail)
+      : '',
+    activityType: config.showActivityFields ? normalizeComparableValue(source.activityType) : '',
+    location: config.showActivityFields ? normalizeComparableValue(source.location) : '',
+    club: config.showActivityFields ? normalizeComparableValue(source.club) : '',
+    missions: config.showMissions ? normalizeComparableValue(source.missions) : '',
+    report: config.showMissions ? normalizeComparableValue(source.report) : '',
+    visibleToEveryone: Boolean(source.visibleToEveryone),
+    hasNewImage: source === form ? Boolean(source.image) : false,
+  };
+}
+
+const hasEditChanges = computed(() => {
+  if (!isEdit.value || !props.initialValue) return true;
+
+  const config = currentConfig.value;
+  const current = getComparableExperience(form, config);
+  const initial = getComparableExperience(props.initialValue, config);
+
+  return JSON.stringify(current) !== JSON.stringify(initial);
+});
+
 const resetDetectedTags = () => {
   technologies.value = [];
   domains.value = [];
@@ -337,6 +390,8 @@ async function scrollToFirstError() {
 }
 
 const submitExperience = () => {
+  if (isEdit.value && !hasEditChanges.value) return;
+
   resetErrors();
 
   const config = currentConfig.value;
@@ -889,6 +944,7 @@ const existingImageName = computed(() => {
               type="submit"
               variant="submit"
               :loading
+              :disabled="isEdit && !hasEditChanges"
             >
               {{ isEdit ? 'Save changes' : `Submit ${props.type}` }}
             </BaseButton>
