@@ -1,14 +1,20 @@
 <script setup>
-import { GraduationCap } from 'lucide-vue-next';
+import { GraduationCap, Plus } from 'lucide-vue-next';
 import PortfolioEmptyState from '@/components/portfolio/shared/PortfolioEmptyState.vue';
 
 defineProps({
   userId: { type: String, required: true },
+  canAdd: {
+    type: Boolean,
+    default: false,
+  },
   items: {
     type: Array,
     default: () => [],
   },
 });
+
+defineEmits(['add-education']);
 </script>
 
 <template>
@@ -44,8 +50,22 @@ defineProps({
           </p>
         </div>
       </article>
+      <div
+        v-if="!items.length && canAdd"
+        class="education__empty education__empty--actionable"
+      >
+        <p>No education information has been added yet.</p>
+        <button
+          class="education__empty-action"
+          type="button"
+          @click="$emit('add-education')"
+        >
+          <Plus :size="15" />
+          Add academic path
+        </button>
+      </div>
       <PortfolioEmptyState
-        v-if="!items.length"
+        v-else-if="!items.length"
         class="education__empty"
         message="No education information has been added yet."
       />
@@ -143,6 +163,61 @@ defineProps({
   font-size: var(--font-size-xs);
   font-weight: var(--font-light);
   line-height: 1.3;
+}
+
+.education__empty {
+  text-align: center;
+}
+
+.education__empty--actionable {
+  display: grid;
+  place-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border: 1.5px dashed rgba(var(--color-primary-rgb), 0.22);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-background-rgb), 0.35);
+  color: rgba(var(--color-primary-rgb), 0.56);
+}
+
+.education__empty--actionable p {
+  margin: 0;
+  color: inherit;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.education__empty-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding-block: var(--space-sm);
+  padding-inline: 0.75rem var(--space-md);
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.education__empty-action:hover {
+  background-color: rgba(var(--color-primary-rgb), 0.92);
+  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.34);
+  transform: translateY(-1px);
+}
+
+.education__empty-action:focus-visible {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
 </style>

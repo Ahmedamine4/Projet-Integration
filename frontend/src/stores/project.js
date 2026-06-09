@@ -51,10 +51,40 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  async function editProject(project) {
+    loading.value = true;
+    error.value = '';
+
+    try {
+      const response = await api.patch(
+        `/projets/${project.id}`,
+        buildProjectFormData(project),
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      const updatedProject = normalizeProject(response.data.data);
+      projects.value = projects.value.map((item) =>
+        item.id === updatedProject.id ? updatedProject : item
+      );
+
+      return updatedProject;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to edit project';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     projects,
     loading,
     error,
     createProject,
+    editProject,
   };
 });

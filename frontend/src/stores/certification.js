@@ -65,10 +65,40 @@ export const useCertificationStore = defineStore('certification', () => {
     }
   }
 
+  async function editCertification(certification) {
+    loading.value = true;
+    error.value = '';
+
+    try {
+      const response = await api.patch(
+        `/certifications/${certification.id}`,
+        buildCertificationFormData(certification),
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      const updatedCertification = normalizeCertification(response.data.data);
+      certifications.value = certifications.value.map((item) =>
+        item.id === updatedCertification.id ? updatedCertification : item
+      );
+
+      return updatedCertification;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to edit certification';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     certifications,
     loading,
     error,
     createCertification,
+    editCertification,
   };
 });

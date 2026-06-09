@@ -78,7 +78,7 @@ watch(
           <PortfolioEmptyState
             v-if="!skills.length"
             class="skills__empty"
-            message="No skills have been added yet."
+            message="No skills have been detected yet."
           />
         </div>
         <button
@@ -143,7 +143,7 @@ watch(
             v-if="!domains.length"
             as="li"
             class="domains__empty"
-            message="No domains have been added yet."
+            message="No domains have been detected yet."
           />
         </ul>
       </section>

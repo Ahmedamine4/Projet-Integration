@@ -105,7 +105,21 @@ export const getPortfolioEtudiantController = async (req, res) => {
   try {
     const { etudiantId } = req.params;
     const isOwner = req.user.utilisateur_id === etudiantId;
-    const data = await getPortfolioEtudiant(etudiantId, isOwner);
+    const technologies = req.query.technologies? req.query.technologies.split(','): [];
+    const domaines = req.query.domaines? req.query.domaines.split(','): [];
+    const filters = {
+      technologies: technologies
+        ? Array.isArray(technologies)
+          ? technologies
+          : [technologies]
+        : [],
+      domaines: domaines
+        ? Array.isArray(domaines)
+          ? domaines
+          : [domaines]
+        : [],
+    };
+    const data = await getPortfolioEtudiant(etudiantId, isOwner, filters);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     console.error('Erreur getPortfolioEtudiant:', error);

@@ -42,6 +42,7 @@ const emit = defineEmits(['add']);
         <Plus :size="15" />
         {{ addLabel }}
       </button>
+      <slot name="actions" />
     </div>
 
     <slot v-if="!isEmpty" />
@@ -145,6 +146,12 @@ const emit = defineEmits(['add']);
 @media (max-width: 820px) {
   .portfolio-section-title {
     font-size: 2.15rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .portfolio-section-title {
+    font-size: 1.75rem;
   }
 }
 </style>

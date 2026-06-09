@@ -349,6 +349,7 @@ function isSchoolYearRangeValid(school, fieldKey) {
     <div
       v-if="open"
       class="modal-overlay"
+      @click.self="close"
     >
       <div class="modal">
         <div class="modal__header">

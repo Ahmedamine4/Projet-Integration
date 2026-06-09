@@ -1,8 +1,9 @@
 <script setup>
-import { nextTick, onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import PortfolioSectionShell from '@/components/portfolio/layout/PortfolioSectionShell.vue';
 import PortfolioProject from '@/components/portfolio/projects/PortfolioProject.vue';
-defineProps({
+import { useHorizontalDragScroll } from '@/composables/useHorizontalDragScroll';
+const props = defineProps({
   projects: {
     type: Array,
     default: () => [],
@@ -18,16 +19,6 @@ const emit = defineEmits(['add-project', 'edit-project']);
 const projectsRef = ref(null);
 const canScrollLeft = ref(false);
 const canScrollRight = ref(false);
-const isDragging = ref(false);
-const lastX = ref(0);
-const lastTime = ref(0);
-const velocity = ref(0);
-const animationFrame = ref(null);
-
-const dragSpeed = 1.2;
-const minReleaseVelocity = 0.05;
-const frictionPerFrame = 0.95;
-const targetFrameDuration = 16;
 
 function updateScrollFades() {
   const el = projectsRef.value;
@@ -38,73 +29,23 @@ function updateScrollFades() {
   canScrollRight.value = el.scrollLeft < maxScrollLeft - 1;
 }
 
-function handleMouseDown(event) {
-  isDragging.value = true;
-  velocity.value = 0;
-
-  if (animationFrame.value) {
-    cancelAnimationFrame(animationFrame.value);
-    animationFrame.value = null;
-  }
-
-  lastX.value = event.clientX;
-  lastTime.value = performance.now();
-}
-
-function handleMouseMove(event) {
-  if (!isDragging.value) return;
-
-  event.preventDefault();
-
-  const deltaX = event.clientX - lastX.value;
-
-  projectsRef.value.scrollBy({
-    left: -deltaX * dragSpeed,
-  });
-
-  const now = performance.now();
-  const deltaTime = now - lastTime.value;
-
-  if (deltaTime > 0) {
-    velocity.value = deltaX / deltaTime;
-  }
-
-  lastX.value = event.clientX;
-  lastTime.value = now;
-}
-
-function handleMouseUp() {
-  if (!isDragging.value) return;
-
-  isDragging.value = false;
-
-  if (Math.abs(velocity.value) < minReleaseVelocity) return;
-
-  lastTime.value = performance.now();
-  animationFrame.value = requestAnimationFrame(applyMomentum);
-}
-
-function applyMomentum(currentTime) {
-  if (Math.abs(velocity.value) < minReleaseVelocity) {
-    animationFrame.value = null;
-    return;
-  }
-
-  const deltaTime = currentTime - lastTime.value;
-
-  projectsRef.value.scrollBy({
-    left: -velocity.value * deltaTime,
-  });
-
-  velocity.value *= frictionPerFrame ** (deltaTime / targetFrameDuration);
-  lastTime.value = currentTime;
-
-  animationFrame.value = requestAnimationFrame(applyMomentum);
-}
+const {
+  handlePointerDown,
+  handlePointerMove,
+  handlePointerUp,
+} = useHorizontalDragScroll(projectsRef, {
+  onScroll: updateScrollFades,
+});
 
 onMounted(() => {
   nextTick(updateScrollFades);
 });
+
+watch(
+  () => props.projects,
+  () => nextTick(updateScrollFades),
+  { deep: true }
+);
 </script>
 
 <template>
@@ -126,10 +67,11 @@ onMounted(() => {
       <div
         ref="projectsRef"
         class="projects"
-        @mousedown="handleMouseDown"
-        @mousemove="handleMouseMove"
-        @mouseup="handleMouseUp"
-        @mouseleave="handleMouseUp"
+        @pointerdown="handlePointerDown"
+        @pointermove="handlePointerMove"
+        @pointerup="handlePointerUp"
+        @pointercancel="handlePointerUp"
+        @pointerleave="handlePointerUp"
         @scroll="updateScrollFades"
       >
         <template

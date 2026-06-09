@@ -11,7 +11,9 @@ function buildActivityFormData(activity) {
   formData.append('description', activity.description);
   formData.append('type', activity.activityType);
   formData.append('lieu', activity.location);
-  formData.append('typeActivite', 'personnelle');
+  formData.append('typeActivite', activity.isAcademic ? 'academique' : 'personnelle');
+  formData.append('isAcademic', String(Boolean(activity.isAcademic)));
+  formData.append('institution', activity.institution ?? '');
   formData.append('visibilite', String(activity.visibleToEveryone));
   formData.append(
     'competences',
@@ -84,11 +86,41 @@ export const useActivityStore = defineStore('activity', () => {
     }
   }
 
+  async function editActivity(activity) {
+    loading.value = true;
+    error.value = '';
+
+    try {
+      const response = await api.patch(
+        `/activites/${activity.id}`,
+        buildActivityFormData(activity),
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      const updatedActivity = normalizeActivity(response.data.data);
+      activities.value = activities.value.map((item) =>
+        item.id === updatedActivity.id ? updatedActivity : item
+      );
+
+      return updatedActivity;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to edit activity';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     activities,
     loading,
     error,
     fetchActivities,
     createActivity,
+    editActivity,
   };
 });

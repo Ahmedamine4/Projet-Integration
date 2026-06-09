@@ -1,147 +1,137 @@
 import prisma from '../config/prisma.js';
 import { creerNotification } from './notification.service.js';
-
-
-// validation
-
-export const getDemandes = async (profId) => {
-  const stages = await prisma.valideStage.findMany({
-    where: {
-      utilisateur_id: profId,
-      statut: { in: ['en_attente', 'valide', 'refuse'] },
-    },
+ 
+const PAGE_SIZE = 10;
+ 
+export const getDemandes = async (profId, { type, statut, page }) => {
+  const pageNum = Math.max(1, parseInt(page) || 1);
+  const skip = (pageNum - 1) * PAGE_SIZE;
+ 
+  const baseWhereStage = {
+    utilisateur_id: profId,
+    ...(statut && { statut }),
+  };
+ 
+  const baseWhereProjet = {
+    utilisateur_id: profId,
+    ...(statut && { statut }),
+  };
+ 
+  const baseWhereLettre = {
+    prof_utilisateur_id: profId,
+    ...(statut && { statut }),
+  };
+ 
+  const selectEtudiant = {
+    utilisateur: { select: { nom: true, prenom: true } },
+  };
+ 
+  const includeExperience = {
     select: {
-      statut: true,
-      date_d_action: true,
-      experience_id: true,
-      experience: {
-        select: {
-          titre: true,
-          etudiant: {
-            include: {
-              utilisateur: { select: { nom: true, prenom: true } },
-            },
-          },
-        },
+      titre: true,
+      etudiant: { include: selectEtudiant },
+    },
+  };
+ 
+  let rawStages = [];
+  let rawProjets = [];
+  let rawLettres = [];
+ 
+  if (!type || type === 'stage') {
+    rawStages = await prisma.valideStage.findMany({
+      where: baseWhereStage,
+      select: {
+        statut: true,
+        date_d_action: true,
+        experience_id: true,
+        commentaire: true,
+        experience: includeExperience,
       },
-    },
-    orderBy: { date_d_action: 'desc' },
-  });
-
-  const projets = await prisma.valideProjet.findMany({
-    where: {
-      utilisateur_id: profId,
-      statut: { in: ['en_attente', 'valide', 'refuse'] },
-    },
-    select: {
-      statut: true,
-      date_d_action: true,
-      experience_id: true,
-      experience: {
-        select: {
-          titre: true,
-          etudiant: {
-            include: {
-              utilisateur: { select: { nom: true, prenom: true } },
-            },
-          },
-        },
+      orderBy: { date_d_action: 'desc' },
+    });
+  }
+ 
+  if (!type || type === 'projet') {
+    rawProjets = await prisma.valideProjet.findMany({
+      where: baseWhereProjet,
+      select: {
+        statut: true,
+        date_d_action: true,
+        experience_id: true,
+        commentaire: true,
+        experience: includeExperience,
       },
-    },
-    orderBy: { date_d_action: 'desc' },
-  });
-
-  return [...stages, ...projets].map((item) => ({
-    experience_id: item.experience_id,
-    titre: item.experience?.titre,
-    statut: item.statut,
-    date_d_action: item.date_d_action,
-    etudiant: {
-      nom: item.experience?.etudiant?.utilisateur?.nom,
-      prenom: item.experience?.etudiant?.utilisateur?.prenom,
-    },
-  }));
-};
-
-export const getStagesProf = async (profId, statut, commente) => {
-  const stages = await prisma.valideStage.findMany({
-    where: {
-      utilisateur_id: profId,
-      statut: statut
-        ? statut
-        : { in: ['en_attente', 'valide', 'refuse'] },
-      ...(commente === true  && { commentaire: { not: null } }),
-      ...(commente === false && { commentaire: null }),
-    },
-    select: {
-      statut: true,
-      experience_id: true,
-      date_d_action: true,
-      experience: {
-        select: {
-          titre: true,
-          etudiant: {
-            include: {
-              utilisateur: { select: { nom: true, prenom: true } },
-            },
-          },
-        },
+      orderBy: { date_d_action: 'desc' },
+    });
+  }
+ 
+  if (!type || type === 'recommandation') {
+    rawLettres = await prisma.lettresDeRecommendations.findMany({
+      where: baseWhereLettre,
+      select: {
+        statut: true,
+        date_lettre: true,
+        objet: true,
+        commentaire: true,
+        etudiant: { include: selectEtudiant },
       },
-    },
-    orderBy: { date_d_action: 'desc' },
-  });
-
-  return stages.map((item) => ({
+      orderBy: { date_lettre: 'desc' },
+    });
+  }
+ 
+  const stages = rawStages.map((item) => ({
+    type: 'stage',
     experience_id: item.experience_id,
     titre: item.experience?.titre ?? null,
     statut: item.statut,
-    date_d_action: item.date_d_action,
+    commentaire: item.commentaire ?? null,
+    date: item.date_d_action,
     etudiant: {
       nom: item.experience?.etudiant?.utilisateur?.nom ?? null,
       prenom: item.experience?.etudiant?.utilisateur?.prenom ?? null,
     },
   }));
-};
-
-export const getProjetsProf = async (profId, statut, commente) => {
-  const projets = await prisma.valideProjet.findMany({
-    where: {
-      utilisateur_id: profId,
-      statut: statut
-        ? statut
-        : { in: ['en_attente', 'valide', 'refuse'] },
-      ...(commente === true  && { commentaire: { not: null } }),
-      ...(commente === false && { commentaire: null }),
-    },
-    select: {
-      statut: true,
-      experience_id: true,
-      date_d_action: true,
-      experience: {
-        select: {
-          titre: true,
-          etudiant: {
-            include: {
-              utilisateur: { select: { nom: true, prenom: true } },
-            },
-          },
-        },
-      },
-    },
-    orderBy: { date_d_action: 'desc' },
-  });
-
-  return projets.map((item) => ({
+ 
+  const projets = rawProjets.map((item) => ({
+    type: 'projet',
     experience_id: item.experience_id,
     titre: item.experience?.titre ?? null,
     statut: item.statut,
-    date_d_action: item.date_d_action,
+    commentaire: item.commentaire ?? null,
+    date: item.date_d_action,
     etudiant: {
       nom: item.experience?.etudiant?.utilisateur?.nom ?? null,
       prenom: item.experience?.etudiant?.utilisateur?.prenom ?? null,
     },
   }));
+ 
+  const lettres = rawLettres.map((item) => ({
+    type: 'recommandation',
+    experience_id: null,
+    titre: item.objet ?? null,
+    statut: item.statut,
+    commentaire: item.commentaire ?? null,
+    date: item.date_lettre,
+    etudiant: {
+      nom: item.etudiant?.utilisateur?.nom ?? null,
+      prenom: item.etudiant?.utilisateur?.prenom ?? null,
+    },
+  }));
+ 
+  const all = [...stages, ...projets, ...lettres].sort(
+    (a, b) => new Date(b.date) - new Date(a.date)
+  );
+ 
+  const total = all.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const data = all.slice(skip, skip + PAGE_SIZE);
+ 
+  return {
+    data,
+    pagination: { page: pageNum, totalPages, total, pageSize: PAGE_SIZE },
+  };
 };
+
 
 export const getStageById = async (profId, experienceId) => {
   const stage = await prisma.valideStage.findUnique({
@@ -149,12 +139,8 @@ export const getStageById = async (profId, experienceId) => {
     include: {
       experience: {
         include: {
-          etudiant: {
-            include: { utilisateur: true },
-          },
-          competence_dev: {
-            include: { competence: true },
-          },
+          etudiant: { include: { utilisateur: true } },
+          competence_dev: { include: { competence: true } },
         },
       },
       stage: true,
@@ -173,12 +159,8 @@ export const getProjetById = async (profId, experienceId) => {
     include: {
       experience: {
         include: {
-          etudiant: {
-            include: { utilisateur: true },
-          },
-          competence_dev: {
-            include: { competence: true },
-          },
+          etudiant: { include: { utilisateur: true } },
+          competence_dev: { include: { competence: true } },
         },
       },
       projet: true,
@@ -305,4 +287,93 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
   );
 
   return updated;
+};
+
+export const getLettreById = async (profId, etudiantId) => {
+  const lettre = await prisma.lettresDeRecommendations.findUnique({
+    where: { utilisateur_id_prof_utilisateur_id: { utilisateur_id: etudiantId, prof_utilisateur_id: profId } },
+    include: {
+      etudiant: {
+        include: {
+          utilisateur: { select: { nom: true, prenom: true, email: true, photo: true, linkedin: true, github: true } },
+          experiences: {
+            where: { visibilite: true },
+            select: { titre: true, type: true, date_experience: true, description: true },
+            orderBy: { date_experience: 'desc' },
+          },
+        },
+      },
+    },
+  });
+ 
+  if (!lettre) throw new Error('Demande non trouvée');
+  return lettre;
+};
+ 
+ 
+export const traiterLettre = async (profId, etudiantId, { statut, commentaire }, file) => {
+  const lettre = await prisma.lettresDeRecommendations.findUnique({
+    where: { utilisateur_id_prof_utilisateur_id: { utilisateur_id: etudiantId, prof_utilisateur_id: profId } },
+    include: { etudiant: { include: { utilisateur: true } } },
+  });
+ 
+  if (!lettre) throw new Error('Demande non trouvée');
+  if (lettre.statut === 'valide') throw new Error('Cette demande a déjà été traitée');
+ 
+  // Cas 1 : commentaire seulement (statut reste en_attente)
+  if (!statut) {
+    if (!commentaire?.trim()) throw new Error('Un commentaire est requis');
+ 
+    const updated = await prisma.lettresDeRecommendations.update({
+      where: { utilisateur_id_prof_utilisateur_id: { utilisateur_id: etudiantId, prof_utilisateur_id: profId } },
+      data: { commentaire },
+    });
+ 
+    await creerNotification(
+      etudiantId,
+      `Votre professeur a laissé un commentaire sur votre demande de lettre : "${lettre.objet}".`,
+      'commentaire_recommandation'
+    );
+ 
+    return updated;
+  }
+ 
+  // Cas 2 : refus
+  if (statut === 'refuse') {
+    if (!commentaire?.trim()) throw new Error('Un commentaire est requis pour un refus');
+ 
+    const updated = await prisma.lettresDeRecommendations.update({
+      where: { utilisateur_id_prof_utilisateur_id: { utilisateur_id: etudiantId, prof_utilisateur_id: profId } },
+      data: { statut: 'refuse', commentaire },
+    });
+ 
+    await creerNotification(
+      etudiantId,
+      `Votre demande de lettre de recommandation "${lettre.objet}" a été refusée. Motif : ${commentaire}`,
+      'refus_recommandation'
+    );
+ 
+    return updated;
+  }
+ 
+  // Cas 3 : validation avec fichier
+  if (statut === 'valide') {
+    if (!file) throw new Error('Un fichier PDF est requis pour valider');
+ 
+ 
+    const updated = await prisma.lettresDeRecommendations.update({
+      where: { utilisateur_id_prof_utilisateur_id: { utilisateur_id: etudiantId, prof_utilisateur_id: profId } },
+      data: { statut: 'valide', fichier: `data:application/pdf;base64,${file.buffer.toString("base64")}`, commentaire: commentaire ?? null },
+    });
+ 
+    await creerNotification(
+      etudiantId,
+      `Votre lettre de recommandation "${lettre.objet}" est disponible.`,
+      'validation_recommandation'
+    );
+ 
+    return updated;
+  }
+ 
+  throw new Error('Statut invalide');
 };

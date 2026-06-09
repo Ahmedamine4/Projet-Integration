@@ -1,5 +1,6 @@
 <script setup>
-import { Eye, EyeOff } from 'lucide-vue-next';
+import { BadgeCheck, Clock3, Eye, EyeOff, Sparkles, XCircle } from 'lucide-vue-next';
+import { computed } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 import ExploreButton from '@/components/portfolio/shared/ExploreButton.vue';
 
@@ -16,6 +17,14 @@ const props = defineProps({
 
 const emit = defineEmits(['edit']);
 
+const canEditExperience = computed(() => {
+  return props.canEdit && props.project.validationStatus !== 'refuse';
+});
+
+const isVisibleHighlight = computed(() => {
+  return Boolean(props.project.highlighted && props.project.effectiveVisibleToEveryone);
+});
+
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'long',
@@ -24,7 +33,7 @@ function formatDate(date) {
 }
 
 const { handleDoubleTap } = useDoubleTap(() => {
-  if (!props.canEdit) return;
+  if (!canEditExperience.value) return;
 
   emit('edit', props.project);
 });
@@ -33,10 +42,47 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <template>
   <article 
     class="project-card"
-    :class="{ 'project-card--editable': canEdit }"
-    @dblclick="canEdit && emit('edit', project)"
+    :class="{
+      'project-card--editable': canEditExperience,
+      'project-card--hidden': !project.effectiveVisibleToEveryone,
+      'project-card--highlighted': isVisibleHighlight,
+    }"
+    @dblclick="canEditExperience && emit('edit', project)"
     @click="handleDoubleTap"
   >
+    <div
+      v-if="project.isAcademic && project.validationStatus"
+      class="project-validation-badge"
+      :class="`project-validation-badge--${project.validationStatus}`"
+      :title="`Academic experience ${project.validationStatus === 'en_attente' ? 'pending validation' : project.validationStatus === 'valide' ? 'validated' : 'rejected'}`"
+    >
+      <BadgeCheck
+        v-if="project.validationStatus === 'valide'"
+        :size="22"
+        :stroke-width="2.3"
+      />
+      <Clock3
+        v-else-if="project.validationStatus === 'en_attente'"
+        :size="21"
+        :stroke-width="2.3"
+      />
+      <XCircle
+        v-else
+        :size="21"
+        :stroke-width="2.3"
+      />
+    </div>
+    <div
+      v-if="isVisibleHighlight"
+      class="project-match-badge"
+      title="Matched by the current filter"
+    >
+      <Sparkles
+        :size="14"
+        :stroke-width="2.2"
+      />
+      <span>{{ project.score ? `${project.score}% match` : 'Match' }}</span>
+    </div>
     <div class="project-preview">
       <img
         v-if="project.imagePreview"
@@ -54,7 +100,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
             class="project-visibility"
           >
             <Eye
-              v-if="project.visibleToEveryone"
+              v-if="project.effectiveVisibleToEveryone"
               :size="14"
             />
             <EyeOff
@@ -106,7 +152,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
           :experience-id="project.id"
         />
         <span
-          v-if="canEdit"
+          v-if="canEditExperience"
           class="project-edit-hint"
         >
           Double-click to edit
@@ -119,6 +165,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <style scoped>
 .project-card {
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  position: relative;
   flex-shrink: 0;
   flex-grow: 0;
   width: min(100%, 26rem);
@@ -131,13 +178,66 @@ const { handleDoubleTap } = useDoubleTap(() => {
   overflow: hidden;
   user-select: none;
   transition:
+    filter var(--transition-fast),
     transform var(--transition-normal),
     box-shadow var(--transition-normal);
+}
+
+.project-card--hidden {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--color-primary-rgb), 0.08),
+      rgba(var(--color-surface-rgb), 0.34) 46%,
+      rgba(var(--color-background-rgb), 0.84)
+    );
+}
+
+.project-card--hidden .project-preview,
+.project-card--hidden .project-header,
+.project-card--hidden .project-content > p,
+.project-card--hidden .project-tags span,
+.project-card--hidden .project-edit-hint {
+  filter: grayscale(1) saturate(0);
+}
+
+.project-card--hidden.project-card--highlighted {
+  --border: 1px solid rgba(var(--color-primary-rgb), 0.18);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--color-primary-rgb), 0.08),
+      rgba(var(--color-surface-rgb), 0.34) 46%,
+      rgba(var(--color-background-rgb), 0.84)
+    );
+  box-shadow:
+    0 12px 22px rgba(var(--color-primary-rgb), 0.08),
+    0 10px 16px rgba(0, 0, 0, 0.04);
+}
+
+.project-card--highlighted {
+  --border: 1px solid rgba(var(--color-secondary-rgb), 0.55);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--color-secondary-rgb), 0.12),
+      rgba(var(--color-surface-rgb), 0.46) 46%,
+      rgba(var(--color-background-rgb), 0.84)
+    );
+  box-shadow:
+    0 12px 22px rgba(var(--color-secondary-rgb), 0.14),
+    0 10px 16px rgba(0, 0, 0, 0.04);
 }
 
 .project-card:hover {
   transform: scale(1.008);
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
+}
+
+.project-card--highlighted:hover {
+  box-shadow:
+    0 14px 26px rgba(var(--color-secondary-rgb), 0.18),
+    0 10px 18px rgba(0, 0, 0, 0.06);
 }
 
 .project-preview {
@@ -202,6 +302,61 @@ const { handleDoubleTap } = useDoubleTap(() => {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   color: rgba(var(--color-primary-rgb), 0.68);
+}
+
+.project-validation-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-validation-badge {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 2;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 12%, var(--color-background));
+  box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
+}
+
+.project-validation-badge--valide {
+  color: var(--color-success);
+}
+
+.project-validation-badge--en_attente {
+  color: rgb(245, 158, 11);
+}
+
+.project-validation-badge--refuse {
+  color: var(--color-error);
+}
+
+.project-match-badge {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.44);
+  border-radius: 999px;
+  padding: 0.38rem 0.58rem;
+  background: var(--color-background);
+  color: var(--color-primary);
+  box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.project-match-badge svg {
+  color: var(--color-secondary);
+  flex-shrink: 0;
 }
 
 .project-visibility {

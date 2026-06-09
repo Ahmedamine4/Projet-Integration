@@ -63,6 +63,8 @@ const experienceConfigs = {
     imageLabel: 'screenshot',
     imageAccept: 'image/*',
     imageRequired: true,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: true,
     showAcademic: true,
     showTags: true,
@@ -78,6 +80,8 @@ const experienceConfigs = {
     imageLabel: 'photo',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
     showAcademic: true,
     showTags: true,
@@ -93,8 +97,10 @@ const experienceConfigs = {
     imageLabel: 'photo',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
-    showAcademic: false,
+    showAcademic: true,
     showTags: true,
     showMissions: false,
     showActivityFields: true,
@@ -108,6 +114,8 @@ const experienceConfigs = {
     imageLabel: 'screenshot',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
     showAcademic: false,
     showTags: true,
@@ -124,6 +132,10 @@ const capitalizedType = computed(() => {
 });
 
 const isEdit = computed(() => props.mode === 'edit');
+
+const requiresAcademicTeacher = computed(() => {
+  return props.type !== 'activity';
+});
 
 const errors = reactive({
   title: '',
@@ -176,14 +188,22 @@ function resetForm() {
 
 function fillForm() {
   const value = props.initialValue;
+  isHydratingForm.value = true;
   resetForm();
-  if (!value) return;
+  if (!value) {
+    isHydratingForm.value = false;
+    return;
+  }
   Object.keys(form).forEach(key => {
     if (value[key] !== undefined) form[key] = value[key];
   });
   technologies.value = createSelectableItems(value.technologies ?? []);
   domains.value = createSelectableItems(value.domains ?? []);
   resetErrors();
+
+  nextTick(() => {
+    isHydratingForm.value = false;
+  });
 }
 
 const createSelectableItems = (items = []) =>
@@ -194,6 +214,7 @@ const createSelectableItems = (items = []) =>
 
 const technologies = ref([]);
 const domains = ref([]);
+const isHydratingForm = ref(false);
 
 let descriptionTypingTimer = null;
 
@@ -263,6 +284,7 @@ watch(
   () => form.description,
   (description) => {
     clearTimeout(descriptionTypingTimer);
+    if (isHydratingForm.value) return;
 
     if (description.trim().length < 20) {
       resetDetectedTags();
@@ -278,6 +300,19 @@ onUnmounted(() => {
 });
 
 const todayValue = computed(() => formatLocalDate(new Date()));
+const formBodyRef = ref(null);
+const errorFieldOrder = [
+  'title',
+  'date',
+  'startDate',
+  'endDate',
+  'image',
+  'description',
+  'certificateURL',
+  'githubLink',
+  'institution',
+  'teacherEmail',
+];
 
 function invalidDateRange(startDate, endDate) {
   return (
@@ -285,6 +320,20 @@ function invalidDateRange(startDate, endDate) {
     endDate &&
     new Date(endDate) < new Date(startDate)
   );
+}
+
+async function scrollToFirstError() {
+  await nextTick();
+
+  const firstErrorKey = errorFieldOrder.find((key) => errors[key]);
+  const formBody = formBodyRef.value;
+  if (!firstErrorKey || !formBody) return;
+
+  const field = formBody.querySelector(`[data-error-field="${firstErrorKey}"]`);
+  if (!field) return;
+
+  const focusTarget = field.querySelector('input, textarea, button, [tabindex]:not([tabindex="-1"])');
+  focusTarget?.focus?.({ preventScroll: false });
 }
 
 const submitExperience = () => {
@@ -340,16 +389,20 @@ const submitExperience = () => {
     if (form.isAcademic && !form.institution)
       errors.institution = `Institution is required for academic ${props.type}s`;
 
-    if (form.isAcademic && !trimmedTeacherEmail)
+    if (requiresAcademicTeacher.value && form.isAcademic && !trimmedTeacherEmail)
       errors.teacherEmail = `Teacher email is required for academic ${props.type}s`;
     else if (
+      requiresAcademicTeacher.value &&
       form.isAcademic &&
       !props.professorEmails.includes(trimmedTeacherEmail)
     )
       errors.teacherEmail = 'Select a valid teacher email';
   }
 
-  if (hasErrors()) return;
+  if (hasErrors()) {
+    scrollToFirstError();
+    return;
+  }
 
   emit('submit', {
     title: trimmedTitle,
@@ -395,6 +448,7 @@ const submitExperience = () => {
       ? trimmedReport
       : '',
     teacherEmail: config.showAcademic && form.isAcademic
+      && requiresAcademicTeacher.value
       ? trimmedTeacherEmail
       : '',
     visibleToEveryone: form.visibleToEveryone,
@@ -463,6 +517,7 @@ const existingImageName = computed(() => {
     <div
       v-if="open"
       class="modal-overlay"
+      @click.self="emit('close')"
     >
       <div class="modal-card">
         <div class="modal-card__header">
@@ -480,7 +535,10 @@ const existingImageName = computed(() => {
           class="experience-form"
           @submit.prevent="submitExperience"
         >
-          <div class="experience-form__body">
+          <div
+            ref="formBodyRef"
+            class="experience-form__body"
+          >
             <ModificationRequest
               v-if="
                 props.mode === 'edit' &&
@@ -491,7 +549,10 @@ const existingImageName = computed(() => {
             >
               {{ message.content }}
             </ModificationRequest>
-            <div class="field">
+            <div
+              class="field"
+              data-error-field="title"
+            >
               <BaseInput
                 v-model="form.title"
                 :label="`${capitalizedType} title`"
@@ -508,6 +569,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.dateMode === 'single'"
               class="field"
+              data-error-field="date"
             >
               <DatePicker
                 v-model="form.date"
@@ -528,7 +590,10 @@ const existingImageName = computed(() => {
               v-else
               class="form-group"
             >
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="startDate"
+              >
                 <DatePicker
                   v-model="form.startDate"
                   label="Start date"
@@ -543,7 +608,10 @@ const existingImageName = computed(() => {
                 </BaseError>
               </div>
 
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="endDate"
+              >
                 <DatePicker
                   v-model="form.endDate"
                   label="End date"
@@ -562,6 +630,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.showImageUpload"
               class="field"
+              data-error-field="image"
             >
               <ImageDropzone
                 v-model="form.image"
@@ -569,6 +638,8 @@ const existingImageName = computed(() => {
                 :accept="currentConfig.imageAccept"
                 :initial-preview-url="existingImagePreview"
                 :initial-file-name="existingImageName"
+                :crop-width="currentConfig.cropWidth"
+                :crop-height="currentConfig.cropHeight"
               />
               <BaseError
                 v-if="errors.image"
@@ -578,7 +649,10 @@ const existingImageName = computed(() => {
               </BaseError>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+              data-error-field="description"
+            >
               <div class="form-group-textarea">
                 <label for="description">Description</label>
                 <textarea
@@ -697,7 +771,10 @@ const existingImageName = computed(() => {
                 />
               </div>
 
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="certificateURL"
+              >
                 <BaseInput
                   v-model="form.certificateURL"
                   label="Certificate URL"
@@ -724,6 +801,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.showGithub"
               class="field"
+              data-error-field="githubLink"
             >
               <BaseInput
                 v-model="form.githubLink"
@@ -752,7 +830,10 @@ const existingImageName = computed(() => {
                   v-if="form.isAcademic"
                   class="academic-form-group"
                 >
-                  <div class="institution-field">
+                  <div
+                    class="institution-field"
+                    data-error-field="institution"
+                  >
                     <BaseSelect
                       v-model="form.institution"
                       :options="schoolOptions"
@@ -766,7 +847,11 @@ const existingImageName = computed(() => {
                       {{ errors.institution }}
                     </BaseError>
                   </div>
-                  <div class="field">
+                  <div
+                    v-if="requiresAcademicTeacher"
+                    class="field"
+                    data-error-field="teacherEmail"
+                  >
                     <BaseDropdown
                       v-model="form.teacherEmail"
                       :options="professorEmails"
@@ -907,6 +992,7 @@ const existingImageName = computed(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scroll-behavior: smooth;
   display: grid;
   gap: var(--modal-field-gap);
   padding: var(--modal-edge-space);

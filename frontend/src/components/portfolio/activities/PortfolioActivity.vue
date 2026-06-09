@@ -1,5 +1,6 @@
 <script setup>
-import { MapPin, CalendarDays, Eye, EyeOff } from 'lucide-vue-next';
+import { MapPin, CalendarDays, Eye, EyeOff, Sparkles } from 'lucide-vue-next';
+import { computed } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 import ExploreButton from '@/components/portfolio/shared/ExploreButton.vue';
 
@@ -16,6 +17,14 @@ const props = defineProps({
 
 const emit = defineEmits(['edit']);
 
+const canEditExperience = computed(() => {
+  return props.canEdit && props.activity.validationStatus !== 'refuse';
+});
+
+const isVisibleHighlight = computed(() => {
+  return Boolean(props.activity.highlighted && props.activity.effectiveVisibleToEveryone);
+});
+
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'long',
@@ -23,8 +32,16 @@ function formatDate(date) {
   });
 }
 
+function getValidationLabel(status) {
+  return {
+    en_attente: 'Pending',
+    refuse: 'Rejected',
+    valide: 'Validated',
+  }[status] ?? '';
+}
+
 const { handleDoubleTap } = useDoubleTap(() => {
-  if (!props.canEdit) return;
+  if (!canEditExperience.value) return;
 
   emit('edit', props.activity);
 });
@@ -33,12 +50,35 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <template>
   <article
     class="activity-card"
-    @dblclick="canEdit && emit('edit', activity)"
+    :class="{
+      'activity-card--hidden': !activity.effectiveVisibleToEveryone,
+      'activity-card--highlighted': isVisibleHighlight,
+    }"
+    @dblclick="canEditExperience && emit('edit', activity)"
     @click="handleDoubleTap"
   >
+    <div
+      v-if="isVisibleHighlight"
+      class="activity-match-badge"
+      title="Matched by the current filter"
+    >
+      <Sparkles
+        :size="14"
+        :stroke-width="2.2"
+      />
+      <span>{{ activity.score ? `${activity.score}% match` : 'Match' }}</span>
+    </div>
+
     <div class="activity-top">
       <div class="activity-info">
         <div class="activity-kicker">
+          <span
+            v-if="activity.isAcademic && activity.validationStatus"
+            class="activity-validation-status"
+            :class="`activity-validation-status--${activity.validationStatus}`"
+          >
+            {{ getValidationLabel(activity.validationStatus) }}
+          </span>
           <span
             v-if="activity.activityType"
             class="activity-type"
@@ -58,7 +98,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
             class="activity-visibility"
           >
             <Eye
-              v-if="activity.visibleToEveryone"
+              v-if="activity.effectiveVisibleToEveryone"
               :size="14"
               :stroke-width="2"
             />
@@ -149,7 +189,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
         :experience-id="activity.id"
       />
       <span
-        v-if="canEdit"
+        v-if="canEditExperience"
         class="activity-edit-hint"
       >
         Double-click to edit
@@ -161,6 +201,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <style scoped>
 .activity-card {
   --border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  position: relative;
   flex-shrink: 0;
   flex-grow: 0;
   width: 100%;
@@ -168,6 +209,23 @@ const { handleDoubleTap } = useDoubleTap(() => {
   flex-direction: column;
   gap: 1.1rem;
   padding: var(--space-xl);
+  background: transparent;
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  user-select: none;
+  transition:
+    filter var(--transition-fast),
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+.activity-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   background:
     radial-gradient(
       circle at top right,
@@ -179,11 +237,82 @@ const { handleDoubleTap } = useDoubleTap(() => {
       var(--color-surface) 30%,
       var(--color-background)    
     );
-  border: var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  user-select: none;
+  pointer-events: none;
+}
+
+.activity-card--hidden::before {
+  filter: grayscale(1) saturate(0);
+}
+
+.activity-card--highlighted {
+  --border: 1px solid rgba(var(--color-secondary-rgb), 0.55);
+  box-shadow:
+    0 12px 22px rgba(var(--color-secondary-rgb), 0.14),
+    0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
+}
+
+.activity-card--highlighted::before {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(var(--color-secondary-rgb), 0.14),
+      transparent 36%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(var(--color-secondary-rgb), 0.12),
+      rgba(var(--color-surface-rgb), 0.46) 46%,
+      rgba(var(--color-background-rgb), 0.84)
+    );
+}
+
+.activity-card--highlighted:hover {
+  transform: scale(1.008);
+  box-shadow:
+    0 14px 26px rgba(var(--color-secondary-rgb), 0.18),
+    0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
+}
+
+.activity-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.activity-card--hidden :is(
+  .activity-image,
+  .activity-tags span,
+  .activity-match-badge,
+  .activity-kicker > :not(.activity-validation-status),
+  .activity-info h3,
+  .activity-details,
+  .activity-description,
+  .activity-meta
+) {
+  filter: grayscale(1) saturate(0);
+}
+
+.activity-match-badge {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.44);
+  border-radius: 999px;
+  padding: 0.38rem 0.58rem;
+  background: var(--color-background);
+  color: var(--color-primary);
+  box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.activity-match-badge svg {
+  color: var(--color-secondary);
+  flex-shrink: 0;
 }
 
 .activity-top {
@@ -210,6 +339,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
 
 .activity-type,
 .activity-date,
+.activity-validation-status,
 .activity-visibility {
   width: fit-content;
   padding: 0.4rem 0.64rem;
@@ -224,6 +354,25 @@ const { handleDoubleTap } = useDoubleTap(() => {
   color: var(--color-surface);
   font-weight: var(--font-bold);
   text-transform: uppercase;
+}
+
+.activity-validation-status {
+  font-weight: var(--font-bold);
+}
+
+.activity-validation-status--en_attente {
+  background: rgba(245, 158, 11, 0.14);
+  color: rgb(245, 158, 11);
+}
+
+.activity-validation-status--valide {
+  background: rgba(var(--color-success-rgb), 0.12);
+  color: var(--color-success);
+}
+
+.activity-validation-status--refuse {
+  background: rgba(var(--color-error-rgb), 0.1);
+  color: var(--color-error);
 }
 
 .activity-date {
