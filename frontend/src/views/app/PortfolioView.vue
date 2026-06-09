@@ -22,6 +22,7 @@ import CertificationsSection from '@/components/portfolio/certifications/Certifi
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
 import InternshipsSection from '@/components/portfolio/internships/InternshipsSection.vue';
 import RecommendationsSection from '@/components/portfolio/recommendations/RecommendationsSection.vue';
+import PortfolioRecommendationModal from '@/components/portfolio/recommendations/PortfolioRecommendationModal.vue';
 import { placeholderRecommendations } from '@/tmp/portfolioRecommendations';
 import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
@@ -85,6 +86,26 @@ const profileName = computed(() => {
   const fullName = `${firstName} ${lastName}`.trim();
   return fullName || 'Name not provided';
 });
+const recommenderName = computed(() => {
+  const user = authStore.user ?? {};
+  const firstName = user.firstName ?? user.prenom ?? '';
+  const lastName = user.lastName ?? user.nom ?? '';
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return fullName || user.email || 'You';
+});
+const recommenderRole = computed(() => {
+  const role = authStore.user?.role;
+  const labels = {
+    etudiant: 'Student',
+    professeur: 'Professor',
+    professionnel: 'Professional',
+    administrateur: 'Administrator',
+    directeur: 'Director',
+  };
+
+  return labels[role] ?? 'Portfolio recommendation';
+});
 const profileHeadline = computed(() => {
   const headline = portfolio.value?.headline;
   const school = portfolio.value?.school;
@@ -101,8 +122,12 @@ const selectedProfilePhotoFile = ref(null);
 const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
 const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
+const localRecommendations = ref([]);
 const displayRecommendations = computed(() => {
-  const recommendations = (portfolio.value?.recommendations ?? []).filter((recommendation) => {
+  const recommendations = [
+    ...localRecommendations.value,
+    ...(portfolio.value?.recommendations ?? []),
+  ].filter((recommendation) => {
     return !recommendation.status || recommendation.status === 'valide';
   });
 
@@ -155,6 +180,11 @@ watch(
   },
   { immediate: true }
 );
+
+watch(portfolioUserId, () => {
+  localRecommendations.value = [];
+  closeRecommendationModal();
+});
 
 function sortVisibleHighlightedExperiences(list, isVisible = (experience) => experience.effectiveVisibleToEveryone) {
   return [...list].sort((firstProject, secondProject) => {
@@ -397,6 +427,37 @@ async function handleExperienceSubmit(experience) {
 const isQRModalOpen = ref(false);
 function openQRModal() {
   isQRModalOpen.value = true;
+}
+
+const isRecommendationModalOpen = ref(false);
+
+function openRecommendationModal() {
+  if (isOwnPortfolio.value) return;
+
+  isRecommendationModalOpen.value = true;
+}
+
+function closeRecommendationModal() {
+  isRecommendationModalOpen.value = false;
+}
+
+function handlePortfolioRecommendationSubmit(recommendation) {
+  if (!portfolioUserId.value) return;
+
+  localRecommendations.value = [
+    {
+      id: `local-recommendation-${Date.now()}`,
+      authorName: recommenderName.value,
+      authorRole: recommenderRole.value,
+      content: recommendation.content,
+      date: new Date().toISOString(),
+      status: 'valide',
+      portfolioOwnerId: portfolioUserId.value,
+    },
+    ...localRecommendations.value,
+  ];
+
+  closeRecommendationModal();
 }
 
 function openSchoolModal() {
@@ -686,7 +747,11 @@ async function handleAiFiltersDetected(filters) {
             <button class="follow-button">
               Follow
             </button>
-            <button class="recommend-button">
+            <button
+              type="button"
+              class="recommend-button"
+              @click="openRecommendationModal"
+            >
               Recommend
             </button>
           </div>
@@ -809,6 +874,15 @@ async function handleAiFiltersDetected(filters) {
       title="Share your portfolio"
       :username="portfolioUserId"
       @close="isQRModalOpen = false"
+    />
+
+    <PortfolioRecommendationModal
+      :open="isRecommendationModalOpen"
+      :portfolio-owner-name="profileName"
+      :recommender-name="recommenderName"
+      :recommender-role="recommenderRole"
+      @close="closeRecommendationModal"
+      @submit="handlePortfolioRecommendationSubmit"
     />
 
     <ExperienceModal

@@ -517,6 +517,7 @@ const existingImageName = computed(() => {
     <div
       v-if="open"
       class="modal-overlay"
+      @click.self="emit('close')"
     >
       <div class="modal-card">
         <div class="modal-card__header">
