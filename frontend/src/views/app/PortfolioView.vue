@@ -1385,7 +1385,7 @@ async function handleAiFiltersDetected(filters) {
   bottom: 2rem;
   width: 64px;
   height: 64px;
-  z-index: 999;
+  z-index: 700;
   overflow: visible;
 }
 
