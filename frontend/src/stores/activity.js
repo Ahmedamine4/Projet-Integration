@@ -115,6 +115,21 @@ export const useActivityStore = defineStore('activity', () => {
     }
   }
 
+  async function deleteActivity(activityId) {
+    loading.value = true;
+    error.value = '';
+
+    try {
+      await api.delete(`/activites/${activityId}`);
+      activities.value = activities.value.filter((item) => item.id !== activityId);
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to delete activity';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     activities,
     loading,
@@ -122,5 +137,6 @@ export const useActivityStore = defineStore('activity', () => {
     fetchActivities,
     createActivity,
     editActivity,
+    deleteActivity,
   };
 });

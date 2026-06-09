@@ -102,6 +102,21 @@ export const useInternshipStore = defineStore('internship', () => {
     }
   }
 
+  async function deleteInternship(internshipId) {
+    loading.value = true;
+    error.value = '';
+
+    try {
+      await api.delete(`/stages/stages/${internshipId}`);
+      internships.value = internships.value.filter((item) => item.id !== internshipId);
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to delete internship';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     internships,
     loading,
@@ -109,5 +124,6 @@ export const useInternshipStore = defineStore('internship', () => {
     fetchInternships,
     createInternship,
     editInternship,
+    deleteInternship,
   };
 });

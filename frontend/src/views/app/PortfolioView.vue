@@ -16,6 +16,8 @@ import { usePortfolioStore } from '@/stores/portfolio';
 import { useInstitutionStore } from '@/stores/institution';
 import api from '@/services/api';
 import BaseError from '@/components/common/feedback/BaseError.vue';
+import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
+import ConfirmDialog from '@/components/common/feedback/ConfirmDialog.vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
@@ -259,13 +261,11 @@ const shouldShowInternshipSection = computed(() => {
   return isOwnPortfolio.value || visibleInternships.value.length > 0;
 });
 
-const experienceErrors = ref({
-  project: '',
-  internship: '',
-  activity: '',
-  certificate: '',
+const notification = ref({
+  type: 'error',
+  message: '',
 });
-const schoolPathError = ref('');
+let notificationTimer = null;
 const isSchoolModalOpen = ref(false);
 
 const experienceModal = ref({
@@ -274,6 +274,7 @@ const experienceModal = ref({
   mode: 'create',
   selected: null,
 });
+const isDeleteConfirmOpen = ref(false);
 
 const isExperienceSubmitting = ref(false);
 
@@ -289,8 +290,16 @@ const experienceModalLoading = computed(() =>
   (experienceLoadingByType.value[experienceModal.value.type] ?? false)
 );
 
+function clearNotification() {
+  notification.value.message = '';
+}
+
+function showNotification(type, message) {
+  notification.value = { type, message };
+}
+
 function openExperienceModal(type) {
-  experienceErrors.value[type] = '';
+  clearNotification();
   experienceModal.value = {
     open: true,
     type,
@@ -302,7 +311,7 @@ function openExperienceModal(type) {
 function openEditExperienceModal(type, experience) {
   if (isRejectedExperience(experience)) return;
 
-  experienceErrors.value[type] = '';
+  clearNotification();
   experienceModal.value = {
     open: true,
     type,
@@ -316,6 +325,7 @@ function isRejectedExperience(experience) {
 }
 
 function closeExperienceModal() {
+  isDeleteConfirmOpen.value = false;
   experienceModal.value = {
     ...experienceModal.value,
     open: false,
@@ -324,9 +334,19 @@ function closeExperienceModal() {
   };
 }
 
+function openDeleteConfirm() {
+  isDeleteConfirmOpen.value = true;
+}
+
+function closeDeleteConfirm() {
+  if (isExperienceSubmitting.value) return;
+
+  isDeleteConfirmOpen.value = false;
+}
+
 async function handleExperienceSubmit(experience) {
   const type = experienceModal.value.type;
-  experienceErrors.value[type] = '';
+  clearNotification();
   isExperienceSubmitting.value = true;
 
   try {
@@ -345,12 +365,14 @@ async function handleExperienceSubmit(experience) {
         );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdProject = await projectStore.createProject(experience);
       projects.value.unshift(createdProject);
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
       return;
     }
 
@@ -366,12 +388,14 @@ async function handleExperienceSubmit(experience) {
         );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdActivity = await activityStore.createActivity(experience);
       activities.value = [createdActivity, ...activities.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
     }
 
     if (type === 'internship') {
@@ -385,12 +409,14 @@ async function handleExperienceSubmit(experience) {
           internship.id === selectedId ? updatedInternship : internship
         );
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdInternship = await internshipStore.createInternship(experience);
       internships.value = [createdInternship, ...internships.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
       return;
     }
 
@@ -406,18 +432,61 @@ async function handleExperienceSubmit(experience) {
         );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdCertification = await certificationStore.createCertification(experience);
       certifications.value = [createdCertification, ...certifications.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
     }
   }
   catch (error) {
-    experienceErrors.value[type] = error.response?.data?.message ||
+    showNotification('error', error.response?.data?.message ||
       error.message ||
-      `Failed to save ${type}`;
+      `Failed to save ${type}`);
+  }
+  finally {
+    isExperienceSubmitting.value = false;
+  }
+}
+
+async function handleExperienceDelete() {
+  const type = experienceModal.value.type;
+  const selectedId = experienceModal.value.selected?.id;
+
+  if (!selectedId) return;
+
+  clearNotification();
+  isExperienceSubmitting.value = true;
+
+  try {
+    if (type === 'project') {
+      await projectStore.deleteProject(selectedId);
+      projects.value = projects.value.filter((project) => project.id !== selectedId);
+    }
+    else if (type === 'activity') {
+      await activityStore.deleteActivity(selectedId);
+      activities.value = activities.value.filter((activity) => activity.id !== selectedId);
+    }
+    else if (type === 'internship') {
+      await internshipStore.deleteInternship(selectedId);
+      internships.value = internships.value.filter((internship) => internship.id !== selectedId);
+    }
+    else if (type === 'certificate') {
+      await certificationStore.deleteCertification(selectedId);
+      certifications.value = certifications.value.filter((certification) => certification.id !== selectedId);
+    }
+
+    closeExperienceModal();
+    isDeleteConfirmOpen.value = false;
+    showNotification('success', 'Experience deleted successfully.');
+  }
+  catch (error) {
+    showNotification('error', error.response?.data?.message ||
+      error.message ||
+      `Failed to delete ${type}`);
   }
   finally {
     isExperienceSubmitting.value = false;
@@ -463,12 +532,12 @@ function handlePortfolioRecommendationSubmit(recommendation) {
 function openSchoolModal() {
   if (!isOwnPortfolio.value) return;
 
-  schoolPathError.value = '';
+  clearNotification();
   isSchoolModalOpen.value = true;
 }
 
 async function completeSchoolPath(schoolData) {
-  schoolPathError.value = '';
+  clearNotification();
 
   try {
     institutionStore.setSchoolPath(schoolData.schoolPath);
@@ -493,12 +562,14 @@ async function completeSchoolPath(schoolData) {
     if (portfolioUserId.value) {
       await portfolioStore.fetchPortfolio(portfolioUserId.value);
     }
+
+    showNotification('success', 'Academic path saved successfully.');
   }
   catch (error) {
-    schoolPathError.value = error.response?.data?.message ||
+    showNotification('error', error.response?.data?.message ||
       error.response?.data?.error ||
       error.message ||
-      'Failed to save academic path';
+      'Failed to save academic path');
   }
 }
 
@@ -568,7 +639,28 @@ onUnmounted(() => {
   if (localProfilePhoto.value) {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
+
+  if (notificationTimer) {
+    clearTimeout(notificationTimer);
+  }
 });
+
+watch(
+  () => notification.value.message,
+  (message) => {
+    if (notificationTimer) {
+      clearTimeout(notificationTimer);
+      notificationTimer = null;
+    }
+
+    if (!message) return;
+
+    notificationTimer = setTimeout(() => {
+      clearNotification();
+      notificationTimer = null;
+    }, 4500);
+  }
+);
 
 async function handleAiFiltersDetected(filters) {
   if (!portfolioUserId.value) return;
@@ -666,6 +758,11 @@ async function handleAiFiltersDetected(filters) {
     class="portfolio"
   >
     <div class="portfolio__banner" />
+    <BaseNotification
+      :message="notification.message"
+      :type="notification.type"
+      @close="clearNotification"
+    />
 
     <main>
       <BaseError v-if="portfolioStore.error">
@@ -774,9 +871,6 @@ async function handleAiFiltersDetected(filters) {
             :can-add="isOwnPortfolio"
             @add-education="openSchoolModal"
           />
-          <BaseError v-if="schoolPathError">
-            {{ schoolPathError }}
-          </BaseError>
           <PortfolioSkills
             v-if="shouldShowSkills"
             :user-id="portfolioUserId"
@@ -795,10 +889,6 @@ async function handleAiFiltersDetected(filters) {
           @add-project="openExperienceModal('project')"
           @edit-project="project => openEditExperienceModal('project', project)"
         />
-
-        <BaseError v-if="experienceErrors.project">
-          {{ experienceErrors.project }}
-        </BaseError>
       </div>
       <div
         v-if="shouldShowInternshipSection"
@@ -810,10 +900,6 @@ async function handleAiFiltersDetected(filters) {
           @add-internship="openExperienceModal('internship')"
           @edit-internship="internship => openEditExperienceModal('internship', internship)"
         />
-
-        <BaseError v-if="experienceErrors.internship">
-          {{ experienceErrors.internship }}
-        </BaseError>
       </div>
       <div
         v-if="shouldShowActivitySection || shouldShowCertificationSection"
@@ -830,10 +916,6 @@ async function handleAiFiltersDetected(filters) {
             @edit-activity="activity => openEditExperienceModal('activity', activity)"
             @update-max-card-height="updateActivityMaxCardHeight"
           />
-
-          <BaseError v-if="experienceErrors.activity">
-            {{ experienceErrors.activity }}
-          </BaseError>
         </div>
 
         <div
@@ -847,10 +929,6 @@ async function handleAiFiltersDetected(filters) {
             @add-certification="openExperienceModal('certificate')"
             @edit-certification="certification => openEditExperienceModal('certificate', certification)"
           />
-
-          <BaseError v-if="experienceErrors.certificate">
-            {{ experienceErrors.certificate }}
-          </BaseError>
         </div>
       </div>
       <RecommendationsSection
@@ -896,6 +974,16 @@ async function handleAiFiltersDetected(filters) {
       :professor-emails="professorEmails"
       @close="closeExperienceModal"
       @submit="handleExperienceSubmit"
+      @delete="openDeleteConfirm"
+    />
+    <ConfirmDialog
+      :open="isDeleteConfirmOpen"
+      title="Delete experience?"
+      message="This experience will be permanently removed from your portfolio."
+      confirm-text="Delete"
+      :loading="isExperienceSubmitting"
+      @cancel="closeDeleteConfirm"
+      @confirm="handleExperienceDelete"
     />
 
     <SchoolPathModal

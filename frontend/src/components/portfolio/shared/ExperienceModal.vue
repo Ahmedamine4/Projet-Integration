@@ -9,6 +9,7 @@ import BaseLabels from '@/components/common/forms/BaseLabels.vue';
 import ToggleSwitch from '@/components/common/forms/ToggleSwitch.vue';
 import ImageDropzone from '@/components/common/forms/ImageDropzone.vue';
 import CloseButton from '@/components/common/actions/CloseButton.vue';
+import DeleteButton from '@/components/common/actions/DeleteButton.vue';
 import BaseSelect from '@/components/common/forms/BaseSelect.vue';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
@@ -52,7 +53,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['close', 'submit']);
+const emit = defineEmits(['close', 'submit', 'delete']);
 
 const experienceConfigs = {
   project: {
@@ -932,22 +933,33 @@ const existingImageName = computed(() => {
           </div>
 
           <div class="experience-form__footer">
-            <BaseButton
+            <DeleteButton
+              v-if="isEdit"
               type="button"
-              variant="ghost"
-              @click="$emit('close')"
+              :disabled="loading"
+              @click="emit('delete')"
             >
-              Cancel
-            </BaseButton>
+              Delete
+            </DeleteButton>
+            <div class="experience-form__footer-actions">
+              <BaseButton
+                type="button"
+                variant="ghost"
+                :disabled="loading"
+                @click="$emit('close')"
+              >
+                Cancel
+              </BaseButton>
 
-            <BaseButton
-              type="submit"
-              variant="submit"
-              :loading
-              :disabled="isEdit && !hasEditChanges"
-            >
-              {{ isEdit ? 'Save changes' : `Submit ${props.type}` }}
-            </BaseButton>
+              <BaseButton
+                type="submit"
+                variant="submit"
+                :loading
+                :disabled="isEdit && !hasEditChanges"
+              >
+                {{ isEdit ? 'Save changes' : `Submit ${props.type}` }}
+              </BaseButton>
+            </div>
           </div>
         </form>
       </div>
@@ -1158,10 +1170,16 @@ textarea:focus {
   z-index: 10;
   flex-shrink: 0;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--space-sm);
   padding: var(--space-md) var(--modal-edge-space);
   border-top: 1px solid rgba(var(--color-primary-rgb), 0.12);
+}
+
+.experience-form__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
 }
 
 .experience-form__footer::before {

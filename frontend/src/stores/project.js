@@ -80,11 +80,27 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  async function deleteProject(projectId) {
+    loading.value = true;
+    error.value = '';
+
+    try {
+      await api.delete(`/projets/${projectId}`);
+      projects.value = projects.value.filter((item) => item.id !== projectId);
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to delete project';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     projects,
     loading,
     error,
     createProject,
     editProject,
+    deleteProject,
   };
 });
