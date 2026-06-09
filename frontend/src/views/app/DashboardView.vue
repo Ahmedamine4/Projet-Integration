@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import StudentHeader from '@/components/dashboard/StudentHeader.vue'
 import BarreStats from '@/components/dashboard/BarreStats.vue'
 import ScoreChart from '@/components/dashboard/ScoreChart.vue'
+import Filtre from '@/components/common/forms/FilterDropdown.vue'
 
 const student = ref({
     firstName: 'Mohamed Reda',
@@ -62,10 +63,26 @@ const statusOrder = {
     rejected: 3
 }
 
-const sortedRequests = computed(() =>
-    [...requests.value]
-        .sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
-)
+const selectedStatus=ref ('');
+
+
+const sortedRequests = computed(() => {
+  let data = [...requests.value];
+
+  // Filtrer si un statut est choisi
+  if (selectedStatus.value !== ''  && selectedStatus.value!=='all') {
+    data = data.filter(
+      requests => requests.status === selectedStatus.value
+    );
+  }
+
+  // Trier par date (plus récent → plus ancien)
+  data.sort(
+    (a, b) => new Date(b.date) - new Date(a.date)
+  );
+
+  return data;
+});
 
 function statusLabel(status) {
     return { accepted: 'Acceptée', pending: 'En attente', rejected: 'Refusée' }[status]
@@ -190,12 +207,28 @@ const scoreHistory = [
 
     <section class="section">
       <div class="section-header">
-        <h2>Demandes envoyées</h2>
-        <span>
-          {{ sortedRequests.length }}
-        </span>
+    <h2>Demandes envoyées</h2>
+
+    <div class="right-side">
+      <div class="filter-container">
+        <label>Filtrer par statut :</label>
+
+        <Filtre
+            class="status-filter" placeholder style="padding-left: 28px;"
+          v-model="selectedStatus"
+          :options="[
+            'all',
+            'accepted',
+            'pending',
+            'rejected'
+          ]"
+        />
       </div>
 
+      <span>{{ sortedRequests.length }}</span>
+    </div>
+  </div>
+        
       <div class="table-responsive">
         <table class="data-table">
           <thead>
@@ -254,14 +287,36 @@ const scoreHistory = [
     background: var(--color-background);
     border: 1px solid rgba(var(--color-primary-rgb), 0.08);
     border-radius: 28px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .section-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    padding: 2rem;
+    padding-right: 2rem;
+    padding-left: 2rem;
+    padding-top:1rem;
+    padding-bottom:1rem;
     border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+}
+
+.right-side {
+  margin-left: auto; /* pousse tout à droite */
+  display: flex;
+  align-items: center;
+  gap: 30px; /* espace filtre ↔ compteur */
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* espace label ↔ dropdown */
+}
+
+.status-filter select {
+  text-align: center;
+  text-align-last: center; /* centre la valeur sélectionnée */
 }
 
 .section-header h2 {
@@ -332,7 +387,7 @@ const scoreHistory = [
 }
 
 .student-name {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     font-weight: var(--font-medium);
 }
 
@@ -340,12 +395,12 @@ const scoreHistory = [
     max-width: 250px;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     color: rgba(var(--color-primary-rgb), 0.8);
 }
 
 .cell-date {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-md);
     color: var(--color-primary-hover);
 }
 

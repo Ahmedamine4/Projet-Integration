@@ -331,6 +331,7 @@ const categoriesWithColors = computed(() => {
 
 .legend-label {
     font-weight: 600;
+    font-size:var(--font-size-md);
 }
 
 .legend-size {

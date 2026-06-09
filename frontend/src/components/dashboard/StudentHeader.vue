@@ -130,7 +130,7 @@ function getStatColor(label ,value) {
 .stat-label {
   display: flex;
   align-items: center;
-  /*font-size: var(--font-size-sm);*/
+  font-size: var(--font-size-md);
   gap: 5px;
   white-space: pre-line;
   min-height: 60px;
