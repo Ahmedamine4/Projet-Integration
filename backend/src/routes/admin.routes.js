@@ -6,7 +6,7 @@ import {
   bloquerUtilisateurController,
   debloquerUtilisateurController,
   listProfessionnelsEnAttente,
-  ajouterAdmin,
+
 } from '../controllers/admin.controllers.js';
 import {
   authMiddleware,
@@ -18,7 +18,6 @@ import { getAllUsers } from '../controllers/auth.controller.js';
 const router = express.Router();
 router.use(authMiddleware, authorizeRoles(ROLES.ADMIN));
 router.post('/assigner-directeur', ajoutDirecteur);
-router.post('/admins', ajouterAdmin);
 router.get('/professionnels/en-attente', listProfessionnelsEnAttente);
 router.get('/users',getAllUsers);
 router.patch('/professionnels/:id/valider', validerProfessionnel);
