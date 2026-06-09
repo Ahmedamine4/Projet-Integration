@@ -150,7 +150,6 @@ onBeforeUnmount(() => {
   max-height: var(--internships-max-height);
   padding-right: var(--internship-scrollbar-offset);
   overflow-y: auto;
-  overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
 }
 
