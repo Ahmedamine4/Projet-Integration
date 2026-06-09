@@ -195,10 +195,10 @@ trivy-images:
       - .trivycache/
 
   script:
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:backend
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:frontend
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:nginx
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:ai
+    - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:backend
+    - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:frontend
+    - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:nginx
+    - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table ahmedamine04/foliocraft:ai
 
   artifacts:
     when: always
@@ -210,10 +210,10 @@ trivy-images:
       - trivy-image-ai.json
 
   after_script:
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-backend.json ahmedamine04/foliocraft:backend
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-frontend.json ahmedamine04/foliocraft:frontend
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-nginx.json ahmedamine04/foliocraft:nginx
-    - trivy image --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-ai.json ahmedamine04/foliocraft:ai
+    - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-backend.json ahmedamine04/foliocraft:backend || true
+    - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-frontend.json ahmedamine04/foliocraft:frontend || true
+    - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-nginx.json ahmedamine04/foliocraft:nginx || true
+    - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-ai.json ahmedamine04/foliocraft:ai || true
 
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
