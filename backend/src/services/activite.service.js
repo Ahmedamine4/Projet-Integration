@@ -53,7 +53,39 @@ export const creeActivite = async (etudiantId, data, photoUrl) => {
       )
     );
 
+<<<<<<< Updated upstream
     return await tx.activite.findUnique({
+=======
+    // Si activité académique, créer la demande de validation auprès de l'institution
+    let validation = null;
+    if (isAcademique && institution) {
+      validation = await tx.valideActivite.create({
+        data: {
+          experience_id: experience.experience_id,
+          institution_id: institution.institution_id,
+          statut: 'en_attente',
+          date_d_action: new Date(),
+        },
+      });
+
+      // Notifier le directeur de l'institution
+      if (institution.directeur?.directeur_utilisateur_id) {
+        const etudiant = await tx.utilisateur.findUnique({
+          where: { utilisateur_id: etudiantId },
+          select: { nom: true, prenom: true },
+        });
+
+        await creerNotification(
+          institution.directeur.directeur_utilisateur_id,
+          `L'etudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son activite "${data.titre}" aupres de ${institution.nom}.`,
+          'validation_activite',
+          { utilisateurSourceId: etudiantId }
+        );
+      }
+    }
+
+    return tx.activite.findUnique({
+>>>>>>> Stashed changes
       where: { experience_id: experience.experience_id },
       include: {
         experience: {
@@ -134,6 +166,68 @@ export const editActivite = async (etudiantId, experienceId, data, photoUrl) => 
       );
     }
 
+<<<<<<< Updated upstream
+=======
+    // Si déjà une validation existante
+    if (experience.activite.validation) {
+
+      const institutionId = nouvelleInstitution
+        ? nouvelleInstitution.institution_id
+        : experience.activite.validation.institution_id;
+
+      await tx.valideActivite.update({
+        where: { experience_id: experienceId },
+        data: {
+          statut: 'en_attente',
+          institution_id: institutionId,
+          date_d_action: new Date(),
+        },
+      });
+
+      const institutionFinale = nouvelleInstitution ?? await tx.institution.findUnique({
+        where: { institution_id: institutionId },
+        include: { directeur: true },
+      });
+
+      if (institutionFinale?.directeur?.directeur_utilisateur_id) {
+        const etudiant = await tx.utilisateur.findUnique({
+          where: { utilisateur_id: etudiantId },
+          select: { nom: true, prenom: true },
+        });
+
+        await creerNotification(
+          institutionFinale.directeur.directeur_utilisateur_id,
+          `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son activité "${data.titre ?? experience.titre}". Il demande une validation auprès de ${institutionFinale.nom}.`,
+          'validation_activite',
+          { utilisateurSourceId: etudiantId }
+        );
+      }
+
+    } else if (nouvelleInstitution) {
+      await tx.valideActivite.create({
+        data: {
+          experience_id: experienceId,
+          institution_id: nouvelleInstitution.institution_id,
+          statut: 'en_attente',
+          date_d_action: new Date(),
+        },
+      });
+
+      if (nouvelleInstitution.directeur?.directeur_utilisateur_id) {
+        const etudiant = await tx.utilisateur.findUnique({
+          where: { utilisateur_id: etudiantId },
+          select: { nom: true, prenom: true },
+        });
+
+        await creerNotification(
+          nouvelleInstitution.directeur.directeur_utilisateur_id,
+          `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son activité "${data.titre ?? experience.titre}" auprès de ${nouvelleInstitution.nom}.`,
+          'validation_activite',
+          { utilisateurSourceId: etudiantId }
+        );
+      }
+    }
+>>>>>>> Stashed changes
 
     return tx.activite.findUnique({
       where: { experience_id: experienceId },
@@ -155,7 +249,18 @@ export const updateVisibiliteActiviteService = async (etudiantId, experienceId, 
 
   if (!experience) throw new Error('Activité non trouvée');
 
+<<<<<<< Updated upstream
   return prisma.experience.update({
+=======
+  if (experience.type_specifique === 'academique') {
+    const statut = experience.activite?.validation?.statut;
+    if (statut !== 'valide') {
+      throw new Error("Vous ne pouvez changer la visibilité que si l'activité académique est validée");
+    }
+  }
+
+  const updated = await prisma.experience.update({
+>>>>>>> Stashed changes
     where: { experience_id: experienceId },
     data: { visibilite },
     select: { experience_id: true, visibilite: true },
@@ -163,7 +268,11 @@ export const updateVisibiliteActiviteService = async (etudiantId, experienceId, 
 
   await creerNotification(
     etudiantId,
+<<<<<<< Updated upstream
     'La visibilite de votre activite a ete mise a jour.',
+=======
+    `La visibilite de votre activite "${experience.titre}" a ete mise a jour.`,
+>>>>>>> Stashed changes
     'portfolio_visibility',
     { utilisateurSourceId: etudiantId }
   );

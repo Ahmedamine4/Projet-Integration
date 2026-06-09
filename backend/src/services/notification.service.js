@@ -1,5 +1,22 @@
 import prisma from '../config/prisma.js';
 
+export const TYPES_HISTORIQUE = [
+  'portfolio_update',
+  'portfolio_visibility',
+  'github_import',
+  'draft_projet_created',
+  'commentaire_projet',
+  'commentaire_stage',
+  'projet_valide',
+  'projet_refuse',
+  'stage_valide',
+  'stage_refuse',
+  'validation_etudiant_acceptee',
+  'validation_etudiant_refusee',
+  'recommandation_validee',
+  'recommandation_refusee',
+];
+
 export const getNotifications = async (utilisateurId) => {
   return prisma.notification.findMany({
     where: { utilisateur_cible_id: utilisateurId },
@@ -23,6 +40,7 @@ export const getHistoriqueActivite = async (utilisateurId) => {
     where: {
       utilisateur_cible_id: utilisateurId,
       type: {
+<<<<<<< Updated upstream
         in: [
           'portfolio_update',
           'portfolio_visibility',
@@ -34,6 +52,9 @@ export const getHistoriqueActivite = async (utilisateurId) => {
           'commentaire_projet',
           'commentaire_stage',
         ],
+=======
+        in: TYPES_HISTORIQUE,
+>>>>>>> Stashed changes
       },
     },
     orderBy: { date_notification: 'desc' },

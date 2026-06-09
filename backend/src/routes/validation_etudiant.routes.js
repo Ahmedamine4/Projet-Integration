@@ -1,12 +1,12 @@
 import express from 'express';
 import { listPendingController, validateStudentController } from '../controllers/validation_etudiant.controller.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-// GET /api/validation/pending/institution_1
-router.get('/pending/:institutionId', listPendingController);
+router.use(authMiddleware);
 
-// PATCH /api/validation/decide/id1/institution_1
+router.get('/pending/:institutionId', listPendingController);
 router.patch('/decide/:etudiantId/:institutionId', validateStudentController);
 
 export default router;

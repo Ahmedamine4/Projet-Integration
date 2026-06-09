@@ -97,7 +97,11 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
       await creerNotification(
         professeur.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre}".`,
+<<<<<<< Updated upstream
         'validation_stage',
+=======
+        'stage_soumis',
+>>>>>>> Stashed changes
         { utilisateurSourceId: etudiantId }
       );
     }
@@ -227,8 +231,13 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
 
       await creerNotification(
         profId,
+<<<<<<< Updated upstream
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son stage "${data.titre ?? experience.titre}". Il demande une validation pour un stage.`,
         'validation_stage',
+=======
+        `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre ?? experience.titre}".`,
+        'stage_soumis',
+>>>>>>> Stashed changes
         { utilisateurSourceId: etudiantId }
       );
 
@@ -259,7 +268,11 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
       await creerNotification(
         prof.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre ?? experience.titre}".`,
+<<<<<<< Updated upstream
         'validation_stage',
+=======
+        'stage_soumis',
+>>>>>>> Stashed changes
         { utilisateurSourceId: etudiantId }
       );
     }
@@ -302,6 +315,10 @@ export const updateVisibiliteStageService = async (etudiantId, experienceId, vis
       throw new Error('Vous ne pouvez changer la visibilité que si le stage académique est validé');
     }
   }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
   //si personnel
   const updated = await prisma.experience.update({
     where: { experience_id: experienceId },
@@ -309,6 +326,26 @@ export const updateVisibiliteStageService = async (etudiantId, experienceId, vis
     select: { experience_id: true, visibilite: true },
   });
 
+<<<<<<< Updated upstream
+=======
+
+  await creerNotification(
+    etudiantId,
+    `La visibilité de votre stage "${experience.titre}" a été mise à jour.`,
+    'portfolio_visibility',
+    { utilisateurSourceId: etudiantId }
+  );
+
+  return updated;
+};
+export const supprimerStageService = async (etudiantId, experienceId) => {
+  const experience = await prisma.experience.findFirst({
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'stage' },
+    include: {
+      stage: { include: { validation: true } },
+    },
+  });
+>>>>>>> Stashed changes
 
   await creerNotification(
     etudiantId,

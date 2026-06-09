@@ -1,7 +1,10 @@
 import prisma from '../config/prisma.js';
 import { creerNotification } from './notification.service.js';
 
+<<<<<<< Updated upstream
 // Recuperer les demandes en attente pour une institution specifique
+=======
+>>>>>>> Stashed changes
 export const getPendingValidations = async (institutionId) => {
     return await prisma.valideEtudiant.findMany({
         where: {
@@ -14,7 +17,10 @@ export const getPendingValidations = async (institutionId) => {
     });
 };
 
+<<<<<<< Updated upstream
 // Mettre a jour le statut (valide / refuse)
+=======
+>>>>>>> Stashed changes
 export const updateValidationStatus = async (
     etudiantId,
     institutionId,
@@ -32,10 +38,22 @@ export const updateValidationStatus = async (
         },
         data: {
             statut: newStatus,
+<<<<<<< Updated upstream
             date: new Date(),
         },
     });
 
+=======
+            date: new Date()
+        }
+    });
+
+    const type =
+        newStatus === 'valide'
+            ? 'validation_etudiant_acceptee'
+            : 'validation_etudiant_refusee';
+
+>>>>>>> Stashed changes
     const message =
         newStatus === 'valide'
             ? "Votre demande de liaison a l'institution a ete acceptee."
@@ -44,7 +62,11 @@ export const updateValidationStatus = async (
     await creerNotification(
         etudiantId,
         message,
+<<<<<<< Updated upstream
         'validation_institution',
+=======
+        type,
+>>>>>>> Stashed changes
         { utilisateurSourceId }
     );
 

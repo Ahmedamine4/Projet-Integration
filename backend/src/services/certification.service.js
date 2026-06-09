@@ -2,8 +2,11 @@ import prisma from '../config/prisma.js';
 import { supabase } from '../config/supabase.js';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
 import { creerNotification } from './notification.service.js';
+<<<<<<< Updated upstream
 export const uploadPhoto = async (file) => {
   const fileName = `${Date.now()}_${file.originalname}`;
+=======
+>>>>>>> Stashed changes
 
   const { error } = await supabase.storage
     .from('certifications-photos')
@@ -158,11 +161,12 @@ export const updateVisibiliteCertificationService = async (etudiantId, experienc
 
   if (!experience) throw new Error('Certification non trouvée');
 
-  return prisma.experience.update({
+  const updated = await prisma.experience.update({
     where: { experience_id: experienceId },
     data: { visibilite },
     select: { experience_id: true, visibilite: true },
   });
+<<<<<<< Updated upstream
 
   await creerNotification(
     etudiantId,
@@ -175,6 +179,18 @@ export const updateVisibiliteCertificationService = async (etudiantId, experienc
 };
 
 
+=======
+
+  await creerNotification(
+    etudiantId,
+    'La visibilite de votre certification a ete mise a jour.',
+    'portfolio_visibility',
+    { utilisateurSourceId: etudiantId }
+  );
+
+  return updated;
+};
+>>>>>>> Stashed changes
 export const getCertificationsVisiblesByEtudiant = async (etudiantId) => {
   return prisma.experience.findMany({
     where: { utilisateur_id: etudiantId, type: 'certification', visibilite: true },

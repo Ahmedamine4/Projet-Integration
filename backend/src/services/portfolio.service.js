@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.js';
 import { creerNotification } from './notification.service.js';
 import { getStagesVisiblesByEtudiant, getStagesByEtudiant } from './stage.service.js';
+import { creerNotification } from './notification.service.js';
 import { getProjetsVisiblesByEtudiant, getProjetsByEtudiant } from './projet.service.js';
 import { getActivitesVisiblesByEtudiant, getActivitesByEtudiant } from './activite.service.js';
 import { getCertificationsVisiblesByEtudiant, getCertificationsByEtudiant } from './certification.service.js';
@@ -17,7 +18,10 @@ export async function getAboutByUserId(userId) {
   return { ownerId: user.utilisateur_id, about: user.a_propos ?? null };
 }
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 export async function updateUserAboutByUserId(userId, aboutText) {
   const updated = await prisma.utilisateur.update({
     where: { utilisateur_id: userId },
@@ -67,6 +71,38 @@ export async function getPortfolioEtudiant(etudiantId, isOwner) {
     isOwner ? getCertificationsByEtudiant(etudiantId) : getCertificationsVisiblesByEtudiant(etudiantId),
   ]);
 
+<<<<<<< Updated upstream
+=======
+  if (!technologies.length && !domaines.length) {
+    return { ...etudiant, isOwner, stages, projets, activites, certifications };
+  }
+
+  const highlight = (list) => {
+    return list
+      .map(item => {
+        const competences = item.competence_dev ?? [];
+
+        const techCount = competences.filter(cd =>
+          cd.competence.type === 'technologie' && technologies.includes(cd.competence.nom)
+        ).length;
+
+        const domaineCount = competences.filter(cd =>
+          cd.competence.type === 'domaine' && domaines.includes(cd.competence.nom)
+        ).length;
+        const score = totalFiltres > 0 ? Math.round(((techCount + domaineCount) / totalFiltres) * 100) : 0;
+
+        return {
+          ...item,
+          highlighted: techCount + domaineCount > 0,
+          score,
+          techCount,
+          domaineCount,
+        };
+      })
+      .sort((a, b) => b.techCount - a.techCount || b.domaineCount - a.domaineCount);
+  };
+
+>>>>>>> Stashed changes
   return {
     ...etudiant,
     isOwner,

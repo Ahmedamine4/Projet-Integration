@@ -86,7 +86,11 @@ export const creeProjet = async (etudiantId, data, photoUrl) => {
       await creerNotification(
         professeur.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle}".`,
+<<<<<<< Updated upstream
         'validation_projet',
+=======
+        'projet_soumis',
+>>>>>>> Stashed changes
         { utilisateurSourceId: etudiantId }
       );
     }
@@ -189,7 +193,11 @@ export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
       await creerNotification(
         profId,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son projet "${data.projectTitle ?? experience.titre}". Il demande une validation.`,
+<<<<<<< Updated upstream
         'validation_projet',
+=======
+        'projet_soumis',
+>>>>>>> Stashed changes
         { utilisateurSourceId: etudiantId }
       );
 
@@ -213,7 +221,11 @@ export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
       await creerNotification(
         prof.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle ?? experience.titre}".`,
+<<<<<<< Updated upstream
         'validation_projet',
+=======
+        'projet_soumis',
+>>>>>>> Stashed changes
         { utilisateurSourceId: etudiantId }
       );
     }
@@ -347,6 +359,28 @@ export const createDraftProjectsFromRepos = async (etudiantId, repositories) => 
     const draftProjet = await createDraftProjetFromRepository(repository, etudiantId);
     draftProjects.push(draftProjet);
   }
+  if (draftProjects.length > 0) {
+    const importMessage = draftProjects.length === 1
+      ? 'Un import GitHub a genere 1 projet brouillon.'
+      : `Un import GitHub a genere ${draftProjects.length} projets brouillons.`;
+    const draftMessage = draftProjects.length === 1
+      ? 'Votre projet brouillon a ete cree depuis GitHub.'
+      : `${draftProjects.length} projets brouillons ont ete crees depuis GitHub.`;
+
+    await creerNotification(
+      etudiantId,
+      importMessage,
+      'github_import',
+      { utilisateurSourceId: etudiantId }
+    );
+
+    await creerNotification(
+      etudiantId,
+      draftMessage,
+      'draft_projet_created',
+      { utilisateurSourceId: etudiantId }
+    );
+  }
 
   if (draftProjects.length > 0) {
     const message = draftProjects.length === 1
@@ -364,3 +398,30 @@ export const createDraftProjectsFromRepos = async (etudiantId, repositories) => 
   return draftProjects;
 };
 
+<<<<<<< Updated upstream
+=======
+export const supprimerProjetService = async (etudiantId, experienceId) => {
+  const experience = await prisma.experience.findFirst({
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet' },
+    include: {
+      projet: { include: { validation: true } },
+    },
+  });
+
+  if (!experience) throw new Error('Projet non trouvé');
+
+  //bloquer si deja traite par le professeur
+  if (experience.type_specifique === 'academique' && experience.projet?.validation) {
+    const statut = experience.projet.validation.statut;
+    if (statut === 'valide' || statut === 'refuse') {
+      throw new Error('Ce projet a déjà été traité par le professeur, vous ne pouvez plus le supprimer');
+    }
+  }
+
+  await supprimerPhoto(experience.photo, 'projets-photos');
+
+  await prisma.experience.delete({
+    where: { experience_id: experienceId },
+  });
+};
+>>>>>>> Stashed changes

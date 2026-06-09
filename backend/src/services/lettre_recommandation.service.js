@@ -39,7 +39,8 @@ export const creerDemandeRecommandation = async (etudiantId, data) => {
   await creerNotification(
     professeur.utilisateur_id,
     `L'étudiant ${etudiant.prenom} ${etudiant.nom} vous demande une lettre de recommandation : "${objet}".`,
-    'recommandation'
+    'recommandation',
+    { utilisateurSourceId: etudiantId }
   );
   await creerNotification(
     professeur.utilisateur_id,

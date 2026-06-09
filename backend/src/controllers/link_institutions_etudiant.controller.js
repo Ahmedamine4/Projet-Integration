@@ -2,19 +2,19 @@ import { LinkInstitutionsToEtudiant } from '../services/link_institutions_etudia
 
 export const LinkInstitutionsToEtudiantController = async (req, res) => {
     try {
-        const { etudiantId, institutionId } = req.body;
+        const etudiantId = req.user?.utilisateur_id;
+        const { institutionId } = req.body;
 
-        // Validation des entrées
         if (!etudiantId || !Array.isArray(institutionId) || institutionId.length === 0) {
-            return res.status(400).json({ 
-                error: 'etudiantId et un tableau institution Id (Ids) sont requis' 
+            return res.status(400).json({
+                error: 'etudiantId et un tableau institution Id (Ids) sont requis'
             });
         }
 
         const result = await LinkInstitutionsToEtudiant(etudiantId, institutionId);
-        
+
         res.status(200).json({
-            message: 'Demandes de liaison traitées avec succès.',
+            message: 'Demandes de liaison traitÃ©es avec succÃ¨s.',
             count: result.length
         });
     } catch (error) {

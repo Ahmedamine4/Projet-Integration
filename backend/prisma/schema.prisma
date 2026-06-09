@@ -77,7 +77,11 @@ model Utilisateur {
   professionnel  Professionnel?
 
   // Autres relations
+<<<<<<< Updated upstream
     notifications_recues Notification[] @relation("NotificationsRecues")
+=======
+     notifications_recues Notification[] @relation("NotificationsRecues")
+>>>>>>> Stashed changes
   notifications_emises Notification[] @relation("NotificationsEmises")
   connexions    Connexion[]
   interactions  Interaction[]
