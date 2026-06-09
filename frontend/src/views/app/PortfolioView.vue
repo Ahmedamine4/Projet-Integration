@@ -5,7 +5,7 @@ import AboutMe from '@/components/portfolio/profile/AboutMe.vue';
 import PortfolioEducation from '@/components/portfolio/profile/PortfolioEducation.vue';
 import PortfolioSkills from '@/components/portfolio/profile/PortfolioSkills.vue';
 import ProjectsSection from '@/components/portfolio/projects/ProjectsSection.vue';
-import { QrCode, UserRound } from 'lucide-vue-next';
+import { Camera, QrCode, UserRound } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/contact/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
@@ -630,6 +630,16 @@ async function handleAiFiltersDetected(filters) {
               :stroke-width="1.55"
             />
           </div>
+          <div
+            v-if="isOwnPortfolio"
+            class="profile__photo-overlay"
+          >
+            <Camera
+              :size="22"
+              :stroke-width="2"
+            />
+            <span>Change photo</span>
+          </div>
           <input
             v-if="isOwnPortfolio"
             ref="profilePhotoInput"
@@ -891,6 +901,7 @@ async function handleAiFiltersDetected(filters) {
 	background-color: var(--color-surface);
 	border-radius: 42%;
 	border: 1px solid var(--color-background);
+  box-shadow: 0 18px 38px rgba(var(--color-primary-rgb), 0.12);
 }
 
 .profile__photo img {
@@ -902,13 +913,48 @@ async function handleAiFiltersDetected(filters) {
 	object-position: center top;
 }
 
+.profile__photo img,
+.profile__photo-fallback {
+  transition: filter 220ms ease;
+}
+
 .profile__photo--editable {
   cursor: pointer;
 }
 
-.profile__photo--editable:hover img,
-.profile__photo--editable:hover .profile__photo-fallback {
-  filter: brightness(0.94);
+.profile__photo--editable:hover:not(:has(.qr-button:hover)) img,
+.profile__photo--editable:hover:not(:has(.qr-button:hover)) .profile__photo-fallback {
+  filter: saturate(1.04) contrast(1.02);
+}
+
+.profile__photo-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 0.35rem;
+  align-content: center;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--color-primary-rgb), 0.04),
+      rgba(var(--color-primary-rgb), 0.52)
+    );
+  color: var(--color-background);
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.35rem);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.profile__photo--editable:hover:not(:has(.qr-button:hover)) .profile__photo-overlay {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .profile__photo-input {
@@ -1039,6 +1085,7 @@ async function handleAiFiltersDetected(filters) {
 	white-space: nowrap;
 	background: var(--color-background);
 	cursor: pointer;
+  z-index: 2;
 	transition: transform var(--transition-fast);
 }
 
