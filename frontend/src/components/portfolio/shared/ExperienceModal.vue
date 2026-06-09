@@ -188,14 +188,22 @@ function resetForm() {
 
 function fillForm() {
   const value = props.initialValue;
+  isHydratingForm.value = true;
   resetForm();
-  if (!value) return;
+  if (!value) {
+    isHydratingForm.value = false;
+    return;
+  }
   Object.keys(form).forEach(key => {
     if (value[key] !== undefined) form[key] = value[key];
   });
   technologies.value = createSelectableItems(value.technologies ?? []);
   domains.value = createSelectableItems(value.domains ?? []);
   resetErrors();
+
+  nextTick(() => {
+    isHydratingForm.value = false;
+  });
 }
 
 const createSelectableItems = (items = []) =>
@@ -206,6 +214,7 @@ const createSelectableItems = (items = []) =>
 
 const technologies = ref([]);
 const domains = ref([]);
+const isHydratingForm = ref(false);
 
 let descriptionTypingTimer = null;
 
@@ -275,6 +284,7 @@ watch(
   () => form.description,
   (description) => {
     clearTimeout(descriptionTypingTimer);
+    if (isHydratingForm.value) return;
 
     if (description.trim().length < 20) {
       resetDetectedTags();
