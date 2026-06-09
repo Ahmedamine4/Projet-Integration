@@ -6,7 +6,6 @@ import { getActivitesVisiblesByEtudiant, getActivitesByEtudiant } from './activi
 import { getCertificationsVisiblesByEtudiant, getCertificationsByEtudiant } from './certification.service.js';
 import { getCompetencesByExperience } from './competence.helper.js';
 
-// Recuperer "a_propos" d'un utilisateur par son id
 export async function getAboutByUserId(userId) {
   const user = await prisma.utilisateur.findUnique({
     where: { utilisateur_id: userId },
@@ -18,7 +17,7 @@ export async function getAboutByUserId(userId) {
   return { ownerId: user.utilisateur_id, about: user.a_propos ?? null };
 }
 
-// modifier le "a_propos" d'un utilisateur par son id
+
 export async function updateUserAboutByUserId(userId, aboutText) {
   const updated = await prisma.utilisateur.update({
     where: { utilisateur_id: userId },
@@ -28,7 +27,7 @@ export async function updateUserAboutByUserId(userId, aboutText) {
 
   await creerNotification(
     userId,
-    'Votre section A propos a ete mise a jour.',
+    'Votre profil portfolio a été mis à jour.',
     'portfolio_update',
     { utilisateurSourceId: userId }
   );
