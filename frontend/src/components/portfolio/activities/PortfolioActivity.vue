@@ -278,10 +278,16 @@ const { handleDoubleTap } = useDoubleTap(() => {
   z-index: 1;
 }
 
-.activity-card--hidden .activity-info,
-.activity-card--hidden .activity-image,
-.activity-card--hidden .activity-tags span,
-.activity-card--hidden .activity-match-badge {
+.activity-card--hidden :is(
+  .activity-image,
+  .activity-tags span,
+  .activity-match-badge,
+  .activity-kicker > :not(.activity-validation-status),
+  .activity-info h3,
+  .activity-details,
+  .activity-description,
+  .activity-meta
+) {
   filter: grayscale(1) saturate(0);
 }
 
