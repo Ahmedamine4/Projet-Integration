@@ -175,7 +175,7 @@ const mockUser = {
 
   // Test roles:
   // 'etudiant' | 'professionnel' | 'professeur'
-  role: 'etudiant',
+  role: 'professeur',
 };
 
 const currentRole = computed(() => mockUser.role || 'etudiant');

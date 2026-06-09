@@ -109,7 +109,7 @@
   margin: 0;
   color: var(--color-primary);
   font-size: clamp(2rem, 3.2vw, 2.75rem);
-  font-weight: 850;
+  font-weight: 700;
   letter-spacing: -0.06em;
   line-height: 0.98;
 }

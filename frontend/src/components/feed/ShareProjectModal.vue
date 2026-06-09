@@ -1,8 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { CheckCheck, Copy } from 'lucide-vue-next';
-
-import FeedModalShell from '@/components/feed/FeedModalShell.vue';
+import { CheckCheck, Copy, Link2, X } from 'lucide-vue-next';
 
 const props = defineProps({
   project: {
@@ -13,7 +11,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-const inputRef = ref(null);
 const copied = ref(false);
 
 const shareLink = computed(() => {
@@ -24,8 +21,9 @@ const shareLink = computed(() => {
   }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const projectId = props.project.id || props.project.projet_id || props.project.project_id;
 
-  return `${origin}/projects/${props.project.id}`;
+  return `${origin}/projects/${projectId}`;
 });
 
 watch(
@@ -62,127 +60,273 @@ async function copyLink() {
 </script>
 
 <template>
-  <FeedModalShell
-    :open="!!project"
-    title="Share project"
-    description="Copy this link to share the project."
-    size="sm"
-    @close="emit('close')"
-  >
-    <div class="share-modal-content">
-      <input
-        ref="inputRef"
-        class="share-link-input"
-        type="text"
-        readonly
-        :value="shareLink"
-        @focus="$event.target.select()"
-      >
+  <Teleport to="body">
+    <div
+      v-if="project"
+      class="share-overlay"
+    >
+      <div class="share-modal">
+        <button
+          type="button"
+          class="share-close-button"
+          @click="emit('close')"
+        >
+          <X :size="18" />
+        </button>
 
-      <p
-        v-if="copied"
-        class="copied-message"
-      >
-        Copied
-      </p>
-    </div>
+        <h2 class="share-title">
+          Share project
+        </h2>
 
-    <template #footer>
-      <button
-        type="button"
-        class="feed-modal-button feed-modal-button--secondary"
-        @click="emit('close')"
-      >
-        Close
-      </button>
+        <p class="share-description">
+          Copy this link to share the project.
+        </p>
 
-      <button
-        type="button"
-        class="feed-modal-button feed-modal-button--primary"
-        :class="{ 'is-copied': copied }"
-        @click="copyLink"
-      >
-        <CheckCheck
+        <div class="share-link-box">
+          <Link2
+            class="share-link-icon"
+            :size="20"
+          />
+
+          <input
+            class="share-link-input"
+            type="text"
+            readonly
+            :value="shareLink"
+            @focus="$event.target.select()"
+          >
+
+          <button
+            type="button"
+            class="share-copy-button"
+            :class="{ 'is-copied': copied }"
+            @click="copyLink"
+          >
+            <CheckCheck
+              v-if="copied"
+              :size="15"
+            />
+            <Copy
+              v-else
+              :size="15"
+            />
+            <span>{{ copied ? 'Copied' : 'Copy link' }}</span>
+          </button>
+        </div>
+
+        <p
           v-if="copied"
-          :size="15"
-        />
-        <Copy
-          v-else
-          :size="15"
-        />
-        <span>{{ copied ? 'Copied' : 'Copy link' }}</span>
-      </button>
-    </template>
-  </FeedModalShell>
+          class="copied-message"
+        >
+          Link copied successfully.
+        </p>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
-.share-modal-content {
-  display: grid;
-  gap: var(--space-sm);
+.share-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(20, 20, 20, 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.share-link-input {
+.share-modal {
+  position: relative;
+
   width: 100%;
-  min-width: 0;
-  padding: 0.65rem 0.8rem;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.13);
-  background: rgba(var(--color-background-rgb), 0.72);
-  color: rgba(var(--color-primary-rgb), 0.72);
-  font: inherit;
-  font-size: var(--font-size-xs);
-  outline: none;
+  max-width: 600px;
+
+  padding: 2rem 1.9rem 1.9rem;
+
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-radius: 24px;
+
+  background: #f4f1e9;
+
+  box-shadow:
+    0 24px 60px rgba(var(--color-primary-rgb), 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+
+  animation: shareModalPop 0.18s ease-out;
 }
 
-.share-link-input:focus {
-  border-color: rgba(var(--color-primary-rgb), 0.28);
-  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.08);
-}
+.share-close-button {
+  position: absolute;
+  top: 1.9rem;
+  right: 1.9rem;
 
-.copied-message {
-  margin: 0;
-  color: #15803d;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-bold);
-}
+  width: 2.7rem;
+  height: 2.7rem;
 
-.feed-modal-button {
-  min-height: 2.35rem;
+  border: none;
+  border-radius: 999px;
+
+  background: rgba(var(--color-primary-rgb), 0.06);
+  color: rgba(var(--color-primary-rgb), 0.55);
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  border-radius: 999px;
-  padding: 0 var(--space-md);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-bold);
+
   cursor: pointer;
+
   transition:
     background var(--transition-fast),
-    border-color var(--transition-fast),
-    opacity var(--transition-fast),
+    color var(--transition-fast),
     transform var(--transition-fast);
 }
 
-.feed-modal-button:hover {
-  transform: translateY(-1px);
+.share-close-button:hover {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+  transform: rotate(90deg);
 }
 
-.feed-modal-button--primary {
-  border: 1px solid var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-background);
+.share-title {
+  margin: 0;
+  padding-right: 3.5rem;
+
+  color: var(--color-primary);
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
-.feed-modal-button--primary.is-copied {
-  border-color: #15803d;
-  background: #15803d;
+.share-description {
+  margin: 0.35rem 0 1.8rem;
+
+  color: rgba(var(--color-primary-rgb), 0.58);
+  font-size: 1rem;
+  line-height: 1.45;
 }
 
-.feed-modal-button--secondary {
-  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
+.share-link-box {
+  width: 100%;
+  min-height: 4.25rem;
+
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  padding: 0.65rem 0.7rem 0.65rem 1rem;
+
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.share-link-icon {
+  flex: 0 0 auto;
+  color: rgba(var(--color-primary-rgb), 0.5);
+}
+
+.share-link-input {
+  flex: 1;
+  min-width: 0;
+
+  border: none;
+  outline: none;
   background: transparent;
-  color: rgba(var(--color-primary-rgb), 0.66);
+
+  color: rgba(var(--color-primary-rgb), 0.72);
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.share-copy-button {
+  flex: 0 0 auto;
+
+  min-height: 2.7rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+
+  padding: 0 1rem;
+
+  border: 1px solid #fb923c;
+  border-radius: 999px;
+
+  background: #ffedd5;
+  color: var(--color-primary);
+
+  font-size: 0.82rem;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.share-copy-button:hover {
+  background: #fed7aa;
+  border-color: #f97316;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(249, 115, 22, 0.16);
+}
+
+.share-copy-button.is-copied {
+  border-color: #22c55e;
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.copied-message {
+  margin: 0.85rem 0 0;
+
+  color: #15803d;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+@keyframes shareModalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .share-modal {
+    max-width: 100%;
+    padding: 1.7rem 1.25rem 1.25rem;
+  }
+
+  .share-close-button {
+    top: 1.25rem;
+    right: 1.25rem;
+  }
+
+  .share-link-box {
+    flex-wrap: wrap;
+  }
+
+  .share-copy-button {
+    width: 100%;
+  }
 }
 </style>
