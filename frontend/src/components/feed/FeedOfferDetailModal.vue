@@ -1,150 +1,142 @@
 <script setup>
-defineProps({
+import { computed } from 'vue';
+
+import FeedModalShell from '@/components/feed/FeedModalShell.vue';
+
+const props = defineProps({
   offer: {
     type: Object,
     default: null,
   },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'apply']);
+
+const modalDescription = computed(() => {
+  if (!props.offer) return '';
+
+  return [props.offer.company, props.offer.location].filter(Boolean).join(' - ');
+});
+
+function handleApply() {
+  if (props.offer) {
+    emit('apply', props.offer);
+  }
+}
 </script>
 
 <template>
-  <Teleport to="body">
+  <FeedModalShell
+    :open="!!offer"
+    :title="offer?.title || ''"
+    :description="modalDescription"
+    size="md"
+    @close="emit('close')"
+  >
     <div
       v-if="offer"
-      class="offer-backdrop"
-      @click.self="emit('close')"
+      class="offer-detail-content"
     >
-      <article class="offer-modal">
-        <header class="offer-modal-header">
-          <div>
-            <h2>{{ offer.title }}</h2>
+      <section class="offer-summary-grid">
+        <div class="offer-summary-item">
+          <span>Company</span>
+          <strong>{{ offer.company || 'Not specified' }}</strong>
+        </div>
 
-            <p>
-              {{ offer.company }} · {{ offer.location }}
-            </p>
-          </div>
+        <div class="offer-summary-item">
+          <span>Location</span>
+          <strong>{{ offer.location || 'Not specified' }}</strong>
+        </div>
 
-          <button
-            type="button"
-            class="close-button"
-            aria-label="Close"
-            @click="emit('close')"
+        <div class="offer-summary-item">
+          <span>Duration</span>
+          <strong>{{ offer.duration || 'Not specified' }}</strong>
+        </div>
+
+        <div class="offer-summary-item">
+          <span>Level</span>
+          <strong>{{ offer.level || 'Not specified' }}</strong>
+        </div>
+      </section>
+
+      <section
+        v-if="offer.technologies?.length"
+        class="offer-section"
+      >
+        <h3>Technologies</h3>
+
+        <div class="tech-list">
+          <span
+            v-for="tech in offer.technologies"
+            :key="tech"
           >
-            ×
-          </button>
-        </header>
+            {{ tech }}
+          </span>
+        </div>
+      </section>
 
-        <section class="offer-section">
-          <h3>Description</h3>
+      <section class="offer-section">
+        <h3>Description</h3>
 
-          <p>
-            {{ offer.description || 'No description available.' }}
-          </p>
-        </section>
-
-        <section class="offer-section">
-          <h3>Required technologies</h3>
-
-          <div class="tech-list">
-            <span
-              v-for="tech in (offer.technologies || [])"
-              :key="tech"
-            >
-              {{ tech }}
-            </span>
-          </div>
-        </section>
-
-        <section class="offer-section">
-          <h3>Details</h3>
-
-          <ul>
-            <li>Duration: {{ offer.duration || 'Not specified' }}</li>
-            <li>Experience level: {{ offer.level || 'Not specified' }}</li>
-          </ul>
-        </section>
-
-        <footer class="offer-actions">
-          <button
-            type="button"
-            class="secondary-button"
-            @click="emit('close')"
-          >
-            Close
-          </button>
-
-          <button
-            type="button"
-            class="primary-button"
-          >
-            Apply
-          </button>
-        </footer>
-      </article>
+        <p>
+          {{ offer.description || 'No description available.' }}
+        </p>
+      </section>
     </div>
-  </Teleport>
+
+    <template #footer>
+      <button
+        type="button"
+        class="feed-modal-button feed-modal-button--secondary"
+        @click="emit('close')"
+      >
+        Close
+      </button>
+
+      <button
+        type="button"
+        class="feed-modal-button feed-modal-button--primary"
+        @click="handleApply"
+      >
+        Apply
+      </button>
+    </template>
+  </FeedModalShell>
 </template>
 
 <style scoped>
-.offer-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
+.offer-detail-content {
   display: grid;
-  place-items: center;
-  padding: var(--space-lg);
-  background: rgba(var(--color-primary-rgb), 0.32);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  gap: var(--space-lg);
 }
 
-.offer-modal {
-  width: min(100%, 34rem);
-  max-height: min(90vh, 42rem);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-lg);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-  background: rgba(var(--color-surface-rgb), 0.98);
-  box-shadow: 0 24px 60px rgba(var(--color-primary-rgb), 0.22);
+.offer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
 }
 
-.offer-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-md);
+.offer-summary-item {
+  display: grid;
+  gap: 0.25rem;
+  padding: var(--space-sm);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-background-rgb), 0.48);
 }
 
-.offer-modal-header h2 {
-  margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.95);
-  font-size: var(--font-size-lg);
+.offer-summary-item span,
+.offer-section h3 {
+  color: rgba(var(--color-primary-rgb), 0.52);
+  font-size: var(--font-size-xxs);
   font-weight: var(--font-bold);
+  text-transform: uppercase;
 }
 
-.offer-modal-header p {
-  margin: var(--space-xs) 0 0;
-  color: rgba(var(--color-primary-rgb), 0.54);
+.offer-summary-item strong {
+  color: rgba(var(--color-primary-rgb), 0.84);
   font-size: var(--font-size-xs);
-}
-
-.close-button {
-  width: 2rem;
-  height: 2rem;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  border: none;
-  border-radius: 999px;
-  background: rgba(var(--color-primary-rgb), 0.06);
-  color: rgba(var(--color-primary-rgb), 0.62);
-  font-size: var(--font-size-md);
-  cursor: pointer;
+  line-height: 1.35;
 }
 
 .offer-section {
@@ -154,25 +146,13 @@ const emit = defineEmits(['close']);
 
 .offer-section h3 {
   margin: 0;
-  color: rgba(var(--color-primary-rgb), 0.82);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-bold);
-}
-
-.offer-section p,
-.offer-section li {
-  color: rgba(var(--color-primary-rgb), 0.66);
-  font-size: var(--font-size-xs);
-  line-height: 1.55;
 }
 
 .offer-section p {
   margin: 0;
-}
-
-.offer-section ul {
-  margin: 0;
-  padding-left: var(--space-md);
+  color: rgba(var(--color-primary-rgb), 0.66);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
 }
 
 .tech-list {
@@ -182,41 +162,51 @@ const emit = defineEmits(['close']);
 }
 
 .tech-list span {
-  padding: 0.22rem 0.55rem;
+  padding: 0.24rem 0.58rem;
   border-radius: 999px;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.09);
-  background: rgba(var(--color-background-rgb), 0.55);
-  color: rgba(var(--color-primary-rgb), 0.6);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  background: rgba(var(--color-background-rgb), 0.62);
+  color: rgba(var(--color-primary-rgb), 0.64);
   font-size: 10px;
   font-weight: var(--font-medium);
 }
 
-.offer-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-sm);
-  padding-top: var(--space-sm);
-}
-
-.primary-button,
-.secondary-button {
-  height: 2.25rem;
-  padding: 0 var(--space-md);
+.feed-modal-button {
+  min-height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
+  padding: 0 var(--space-md);
   font-size: var(--font-size-xxs);
   font-weight: var(--font-bold);
   cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-.primary-button {
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.38);
-  background: rgba(var(--color-secondary-rgb), 0.16);
-  color: rgba(var(--color-secondary-rgb), 0.98);
+.feed-modal-button:hover {
+  transform: translateY(-1px);
 }
 
-.secondary-button {
-  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+.feed-modal-button--primary {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-background);
+}
+
+.feed-modal-button--secondary {
+  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
   background: transparent;
-  color: rgba(var(--color-primary-rgb), 0.62);
+  color: rgba(var(--color-primary-rgb), 0.66);
+}
+
+@media (max-width: 520px) {
+  .offer-summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

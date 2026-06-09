@@ -3,13 +3,7 @@
     <Sidebar :user="mockUser" />
 
     <main class="feed-page">
-      <FeedHeader
-        class="sticky-header"
-        :userName="mockUser.prenom"
-        :search="search"
-        @update:search="search = $event"
-        @create-project="handleCreateProject"
-      />
+      <FeedHeader class="sticky-header" />
 
       <div class="feed-content">
         <section class="offers-row">
@@ -20,37 +14,7 @@
         </section>
 
         <div class="feed-grid">
-          <section class="feed-list">
-            <template v-if="filteredProjects.length">
-              <FeedProjectCard
-                v-for="project in filteredProjects"
-                :key="project.id"
-                :project="project"
-                @click="openProjectDetail(project)"
-                @share="shareProject = $event"
-              />
-            </template>
-
-            <div
-              v-else
-              class="feed-empty"
-            >
-              <SearchX :size="32" />
-              <p>Aucun projet ne correspond à vos filtres.</p>
-            </div>
-          </section>
-
-          <aside class="feed-sidebar sticky-filters">
-            <FeedFiltersPanel
-              :filters="filters"
-              :technologies="allTechnologies"
-              :domains="allDomains"
-              :trending-techs="trendingTechs"
-              :suggested-students="[]"
-              @update:filters="filters = $event"
-              @reset="resetFilters"
-            />
-
+          <aside class="suggested-sidebar sticky-suggestions">
             <section class="suggested-students-card">
               <header class="suggested-students-header">
                 <h2>Suggested students</h2>
@@ -68,7 +32,14 @@
                   </div>
 
                   <div class="suggested-info">
-                    <strong>{{ student.name }}</strong>
+                    <button
+                      type="button"
+                      class="suggested-name-button"
+                      @click.stop="openStudentPortfolio(student)"
+                    >
+                      {{ student.name }}
+                    </button>
+
                     <span>{{ student.speciality }}</span>
 
                     <div class="suggested-stack">
@@ -84,12 +55,62 @@
                   <button
                     type="button"
                     class="follow-mini-button"
+                    :class="{ 'is-following': student.isFollowing }"
+                    :aria-label="student.isFollowing ? `Following ${student.name}` : `Follow ${student.name}`"
+                    @click.stop="toggleFollowStudent(student.id)"
                   >
-                    Follow
+                    <Check
+                      v-if="student.isFollowing"
+                      :size="11"
+                      :stroke-width="2.6"
+                    />
+
+                    <Plus
+                      v-else
+                      :size="12"
+                      :stroke-width="2.8"
+                    />
+
+                    <span v-if="student.isFollowing">
+                      Following
+                    </span>
                   </button>
                 </article>
               </div>
             </section>
+          </aside>
+
+          <section class="feed-list">
+            <template v-if="filteredProjects.length">
+              <FeedProjectCard
+                v-for="project in filteredProjects"
+                :key="project.id"
+                :project="project"
+                @click="openProjectDetail(project)"
+                @share="shareProject = $event"
+                @open-student="openProjectOwnerPortfolio"
+              />
+            </template>
+
+            <div
+              v-else
+              class="feed-empty"
+            >
+              <SearchX :size="32" />
+              <p>Aucun projet ne correspond à vos filtres.</p>
+            </div>
+          </section>
+
+          <aside class="feed-sidebar sticky-filters">
+            <FeedFiltersPanel
+              :filters="filters"
+              :search="search"
+              :technologies="allTechnologies"
+              :domains="allDomains"
+              @update:filters="filters = $event"
+              @update:search="search = $event"
+              @reset="resetFilters"
+            />
           </aside>
         </div>
       </div>
@@ -103,26 +124,22 @@
     <FeedOfferDetailModal
       :offer="selectedOffer"
       @close="closeOfferDetail"
+      @apply="openApplyOffer"
     />
-    <ExperienceModal
-  :open="projectModal.open"
-  mode="create"
-  type="project"
-  :initial-value="null"
-  :loading="false"
-  :school-options="[]"
-  :professor-emails="professorEmails"
-  @close="closeProjectModal"
-  @submit="handleProjectSubmit"
-/>
+
+    <ApplyOfferModal
+      :offer="applyingOffer"
+      @close="closeApplyOffer"
+      @submit="handleApplyOfferSubmit"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
-import { SearchX } from 'lucide-vue-next';
+import { Check, Plus, SearchX } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
-import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
+
 import Sidebar from '@/components/layout/AppSidebar.vue';
 import FeedHeader from '@/components/feed/feedHeader.vue';
 import FeedFiltersPanel from '@/components/feed/FeedFiltersPanel.vue';
@@ -130,7 +147,8 @@ import FeedProjectCard from '@/components/feed/feedProject.vue';
 import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
 import FeedOffersCarousel from '@/components/feed/FeedOffersCarousel.vue';
 import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
-
+import ApplyOfferModal from '@/components/feed/ApplyOfferModal.vue';
+import RecommendationsSection from '@/components/portfolio/recommendations/RecommendationsSection.vue';
 const router = useRouter();
 
 const mockUser = {
@@ -138,94 +156,42 @@ const mockUser = {
   nom: 'Bakkali',
 };
 
-const trendingTechs = [
-  { name: 'Vue 3', projectsCount: 18 },
-  { name: 'FastAPI', projectsCount: 14 },
-  { name: 'PostgreSQL', projectsCount: 11 },
-  { name: 'Docker', projectsCount: 9 },
-];
-
-const suggestedStudents = [
+const suggestedStudents = ref([
   {
     id: 1,
+    portfolioUserId: 1,
     initials: 'SI',
     name: 'Sara Idrissi',
     speciality: 'Dev Web',
     stack: ['Vue', 'Node'],
+    isFollowing: false,
   },
   {
     id: 2,
+    portfolioUserId: 2,
     initials: 'YK',
     name: 'Yassine Karim',
     speciality: 'IA & Data',
     stack: ['Python', 'FastAPI'],
+    isFollowing: false,
   },
   {
     id: 3,
+    portfolioUserId: 3,
     initials: 'AB',
     name: 'Amal Benali',
     speciality: 'DevOps',
     stack: ['Docker', 'CI/CD'],
+    isFollowing: false,
   },
-];
+]);
 
 const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
-const professorEmails = [
-  'ahmed.elamrani@ensat.ac.ma',
-  'fatima.zahra@ensat.ac.ma',
-  'youssef.bennani@uae.ac.ma',
-  'sara.lahlou@fstt.ac.ma',
-  'nour.chaoui@encgt.ac.ma',
-  'karim.boukhari@ensate.uae.ac.ma',
-  'amina.tazi@fs-tanger.ac.ma',
-  'mehdi.elidrissi@ensah.ma',
-  'salma.aitali@fstt.ac.ma',
-  'omar.benali@uae.ac.ma',
-];
-
-const projectModal = ref({
-  open: false,
-});
-
-function openProjectDetail(project) {
-  const ownerId =
-    project.portfolioUserId ||
-    project.userId ||
-    project.utilisateur_id ||
-    project.etudiant_id;
-
-  if (ownerId) {
-    router.push({
-      name: 'portfolio-experience',
-      params: {
-        id: ownerId,
-        experienceId: project.id,
-      },
-    });
-
-    return;
-  }
-
-  router.push({
-    name: 'my-portfolio-experience',
-    params: {
-      experienceId: project.id,
-    },
-  });
-}
-
-function openOfferDetail(offer) {
-  selectedOffer.value = offer;
-}
-
-function closeOfferDetail() {
-  selectedOffer.value = null;
-}
+const applyingOffer = ref(null);
 
 const defaultFilters = () => ({
-  certifiedOnly: false,
   source: 'all',
   sort: 'trending',
   technology: null,
@@ -233,23 +199,6 @@ const defaultFilters = () => ({
 });
 
 const filters = ref(defaultFilters());
-
-function resetFilters() {
-  filters.value = defaultFilters();
-}
-
-function handleCreateProject() {
-  projectModal.value.open = true;
-}
-
-function closeProjectModal() {
-  projectModal.value.open = false;
-}
-
-function handleProjectSubmit(project) {
-  console.log('Project submitted:', project);
-  closeProjectModal();
-}
 
 const mockProjects = [
   {
@@ -271,7 +220,7 @@ const mockProjects = [
     recommendationsCount: 128,
     githubReposCount: 3,
     technologies: ['Vue 3', 'FastAPI', 'PostgreSQL'],
-    domains: ['EdTech', 'IA'],
+    domains: ['Web Frontend', 'Web Backend', 'Machine Learning & AI'],
   },
   {
     id: 2,
@@ -292,7 +241,7 @@ const mockProjects = [
     recommendationsCount: 97,
     githubReposCount: 2,
     technologies: ['Python', 'LangChain', 'React'],
-    domains: ['IA', 'Carrière'],
+    domains: ['Machine Learning & AI', 'Data Engineering'],
   },
   {
     id: 3,
@@ -313,7 +262,7 @@ const mockProjects = [
     recommendationsCount: 54,
     githubReposCount: 1,
     technologies: ['Flutter', 'Node.js', 'Firebase'],
-    domains: ['Mobile', 'Événements'],
+    domains: ['Mobile Development', 'Web Backend'],
   },
 ];
 
@@ -365,13 +314,11 @@ const mockOffers = [
 ];
 
 const allTechnologies = computed(() => {
-  const set = new Set();
-
-  mockProjects.forEach((project) => {
-    project.technologies.forEach((technology) => set.add(technology));
-  });
-
-  return [...set];
+  return [
+    ...new Set(
+      mockProjects.flatMap((project) => project.technologies || [])
+    ),
+  ];
 });
 
 const allDomains = computed(() => [
@@ -405,8 +352,6 @@ const filteredProjects = computed(() => {
 
       if (!searchableText.includes(keyword)) return false;
     }
-
-    if (currentFilters.certifiedOnly && !project.isVerified) return false;
 
     if (
       currentFilters.source === 'same-school' &&
@@ -443,18 +388,96 @@ const filteredProjects = computed(() => {
     result = [...result].sort(
       (a, b) => b.campusRankScore - a.campusRankScore
     );
-  } else if (currentFilters.sort === 'recent') {
+  }
+
+  if (currentFilters.sort === 'recent') {
     result = [...result].sort(
       (a, b) => new Date(b.date) - new Date(a.date)
-    );
-  } else if (currentFilters.sort === 'top-month') {
-    result = [...result].sort(
-      (a, b) => b.recommendationsCount - a.recommendationsCount
     );
   }
 
   return result;
 });
+
+function resetFilters() {
+  filters.value = defaultFilters();
+  search.value = '';
+}
+
+function openProjectDetail(project) {
+  const ownerId =
+    project.portfolioUserId ||
+    project.userId ||
+    project.utilisateur_id ||
+    project.etudiant_id;
+
+  if (ownerId) {
+    router.push({
+      name: 'portfolio-experience',
+      params: {
+        id: ownerId,
+        experienceId: project.id,
+      },
+    });
+
+    return;
+  }
+
+  router.push({
+    name: 'my-portfolio-experience',
+    params: {
+      experienceId: project.id,
+    },
+  });
+}
+
+function openOfferDetail(offer) {
+  selectedOffer.value = offer;
+}
+
+function closeOfferDetail() {
+  selectedOffer.value = null;
+}
+
+function openApplyOffer(offer) {
+  selectedOffer.value = null;
+  applyingOffer.value = offer;
+}
+
+function closeApplyOffer() {
+  applyingOffer.value = null;
+}
+
+function handleApplyOfferSubmit(payload) {
+  console.log('Offer application payload:', payload);
+  closeApplyOffer();
+}
+
+function toggleFollowStudent(studentId) {
+  const student = suggestedStudents.value.find((item) => item.id === studentId);
+
+  if (!student) return;
+
+  student.isFollowing = !student.isFollowing;
+}
+
+function openStudentPortfolio(student) {
+  const portfolioId = student.portfolioUserId || student.id;
+
+  router.push(`/portfolio/${portfolioId}`);
+}
+
+function openProjectOwnerPortfolio(project) {
+  const portfolioId =
+    project.portfolioUserId ||
+    project.userId ||
+    project.utilisateur_id ||
+    project.etudiant_id;
+
+  if (!portfolioId) return;
+
+  router.push(`/portfolio/${portfolioId}`);
+}
 </script>
 
 <style scoped>
@@ -499,12 +522,12 @@ const filteredProjects = computed(() => {
 
 .feed-content {
   width: 100%;
-  max-width: 1220px;
+  max-width: calc(250px + 700px + 270px + (var(--space-md) * 2));
   margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  padding: var(--space-md) var(--space-xl) var(--space-xl);
+  padding: var(--space-md) 0 var(--space-xl);
 }
 
 .offers-row {
@@ -528,40 +551,52 @@ const filteredProjects = computed(() => {
 }
 
 .feed-grid {
-  width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 680px) 320px;
-  justify-content: center;
+  grid-template-columns: 250px minmax(0, 700px) 270px;
   align-items: start;
-  gap: var(--space-xl);
+  justify-content: center;
+  gap: var(--space-md);
+  width: 100%;
 }
 
 .feed-list {
   width: 100%;
-  max-width: 680px;
-  justify-self: stretch;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  min-width: 0;
+  max-width: 700px;
+  display: grid;
+  gap: var(--space-md);
 }
 
 .feed-list :deep(.project-card) {
   width: 100%;
-  max-width: 680px;
-  margin-inline: auto;
+  max-width: 100%;
+  border-color: rgba(var(--color-primary-rgb), 0.11);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-.sticky-filters {
-  width: 320px;
-  position: sticky;
-  top: 90px;
-  align-self: start;
-  justify-self: end;
-  max-height: calc(100vh - 110px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  padding-bottom: var(--space-md);
+.feed-list :deep(.project-card:hover) {
+  transform: translateY(-2px);
+  border-color: rgba(var(--color-secondary-rgb), 0.2);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.055);
+}
+
+.feed-list :deep(.card-title) {
+  color: rgba(var(--color-primary-rgb), 0.94);
+  font-weight: var(--font-bold);
+}
+
+.feed-list :deep(.tag--domain) {
+  border-color: rgba(var(--color-secondary-rgb), 0.18);
+  background: rgba(var(--color-secondary-rgb), 0.07);
+  color: rgba(var(--color-secondary-rgb), 0.92);
+}
+
+.feed-list :deep(.tag--tech) {
+  border-color: rgba(var(--color-primary-rgb), 0.1);
+  background: rgba(var(--color-primary-rgb), 0.035);
+  color: rgba(var(--color-primary-rgb), 0.62);
 }
 
 .feed-sidebar {
@@ -570,8 +605,28 @@ const filteredProjects = computed(() => {
   gap: var(--space-md);
 }
 
+.sticky-filters {
+  width: 270px;
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  justify-self: end;
+  overflow: visible;
+}
+
 .feed-grid :deep(.filters-panel) {
   width: 100%;
+}
+
+.suggested-sidebar {
+  width: 250px;
+}
+
+.sticky-suggestions {
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  justify-self: start;
 }
 
 .feed-empty {
@@ -607,13 +662,13 @@ const filteredProjects = computed(() => {
 }
 
 .suggested-students-header {
-  padding: 1rem var(--space-lg);
+  padding: 0.75rem var(--space-md);
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }
 
 .suggested-students-header h2 {
   margin: 0;
-  color: var(--color-primary);
+  color: rgba(var(--color-primary-rgb), 0.9);
   font-size: var(--font-size-sm);
   font-weight: var(--font-bold);
 }
@@ -626,19 +681,29 @@ const filteredProjects = computed(() => {
 
 .suggested-students-list {
   display: grid;
-  gap: var(--space-sm);
-  padding: var(--space-md);
+  gap: 0.55rem;
+  padding: 0.75rem;
 }
 
 .suggested-student {
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm);
+  gap: 0.55rem;
+  padding: 0.58rem;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.075);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  background: rgba(var(--color-background-rgb), 0.36);
+  background: rgba(var(--color-background-rgb), 0.28);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.suggested-student:hover {
+  transform: translateY(-1px);
+  background: rgba(var(--color-surface-rgb), 0.48);
+  border-color: rgba(var(--color-primary-rgb), 0.12);
 }
 
 .suggested-avatar {
@@ -647,8 +712,8 @@ const filteredProjects = computed(() => {
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: rgba(var(--color-secondary-rgb), 0.12);
-  color: rgba(var(--color-secondary-rgb), 0.96);
+  background: rgba(var(--color-secondary-rgb), 0.1);
+  color: rgba(var(--color-secondary-rgb), 0.95);
   font-size: var(--font-size-xxs);
   font-weight: var(--font-bold);
 }
@@ -659,13 +724,33 @@ const filteredProjects = computed(() => {
   gap: 2px;
 }
 
-.suggested-info strong {
-  color: rgba(var(--color-primary-rgb), 0.88);
+.suggested-name-button {
+  width: fit-content;
+  max-width: 100%;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  padding: 0 0 1px;
+  color: rgba(var(--color-primary-rgb), 0.86);
+  font: inherit;
   font-size: var(--font-size-xs);
   font-weight: var(--font-bold);
+  text-align: left;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.suggested-name-button:hover {
+  border-bottom-color: currentColor;
+  color: var(--color-primary);
+}
+
+.suggested-name-button:focus-visible {
+  outline: none;
+  border-bottom-color: currentColor;
 }
 
 .suggested-info > span {
@@ -677,44 +762,83 @@ const filteredProjects = computed(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .suggested-stack small {
   display: inline-flex;
   border: 1px solid rgba(var(--color-primary-rgb), 0.12);
   border-radius: 999px;
-  padding: 0.14rem 0.4rem;
-  color: rgba(var(--color-primary-rgb), 0.58);
+  padding: 0.12rem 0.4rem;
+  background: rgba(var(--color-primary-rgb), 0.025);
+  color: rgba(var(--color-primary-rgb), 0.52);
   font-size: 9px;
   font-weight: var(--font-medium);
 }
 
 .follow-mini-button {
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.22);
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.28rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  border: 1.3px solid var(--color-primary);
   border-radius: 999px;
-  padding: 0.26rem 0.55rem;
-  background: rgba(var(--color-secondary-rgb), 0.08);
-  color: rgba(var(--color-secondary-rgb), 0.96);
-  font-size: 10px;
+  padding: 0;
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  font-size: 9px;
   font-weight: var(--font-bold);
   cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
   transition:
-    background var(--transition-fast),
+    width var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
     transform var(--transition-fast);
 }
 
 .follow-mini-button:hover {
   transform: translateY(-1px);
-  background: rgba(var(--color-secondary-rgb), 0.14);
+  background-color: rgba(var(--color-primary-rgb), 0.92);
+  box-shadow: 0 5px 9px rgba(0, 0, 0, 0.22);
 }
 
-@media (max-width: 1050px) {
+.follow-mini-button.is-following {
+  width: auto;
+  min-width: 4.7rem;
+  height: 1.55rem;
+  padding-inline: 0.55rem;
+}
+
+.follow-mini-button:focus-visible {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
+}
+
+@media (max-width: 1250px) {
   .feed-content {
-    max-width: 720px;
+    max-width: 100%;
     padding-inline: var(--space-md);
   }
 
+  .feed-grid {
+    grid-template-columns: minmax(0, 700px) 270px;
+  }
+
+  .suggested-sidebar {
+    display: none;
+  }
+
+  .sticky-filters {
+    width: 270px;
+  }
+}
+
+@media (max-width: 900px) {
   .feed-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -723,31 +847,156 @@ const filteredProjects = computed(() => {
     display: none;
   }
 
-  .feed-list,
-  .feed-list :deep(.project-card) {
+  .feed-list {
     max-width: 100%;
   }
 }
+/* === Scholar Highlight Style === */
 
-@media (max-width: 1050px) {
-  .feed-content {
-    max-width: 100%;
-    padding-inline: var(--space-md);
-  }
+.feed-list :deep(.project-card) {
+  position: relative !important;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.13) !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(var(--color-secondary-rgb), 0.09),
+      rgba(var(--color-surface-rgb), 0.64) 36%,
+      rgba(var(--color-background-rgb), 0.94) 100%
+    ) !important;
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.065),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+  overflow: hidden !important;
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast) !important;
+}
 
-  .feed-grid {
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: var(--space-md);
-  }
+.feed-list :deep(.project-card)::before {
+  content: '';
+  position: absolute;
+  top: -3rem;
+  right: -3rem;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  background: rgba(var(--color-secondary-rgb), 0.1);
+  pointer-events: none;
+}
 
-  .sticky-filters {
-    display: flex;
-    width: 300px;
-  }
+.feed-list :deep(.project-card:hover) {
+  transform: translateY(-3px) !important;
+  border-color: rgba(var(--color-secondary-rgb), 0.3) !important;
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+}
 
-  .feed-list,
-  .feed-list :deep(.project-card) {
-    max-width: 100%;
-  }
+.feed-list :deep(.card-title) {
+  color: var(--color-primary) !important;
+  font-weight: var(--font-bold) !important;
+  letter-spacing: -0.025em;
+}
+
+.feed-list :deep(.card-description) {
+  color: rgba(var(--color-primary-rgb), 0.68) !important;
+}
+
+.feed-list :deep(.tag--domain) {
+  border-color: rgba(var(--color-secondary-rgb), 0.3) !important;
+  background: rgba(var(--color-secondary-rgb), 0.12) !important;
+  color: rgba(var(--color-secondary-rgb), 0.98) !important;
+}
+
+.feed-list :deep(.tag--tech) {
+  border-color: rgba(var(--color-primary-rgb), 0.12) !important;
+  background: rgba(var(--color-background-rgb), 0.58) !important;
+  color: rgba(var(--color-primary-rgb), 0.62) !important;
+}
+
+.feed-list :deep(.credibility-pill) {
+  border-color: rgba(var(--color-secondary-rgb), 0.24) !important;
+  background: rgba(var(--color-secondary-rgb), 0.09) !important;
+  color: rgba(var(--color-secondary-rgb), 0.94) !important;
+}
+
+.suggested-students-card {
+  border-color: rgba(var(--color-primary-rgb), 0.11) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.04) !important;
+}
+
+.suggested-student {
+  background: rgba(var(--color-background-rgb), 0.4) !important;
+  border-color: rgba(var(--color-primary-rgb), 0.08) !important;
+}
+
+.suggested-student:hover {
+  transform: translateY(-1px) !important;
+  background: rgba(var(--color-surface-rgb), 0.68) !important;
+  border-color: rgba(var(--color-secondary-rgb), 0.18) !important;
+}
+
+.suggested-avatar {
+  background: rgba(var(--color-secondary-rgb), 0.13) !important;
+  color: rgba(var(--color-secondary-rgb), 0.98) !important;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.2) !important;
+}
+/* === Offers: soft sage academic opportunity mood === */
+
+.offers-row :deep(.recommendation-card) {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(244, 249, 241, 0.96),
+      rgba(var(--color-background-rgb), 0.95)
+    ) !important;
+  border-color: rgba(91, 128, 89, 0.18) !important;
+  box-shadow:
+    0 10px 24px rgba(91, 128, 89, 0.055),
+    0 8px 20px rgba(0, 0, 0, 0.035) !important;
+}
+
+.offers-row :deep(.recommendation-card:hover) {
+  border-color: rgba(91, 128, 89, 0.32) !important;
+  box-shadow:
+    0 14px 30px rgba(91, 128, 89, 0.095),
+    0 10px 24px rgba(0, 0, 0, 0.045) !important;
+}
+
+/* Accent line inside offer cards */
+.offers-row :deep(.recommendation-card)::before {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(91, 128, 89, 0.62),
+      rgba(var(--color-secondary-rgb), 0.32)
+    ) !important;
+}
+.offers-row :deep(.offers-section) {
+  padding-inline: 0 !important;
+}
+
+.offers-row :deep(.offers-header) {
+  padding-inline: 0 !important;
+  margin-inline: 0 !important;
+}
+
+.offers-row :deep(.offers-frame) {
+  margin-inline: 0 !important;
+}
+
+.offers-row :deep(.offers-scroller),
+.offers-row :deep(.offers-list) {
+  padding-inline: 0 !important;
+  scroll-padding-inline: 0 !important;
+}
+.offers-row :deep(.offers-section),
+.offers-row :deep(.offers-header),
+.offers-row :deep(.offers-frame),
+.offers-row :deep(.offers-scroller),
+.offers-row :deep(.offers-list) {
+  padding-inline: 0 !important;
+  margin-inline: 0 !important;
 }
 </style>

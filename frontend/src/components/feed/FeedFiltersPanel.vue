@@ -1,17 +1,22 @@
 <script setup>
 import { computed } from 'vue';
 import BaseSelect from '@/components/common/forms/BaseSelect.vue';
-import BaseLabelGroup from '@/components/common/forms/BaseLabels.vue';
-
+import BaseDropdown from '@/components/common/forms/BaseDropdown.vue';
+import BaseInput from '@/components/common/forms/BaseInput.vue';
 import {
   ChevronDown,
   Layers,
   RotateCcw,
   SlidersHorizontal,
   Sparkles,
+  Cpu,
 } from 'lucide-vue-next';
 
 const props = defineProps({
+  search: {
+  type: String,
+  default: '',
+},
   filters: {
     type: Object,
     required: true,
@@ -26,7 +31,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['update:filters', 'reset']);
+const emit = defineEmits(['update:filters', 'update:search', 'reset']);
 
 const selectedDomain = computed({
   get() {
@@ -39,10 +44,18 @@ const selectedDomain = computed({
     });
   },
 });
+const searchModel = computed({
+  get() {
+    return props.search;
+  },
+  set(value) {
+    emit('update:search', value);
+  },
+});
 
 const selectedTechnology = computed({
   get() {
-    return props.filters.technology || null;
+    return props.filters.technology || '';
   },
   set(value) {
     emit('update:filters', {
@@ -52,18 +65,22 @@ const selectedTechnology = computed({
   },
 });
 
-const technologyItems = computed(() => {
-  return props.technologies.map((technology) => {
-    const name =
-      typeof technology === 'string'
-        ? technology
-        : technology.name || technology.label || technology.title || '';
+const technologyOptions = computed(() => {
+  return props.technologies
+    .map((technology) => {
+      if (typeof technology === 'string') {
+        return technology;
+      }
 
-    return {
-      name,
-      selected: selectedTechnology.value === name,
-    };
-  }).filter((technology) => technology.name);
+      return (
+        technology.name ||
+        technology.label ||
+        technology.title ||
+        technology.nom ||
+        ''
+      );
+    })
+    .filter(Boolean);
 });
 
 function updateDirectFilter(key, value) {
@@ -71,10 +88,6 @@ function updateDirectFilter(key, value) {
     ...props.filters,
     [key]: value,
   });
-}
-
-function toggleTechnology(item) {
-  selectedTechnology.value = item.selected ? null : item.name;
 }
 
 function handleReset() {
@@ -108,6 +121,13 @@ function handleReset() {
       </header>
 
       <div class="filters-body">
+        <section class="filter-group">
+  <BaseInput
+    v-model="searchModel"
+    label="Search"
+    placeholder="Search projects, students, technologies..."
+  />
+</section>
         <section class="filter-group">
           <div class="filter-title">
             <Sparkles
@@ -197,11 +217,20 @@ function handleReset() {
         </section>
 
         <section class="filter-group">
-          <BaseLabelGroup
-            title="Technologies"
-            :items="technologyItems"
-            color-rgb="var(--color-secondary-rgb)"
-            @toggle="toggleTechnology"
+          <div class="filter-title">
+            <Cpu
+              :size="20"
+              :stroke-width="1.9"
+            />
+
+            <h3>Technologies</h3>
+          </div>
+
+          <BaseDropdown
+            v-model="selectedTechnology"
+            :options="technologyOptions"
+            placeholder="Search or select a technology"
+            :visible-options="5"
           />
         </section>
       </div>
@@ -235,8 +264,8 @@ function handleReset() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-md);
-  padding: 1.1rem var(--space-lg);
+  gap: var(--space-sm);
+  padding: 0.75rem var(--space-md);
   border-bottom: var(--border);
 }
 
@@ -282,26 +311,26 @@ function handleReset() {
 
 .filters-body {
   display: grid;
-  gap: var(--space-lg);
-  padding: var(--space-lg);
+  gap: 0.9rem;
+  padding: 0.9rem var(--space-md);
 }
 
 .filter-group {
   display: grid;
-  gap: var(--space-sm);
+  gap: 0.45rem;
+  position: relative;
 }
 
 .filter-title {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 0.45rem;
   color: rgba(var(--color-primary-rgb), 0.72);
 }
-
 .filter-title h3 {
   margin: 0;
   color: var(--color-primary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-bold);
   line-height: 1;
 }
@@ -309,7 +338,7 @@ function handleReset() {
 .filter-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs);
+  gap: 0.35rem;
 }
 
 .filter-chip {
@@ -317,13 +346,13 @@ function handleReset() {
   align-items: center;
   justify-content: center;
   width: fit-content;
-  min-width: 5.2rem;
+  min-width: auto;
   border: 1px solid rgba(var(--color-primary-rgb), 0.16);
   border-radius: 999px;
-  padding: 0.3rem 0.85rem;
+  padding: 0.25rem 0.65rem;
   background: transparent;
   color: rgba(var(--color-primary-rgb), 0.76);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-xxs);
   font-weight: var(--font-medium);
   line-height: 1;
   cursor: pointer;
@@ -344,5 +373,47 @@ function handleReset() {
   border-color: rgba(var(--color-secondary-rgb), 0.28);
   background: rgba(var(--color-secondary-rgb), 0.1);
   color: rgba(var(--color-secondary-rgb), 0.98);
+}
+.filters-card {
+  overflow: visible;
+}
+
+.filter-group {
+  position: relative;
+}
+
+.filter-group :deep(.select__list) {
+  max-height: 13rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 9999;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.filters-card {
+  overflow: visible;
+}
+
+.filter-group {
+  position: relative;
+}
+
+.filter-group :deep(.dropdown__list),
+.filter-group :deep(.select__list) {
+  z-index: 9999;
+}
+.filter-group :deep(.select__control),
+.filter-group :deep(.input__field) {
+  min-height: 2.05rem;
+  padding-block: 0.35rem;
+}
+
+.filter-group :deep(.dropdown__list),
+.filter-group :deep(.select__list) {
+  z-index: 9999;
+}
+
+.filters-card {
+  overflow: visible;
 }
 </style>

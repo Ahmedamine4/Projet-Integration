@@ -10,7 +10,13 @@
       </div>
 
       <div class="author-info">
-        <span class="author-name">{{ project.studentName }}</span>
+        <button
+  type="button"
+  class="author-name-button"
+  @click.stop="emit('open-student', project)"
+>
+  {{ project.studentName }}
+</button>
         <span class="author-meta">{{ project.schoolName }} · {{ formattedDate }}</span>
       </div>
 
@@ -120,7 +126,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['share']);
+const emit = defineEmits(['share', 'open-student']);
 
 const initials = computed(() => {
   const parts = (props.project.studentName || '').split(' ');
@@ -432,5 +438,33 @@ const formattedDate = computed(() => {
 .action-btn--icon {
   margin-left: auto;
   padding-inline: 0.45rem;
+}
+.author-name-button {
+  width: fit-content;
+  max-width: 100%;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  padding: 0 0 1px;
+  color: rgba(var(--color-primary-rgb), 0.88);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-bold);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.author-name-button:hover {
+  border-bottom-color: currentColor;
+  color: var(--color-primary);
+}
+
+.author-name-button:focus-visible {
+  outline: none;
+  border-bottom-color: currentColor;
 }
 </style>

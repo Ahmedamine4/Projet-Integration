@@ -35,10 +35,14 @@ const normalizedOffers = computed(() =>
     .filter((offer) => offer.recommendation.content)
 );
 
-const canLoop = computed(() => normalizedOffers.value.length >= 4);
+const canLoop = computed(() => normalizedOffers.value.length >= 2);
 const isLoopMode = computed(() => viewMode.value === 'loop');
 const isScrollMode = computed(() => viewMode.value === 'scroll');
 const shouldLoop = computed(() => isLoopMode.value && canLoop.value);
+
+const loopCopies = computed(() => {
+  return shouldLoop.value ? [0, 1, 2, 3] : [0];
+});
 
 const modeButtonLabel = computed(() =>
   isLoopMode.value ? 'Scroll' : 'Loop'
@@ -132,10 +136,12 @@ onMounted(() => {
           v-if="isLoopMode"
           :size="15"
         />
+
         <Repeat2
           v-else
           :size="15"
         />
+
         {{ modeButtonLabel }}
       </button>
     </div>
@@ -165,13 +171,13 @@ onMounted(() => {
         <div class="offers-track">
           <template v-if="shouldLoop">
             <div
-              v-for="copy in 2"
-              :key="copy"
+              v-for="copyIndex in loopCopies"
+              :key="copyIndex"
               class="offers-loop-set"
             >
               <button
                 v-for="(offer, index) in normalizedOffers"
-                :key="`${offer.id}-${copy}-${index}`"
+                :key="`${copyIndex}-${offer.id}-${index}`"
                 type="button"
                 class="offer-card-button"
                 @click.stop="selectOffer(offer.originalOffer)"
@@ -264,7 +270,6 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
-/* FRAME + SOFT FADE */
 .offers-frame {
   --offer-fade-width: clamp(2rem, 6vw, 4rem);
   position: relative;
@@ -287,20 +292,22 @@ onMounted(() => {
 
 .offers-frame::before {
   left: 0;
-  background: linear-gradient(
-    to right,
-    var(--color-background),
-    rgba(var(--color-background-rgb), 0)
-  );
+  background:
+    linear-gradient(
+      to right,
+      var(--color-background),
+      rgba(var(--color-background-rgb), 0)
+    );
 }
 
 .offers-frame::after {
   right: 0;
-  background: linear-gradient(
-    to left,
-    var(--color-background),
-    rgba(var(--color-background-rgb), 0)
-  );
+  background:
+    linear-gradient(
+      to left,
+      var(--color-background),
+      rgba(var(--color-background-rgb), 0)
+    );
 }
 
 .offers-frame--loop::before,
@@ -323,17 +330,21 @@ onMounted(() => {
 .offers-track {
   display: flex;
   width: max-content;
-  gap: var(--space-md);
+  gap: 0;
   align-items: stretch;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
 .offers-loop-set {
   display: flex;
+  flex: 0 0 auto;
   gap: var(--space-md);
   align-items: stretch;
+  padding-right: var(--space-md);
 }
 
-/* CARD WRAPPER: fixed equal size */
 .offer-card-button {
   flex: 0 0 15rem;
   width: 15rem;
@@ -348,7 +359,6 @@ onMounted(() => {
   cursor: pointer;
 }
 
-/* REUSED RecommendationCard, but compact only here */
 .offer-card-button :deep(.recommendation-card) {
   box-sizing: border-box;
   width: 100%;
@@ -418,7 +428,6 @@ onMounted(() => {
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.055);
 }
 
-/* LOOP ANIMATION */
 .offers-frame--moving .offers-track {
   animation: offers-marquee 42s linear infinite;
 }
@@ -442,18 +451,18 @@ onMounted(() => {
 
 @keyframes offers-marquee {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   to {
-    transform: translateX(calc(-50% - (var(--space-md) / 2)));
+    transform: translate3d(-25%, 0, 0);
   }
 }
 
 @media (max-width: 640px) {
-  .offers-track,
   .offers-loop-set {
     gap: var(--space-sm);
+    padding-right: var(--space-sm);
   }
 
   .offer-card-button {

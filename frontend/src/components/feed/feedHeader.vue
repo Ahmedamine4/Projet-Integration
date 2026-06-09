@@ -1,215 +1,134 @@
 <template>
   <header class="feed-header">
-    <div class="header-left">
-      <span class="discovery-label">DISCOVERY</span>
-      <h1 class="greeting">Hello {{ userName }} </h1>
-    </div>
+    <div class="feed-header__inner">
+      <div class="feed-header__intro">
+        
 
-    <div class="header-center">
-      <div class="search-wrapper">
-        <Search class="search-icon" :size="16" />
-        <input
-          class="search-input"
-          type="text"
-          placeholder="Search projects, students or technologies..."
-          :value="search"
-          @input="emit('update:search', $event.target.value)"
-        />
+        <h1>Discover</h1>
+
+        <p>
+          Explore student projects, opportunities and inspiring profiles.
+        </p>
       </div>
-    </div>
-
-    <div class="header-right">
-      <button class="notif-btn" aria-label="Notifications">
-        <Bell :size="18" />
-        <span class="notif-dot" />
-      </button>
-      <button class="create-btn" @click="emit('create-project')">
-        <Plus :size="16" />
-        <span>New Projet</span>
-      </button>
     </div>
   </header>
 </template>
 
 <script setup>
-import { Search, Bell, Plus } from 'lucide-vue-next';
-
-const props = defineProps({
-  userName: { type: String, default: 'Étudiant' },
-  search: { type: String, default: '' },
-});
-
-const emit = defineEmits(['update:search', 'create-project']);
 </script>
 
 <style scoped>
 .feed-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-sm) var(--space-lg);
-  background: rgba(var(--color-surface-rgb), 0.72);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  position: relative;
+  width: 100%;
+  padding-block: 1.35rem 1.15rem;
+  padding-inline: 0;
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.06);
+  background:
+    radial-gradient(
+      circle at 10% 18%,
+      rgba(255, 121, 145, 0.18),
+      transparent 19rem
+    ),
+    radial-gradient(
+      circle at 34% 4%,
+      rgba(var(--color-secondary-rgb), 0.13),
+      transparent 20rem
+    ),
+    linear-gradient(
+      135deg,
+      rgba(var(--color-background-rgb), 0.98),
+      rgba(var(--color-surface-rgb), 0.72)
+    );
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   flex-shrink: 0;
-  min-height: 60px;
-  z-index: 10;
+  overflow: hidden;
+}
+.feed-header::before {
+  content: '';
+  position: absolute;
+  left: -5rem;
+  top: -7rem;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 121, 145, 0.16),
+      transparent 68%
+    );
+  pointer-events: none;
 }
 
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 150px;
+.feed-header::after {
+  content: '';
+  position: absolute;
+  right: 14%;
+  top: -5rem;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle,
+      rgba(var(--color-secondary-rgb), 0.12),
+      transparent 70%
+    );
+  pointer-events: none;
 }
 
-.discovery-label {
+.feed-header__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: calc(250px + 700px + 270px + (var(--space-md) * 2));
+  margin-inline: auto;
+}
+
+.feed-header__intro {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.feed-header__eyebrow {
+  width: fit-content;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  background: rgba(var(--color-background-rgb), 0.54);
+  color: rgba(var(--color-primary-rgb), 0.54);
   font-size: var(--font-size-xxs);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(var(--color-secondary-rgb), 1);
-  line-height: 1;
 }
 
-.greeting {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-semibold);
-  color: rgba(var(--color-primary-rgb), 0.85);
+.feed-header__intro h1 {
   margin: 0;
-  white-space: nowrap;
+  color: var(--color-primary);
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  font-weight: 850;
+  letter-spacing: -0.06em;
+  line-height: 0.98;
 }
 
-.header-center {
-  flex: 1;
-  max-width: 480px;
-}
-
-.search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  color: rgba(var(--color-primary-rgb), 0.38);
-  pointer-events: none;
-  flex-shrink: 0;
-}
-
-.search-input {
-  width: 100%;
-  padding: 7px 70px 7px 34px;
-  background: rgba(var(--color-background-rgb), 0.7);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
-  color: rgba(var(--color-primary-rgb), 0.85);
-  outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.search-input::placeholder {
-  color: rgba(var(--color-primary-rgb), 0.35);
-}
-
-.search-input:focus {
-  border-color: rgba(var(--color-secondary-rgb), 0.45);
-  box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.1);
-}
-
-.search-hint {
-  position: absolute;
-  right: 10px;
-  font-size: var(--font-size-xxs);
-  color: rgba(var(--color-primary-rgb), 0.3);
-  background: rgba(var(--color-primary-rgb), 0.06);
-  padding: 2px 5px;
-  border-radius: 4px;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-left: auto;
-}
-
-.notif-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: rgba(var(--color-background-rgb), 0.7);
-  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-  color: rgba(var(--color-primary-rgb), 0.65);
-  cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.notif-btn:hover {
-  background: rgba(var(--color-secondary-rgb), 0.1);
-  color: rgba(var(--color-secondary-rgb), 1);
-}
-
-.notif-dot {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(var(--color-secondary-rgb), 1);
-  border: 1.5px solid rgba(var(--color-surface-rgb), 1);
-}
-
-.create-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  background: rgba(var(--color-secondary-rgb), 1);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-semibold);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: opacity var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.create-btn:hover {
-  opacity: 0.88;
-  box-shadow: 0 3px 10px rgba(var(--color-secondary-rgb), 0.3);
+.feed-header__intro p {
+  max-width: 36rem;
+  margin: 0;
+  color: rgba(var(--color-primary-rgb), 0.58);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
 }
 
 @media (max-width: 760px) {
   .feed-header {
-    flex-wrap: wrap;
-    padding: var(--space-xs) var(--space-md);
-    gap: var(--space-xs);
+    padding: 1.15rem var(--space-md) 1rem;
   }
-  .header-center {
-    order: 3;
-    max-width: 100%;
-    width: 100%;
-  }
-  .create-btn span {
-    display: none;
-  }
-  .create-btn {
-    padding: 7px 10px;
+
+  .feed-header__intro h1 {
+    font-size: clamp(1.85rem, 10vw, 2.35rem);
   }
 }
 </style>
