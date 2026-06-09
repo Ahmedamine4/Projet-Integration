@@ -6,24 +6,42 @@
       <FeedHeader class="sticky-header" />
 
       <div class="feed-content">
-        <section class="offers-row">
+        <section
+          class="offers-row"
+          :class="{ 'offers-row--with-action': feedConfig.showAddOfferButton }"
+        >
           <FeedOffersCarousel
-            :offers="mockOffers"
-            @select-offer="openOfferDetail"
+            :offers="topCarouselItems"
+            :title="feedConfig.topSectionTitle"
+            :subtitle="feedConfig.topSectionSubtitle"
+            @select-offer="handleTopCarouselSelect"
           />
+
+          <button
+            v-if="feedConfig.showAddOfferButton"
+            type="button"
+            class="add-offer-button feed-add-offer-button"
+            @click="openAddOfferModal"
+          >
+            <Plus
+              :size="14"
+              :stroke-width="2.7"
+            />
+            Add offer
+          </button>
         </section>
 
         <div class="feed-grid">
           <aside class="suggested-sidebar sticky-suggestions">
             <section class="suggested-students-card">
               <header class="suggested-students-header">
-                <h2>Suggested students</h2>
-                <p>Profiles you may want to follow.</p>
+                <h2>{{ feedConfig.sidebarTitle }}</h2>
+                <p>{{ feedConfig.sidebarSubtitle }}</p>
               </header>
 
               <div class="suggested-students-list">
                 <article
-                  v-for="student in suggestedStudents"
+                  v-for="student in sidebarStudents"
                   :key="student.id"
                   class="suggested-student"
                 >
@@ -56,8 +74,8 @@
                     type="button"
                     class="follow-mini-button"
                     :class="{ 'is-following': student.isFollowing }"
-                    :aria-label="student.isFollowing ? `Following ${student.name}` : `Follow ${student.name}`"
-                    @click.stop="toggleFollowStudent(student.id)"
+                    :aria-label="sidebarActionAria(student)"
+                    @click.stop="handleSidebarStudentAction(student)"
                   >
                     <Check
                       v-if="student.isFollowing"
@@ -72,7 +90,7 @@
                     />
 
                     <span v-if="student.isFollowing">
-                      Following
+                      {{ sidebarActionLabel(student) }}
                     </span>
                   </button>
                 </article>
@@ -97,7 +115,7 @@
               class="feed-empty"
             >
               <SearchX :size="32" />
-              <p>Aucun projet ne correspond à vos filtres.</p>
+              <p>{{ feedConfig.emptyMessage }}</p>
             </div>
           </section>
 
@@ -148,13 +166,54 @@ import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
 import FeedOffersCarousel from '@/components/feed/FeedOffersCarousel.vue';
 import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
 import ApplyOfferModal from '@/components/feed/ApplyOfferModal.vue';
-import RecommendationsSection from '@/components/portfolio/recommendations/RecommendationsSection.vue';
+
 const router = useRouter();
 
 const mockUser = {
   prenom: 'Wissam',
   nom: 'Bakkali',
+
+  // Test roles:
+  // 'etudiant' | 'professionnel' | 'professeur'
+  role: 'etudiant',
 };
+
+const currentRole = computed(() => mockUser.role || 'etudiant');
+const isRecruiter = computed(() => currentRole.value === 'professionnel');
+const isProfessor = computed(() => currentRole.value === 'professeur');
+
+const feedConfigByRole = {
+  etudiant: {
+    topSectionTitle: 'Recommended opportunities',
+    topSectionSubtitle: 'Internships and jobs matching your portfolio.',
+    sidebarTitle: 'Suggested students',
+    sidebarSubtitle: 'Profiles you may want to follow.',
+    emptyMessage: 'Aucun élément ne correspond à vos filtres.',
+    showAddOfferButton: false,
+  },
+
+  professionnel: {
+    topSectionTitle: 'Top students',
+    topSectionSubtitle: 'Discover high-performing students with strong portfolios.',
+    sidebarTitle: 'Featured candidates',
+    sidebarSubtitle: 'Students with strong public portfolios.',
+    emptyMessage: 'Aucun profil ou élément ne correspond à vos filtres.',
+    showAddOfferButton: true,
+  },
+
+  professeur: {
+    topSectionTitle: 'Top students',
+    topSectionSubtitle: 'Discover high-performing students from your school.',
+    sidebarTitle: 'Students from your school',
+    sidebarSubtitle: 'Profiles you may want to follow.',
+    emptyMessage: 'Aucun élément ne correspond à vos filtres.',
+    showAddOfferButton: false,
+  },
+};
+
+const feedConfig = computed(() => {
+  return feedConfigByRole[currentRole.value] || feedConfigByRole.etudiant;
+});
 
 const suggestedStudents = ref([
   {
@@ -162,8 +221,12 @@ const suggestedStudents = ref([
     portfolioUserId: 1,
     initials: 'SI',
     name: 'Sara Idrissi',
-    speciality: 'Dev Web',
+    speciality: 'Frontend Developer',
+    schoolName: 'ENSA Casablanca',
     stack: ['Vue', 'Node'],
+    technologies: ['Vue 3', 'Node.js', 'PostgreSQL'],
+    domains: ['Web Frontend', 'Web Backend'],
+    portfolioScore: 86,
     isFollowing: false,
   },
   {
@@ -171,8 +234,12 @@ const suggestedStudents = ref([
     portfolioUserId: 2,
     initials: 'YK',
     name: 'Yassine Karim',
-    speciality: 'IA & Data',
+    speciality: 'AI & Data Student',
+    schoolName: 'ENSIAS Rabat',
     stack: ['Python', 'FastAPI'],
+    technologies: ['Python', 'FastAPI', 'LangChain'],
+    domains: ['Machine Learning & AI', 'Data Engineering'],
+    portfolioScore: 91,
     isFollowing: false,
   },
   {
@@ -180,11 +247,70 @@ const suggestedStudents = ref([
     portfolioUserId: 3,
     initials: 'AB',
     name: 'Amal Benali',
-    speciality: 'DevOps',
+    speciality: 'DevOps Student',
+    schoolName: 'ENSA Casablanca',
     stack: ['Docker', 'CI/CD'],
+    technologies: ['Docker', 'GitLab CI', 'Linux'],
+    domains: ['DevOps & Cloud Infrastructure'],
+    portfolioScore: 78,
     isFollowing: false,
   },
 ]);
+
+const studentsFromSchool = ref([
+  {
+    id: 4,
+    portfolioUserId: 4,
+    initials: 'AK',
+    name: 'Amine Kettani',
+    speciality: 'Software Engineering Student',
+    schoolName: 'ENSA Casablanca',
+    stack: ['Vue 3', 'FastAPI'],
+    technologies: ['Vue 3', 'FastAPI', 'PostgreSQL'],
+    domains: ['Web Frontend', 'Web Backend'],
+    portfolioScore: 82,
+    isFollowing: false,
+  },
+  {
+    id: 5,
+    portfolioUserId: 5,
+    initials: 'YB',
+    name: 'Youssef Benmoussa',
+    speciality: 'Mobile Development Student',
+    schoolName: 'ENSA Casablanca',
+    stack: ['Flutter', 'Node.js'],
+    technologies: ['Flutter', 'Node.js', 'Firebase'],
+    domains: ['Mobile Development', 'Web Backend'],
+    portfolioScore: 74,
+    isFollowing: false,
+  },
+  {
+    id: 6,
+    portfolioUserId: 6,
+    initials: 'NB',
+    name: 'Nour Berrada',
+    speciality: 'Cybersecurity Student',
+    schoolName: 'ENSA Casablanca',
+    stack: ['Linux', 'Security'],
+    technologies: ['Linux', 'Python', 'Networking'],
+    domains: ['Cybersecurity'],
+    portfolioScore: 88,
+    isFollowing: false,
+  },
+]);
+
+const topStudents = computed(() => {
+  return [...suggestedStudents.value].sort((a, b) => {
+    return (b.portfolioScore || 0) - (a.portfolioScore || 0);
+  });
+});
+
+const sidebarStudents = computed(() => {
+  if (isRecruiter.value) return topStudents.value;
+  if (isProfessor.value) return studentsFromSchool.value;
+
+  return suggestedStudents.value;
+});
 
 const search = ref('');
 const shareProject = ref(null);
@@ -203,9 +329,11 @@ const filters = ref(defaultFilters());
 const mockProjects = [
   {
     id: 'cmq2w34ze000dug4a8r9byuqb',
-    portfolioUserId: 1,
+    type: 'projet',
+    portfolioUserId: 4,
     campusRankScore: 94,
-    credibilityScore: 4.8,
+    portfolioScore: 82,
+    credibilityScore: 82,
     title: 'SmartStudyRoom Platform',
     description:
       'Une plateforme collaborative qui utilise l\'IA pour optimiser les espaces d\'étude partagés. Les étudiants peuvent réserver des salles, former des groupes d\'étude et recevoir des recommandations de ressources personnalisées en fonction de leur cours et de leurs objectifs.',
@@ -224,9 +352,11 @@ const mockProjects = [
   },
   {
     id: 2,
+    type: 'projet',
     portfolioUserId: 2,
     campusRankScore: 88,
-    credibilityScore: 4.5,
+    portfolioScore: 91,
+    credibilityScore: 91,
     title: 'AI Portfolio Recommendation System',
     description:
       'Un système intelligent qui analyse les projets académiques des étudiants et propose des recommandations de compétences à acquérir, ainsi que des profils d\'entreprises susceptibles d\'être intéressées par leur profil. Utilise des embeddings NLP pour comparer les portfolios.',
@@ -245,9 +375,11 @@ const mockProjects = [
   },
   {
     id: 3,
-    portfolioUserId: 3,
+    type: 'projet',
+    portfolioUserId: 5,
     campusRankScore: 72,
-    credibilityScore: 3.9,
+    portfolioScore: 74,
+    credibilityScore: 74,
     title: 'Campus Event Aggregator',
     description:
       'Application mobile et web qui centralise tous les événements du campus — workshops, hackathons, séminaires — et envoie des notifications personnalisées aux étudiants selon leurs centres d\'intérêt et leur parcours académique.',
@@ -313,12 +445,43 @@ const mockOffers = [
   },
 ];
 
+const topCarouselItems = computed(() => {
+  if (isRecruiter.value || isProfessor.value) {
+    return topStudents.value.map((student) => ({
+      ...student,
+      id: student.id,
+      title: student.name,
+      company: student.schoolName,
+      location: `Portfolio score ${student.portfolioScore || 0}`,
+      duration: student.speciality,
+      level: isRecruiter.value ? 'Featured candidate' : 'Top student',
+      technologies: student.technologies || student.stack || [],
+      domains: student.domains || [],
+      description: buildStudentCarouselDescription(student),
+      carouselType: 'student-profile',
+    }));
+  }
+
+  return mockOffers.map((offer) => ({
+    ...offer,
+    carouselType: 'offer',
+  }));
+});
+
 const allTechnologies = computed(() => {
-  return [
-    ...new Set(
-      mockProjects.flatMap((project) => project.technologies || [])
-    ),
-  ];
+  const technologiesMap = new Map();
+
+  mockProjects.forEach((project) => {
+    (project.technologies || []).forEach((technology) => {
+      const key = normalizeFilterValue(technology);
+
+      if (!technologiesMap.has(key)) {
+        technologiesMap.set(key, technology);
+      }
+    });
+  });
+
+  return [...technologiesMap.values()].sort((a, b) => a.localeCompare(b));
 });
 
 const allDomains = computed(() => [
@@ -344,6 +507,7 @@ const filteredProjects = computed(() => {
         project.description,
         project.studentName,
         project.schoolName,
+        project.type,
         ...(project.technologies || []),
         ...(project.domains || []),
       ]
@@ -367,30 +531,26 @@ const filteredProjects = computed(() => {
       return false;
     }
 
-    if (
-      currentFilters.technology &&
-      !project.technologies.includes(currentFilters.technology)
-    ) {
+    if (!itemHasTechnology(project, currentFilters.technology)) {
       return false;
     }
 
-    if (
-      currentFilters.domain &&
-      !project.domains.includes(currentFilters.domain)
-    ) {
+    if (!itemHasDomain(project, currentFilters.domain)) {
       return false;
     }
 
     return true;
   });
 
-  if (currentFilters.sort === 'trending') {
+  if (currentFilters.sort === 'portfolio-score') {
     result = [...result].sort(
-      (a, b) => b.campusRankScore - a.campusRankScore
+      (a, b) => (b.portfolioScore || 0) - (a.portfolioScore || 0)
     );
-  }
-
-  if (currentFilters.sort === 'recent') {
+  } else if (currentFilters.sort === 'trending') {
+    result = [...result].sort(
+      (a, b) => (b.campusRankScore || 0) - (a.campusRankScore || 0)
+    );
+  } else if (currentFilters.sort === 'recent') {
     result = [...result].sort(
       (a, b) => new Date(b.date) - new Date(a.date)
     );
@@ -399,9 +559,74 @@ const filteredProjects = computed(() => {
   return result;
 });
 
+function buildStudentCarouselDescription(student) {
+  const score = student.portfolioScore
+    ? `Portfolio score ${student.portfolioScore}`
+    : 'Strong portfolio';
+
+  const domains = student.domains?.length
+    ? student.domains.slice(0, 2).join(', ')
+    : 'multiple domains';
+
+  return `${score} with experience in ${domains}.`;
+}
+
+function normalizeFilterValue(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/\./g, '');
+}
+
+function itemHasTechnology(item, selectedTechnology) {
+  if (!selectedTechnology) return true;
+
+  const selected = normalizeFilterValue(selectedTechnology);
+
+  return (item.technologies || []).some((technology) => {
+    const normalizedTechnology = normalizeFilterValue(technology);
+
+    return (
+      normalizedTechnology === selected ||
+      normalizedTechnology.includes(selected) ||
+      selected.includes(normalizedTechnology)
+    );
+  });
+}
+
+function itemHasDomain(item, selectedDomain) {
+  if (!selectedDomain) return true;
+
+  const selected = normalizeFilterValue(selectedDomain);
+
+  return (item.domains || []).some((domain) => {
+    const normalizedDomain = normalizeFilterValue(domain);
+
+    return (
+      normalizedDomain === selected ||
+      normalizedDomain.includes(selected) ||
+      selected.includes(normalizedDomain)
+    );
+  });
+}
+
 function resetFilters() {
   filters.value = defaultFilters();
   search.value = '';
+}
+
+function handleTopCarouselSelect(item) {
+  if (item.carouselAction === 'open-profile') {
+    openStudentPortfolio(item);
+    return;
+  }
+
+  if (item.carouselType === 'student-profile') {
+    return;
+  }
+
+  openOfferDetail(item);
 }
 
 function openProjectDetail(project) {
@@ -453,16 +678,31 @@ function handleApplyOfferSubmit(payload) {
   closeApplyOffer();
 }
 
-function toggleFollowStudent(studentId) {
-  const student = suggestedStudents.value.find((item) => item.id === studentId);
+function openAddOfferModal() {
+  console.log('Open add offer modal');
+}
 
-  if (!student) return;
-
+function handleSidebarStudentAction(student) {
   student.isFollowing = !student.isFollowing;
 }
 
+function sidebarActionLabel(student) {
+  if (isRecruiter.value) return student.isFollowing ? 'Saved' : '';
+  return student.isFollowing ? 'Following' : '';
+}
+
+function sidebarActionAria(student) {
+  if (isRecruiter.value) {
+    return student.isFollowing ? `Saved ${student.name}` : `Save ${student.name}`;
+  }
+
+  return student.isFollowing ? `Following ${student.name}` : `Follow ${student.name}`;
+}
+
 function openStudentPortfolio(student) {
-  const portfolioId = student.portfolioUserId || student.id;
+  const portfolioId = student.portfolioUserId || student.userId || student.id;
+
+  if (!portfolioId) return;
 
   router.push(`/portfolio/${portfolioId}`);
 }
@@ -531,6 +771,7 @@ function openProjectOwnerPortfolio(project) {
 }
 
 .offers-row {
+  position: relative;
   width: 100%;
   min-width: 0;
   flex-shrink: 0;
@@ -548,6 +789,45 @@ function openProjectOwnerPortfolio(project) {
 .offers-row :deep(.offers-scroller) {
   width: 100%;
   max-width: none;
+}
+
+.offers-row--with-action :deep(.offers-section-header) {
+  padding-right: 7.25rem;
+}
+
+.add-offer-button {
+  flex: 0 0 auto;
+  min-height: 2.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
+  padding: 0 var(--space-md);
+  background: var(--color-primary);
+  color: var(--color-background);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.add-offer-button:hover {
+  transform: translateY(-1px);
+  background-color: rgba(var(--color-primary-rgb), 0.92);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.feed-add-offer-button {
+  position: absolute;
+  top: 0;
+  right: 5.8rem;
+  z-index: 6;
 }
 
 .feed-grid {
@@ -851,6 +1131,18 @@ function openProjectOwnerPortfolio(project) {
     max-width: 100%;
   }
 }
+
+@media (max-width: 640px) {
+  .feed-add-offer-button {
+    position: static;
+    margin-top: var(--space-sm);
+  }
+
+  .offers-row--with-action :deep(.offers-section-header) {
+    padding-right: 0;
+  }
+}
+
 /* === Scholar Highlight Style === */
 
 .feed-list :deep(.project-card) {
@@ -942,7 +1234,8 @@ function openProjectOwnerPortfolio(project) {
   color: rgba(var(--color-secondary-rgb), 0.98) !important;
   border: 1px solid rgba(var(--color-secondary-rgb), 0.2) !important;
 }
-/* === Offers: soft sage academic opportunity mood === */
+
+/* === Offers / Top students carousel style === */
 
 .offers-row :deep(.recommendation-card) {
   background:
@@ -964,7 +1257,6 @@ function openProjectOwnerPortfolio(project) {
     0 10px 24px rgba(0, 0, 0, 0.045) !important;
 }
 
-/* Accent line inside offer cards */
 .offers-row :deep(.recommendation-card)::before {
   background:
     linear-gradient(
@@ -973,26 +1265,10 @@ function openProjectOwnerPortfolio(project) {
       rgba(var(--color-secondary-rgb), 0.32)
     ) !important;
 }
-.offers-row :deep(.offers-section) {
-  padding-inline: 0 !important;
-}
 
-.offers-row :deep(.offers-header) {
-  padding-inline: 0 !important;
-  margin-inline: 0 !important;
-}
-
-.offers-row :deep(.offers-frame) {
-  margin-inline: 0 !important;
-}
-
-.offers-row :deep(.offers-scroller),
-.offers-row :deep(.offers-list) {
-  padding-inline: 0 !important;
-  scroll-padding-inline: 0 !important;
-}
 .offers-row :deep(.offers-section),
 .offers-row :deep(.offers-header),
+.offers-row :deep(.offers-section-header),
 .offers-row :deep(.offers-frame),
 .offers-row :deep(.offers-scroller),
 .offers-row :deep(.offers-list) {

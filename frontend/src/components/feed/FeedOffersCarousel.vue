@@ -9,6 +9,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  title: {
+    type: String,
+    default: 'Recommended opportunities',
+  },
+  subtitle: {
+    type: String,
+    default: 'Internships and jobs matching your portfolio.',
+  },
 });
 
 const emit = defineEmits(['select-offer']);
@@ -20,18 +28,22 @@ const canScrollRight = ref(false);
 
 const normalizedOffers = computed(() =>
   props.offers
-    .map((offer, index) => ({
-      id: offer.id ?? `${offer.title}-${index}`,
-      originalOffer: offer,
-      recommendation: {
-        id: offer.id ?? `${offer.title}-${index}`,
-        authorName: offer.company || 'Company',
-        authorRole: [offer.title, offer.location].filter(Boolean).join(' · '),
-        content:
-          offer.description ||
-          `${offer.duration || 'Duration not specified'} · ${offer.level || 'Level not specified'}`,
-      },
-    }))
+    .map((offer, index) => {
+      const id = offer.id ?? `${offer.title}-${index}`;
+
+      return {
+        id,
+        originalOffer: offer,
+        recommendation: {
+          id,
+          authorName: offer.company || offer.studentName || offer.name || 'Profile',
+          authorRole: [offer.title, offer.location].filter(Boolean).join(' · '),
+          content:
+            offer.description ||
+            `${offer.duration || 'Duration not specified'} · ${offer.level || 'Level not specified'}`,
+        },
+      };
+    })
     .filter((offer) => offer.recommendation.content)
 );
 
@@ -44,9 +56,7 @@ const loopCopies = computed(() => {
   return shouldLoop.value ? [0, 1, 2, 3] : [0];
 });
 
-const modeButtonLabel = computed(() =>
-  isLoopMode.value ? 'Scroll' : 'Loop'
-);
+const modeButtonLabel = computed(() => (isLoopMode.value ? 'Scroll' : 'Loop'));
 
 function updateScrollFades() {
   const scroller = scrollerRef.value;
@@ -122,8 +132,11 @@ onMounted(() => {
   >
     <div class="offers-section-header">
       <div>
-        <h2>Recommended opportunities</h2>
-        <p>Internships and jobs matching your portfolio.</p>
+        <h2>{{ title }}</h2>
+
+        <p v-if="subtitle">
+          {{ subtitle }}
+        </p>
       </div>
 
       <button
