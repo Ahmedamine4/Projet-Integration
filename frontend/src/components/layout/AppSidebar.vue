@@ -23,10 +23,11 @@ const route = useRoute();
 defineProps({
   user: {
     type: Object,
-    default: () => ({
-      firstName: 'User',
-      lastName: '',
-    }),
+    default: null,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -75,7 +76,7 @@ async function handleLogout() {
 <template>
   <div
     class="sidebar-space"
-    :class="{ collapsed }"
+    :class="{ collapsed, 'is-loading': loading }"
   >
     <button
       class="mobile-toggle"
@@ -123,12 +124,24 @@ async function handleLogout() {
       </nav>
 
       <footer>
-        <div class="sidebar__account">
+        <div
+          v-if="loading"
+          class="sidebar__account sidebar__account--loading"
+          aria-hidden="true"
+        >
+          <span class="sidebar__avatar sidebar-skeleton" />
+          <span class="sidebar__user sidebar-skeleton sidebar-skeleton--name" />
+          <span class="sidebar__notification sidebar-skeleton sidebar-skeleton--icon" />
+        </div>
+        <div
+          v-else
+          class="sidebar__account"
+        >
           <span class="sidebar__avatar">
             {{ user?.firstName?.[0] || 'U' }}
           </span>
           <span class="sidebar__user">
-            {{ user.firstName || 'User' }}
+            {{ user?.firstName || 'User' }}
           </span>
           <button class="sidebar__notification">
             <Bell />
@@ -402,7 +415,52 @@ async function handleLogout() {
     calc(
       (var(--collapsed-sidebar-width) - var(--sidebar-media-size)) / 2
       - var(--sidebar-padding)
-    );
+  );
+}
+
+.sidebar__account--loading {
+  pointer-events: none;
+}
+
+.sidebar-skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(var(--color-background-rgb), 0.12);
+  color: transparent;
+}
+
+.sidebar-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--color-background-rgb), 0.24),
+    transparent
+  );
+  animation: sidebar-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.sidebar-skeleton--name {
+  width: 4.8rem;
+  height: 0.72rem;
+  align-self: center;
+  border-radius: 999px;
+}
+
+.sidebar-skeleton--icon {
+  justify-self: end;
+  cursor: default;
+}
+
+@keyframes sidebar-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .sidebar-space.collapsed,

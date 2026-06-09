@@ -1,9 +1,15 @@
 import express from 'express';
-import { getInstitution, getInstitutionByEtudiant} from '../controllers/institution.controller.js';
+import {
+  getInstitution,
+  getInstitutionByEtudiant,
+  getProfesseursParInstitution,
+} from '../controllers/institution.controller.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
 router.get('/', getInstitution);
-router.get('/me', getInstitutionByEtudiant);
+router.get('/me', authMiddleware, getInstitutionByEtudiant);
+router.get('/:institutionId/professeurs', getProfesseursParInstitution);
 
 export default router;

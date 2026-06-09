@@ -77,6 +77,237 @@ const handleOrbChange = (event) => {
 };
 </script>
 
+<template>
+  <div class="container-vao">
+    <input
+      id="v.a.o."
+      type="checkbox"
+      class="input-orb"
+      name="v.a.o."
+      style="display: none;"
+      @change="handleOrbChange"
+    >
+
+    <label
+      for="v.a.o."
+      class="orb"
+      :class="{ 'is-ai-speaking': isAiSpeaking }"
+    >
+      <div class="icons">
+        <img
+          class="logo-icon"
+          :src="FolioCraftLogo"
+          alt="FolioCraft"
+        >
+
+        <svg
+          class="close-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+        >
+          <path
+            fill="currentColor"
+            d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59L7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12L5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4"
+          />
+        </svg>
+      </div>
+
+      <div class="ball">
+        <div class="container-lines" />
+        <div class="container-rings" />
+      </div>
+
+      <svg style="pointer-events: none;">
+        <filter id="gooey">
+          <feGaussianBlur
+            in="SourceGraphic"
+            stdDeviation="6"
+          />
+          <feColorMatrix
+            values="1 0 0 0 0
+            0 1 0 0 0
+            0 0 1 0 0
+            0 0 0 20 -10"
+          />
+        </filter>
+      </svg>
+    </label>
+
+    <div class="container-chat-ia">
+      <div class="container-title">
+        <Sparkles :size="20" />
+
+        <p class="text-title">
+          <span>What are</span>
+          <span> you looking for ?</span>
+        </p>
+      </div>
+
+      <div class="container-chat">
+        <div class="container-chat-limit">
+          <div class="chats">
+            <div
+              class="chat-ia"
+              style="--delay: 2"
+            >
+              <p>
+                <span style="--word: 1">Hi</span>
+                <span style="--word: 2">there!</span>
+                <span style="--word: 3">I'm</span>
+                <span style="--word: 4">an</span>
+                <span style="--word: 5">adaptive</span>
+                <span style="--word: 6">assistant.</span>
+                <span style="--word: 7">To</span>
+                <span style="--word: 8">save</span>
+                <span style="--word: 9">you</span>
+                <span style="--word: 10">time</span>
+                <span style="--word: 11">scrolling,</span>
+                <span style="--word: 12">paste</span>
+                <span style="--word: 13">a</span>
+                <span style="--word: 14">job</span>
+                <span style="--word: 15">description</span>
+                <span style="--word: 16">or</span>
+                <span style="--word: 17">tell</span>
+                <span style="--word: 18">me</span>
+                <span style="--word: 19">what</span>
+                <span style="--word: 20">role</span>
+                <span style="--word: 21">you're</span>
+                <span style="--word: 22">hiring</span>
+                <span style="--word: 23">for,</span>
+                <span style="--word: 24">and</span>
+                <span style="--word: 25">I'll</span>
+                <span style="--word: 26">instantly</span>
+                <span style="--word: 27">surface</span>
+                <span style="--word: 28">the</span>
+                <span style="--word: 29">most</span>
+                <span style="--word: 30">relevant</span>
+                <span style="--word: 31">projects</span>
+                <span style="--word: 32">and</span>
+                <span style="--word: 33">skills</span>
+                <span style="--word: 34">from</span>
+                <span style="--word: 35">this</span>
+                <span style="--word: 36">portfolio.</span>
+              </p>
+            </div>
+
+            <div
+              v-if="userMessage"
+              class="chat-user"
+            >
+              <p>{{ userMessage }}</p>
+            </div>
+
+            <div
+              v-if="isAnalyzingDescription"
+              class="chat-result"
+            >
+              <div>
+                <p class="result-title">
+                  Analyzing your description...
+                </p>
+              </div>
+            </div>
+
+            <div
+              v-if="analysisError"
+              class="chat-result"
+            >
+              <div>
+                <p class="error-message">
+                  {{ analysisError }}
+                </p>
+              </div>
+            </div>
+
+            <div
+              v-if="technologies.length || domains.length"
+              class="chat-result"
+            >
+              <div>
+                <p class="result-title">
+                  Here is what I detected:
+                </p>
+
+                <div
+                  v-if="technologies.length"
+                  class="result-section"
+                >
+                  <p class="result-label">
+                    Technologies
+                  </p>
+                  <div class="result-tags">
+                    <span
+                      v-for="technology in technologies"
+                      :key="technology.name"
+                      class="result-tag"
+                    >
+                      {{ technology.name }}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  v-if="domains.length"
+                  class="result-section"
+                >
+                  <p class="result-label">
+                    Domains
+                  </p>
+                  <div class="result-tags">
+                    <span
+                      v-for="domain in domains"
+                      :key="domain.name"
+                      class="result-tag"
+                    >
+                      {{ domain.name }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <form
+          class="chat-input-form"
+          @submit.prevent="analyzeDescription"
+        >
+          <textarea
+            ref="descriptionInput"
+            v-model="form.description"
+            class="chat-input"
+            placeholder="Paste a job description..."
+            @input="resizeDescriptionInput"
+            @keydown.enter.prevent="analyzeDescription"
+          />
+
+          <button
+            type="submit"
+            class="chat-send-button"
+            :disabled="isAnalyzingDescription || !form.description.trim()"
+            aria-label="Send description"
+          >
+            <svg
+              v-if="!isAnalyzingDescription"
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="currentColor"
+                d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14z"
+              />
+            </svg>
+
+            <span v-else>...</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
 <style scoped>
 .container-vao {
   position: relative;
@@ -468,7 +699,7 @@ const handleOrbChange = (event) => {
   display: flex;
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
-  z-index: 999999;
+  z-index: 2;
 }
 
 .icons {
@@ -826,192 +1057,3 @@ const handleOrbChange = (event) => {
   }
 }
 </style>
-
-<template>
-  <div class="container-vao">
-    <input
-      type="checkbox"
-      class="input-orb"
-      id="v.a.o."
-      name="v.a.o."
-      style="display: none;"
-      @change="handleOrbChange"
-    />
-
-    <label for="v.a.o." class="orb" :class="{ 'is-ai-speaking': isAiSpeaking }">
-      <div class="icons">
-        <img class="logo-icon" :src="FolioCraftLogo" alt="FolioCraft">
-
-        <svg
-          class="close-icon"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-        >
-          <path
-            fill="currentColor"
-            d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59L7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12L5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4"
-          ></path>
-        </svg>
-      </div>
-
-      <div class="ball">
-        <div class="container-lines"></div>
-        <div class="container-rings"></div>
-      </div>
-
-      <svg style="pointer-events: none;">
-        <filter id="gooey">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6"></feGaussianBlur>
-          <feColorMatrix
-            values="1 0 0 0 0
-            0 1 0 0 0 
-            0 0 1 0 0
-            0 0 0 20 -10"
-          ></feColorMatrix>
-        </filter>
-      </svg>
-    </label>
-
-    <div class="container-chat-ia">
-      <div class="container-title">
-        <Sparkles :size="20" />
-
-        <p class="text-title">
-          <span>What are</span>
-          <span> you looking for ?</span>
-        </p>
-      </div>
-
-      <div class="container-chat">
-        <div class="container-chat-limit">
-          <div class="chats">
-            <div class="chat-ia" style="--delay: 2">
-              <p>
-                <span style="--word: 1">Hi</span>
-                <span style="--word: 2">there!</span>
-                <span style="--word: 3">I'm</span>
-                <span style="--word: 4">an</span>
-                <span style="--word: 5">adaptive</span>
-                <span style="--word: 6">assistant.</span>
-                <span style="--word: 7">To</span>
-                <span style="--word: 8">save</span>
-                <span style="--word: 9">you</span>
-                <span style="--word: 10">time</span>
-                <span style="--word: 11">scrolling,</span>
-                <span style="--word: 12">paste</span>
-                <span style="--word: 13">a</span>
-                <span style="--word: 14">job</span>
-                <span style="--word: 15">description</span>
-                <span style="--word: 16">or</span>
-                <span style="--word: 17">tell</span>
-                <span style="--word: 18">me</span>
-                <span style="--word: 19">what</span>
-                <span style="--word: 20">role</span>
-                <span style="--word: 21">you're</span>
-                <span style="--word: 22">hiring</span>
-                <span style="--word: 23">for,</span>
-                <span style="--word: 24">and</span>
-                <span style="--word: 25">I'll</span>
-                <span style="--word: 26">instantly</span>
-                <span style="--word: 27">surface</span>
-                <span style="--word: 28">the</span>
-                <span style="--word: 29">most</span>
-                <span style="--word: 30">relevant</span>
-                <span style="--word: 31">projects</span>
-                <span style="--word: 32">and</span>
-                <span style="--word: 33">skills</span>
-                <span style="--word: 34">from</span>
-                <span style="--word: 35">this</span>
-                <span style="--word: 36">portfolio.</span>
-              </p>
-            </div>
-
-            <div v-if="userMessage" class="chat-user">
-              <p>{{ userMessage }}</p>
-            </div>
-
-            <div v-if="isAnalyzingDescription" class="chat-result">
-              <div>
-                <p class="result-title">Analyzing your description...</p>
-              </div>
-            </div>
-
-            <div v-if="analysisError" class="chat-result">
-              <div>
-                <p class="error-message">{{ analysisError }}</p>
-              </div>
-            </div>
-
-            <div
-              v-if="technologies.length || domains.length"
-              class="chat-result"
-            >
-              <div>
-                <p class="result-title">Here is what I detected:</p>
-
-                <div v-if="technologies.length" class="result-section">
-                  <p class="result-label">Technologies</p>
-                  <div class="result-tags">
-                    <span
-                      v-for="technology in technologies"
-                      :key="technology.name"
-                      class="result-tag"
-                    >
-                      {{ technology.name }}
-                    </span>
-                  </div>
-                </div>
-
-                <div v-if="domains.length" class="result-section">
-                  <p class="result-label">Domains</p>
-                  <div class="result-tags">
-                    <span
-                      v-for="domain in domains"
-                      :key="domain.name"
-                      class="result-tag"
-                    >
-                      {{ domain.name }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <form class="chat-input-form" @submit.prevent="analyzeDescription">
-          <textarea
-            ref="descriptionInput"
-            v-model="form.description"
-            class="chat-input"
-            placeholder="Paste a job description..."
-            @input="resizeDescriptionInput"
-            @keydown.enter.prevent="analyzeDescription"
-          ></textarea>
-
-          <button
-            type="submit"
-            class="chat-send-button"
-            :disabled="isAnalyzingDescription || !form.description.trim()"
-            aria-label="Send description"
-          >
-            <svg
-              v-if="!isAnalyzingDescription"
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-            >
-              <path
-                fill="currentColor"
-                d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14z"
-              />
-            </svg>
-
-            <span v-else>...</span>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</template>

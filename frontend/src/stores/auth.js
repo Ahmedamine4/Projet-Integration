@@ -6,15 +6,22 @@ import { normalizeUser } from '@/utils/portfolioNormalizers';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
+  const profileLoading = ref(false);
+  const profileChecked = ref(false);
 
   const isAuthenticated = computed(() => Boolean(user.value));
 
   async function fetchProfile() { // Appelé au démarrage pour vérifier si l'utilisateur est déjà connecté (cookie valide)
+      profileLoading.value = true;
+
       try {
           const { data } = await api.get('/auth/profile');
           user.value = normalizeUser(data.user);
       } catch {
           user.value = null; // Cookie expiré ou absent
+      } finally {
+          profileLoading.value = false;
+          profileChecked.value = true;
       }
   }
 
@@ -97,6 +104,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user,
+    profileLoading,
+    profileChecked,
     isAuthenticated,
     fetchProfile,
     updateProfile,

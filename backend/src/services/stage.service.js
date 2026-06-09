@@ -1,40 +1,24 @@
 import prisma from '../config/prisma.js';
-import { supabase } from '../config/supabase.js';
 import { creerNotification } from './notification.service.js';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
+import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
-//upload photo sur supabase et collection de url
-export const uploadPhoto = async (file) => {
-  const fileName = `${Date.now()}_${file.originalname}`;
+export const creeStage = async (etudiantId, data, file) => {
 
-  const { error } = await supabase.storage
-    .from('stages-photos')
-    .upload(fileName, file.buffer, { contentType: file.mimetype });
+  const stageExistant = await prisma.experience.findFirst({
+    where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre },
+  });
+  if (stageExistant) throw new Error('Stage déjà existant');
 
-  if (error) throw new Error('Erreur upload photo : ' + error.message);
+  const debut = new Date(data.date_debut);
+  const fin = new Date(data.date_fin);
+  const duree = String(Math.ceil((fin - debut) / (1000 * 60 * 60 * 24)));
 
-  const { data } = supabase.storage
-    .from('stages-photos')
-    .getPublicUrl(fileName);
+  const technologies = JSON.parse(data.technologies || '[]');
+  const domaines = JSON.parse(data.domaines || '[]');
 
-  return data.publicUrl;
-};
-
-export const creeStage = async (etudiantId, data, photoUrl) => {
-  
-    const stageExistant = await prisma.experience.findFirst({
-        where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre },
-      });
-      if (stageExistant) throw new Error('Stage déjà existant');
-    
-
-    const debut = new Date(data.date_debut);
-    const fin = new Date(data.date_fin);
-    const diffMs = fin - debut;
-    const duree = String(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-
-    const technologies = JSON.parse(data.technologies || '[]');
-    const domaines = JSON.parse(data.domaines || '[]');
+  // Upload photo avant la transaction
+  const photoUrl = file ? await uploadPhoto(file, 'stages-photos') : null;
 
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.create({
@@ -59,7 +43,7 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
         rapport_stage: data.rapport_stage ?? null,
       },
     });
-    
+
     const competencesTech = await lierCompetencesExperience(
       tx, experience.experience_id, etudiantId, technologies, 'technologie'
     );
@@ -73,7 +57,7 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
 
       const professeur = await tx.utilisateur.findUnique({
         where: { email: data.email_professeur },
-        include: { professeur: true }
+        include: { professeur: true },
       });
 
       if (!professeur || !professeur.professeur) {
@@ -86,7 +70,7 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
           experience_id: experience.experience_id,
           statut: 'en_attente',
           date_d_action: new Date(),
-        }
+        },
       });
 
       const etudiant = await tx.utilisateur.findUnique({
@@ -101,11 +85,11 @@ export const creeStage = async (etudiantId, data, photoUrl) => {
       );
     }
 
-    return { 
-      experience, 
-      stage, 
+    return {
+      experience,
+      stage,
       competences: [...competencesTech, ...competencesDomaines],
-      validation, 
+      validation,
     };
   });
 };
@@ -121,16 +105,24 @@ export const getStagesByEtudiant = async (etudiantId) => {
   });
 };
 
-export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
+export const editStage = async (etudiantId, experienceId, data, file) => {
   const stageExistant = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'stage', titre: data.titre, experience_id: { not: experienceId } },
   });
-  if (stageExistant) {
-    throw new Error('Stage déjà existant');
-  }
+  if (stageExistant) throw new Error('Stage déjà existant');
+
+  //recupere l'ancienne photo avant la transaction
+  const experienceActuelle = await prisma.experience.findFirst({
+    where: { experience_id: experienceId },
+    select: { photo: true },
+  });
+
+  const photoUrl = file
+    ? await remplacerPhoto(file, experienceActuelle?.photo, 'stages-photos')
+    : null;
 
   return await prisma.$transaction(async (tx) => {
-    //verifier que le stage appartient vrai a l'etudiant
+    // verifier que le stage appartient bien à l'etudiant
     const experience = await tx.experience.findFirst({
       where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'stage' },
       include: {
@@ -146,21 +138,32 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
       },
     });
 
-    if (!experience) throw new Error('Stage not found');
+    if (!experience) throw new Error('Stage non trouvé');
+
+    //verification statut AVANT les updates
+    if (experience.type_specifique === 'academique' && experience.stage.validation) {
+      const statut = experience.stage.validation.statut;
+      if (statut === 'valide' || statut === 'refuse') {
+        throw new Error('Ce stage a déjà été traité par le professeur, vous ne pouvez plus le modifier');
+      }
+    }
 
     const debut = data.date_debut ? new Date(data.date_debut) : experience.date_experience;
     const fin = data.date_fin ? new Date(data.date_fin) : experience.stage.date_fin;
-    const duree = (data.date_debut || data.date_fin) ? String(Math.ceil((fin - debut) / (1000 * 60 * 60 * 24))) : experience.stage.duree;
+    const duree = (data.date_debut || data.date_fin)
+      ? String(Math.ceil((fin - debut) / (1000 * 60 * 60 * 24)))
+      : experience.stage.duree;
 
-    // editer experience et stage
     await tx.experience.update({
       where: { experience_id: experienceId },
       data: {
         titre: data.titre ?? experience.titre,
         date_experience: debut,
         description: data.description ?? experience.description,
-        visibilite: false, //invisible
-        type_specifique: data.is_academique ? (data.is_academique === 'true' ? 'academique' : 'personnel') : experience.type_specifique,
+        visibilite: false,
+        type_specifique: data.is_academique
+          ? (data.is_academique === 'true' ? 'academique' : 'personnel')
+          : experience.type_specifique,
         photo: photoUrl ?? experience.photo,
       },
     });
@@ -175,7 +178,7 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
       },
     });
 
-    //update les competences
+    //maj des competences
     if (data.technologies !== undefined || data.domaines !== undefined) {
       const technologies = JSON.parse(data.technologies || '[]');
       const domaines = JSON.parse(data.domaines || '[]');
@@ -188,13 +191,8 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
       await lierCompetencesExperience(tx, experienceId, etudiantId, domaines, 'domaine');
     }
 
-    //si deja le stage est dans la table du valideStage
+    // Si déjà une validation existante
     if (experience.stage.validation) {
-      //si le stage est valide ou refuse on ne peut plus le modifier
-      if (experience.stage.validation.statut !== 'en_attente') {
-        throw new Error('Ce stage a déjà été traité par le professeur, vous ne pouvez plus le modifier');
-      }
-
       let profId = experience.stage.validation.utilisateur_id;
 
       // L'étudiant veut changer de prof
@@ -226,7 +224,7 @@ export const editStage = async (etudiantId, experienceId, data, photoUrl) => {
 
       await creerNotification(
         profId,
-        `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son stage "${data.titre ?? experience.titre}". Il demande une validation pour un stage.`,
+        `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son stage "${data.titre ?? experience.titre}". Il demande une validation.`,
         'validation_stage'
       );
 
@@ -305,5 +303,30 @@ export const updateVisibiliteStageService = async (etudiantId, experienceId, vis
     where: { experience_id: experienceId },
     data: { visibilite },
     select: { experience_id: true, visibilite: true },
+  });
+};
+
+export const supprimerStageService = async (etudiantId, experienceId) => {
+  const experience = await prisma.experience.findFirst({
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'stage' },
+    include: {
+      stage: { include: { validation: true } },
+    },
+  });
+
+  if (!experience) throw new Error('Stage non trouvé');
+
+  // bloquer si deja traite par le professeur
+  if (experience.type_specifique === 'academique' && experience.stage?.validation) {
+    const statut = experience.stage.validation.statut;
+    if (statut === 'valide' || statut === 'refuse') {
+      throw new Error('Ce stage a déjà été traité par le professeur, vous ne pouvez plus le supprimer');
+    }
+  }
+
+  await supprimerPhoto(experience.photo, 'stages-photos');
+
+  await prisma.experience.delete({
+    where: { experience_id: experienceId },
   });
 };

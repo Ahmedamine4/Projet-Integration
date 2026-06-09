@@ -75,7 +75,10 @@ function getExperienceRoute(experienceId) {
 <template>
   <article
     class="internship-card"
-    :class="{ 'internship-card--editable': canEditExperience }"
+    :class="{
+      'internship-card--editable': canEditExperience,
+      'internship-card--hidden': !internship.effectiveVisibleToEveryone,
+    }"
     @dblclick="canEditExperience && emit('edit', internship)"
     @click="handleDoubleTap"
   >
@@ -96,7 +99,6 @@ function getExperienceRoute(experienceId) {
             </span>
           </div>
           <h3>{{ internship.title }}</h3>
-          <span v-if="internship.missions">{{ internship.missions }}</span>
         </div>
         <div class="internship-card__controls">
           <span
@@ -194,8 +196,46 @@ function getExperienceRoute(experienceId) {
   z-index: 1;
 }
 
+.internship-card::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--internship-gap, calc(var(--space-xl) * 1.2)) / -2);
+  bottom: calc(var(--internship-gap, calc(var(--space-xl) * 1.2)) / -2);
+  left: calc(clamp(4.6rem, 10vw, 7rem) + 1px);
+  width: 2px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--color-secondary-rgb), 0.16),
+      rgba(var(--color-secondary-rgb), 0.78),
+      rgba(var(--color-secondary-rgb), 0.16)
+    );
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 .internship-card--editable {
   cursor: pointer;
+}
+
+.internship-card--hidden::before {
+  background: color-mix(in srgb, var(--color-primary) 46%, var(--color-background));
+}
+
+.internship-card--hidden::after {
+  filter: grayscale(1) saturate(0);
+}
+
+.internship-card--hidden .internship-card__year,
+.internship-card--hidden .internship-card__heading,
+.internship-card--hidden .internship-card__date,
+.internship-card--hidden p,
+.internship-card--hidden .internship-card__image,
+.internship-card--hidden .internship-card__tags span,
+.internship-card--hidden .internship-card__hint {
+  filter: grayscale(1) saturate(0);
 }
 
 .internship-card__year {
@@ -229,6 +269,11 @@ function getExperienceRoute(experienceId) {
 .internship-card__heading h3,
 .internship-card p {
   margin: 0;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .internship-card__heading h3 {
@@ -371,6 +416,10 @@ function getExperienceRoute(experienceId) {
   }
 
   .internship-card::before {
+    left: calc(4.2rem + 1px);
+  }
+
+  .internship-card::after {
     left: calc(4.2rem + 1px);
   }
 

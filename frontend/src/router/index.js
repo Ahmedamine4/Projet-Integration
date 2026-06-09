@@ -6,6 +6,7 @@ import RegisterView from '@/views/auth/RegisterView.vue';
 import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
 import TestRecommandationRequestView from '@/views/TestRecommandationRequestView.vue';
+import PortfolioView from '@/views/app/PortfolioView.vue';
 
 
 const routes = [
@@ -81,7 +82,7 @@ const routes = [
   {
     path: '/portfolio/:id?',
     name: 'portfolio',
-    component: () => import('@/views/app/PortfolioView.vue'),
+    component: PortfolioView,
     meta: {
       requiresAuth: true,
       layout: 'app',
@@ -112,6 +113,10 @@ router.beforeEach((to) => {
   const requiresAuth = to.matched.some((record) => {
     return record.meta.requiresAuth;
   });
+
+  if (requiresAuth && !authStore.profileChecked) {
+    return true;
+  }
 
   if (requiresAuth && !authStore.isAuthenticated) {
     return {

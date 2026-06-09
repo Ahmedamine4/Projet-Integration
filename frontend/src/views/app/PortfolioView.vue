@@ -5,7 +5,7 @@ import AboutMe from '@/components/portfolio/profile/AboutMe.vue';
 import PortfolioEducation from '@/components/portfolio/profile/PortfolioEducation.vue';
 import PortfolioSkills from '@/components/portfolio/profile/PortfolioSkills.vue';
 import ProjectsSection from '@/components/portfolio/projects/ProjectsSection.vue';
-import { QrCode, UserRound } from 'lucide-vue-next';
+import { Camera, QrCode, UserRound } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/contact/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
 import { useProjectStore } from '@/stores/project';
@@ -14,15 +14,21 @@ import { useCertificationStore } from '@/stores/certification';
 import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
 import { useInstitutionStore } from '@/stores/institution';
+import api from '@/services/api';
 import BaseError from '@/components/common/feedback/BaseError.vue';
+import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
+import ConfirmDialog from '@/components/common/feedback/ConfirmDialog.vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
 import InternshipsSection from '@/components/portfolio/internships/InternshipsSection.vue';
 import RecommendationsSection from '@/components/portfolio/recommendations/RecommendationsSection.vue';
+import PortfolioRecommendationModal from '@/components/portfolio/recommendations/PortfolioRecommendationModal.vue';
 import { placeholderRecommendations } from '@/tmp/portfolioRecommendations';
 import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
+import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
+import ImageCropperModal from '@/components/common/forms/ImageCropperModal.vue';
 
 const professorEmails = [
   'ahmed.elamrani@ensat.ac.ma',
@@ -56,6 +62,12 @@ const userId = computed(() => authStore.user?.utilisateur_id);
 
 const portfolio = computed(() => portfolioStore.portfolio);
 const isResolvingPortfolio = ref(false);
+const isAuthResolving = computed(() => authStore.profileLoading || !authStore.profileChecked);
+const isPortfolioLoading = computed(() =>
+  isAuthResolving.value ||
+  isResolvingPortfolio.value ||
+  portfolioStore.loading
+);
 const portfolioUserId = computed(() =>
   route.params.id ||
   portfolio.value?.id ||
@@ -76,30 +88,62 @@ const profileName = computed(() => {
   const fullName = `${firstName} ${lastName}`.trim();
   return fullName || 'Name not provided';
 });
+const recommenderName = computed(() => {
+  const user = authStore.user ?? {};
+  const firstName = user.firstName ?? user.prenom ?? '';
+  const lastName = user.lastName ?? user.nom ?? '';
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return fullName || user.email || 'You';
+});
+const recommenderRole = computed(() => {
+  const role = authStore.user?.role;
+  const labels = {
+    etudiant: 'Student',
+    professeur: 'Professor',
+    professionnel: 'Professional',
+    administrateur: 'Administrator',
+    directeur: 'Director',
+  };
+
+  return labels[role] ?? 'Portfolio recommendation';
+});
 const profileHeadline = computed(() => {
   const headline = portfolio.value?.headline;
   const school = portfolio.value?.school;
 
+  if (!school) return '';
   if (headline && school) return `${headline} at ${school}`;
-  if (headline) return headline;
-  if (school) return `Student at ${school}`;
 
-  return 'Student';
+  return `Student at ${school}`;
 });
 const profilePhoto = computed(() => profile.value?.photo || '');
 const localProfilePhoto = ref('');
 const profilePhotoInput = ref(null);
+const selectedProfilePhotoFile = ref(null);
 const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
 const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
+const localRecommendations = ref([]);
 const displayRecommendations = computed(() => {
-  const recommendations = (portfolio.value?.recommendations ?? []).filter((recommendation) => {
+  const recommendations = [
+    ...localRecommendations.value,
+    ...(portfolio.value?.recommendations ?? []),
+  ].filter((recommendation) => {
     return !recommendation.status || recommendation.status === 'valide';
   });
 
   return recommendations.length ? recommendations : placeholderRecommendations;
 });
 const recommendationsCount = computed(() => displayRecommendations.value.length);
+const educationItems = computed(() => portfolio.value?.education ?? []);
+const skillItems = computed(() => portfolio.value?.skills ?? []);
+const domainItems = computed(() => portfolio.value?.domains ?? []);
+const hasEducation = computed(() => educationItems.value.length > 0);
+const hasSkills = computed(() => skillItems.value.length > 0 || domainItems.value.length > 0);
+const shouldShowEducation = computed(() => isOwnPortfolio.value || hasEducation.value);
+const shouldShowSkills = computed(() => isOwnPortfolio.value || hasSkills.value);
+const hasProfileDetails = computed(() => shouldShowEducation.value || shouldShowSkills.value);
 const schoolOptions = computed(() =>
   institutionStore.institutions.map((institution) => institution.nom).filter(Boolean)
 );
@@ -139,22 +183,60 @@ watch(
   { immediate: true }
 );
 
-const visibleProjects = computed(() => {
-	if (isOwnPortfolio.value) return projects.value;
+watch(portfolioUserId, () => {
+  localRecommendations.value = [];
+  closeRecommendationModal();
+});
 
-	return projects.value.filter(project => project.effectiveVisibleToEveryone);
+function sortVisibleHighlightedExperiences(list, isVisible = (experience) => experience.effectiveVisibleToEveryone) {
+  return [...list].sort((firstProject, secondProject) => {
+    const firstIsVisibleHighlight = Boolean(
+      firstProject.highlighted && isVisible(firstProject)
+    );
+    const secondIsVisibleHighlight = Boolean(
+      secondProject.highlighted && isVisible(secondProject)
+    );
+
+    if (firstIsVisibleHighlight !== secondIsVisibleHighlight) {
+      return firstIsVisibleHighlight ? -1 : 1;
+    }
+
+    if (firstIsVisibleHighlight && secondIsVisibleHighlight) {
+      return (secondProject.score ?? 0) - (firstProject.score ?? 0);
+    }
+
+    return new Date(secondProject.date) - new Date(firstProject.date);
+  });
+}
+
+const visibleProjects = computed(() => {
+	if (isOwnPortfolio.value) return sortVisibleHighlightedExperiences(projects.value);
+
+	return sortVisibleHighlightedExperiences(
+    projects.value.filter(project => project.effectiveVisibleToEveryone)
+  );
 });
 
 const visibleActivities = computed(() => {
-  if (isOwnPortfolio.value) return activities.value;
+  if (isOwnPortfolio.value) return sortVisibleHighlightedExperiences(activities.value);
 
-  return activities.value.filter(activity => activity.effectiveVisibleToEveryone);
+  return sortVisibleHighlightedExperiences(
+    activities.value.filter(activity => activity.effectiveVisibleToEveryone)
+  );
 });
 
 const visibleCertifications = computed(() => {
-  if (isOwnPortfolio.value) return certifications.value;
+  if (isOwnPortfolio.value) {
+    return sortVisibleHighlightedExperiences(
+      certifications.value,
+      certification => certification.visibleToEveryone
+    );
+  }
 
-  return certifications.value.filter(certification => certification.visibleToEveryone);
+  return sortVisibleHighlightedExperiences(
+    certifications.value.filter(certification => certification.visibleToEveryone),
+    certification => certification.visibleToEveryone
+  );
 });
 
 const visibleInternships = computed(() => {
@@ -179,12 +261,12 @@ const shouldShowInternshipSection = computed(() => {
   return isOwnPortfolio.value || visibleInternships.value.length > 0;
 });
 
-const experienceErrors = ref({
-  project: '',
-  internship: '',
-  activity: '',
-  certificate: '',
+const notification = ref({
+  type: 'error',
+  message: '',
 });
+let notificationTimer = null;
+const isSchoolModalOpen = ref(false);
 
 const experienceModal = ref({
   open: false,
@@ -192,6 +274,9 @@ const experienceModal = ref({
   mode: 'create',
   selected: null,
 });
+const isDeleteConfirmOpen = ref(false);
+
+const isExperienceSubmitting = ref(false);
 
 const experienceLoadingByType = computed(() => ({
   project: projectStore.loading,
@@ -201,11 +286,20 @@ const experienceLoadingByType = computed(() => ({
 }));
 
 const experienceModalLoading = computed(() =>
-  experienceLoadingByType.value[experienceModal.value.type] ?? false
+  isExperienceSubmitting.value ||
+  (experienceLoadingByType.value[experienceModal.value.type] ?? false)
 );
 
+function clearNotification() {
+  notification.value.message = '';
+}
+
+function showNotification(type, message) {
+  notification.value = { type, message };
+}
+
 function openExperienceModal(type) {
-  experienceErrors.value[type] = '';
+  clearNotification();
   experienceModal.value = {
     open: true,
     type,
@@ -217,7 +311,7 @@ function openExperienceModal(type) {
 function openEditExperienceModal(type, experience) {
   if (isRejectedExperience(experience)) return;
 
-  experienceErrors.value[type] = '';
+  clearNotification();
   experienceModal.value = {
     open: true,
     type,
@@ -231,6 +325,7 @@ function isRejectedExperience(experience) {
 }
 
 function closeExperienceModal() {
+  isDeleteConfirmOpen.value = false;
   experienceModal.value = {
     ...experienceModal.value,
     open: false,
@@ -239,9 +334,20 @@ function closeExperienceModal() {
   };
 }
 
+function openDeleteConfirm() {
+  isDeleteConfirmOpen.value = true;
+}
+
+function closeDeleteConfirm() {
+  if (isExperienceSubmitting.value) return;
+
+  isDeleteConfirmOpen.value = false;
+}
+
 async function handleExperienceSubmit(experience) {
   const type = experienceModal.value.type;
-  experienceErrors.value[type] = '';
+  clearNotification();
+  isExperienceSubmitting.value = true;
 
   try {
     const isEdit = experienceModal.value.mode === 'edit';
@@ -249,53 +355,47 @@ async function handleExperienceSubmit(experience) {
 
     if (type === 'project') {
       if (isEdit) {
-        const index = projects.value.findIndex(item => item.id === selectedId);
+        const updatedProject = await projectStore.editProject({
+          ...experience,
+          id: selectedId,
+        });
 
-        if (index !== -1) {
-          projects.value[index] = {
-            ...projects.value[index],
-            ...experience,
-            imagePreview: experience.image
-              ? URL.createObjectURL(experience.image)
-              : projects.value[index].imagePreview,
-          };
-        }
+        projects.value = projects.value.map((project) =>
+          project.id === selectedId ? updatedProject : project
+        );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdProject = await projectStore.createProject(experience);
       projects.value.unshift(createdProject);
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
       return;
     }
 
     if (type === 'activity') {
       if (isEdit) {
-        const index = activities.value.findIndex(item => item.id === selectedId);
+        const updatedActivity = await activityStore.editActivity({
+          ...experience,
+          id: selectedId,
+        });
 
-        if (index !== -1) {
-          activities.value = activities.value.map((activity, currentIndex) =>
-            currentIndex === index
-              ? {
-                  ...activity,
-                  ...experience,
-                  imagePreview: experience.image
-                    ? URL.createObjectURL(experience.image)
-                    : activity.imagePreview,
-                }
-              : activity
-          );
-        }
+        activities.value = activities.value.map((activity) =>
+          activity.id === selectedId ? updatedActivity : activity
+        );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdActivity = await activityStore.createActivity(experience);
       activities.value = [createdActivity, ...activities.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
     }
 
     if (type === 'internship') {
@@ -309,49 +409,168 @@ async function handleExperienceSubmit(experience) {
           internship.id === selectedId ? updatedInternship : internship
         );
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdInternship = await internshipStore.createInternship(experience);
       internships.value = [createdInternship, ...internships.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
       return;
     }
 
     if (type === 'certificate') {
       if (isEdit) {
-        const index = certifications.value.findIndex(item => item.id === selectedId);
+        const updatedCertification = await certificationStore.editCertification({
+          ...experience,
+          id: selectedId,
+        });
 
-        if (index !== -1) {
-          certifications.value = certifications.value.map((certification, currentIndex) =>
-            currentIndex === index
-              ? {
-                  ...certification,
-                  ...experience,
-                }
-              : certification
-          );
-        }
+        certifications.value = certifications.value.map((certification) =>
+          certification.id === selectedId ? updatedCertification : certification
+        );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdCertification = await certificationStore.createCertification(experience);
       certifications.value = [createdCertification, ...certifications.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
     }
   }
   catch (error) {
-    experienceErrors.value[type] = error.response?.data?.message ||
+    showNotification('error', error.response?.data?.message ||
       error.message ||
-      `Failed to save ${type}`;
+      `Failed to save ${type}`);
+  }
+  finally {
+    isExperienceSubmitting.value = false;
+  }
+}
+
+async function handleExperienceDelete() {
+  const type = experienceModal.value.type;
+  const selectedId = experienceModal.value.selected?.id;
+
+  if (!selectedId) return;
+
+  clearNotification();
+  isExperienceSubmitting.value = true;
+
+  try {
+    if (type === 'project') {
+      await projectStore.deleteProject(selectedId);
+      projects.value = projects.value.filter((project) => project.id !== selectedId);
+    }
+    else if (type === 'activity') {
+      await activityStore.deleteActivity(selectedId);
+      activities.value = activities.value.filter((activity) => activity.id !== selectedId);
+    }
+    else if (type === 'internship') {
+      await internshipStore.deleteInternship(selectedId);
+      internships.value = internships.value.filter((internship) => internship.id !== selectedId);
+    }
+    else if (type === 'certificate') {
+      await certificationStore.deleteCertification(selectedId);
+      certifications.value = certifications.value.filter((certification) => certification.id !== selectedId);
+    }
+
+    closeExperienceModal();
+    isDeleteConfirmOpen.value = false;
+    showNotification('success', 'Experience deleted successfully.');
+  }
+  catch (error) {
+    showNotification('error', error.response?.data?.message ||
+      error.message ||
+      `Failed to delete ${type}`);
+  }
+  finally {
+    isExperienceSubmitting.value = false;
   }
 }
 
 const isQRModalOpen = ref(false);
 function openQRModal() {
   isQRModalOpen.value = true;
+}
+
+const isRecommendationModalOpen = ref(false);
+
+function openRecommendationModal() {
+  if (isOwnPortfolio.value) return;
+
+  isRecommendationModalOpen.value = true;
+}
+
+function closeRecommendationModal() {
+  isRecommendationModalOpen.value = false;
+}
+
+function handlePortfolioRecommendationSubmit(recommendation) {
+  if (!portfolioUserId.value) return;
+
+  localRecommendations.value = [
+    {
+      id: `local-recommendation-${Date.now()}`,
+      authorName: recommenderName.value,
+      authorRole: recommenderRole.value,
+      content: recommendation.content,
+      date: new Date().toISOString(),
+      status: 'valide',
+      portfolioOwnerId: portfolioUserId.value,
+    },
+    ...localRecommendations.value,
+  ];
+
+  closeRecommendationModal();
+}
+
+function openSchoolModal() {
+  if (!isOwnPortfolio.value) return;
+
+  clearNotification();
+  isSchoolModalOpen.value = true;
+}
+
+async function completeSchoolPath(schoolData) {
+  clearNotification();
+
+  try {
+    institutionStore.setSchoolPath(schoolData.schoolPath);
+
+    const institutionIds = [
+      ...new Set(
+        Object.values(schoolData.schoolPath ?? {})
+          .map((school) => school?.institutionId)
+          .filter(Boolean)
+      ),
+    ];
+
+    if (institutionIds.length && userId.value) {
+      await api.post('/select-institutions', {
+        etudiantId: userId.value,
+        institutionId: institutionIds,
+      });
+    }
+
+    isSchoolModalOpen.value = false;
+
+    if (portfolioUserId.value) {
+      await portfolioStore.fetchPortfolio(portfolioUserId.value);
+    }
+
+    showNotification('success', 'Academic path saved successfully.');
+  }
+  catch (error) {
+    showNotification('error', error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'Failed to save academic path');
+  }
 }
 
 const links = computed(() => [
@@ -397,20 +616,51 @@ function openProfilePhotoPicker() {
 
 function handleProfilePhotoChange(event) {
   const file = event.target.files?.[0];
-  if (!file) return;
+  event.target.value = '';
 
+  if (!file) return;
+  selectedProfilePhotoFile.value = file;
+}
+
+function handleProfilePhotoCropped(file) {
   if (localProfilePhoto.value) {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
 
   localProfilePhoto.value = URL.createObjectURL(file);
+  selectedProfilePhotoFile.value = null;
+}
+
+function closeProfilePhotoCropper() {
+  selectedProfilePhotoFile.value = null;
 }
 
 onUnmounted(() => {
   if (localProfilePhoto.value) {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
+
+  if (notificationTimer) {
+    clearTimeout(notificationTimer);
+  }
 });
+
+watch(
+  () => notification.value.message,
+  (message) => {
+    if (notificationTimer) {
+      clearTimeout(notificationTimer);
+      notificationTimer = null;
+    }
+
+    if (!message) return;
+
+    notificationTimer = setTimeout(() => {
+      clearNotification();
+      notificationTimer = null;
+    }, 4500);
+  }
+);
 
 async function handleAiFiltersDetected(filters) {
   if (!portfolioUserId.value) return;
@@ -421,10 +671,98 @@ async function handleAiFiltersDetected(filters) {
 
 <template>
   <div
-    v-if="!isResolvingPortfolio"
+    v-if="isPortfolioLoading"
+    class="portfolio portfolio--loading"
+    aria-busy="true"
+  >
+    <div class="portfolio__banner" />
+
+    <main>
+      <div class="profile profile--skeleton">
+        <div class="profile__photo skeleton" />
+        <div class="profile__info profile__info--skeleton">
+          <span class="skeleton skeleton-line skeleton-line--name" />
+          <span class="skeleton skeleton-line skeleton-line--headline" />
+          <div class="statistics statistics--skeleton">
+            <div
+              v-for="item in 3"
+              :key="item"
+            >
+              <span class="skeleton skeleton-line skeleton-line--stat-label" />
+              <span class="skeleton skeleton-line skeleton-line--stat-value" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="about">
+        <section class="skeleton-panel skeleton-panel--about">
+          <span class="skeleton skeleton-line skeleton-line--section-title" />
+          <span
+            v-for="line in 4"
+            :key="`about-${line}`"
+            class="skeleton skeleton-line"
+            :class="`skeleton-line--copy-${line}`"
+          />
+        </section>
+
+        <div class="education-skills-wrapper">
+          <section class="skeleton-panel skeleton-panel--compact">
+            <span class="skeleton skeleton-line skeleton-line--section-title" />
+            <span
+              v-for="line in 3"
+              :key="`education-${line}`"
+              class="skeleton skeleton-line"
+            />
+          </section>
+
+          <section class="skeleton-panel skeleton-panel--compact">
+            <span class="skeleton skeleton-line skeleton-line--section-title" />
+            <div class="skeleton-tags">
+              <span
+                v-for="tag in 8"
+                :key="`tag-${tag}`"
+                class="skeleton skeleton-tag"
+              />
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section
+        v-for="section in 3"
+        :key="`portfolio-section-${section}`"
+        class="skeleton-section"
+      >
+        <div class="skeleton-section__header">
+          <span class="skeleton skeleton-line skeleton-line--section-heading" />
+          <span class="skeleton skeleton-button" />
+        </div>
+        <div class="skeleton-card-grid">
+          <article
+            v-for="card in 3"
+            :key="`section-${section}-card-${card}`"
+            class="skeleton-card"
+          >
+            <span class="skeleton skeleton-line skeleton-line--card-title" />
+            <span class="skeleton skeleton-line" />
+            <span class="skeleton skeleton-line skeleton-line--copy-2" />
+            <span class="skeleton skeleton-line skeleton-line--copy-3" />
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div
+    v-else
     class="portfolio"
   >
     <div class="portfolio__banner" />
+    <BaseNotification
+      :message="notification.message"
+      :type="notification.type"
+      @close="clearNotification"
+    />
 
     <main>
       <BaseError v-if="portfolioStore.error">
@@ -450,6 +788,16 @@ async function handleAiFiltersDetected(filters) {
               :stroke-width="1.55"
             />
           </div>
+          <div
+            v-if="isOwnPortfolio"
+            class="profile__photo-overlay"
+          >
+            <Camera
+              :size="22"
+              :stroke-width="2"
+            />
+            <span>Change photo</span>
+          </div>
           <input
             v-if="isOwnPortfolio"
             ref="profilePhotoInput"
@@ -474,7 +822,7 @@ async function handleAiFiltersDetected(filters) {
           <h2 class="name">
             {{ profileName }}
           </h2>
-          <span>{{ profileHeadline }}</span>
+          <span class="profile__headline">{{ profileHeadline }}</span>
           <div class="statistics">
             <div>
               <span>Followers</span>
@@ -496,7 +844,11 @@ async function handleAiFiltersDetected(filters) {
             <button class="follow-button">
               Follow
             </button>
-            <button class="recommend-button">
+            <button
+              type="button"
+              class="recommend-button"
+              @click="openRecommendationModal"
+            >
               Recommend
             </button>
           </div>
@@ -505,17 +857,25 @@ async function handleAiFiltersDetected(filters) {
       <div
         v-if="portfolioUserId"
         class="about"
+        :class="{ 'about--solo': !hasProfileDetails }"
       >
         <AboutMe :user-id="portfolioUserId" />
-        <div class="education-skills-wrapper">
+        <div
+          v-if="hasProfileDetails"
+          class="education-skills-wrapper"
+        >
           <PortfolioEducation
+            v-if="shouldShowEducation"
             :user-id="portfolioUserId"
-            :items="portfolio?.education ?? []"
+            :items="educationItems"
+            :can-add="isOwnPortfolio"
+            @add-education="openSchoolModal"
           />
           <PortfolioSkills
+            v-if="shouldShowSkills"
             :user-id="portfolioUserId"
-            :skills="portfolio?.skills ?? []"
-            :domains="portfolio?.domains ?? []"
+            :skills="skillItems"
+            :domains="domainItems"
           />
         </div>
       </div>
@@ -529,10 +889,6 @@ async function handleAiFiltersDetected(filters) {
           @add-project="openExperienceModal('project')"
           @edit-project="project => openEditExperienceModal('project', project)"
         />
-
-        <BaseError v-if="experienceErrors.project">
-          {{ experienceErrors.project }}
-        </BaseError>
       </div>
       <div
         v-if="shouldShowInternshipSection"
@@ -544,10 +900,6 @@ async function handleAiFiltersDetected(filters) {
           @add-internship="openExperienceModal('internship')"
           @edit-internship="internship => openEditExperienceModal('internship', internship)"
         />
-
-        <BaseError v-if="experienceErrors.internship">
-          {{ experienceErrors.internship }}
-        </BaseError>
       </div>
       <div
         v-if="shouldShowActivitySection || shouldShowCertificationSection"
@@ -564,10 +916,6 @@ async function handleAiFiltersDetected(filters) {
             @edit-activity="activity => openEditExperienceModal('activity', activity)"
             @update-max-card-height="updateActivityMaxCardHeight"
           />
-
-          <BaseError v-if="experienceErrors.activity">
-            {{ experienceErrors.activity }}
-          </BaseError>
         </div>
 
         <div
@@ -581,10 +929,6 @@ async function handleAiFiltersDetected(filters) {
             @add-certification="openExperienceModal('certificate')"
             @edit-certification="certification => openEditExperienceModal('certificate', certification)"
           />
-
-          <BaseError v-if="experienceErrors.certificate">
-            {{ experienceErrors.certificate }}
-          </BaseError>
         </div>
       </div>
       <RecommendationsSection
@@ -610,6 +954,15 @@ async function handleAiFiltersDetected(filters) {
       @close="isQRModalOpen = false"
     />
 
+    <PortfolioRecommendationModal
+      :open="isRecommendationModalOpen"
+      :portfolio-owner-name="profileName"
+      :recommender-name="recommenderName"
+      :recommender-role="recommenderRole"
+      @close="closeRecommendationModal"
+      @submit="handlePortfolioRecommendationSubmit"
+    />
+
     <ExperienceModal
       v-if="isOwnPortfolio"
       :open="experienceModal.open"
@@ -621,12 +974,39 @@ async function handleAiFiltersDetected(filters) {
       :professor-emails="professorEmails"
       @close="closeExperienceModal"
       @submit="handleExperienceSubmit"
+      @delete="openDeleteConfirm"
+    />
+    <ConfirmDialog
+      :open="isDeleteConfirmOpen"
+      title="Delete experience?"
+      message="This experience will be permanently removed from your portfolio."
+      confirm-text="Delete"
+      :loading="isExperienceSubmitting"
+      @cancel="closeDeleteConfirm"
+      @confirm="handleExperienceDelete"
+    />
+
+    <SchoolPathModal
+      v-if="isOwnPortfolio"
+      :open="isSchoolModalOpen"
+      :schools="institutionStore.institutions"
+      @close="isSchoolModalOpen = false"
+      @complete="completeSchoolPath"
+    />
+
+    <ImageCropperModal
+      :open="Boolean(selectedProfilePhotoFile)"
+      :file="selectedProfilePhotoFile"
+      title="Crop profile photo"
+      :output-width="760"
+      :output-height="820"
+      @close="closeProfilePhotoCropper"
+      @crop="handleProfilePhotoCropped"
     />
   </div>
   <div class="ai-orb-container">
     <AiOrb @filters-detected="handleAiFiltersDetected" />
   </div>
-
 </template>
 
 <style scoped>
@@ -651,6 +1031,10 @@ async function handleAiFiltersDetected(filters) {
   overflow-x: hidden;
 }
 
+.portfolio--loading {
+  min-height: 100vh;
+}
+
 .portfolio main {
 	--portfolio-padding-inline: clamp(var(--space-md), 12vw, calc(var(--space-xl) * 5));
   --portfolio-section-gap: clamp(calc(var(--space-xl) * 2), 7vw, calc(var(--space-xl) * 3));
@@ -662,6 +1046,7 @@ async function handleAiFiltersDetected(filters) {
 }
 
 .profile {
+  margin-top: var(--space-md);
 	display: flex;
 	gap: 2.5rem;
 }
@@ -678,6 +1063,7 @@ async function handleAiFiltersDetected(filters) {
 	background-color: var(--color-surface);
 	border-radius: 42%;
 	border: 1px solid var(--color-background);
+  box-shadow: 0 18px 38px rgba(var(--color-primary-rgb), 0.12);
 }
 
 .profile__photo img {
@@ -689,13 +1075,48 @@ async function handleAiFiltersDetected(filters) {
 	object-position: center top;
 }
 
+.profile__photo img,
+.profile__photo-fallback {
+  transition: filter 220ms ease;
+}
+
 .profile__photo--editable {
   cursor: pointer;
 }
 
-.profile__photo--editable:hover img,
-.profile__photo--editable:hover .profile__photo-fallback {
-  filter: brightness(0.94);
+.profile__photo--editable:hover:not(:has(.qr-button:hover)) img,
+.profile__photo--editable:hover:not(:has(.qr-button:hover)) .profile__photo-fallback {
+  filter: saturate(1.04) contrast(1.02);
+}
+
+.profile__photo-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 0.35rem;
+  align-content: center;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--color-primary-rgb), 0.04),
+      rgba(var(--color-primary-rgb), 0.52)
+    );
+  color: var(--color-background);
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.35rem);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.profile__photo--editable:hover:not(:has(.qr-button:hover)) .profile__photo-overlay {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .profile__photo-input {
@@ -731,6 +1152,11 @@ async function handleAiFiltersDetected(filters) {
 	padding: var(--space-sm) 0;
 }
 
+.profile__info--skeleton {
+  width: min(100%, 25rem);
+  gap: var(--space-sm);
+}
+
 .name {
 	margin: 0;
 	font-size: calc(var(--font-size-lg));
@@ -739,8 +1165,11 @@ async function handleAiFiltersDetected(filters) {
 	line-height: 1;
 }
 
-.profile__info > span {
+.profile__headline {
+	display: block;
+	min-height: var(--font-size-xs);
 	font-size: var(--font-size-xs);
+	line-height: 1;
 	color: rgba(var(--color-primary-rgb), 0.7);
 }
 
@@ -776,10 +1205,22 @@ async function handleAiFiltersDetected(filters) {
 	color: var(--color-primary);
 }
 
+.statistics--skeleton {
+  justify-content: flex-start;
+}
+
+.statistics--skeleton > div {
+  width: 6.5rem;
+}
+
 .about {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: var(--space-lg);
+}
+
+.about--solo {
+	grid-template-columns: 1fr;
 }
 
 .actions {
@@ -806,6 +1247,7 @@ async function handleAiFiltersDetected(filters) {
 	white-space: nowrap;
 	background: var(--color-background);
 	cursor: pointer;
+  z-index: 2;
 	transition: transform var(--transition-fast);
 }
 
@@ -874,13 +1316,164 @@ async function handleAiFiltersDetected(filters) {
   column-gap: calc(var(--space-xl) * 2);
   row-gap: var(--portfolio-section-gap);
 }
+
+.skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--color-primary-rgb), 0.08);
+}
+
+.profile__photo.skeleton {
+  border-radius: 42%;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--color-background-rgb), 0.72),
+    transparent
+  );
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.skeleton-line {
+  width: 100%;
+  height: 0.85rem;
+}
+
+.skeleton-line--name {
+  width: min(15rem, 78%);
+  height: 1.6rem;
+}
+
+.skeleton-line--headline {
+  width: min(20rem, 92%);
+}
+
+.skeleton-line--stat-label {
+  width: 5.6rem;
+  height: 0.65rem;
+}
+
+.skeleton-line--stat-value {
+  width: 2.4rem;
+  height: 1.25rem;
+}
+
+.skeleton-line--section-title,
+.skeleton-line--section-heading {
+  width: min(13rem, 70%);
+  height: 1.85rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-line--section-heading {
+  height: 2.2rem;
+}
+
+.skeleton-line--card-title {
+  width: 72%;
+  height: 1.15rem;
+}
+
+.skeleton-line--copy-1 {
+  width: 94%;
+}
+
+.skeleton-line--copy-2 {
+  width: 82%;
+}
+
+.skeleton-line--copy-3 {
+  width: 64%;
+}
+
+.skeleton-line--copy-4 {
+  width: 74%;
+}
+
+.skeleton-panel {
+  display: flex;
+  min-height: 17rem;
+  flex-direction: column;
+  gap: var(--space-md);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  padding-block: var(--space-sm) var(--space-xl);
+}
+
+.skeleton-panel--compact {
+  min-height: 8.5rem;
+}
+
+.skeleton-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.skeleton-tag {
+  width: 5.5rem;
+  height: 1.7rem;
+  border-radius: 999px;
+}
+
+.skeleton-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  padding-bottom: var(--space-xl);
+}
+
+.skeleton-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.skeleton-button {
+  width: 7.25rem;
+  height: 2.1rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-lg);
+}
+
+.skeleton-card {
+  display: flex;
+  min-height: 10.5rem;
+  flex-direction: column;
+  gap: var(--space-md);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-surface-rgb), 0.28);
+  padding: var(--space-lg);
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
 .ai-orb-container {
   position: fixed;
   right: 2rem;
   bottom: 2rem;
   width: 64px;
   height: 64px;
-  z-index: 999;
+  z-index: 700;
   overflow: visible;
 }
 
@@ -900,6 +1493,14 @@ async function handleAiFiltersDetected(filters) {
 		grid-template-columns: 1fr;
 		gap: var(--space-lg);
 	}
+
+  .profile__info--skeleton {
+    align-items: center;
+  }
+
+  .skeleton-card-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -930,6 +1531,15 @@ async function handleAiFiltersDetected(filters) {
   .qr-button {
     font-size: 10px;
     padding-inline: 0.7rem 0.85rem;
+  }
+
+  .skeleton-section__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .skeleton-button {
+    width: 6.5rem;
   }
 }
 

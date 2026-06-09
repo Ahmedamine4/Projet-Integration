@@ -1,5 +1,5 @@
 <script setup>
-import { MapPin, CalendarDays, Eye, EyeOff } from 'lucide-vue-next';
+import { MapPin, CalendarDays, Eye, EyeOff, Sparkles } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 import ExploreButton from '@/components/portfolio/shared/ExploreButton.vue';
@@ -19,6 +19,10 @@ const emit = defineEmits(['edit']);
 
 const canEditExperience = computed(() => {
   return props.canEdit && props.activity.validationStatus !== 'refuse';
+});
+
+const isVisibleHighlight = computed(() => {
+  return Boolean(props.activity.highlighted && props.activity.effectiveVisibleToEveryone);
 });
 
 function formatDate(date) {
@@ -46,9 +50,25 @@ const { handleDoubleTap } = useDoubleTap(() => {
 <template>
   <article
     class="activity-card"
+    :class="{
+      'activity-card--hidden': !activity.effectiveVisibleToEveryone,
+      'activity-card--highlighted': isVisibleHighlight,
+    }"
     @dblclick="canEditExperience && emit('edit', activity)"
     @click="handleDoubleTap"
   >
+    <div
+      v-if="isVisibleHighlight"
+      class="activity-match-badge"
+      title="Matched by the current filter"
+    >
+      <Sparkles
+        :size="14"
+        :stroke-width="2.2"
+      />
+      <span>{{ activity.score ? `${activity.score}% match` : 'Match' }}</span>
+    </div>
+
     <div class="activity-top">
       <div class="activity-info">
         <div class="activity-kicker">
@@ -189,6 +209,23 @@ const { handleDoubleTap } = useDoubleTap(() => {
   flex-direction: column;
   gap: 1.1rem;
   padding: var(--space-xl);
+  background: transparent;
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  user-select: none;
+  transition:
+    filter var(--transition-fast),
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+.activity-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   background:
     radial-gradient(
       circle at top right,
@@ -200,11 +237,82 @@ const { handleDoubleTap } = useDoubleTap(() => {
       var(--color-surface) 30%,
       var(--color-background)    
     );
-  border: var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  user-select: none;
+  pointer-events: none;
+}
+
+.activity-card--hidden::before {
+  filter: grayscale(1) saturate(0);
+}
+
+.activity-card--highlighted {
+  --border: 1px solid rgba(var(--color-secondary-rgb), 0.55);
+  box-shadow:
+    0 12px 22px rgba(var(--color-secondary-rgb), 0.14),
+    0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
+}
+
+.activity-card--highlighted::before {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(var(--color-secondary-rgb), 0.14),
+      transparent 36%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(var(--color-secondary-rgb), 0.12),
+      rgba(var(--color-surface-rgb), 0.46) 46%,
+      rgba(var(--color-background-rgb), 0.84)
+    );
+}
+
+.activity-card--highlighted:hover {
+  transform: scale(1.008);
+  box-shadow:
+    0 14px 26px rgba(var(--color-secondary-rgb), 0.18),
+    0 1.6rem 3.8rem rgba(0, 0, 0, 0.12);
+}
+
+.activity-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.activity-card--hidden :is(
+  .activity-image,
+  .activity-tags span,
+  .activity-match-badge,
+  .activity-kicker > :not(.activity-validation-status),
+  .activity-info h3,
+  .activity-details,
+  .activity-description,
+  .activity-meta
+) {
+  filter: grayscale(1) saturate(0);
+}
+
+.activity-match-badge {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.44);
+  border-radius: 999px;
+  padding: 0.38rem 0.58rem;
+  background: var(--color-background);
+  color: var(--color-primary);
+  box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.activity-match-badge svg {
+  color: var(--color-secondary);
+  flex-shrink: 0;
 }
 
 .activity-top {

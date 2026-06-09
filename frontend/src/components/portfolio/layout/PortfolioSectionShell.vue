@@ -148,4 +148,10 @@ const emit = defineEmits(['add']);
     font-size: 2.15rem;
   }
 }
+
+@media (max-width: 640px) {
+  .portfolio-section-title {
+    font-size: 1.75rem;
+  }
+}
 </style>

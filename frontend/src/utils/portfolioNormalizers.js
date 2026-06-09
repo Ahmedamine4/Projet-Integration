@@ -63,6 +63,10 @@ export function normalizeProject(item) {
     technologies: project.technologies ?? getCompetenceNames(experience, 'technologie'),
     domains: project.domains ?? getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.photo ?? project.photo ?? experience.documentations?.[0]?.captures ?? '',
+    highlighted: Boolean(item?.highlighted ?? experience.highlighted),
+    score: item?.score ?? experience.score ?? 0,
+    techCount: item?.techCount ?? experience.techCount ?? 0,
+    domaineCount: item?.domaineCount ?? experience.domaineCount ?? 0,
     ...validationState,
   };
 }
@@ -88,6 +92,10 @@ export function normalizeActivity(item) {
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.photo ?? experience.documentations?.[0]?.captures ?? '',
+    highlighted: Boolean(item?.highlighted ?? experience.highlighted),
+    score: item?.score ?? experience.score ?? 0,
+    techCount: item?.techCount ?? experience.techCount ?? 0,
+    domaineCount: item?.domaineCount ?? experience.domaineCount ?? 0,
     ...validationState,
   };
 }
@@ -109,6 +117,10 @@ export function normalizeCertification(item) {
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
     imagePreview: experience.photo ?? experience.documentations?.[0]?.captures ?? '',
+    highlighted: Boolean(item?.highlighted ?? experience.highlighted),
+    score: item?.score ?? experience.score ?? 0,
+    techCount: item?.techCount ?? experience.techCount ?? 0,
+    domaineCount: item?.domaineCount ?? experience.domaineCount ?? 0,
   };
 }
 
@@ -203,6 +215,9 @@ export function normalizePortfolio(data) {
   const certifications = (data?.certifications ?? []).map(normalizeCertification);
   const internships = (data?.stages ?? []).map(normalizeInternship);
   const experiences = [...projects, ...activities, ...certifications, ...internships];
+  const visibleSkillSources = experiences.filter((item) =>
+    item.effectiveVisibleToEveryone ?? item.visibleToEveryone
+  );
 
   return {
     id: data?.etudiant_utilisateur_id ?? user.utilisateur_id ?? '',
@@ -219,7 +234,7 @@ export function normalizePortfolio(data) {
     },
     headline: data?.niveau
       ? `${data.niveau} Student`
-      : 'Student',
+      : '',
     school: data?.institutions?.[0]?.institution?.nom ?? '',
     portfolio: data?.portfolio ?? null,
     badges: data?.badges ?? [],
@@ -228,8 +243,8 @@ export function normalizePortfolio(data) {
     internships,
     activities,
     certifications,
-    skills: sortByFrequency(experiences.flatMap((item) => item.technologies ?? [])),
-    domains: sortByFrequency(experiences.flatMap((item) => item.domains ?? [])),
+    skills: sortByFrequency(visibleSkillSources.flatMap((item) => item.technologies ?? [])),
+    domains: sortByFrequency(visibleSkillSources.flatMap((item) => item.domains ?? [])),
     recommendations: (data?.recommandations ?? []).map(normalizeRecommendation),
   };
 }

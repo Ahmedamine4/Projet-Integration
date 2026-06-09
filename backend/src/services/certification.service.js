@@ -1,30 +1,17 @@
 import prisma from '../config/prisma.js';
-import { supabase } from '../config/supabase.js';
+import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
 
-export const uploadPhoto = async (file) => {
-  const fileName = `${Date.now()}_${file.originalname}`;
 
-  const { error } = await supabase.storage
-    .from('certifications-photos')
-    .upload(fileName, file.buffer, { contentType: file.mimetype });
-
-  if (error) throw new Error('Erreur upload photo : ' + error.message);
-
-  const { data } = supabase.storage
-    .from('certifications-photos')
-    .getPublicUrl(fileName);
-
-  return data.publicUrl;
-};
-
-export const creeCertification = async (etudiantId, data, photoUrl) => {
+export const creeCertification = async (etudiantId, data, file) => {
   const certExistante = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'certification', titre: data.titre },
   });
   if (certExistante) throw new Error('Certification déjà existante');
 
   const competences = JSON.parse(data.competences || '[]');
+
+  const photoUrl = file ? await uploadPhoto(file, 'certifications-photos') : null;
 
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.create({
@@ -39,11 +26,11 @@ export const creeCertification = async (etudiantId, data, photoUrl) => {
       },
     });
 
-    const certification = await tx.certification.create({
+    await tx.certification.create({
       data: {
         experience_id: experience.experience_id,
-        code: data.code ,
-        lien_URL: data.credentialUrl ,
+        code: data.code,
+        lien_URL: data.credentialUrl,
       },
     });
 
@@ -85,7 +72,7 @@ export const getCertificationsByEtudiant = async (etudiantId) => {
   });
 };
 
-export const editCertification = async (etudiantId, experienceId, data, photoUrl) => {
+export const editCertification = async (etudiantId, experienceId, data, file) => {
   const certExistante = await prisma.experience.findFirst({
     where: {
       utilisateur_id: etudiantId,
@@ -95,6 +82,15 @@ export const editCertification = async (etudiantId, experienceId, data, photoUrl
     },
   });
   if (certExistante) throw new Error('Certification déjà existante');
+
+  const experienceActuelle = await prisma.experience.findFirst({
+    where: { experience_id: experienceId },
+    select: { photo: true },
+  });
+
+  const photoUrl = file
+    ? await remplacerPhoto(file, experienceActuelle?.photo, 'certifications-photos')
+    : null;
 
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.findFirst({
@@ -148,6 +144,23 @@ export const editCertification = async (etudiantId, experienceId, data, photoUrl
         },
       },
     });
+  });
+};
+
+export const supprimerCertificationService = async (etudiantId, experienceId) => {
+  const experience = await prisma.experience.findFirst({
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'certification' },
+    select: { photo: true },
+  });
+
+  if (!experience) throw new Error('Certification non trouvée');
+
+  
+  await supprimerPhoto(experience.photo, 'certifications-photos');
+
+  
+  await prisma.experience.delete({
+    where: { experience_id: experienceId },
   });
 };
 

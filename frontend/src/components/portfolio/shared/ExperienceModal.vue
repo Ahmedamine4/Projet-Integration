@@ -9,6 +9,7 @@ import BaseLabels from '@/components/common/forms/BaseLabels.vue';
 import ToggleSwitch from '@/components/common/forms/ToggleSwitch.vue';
 import ImageDropzone from '@/components/common/forms/ImageDropzone.vue';
 import CloseButton from '@/components/common/actions/CloseButton.vue';
+import DeleteButton from '@/components/common/actions/DeleteButton.vue';
 import BaseSelect from '@/components/common/forms/BaseSelect.vue';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
@@ -52,7 +53,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['close', 'submit']);
+const emit = defineEmits(['close', 'submit', 'delete']);
 
 const experienceConfigs = {
   project: {
@@ -63,6 +64,8 @@ const experienceConfigs = {
     imageLabel: 'screenshot',
     imageAccept: 'image/*',
     imageRequired: true,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: true,
     showAcademic: true,
     showTags: true,
@@ -78,6 +81,8 @@ const experienceConfigs = {
     imageLabel: 'photo',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
     showAcademic: true,
     showTags: true,
@@ -93,6 +98,8 @@ const experienceConfigs = {
     imageLabel: 'photo',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
     showAcademic: true,
     showTags: true,
@@ -108,6 +115,8 @@ const experienceConfigs = {
     imageLabel: 'screenshot',
     imageAccept: 'image/*',
     imageRequired: false,
+    cropWidth: 1280,
+    cropHeight: 720,
     showGithub: false,
     showAcademic: false,
     showTags: true,
@@ -180,14 +189,22 @@ function resetForm() {
 
 function fillForm() {
   const value = props.initialValue;
+  isHydratingForm.value = true;
   resetForm();
-  if (!value) return;
+  if (!value) {
+    isHydratingForm.value = false;
+    return;
+  }
   Object.keys(form).forEach(key => {
     if (value[key] !== undefined) form[key] = value[key];
   });
   technologies.value = createSelectableItems(value.technologies ?? []);
   domains.value = createSelectableItems(value.domains ?? []);
   resetErrors();
+
+  nextTick(() => {
+    isHydratingForm.value = false;
+  });
 }
 
 const createSelectableItems = (items = []) =>
@@ -198,6 +215,7 @@ const createSelectableItems = (items = []) =>
 
 const technologies = ref([]);
 const domains = ref([]);
+const isHydratingForm = ref(false);
 
 let descriptionTypingTimer = null;
 
@@ -207,6 +225,59 @@ const toggleLabel = (item) => {
 
 const getSelectedNames = (items) =>
   items.filter((item) => item.selected).map((item) => item.name);
+
+const normalizeList = (items = []) => [...items].filter(Boolean).sort((a, b) => a.localeCompare(b));
+
+const normalizeComparableValue = (value) => {
+  if (Array.isArray(value)) return normalizeList(value);
+  if (typeof value === 'string') return value.trim();
+  return value ?? '';
+};
+
+function getComparableExperience(source = {}, config = currentConfig.value) {
+  const sourceTechnologies = source === form
+    ? getSelectedNames(technologies.value)
+    : source.technologies ?? [];
+  const sourceDomains = source === form
+    ? getSelectedNames(domains.value)
+    : source.domains ?? [];
+  const isAcademicExperience = config.showAcademic && Boolean(source.isAcademic);
+
+  return {
+    title: normalizeComparableValue(source.title),
+    date: normalizeComparableValue(config.dateMode === 'range' ? source.startDate : source.date),
+    startDate: normalizeComparableValue(source.startDate),
+    endDate: normalizeComparableValue(source.endDate),
+    description: normalizeComparableValue(source.description),
+    technologies: config.showTags ? normalizeList(sourceTechnologies) : [],
+    domains: config.showTags ? normalizeList(sourceDomains) : [],
+    githubLink: config.showGithub ? normalizeComparableValue(source.githubLink) : '',
+    certificateURL: config.showCertificateFields ? normalizeComparableValue(source.certificateURL) : '',
+    certificateCode: config.showCertificateFields ? normalizeComparableValue(source.certificateCode) : '',
+    isAcademic: isAcademicExperience,
+    institution: isAcademicExperience ? normalizeComparableValue(source.institution) : '',
+    teacherEmail: isAcademicExperience && requiresAcademicTeacher.value
+      ? normalizeComparableValue(source.teacherEmail)
+      : '',
+    activityType: config.showActivityFields ? normalizeComparableValue(source.activityType) : '',
+    location: config.showActivityFields ? normalizeComparableValue(source.location) : '',
+    club: config.showActivityFields ? normalizeComparableValue(source.club) : '',
+    missions: config.showMissions ? normalizeComparableValue(source.missions) : '',
+    report: config.showMissions ? normalizeComparableValue(source.report) : '',
+    visibleToEveryone: Boolean(source.visibleToEveryone),
+    hasNewImage: source === form ? Boolean(source.image) : false,
+  };
+}
+
+const hasEditChanges = computed(() => {
+  if (!isEdit.value || !props.initialValue) return true;
+
+  const config = currentConfig.value;
+  const current = getComparableExperience(form, config);
+  const initial = getComparableExperience(props.initialValue, config);
+
+  return JSON.stringify(current) !== JSON.stringify(initial);
+});
 
 const resetDetectedTags = () => {
   technologies.value = [];
@@ -267,6 +338,7 @@ watch(
   () => form.description,
   (description) => {
     clearTimeout(descriptionTypingTimer);
+    if (isHydratingForm.value) return;
 
     if (description.trim().length < 20) {
       resetDetectedTags();
@@ -282,6 +354,19 @@ onUnmounted(() => {
 });
 
 const todayValue = computed(() => formatLocalDate(new Date()));
+const formBodyRef = ref(null);
+const errorFieldOrder = [
+  'title',
+  'date',
+  'startDate',
+  'endDate',
+  'image',
+  'description',
+  'certificateURL',
+  'githubLink',
+  'institution',
+  'teacherEmail',
+];
 
 function invalidDateRange(startDate, endDate) {
   return (
@@ -291,7 +376,23 @@ function invalidDateRange(startDate, endDate) {
   );
 }
 
+async function scrollToFirstError() {
+  await nextTick();
+
+  const firstErrorKey = errorFieldOrder.find((key) => errors[key]);
+  const formBody = formBodyRef.value;
+  if (!firstErrorKey || !formBody) return;
+
+  const field = formBody.querySelector(`[data-error-field="${firstErrorKey}"]`);
+  if (!field) return;
+
+  const focusTarget = field.querySelector('input, textarea, button, [tabindex]:not([tabindex="-1"])');
+  focusTarget?.focus?.({ preventScroll: false });
+}
+
 const submitExperience = () => {
+  if (isEdit.value && !hasEditChanges.value) return;
+
   resetErrors();
 
   const config = currentConfig.value;
@@ -354,7 +455,10 @@ const submitExperience = () => {
       errors.teacherEmail = 'Select a valid teacher email';
   }
 
-  if (hasErrors()) return;
+  if (hasErrors()) {
+    scrollToFirstError();
+    return;
+  }
 
   emit('submit', {
     title: trimmedTitle,
@@ -469,6 +573,7 @@ const existingImageName = computed(() => {
     <div
       v-if="open"
       class="modal-overlay"
+      @click.self="emit('close')"
     >
       <div class="modal-card">
         <div class="modal-card__header">
@@ -486,7 +591,10 @@ const existingImageName = computed(() => {
           class="experience-form"
           @submit.prevent="submitExperience"
         >
-          <div class="experience-form__body">
+          <div
+            ref="formBodyRef"
+            class="experience-form__body"
+          >
             <ModificationRequest
               v-if="
                 props.mode === 'edit' &&
@@ -497,7 +605,10 @@ const existingImageName = computed(() => {
             >
               {{ message.content }}
             </ModificationRequest>
-            <div class="field">
+            <div
+              class="field"
+              data-error-field="title"
+            >
               <BaseInput
                 v-model="form.title"
                 :label="`${capitalizedType} title`"
@@ -514,6 +625,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.dateMode === 'single'"
               class="field"
+              data-error-field="date"
             >
               <DatePicker
                 v-model="form.date"
@@ -534,7 +646,10 @@ const existingImageName = computed(() => {
               v-else
               class="form-group"
             >
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="startDate"
+              >
                 <DatePicker
                   v-model="form.startDate"
                   label="Start date"
@@ -549,7 +664,10 @@ const existingImageName = computed(() => {
                 </BaseError>
               </div>
 
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="endDate"
+              >
                 <DatePicker
                   v-model="form.endDate"
                   label="End date"
@@ -568,6 +686,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.showImageUpload"
               class="field"
+              data-error-field="image"
             >
               <ImageDropzone
                 v-model="form.image"
@@ -575,6 +694,8 @@ const existingImageName = computed(() => {
                 :accept="currentConfig.imageAccept"
                 :initial-preview-url="existingImagePreview"
                 :initial-file-name="existingImageName"
+                :crop-width="currentConfig.cropWidth"
+                :crop-height="currentConfig.cropHeight"
               />
               <BaseError
                 v-if="errors.image"
@@ -584,7 +705,10 @@ const existingImageName = computed(() => {
               </BaseError>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+              data-error-field="description"
+            >
               <div class="form-group-textarea">
                 <label for="description">Description</label>
                 <textarea
@@ -703,7 +827,10 @@ const existingImageName = computed(() => {
                 />
               </div>
 
-              <div class="field">
+              <div
+                class="field"
+                data-error-field="certificateURL"
+              >
                 <BaseInput
                   v-model="form.certificateURL"
                   label="Certificate URL"
@@ -730,6 +857,7 @@ const existingImageName = computed(() => {
             <div
               v-if="currentConfig.showGithub"
               class="field"
+              data-error-field="githubLink"
             >
               <BaseInput
                 v-model="form.githubLink"
@@ -758,7 +886,10 @@ const existingImageName = computed(() => {
                   v-if="form.isAcademic"
                   class="academic-form-group"
                 >
-                  <div class="institution-field">
+                  <div
+                    class="institution-field"
+                    data-error-field="institution"
+                  >
                     <BaseSelect
                       v-model="form.institution"
                       :options="schoolOptions"
@@ -775,6 +906,7 @@ const existingImageName = computed(() => {
                   <div
                     v-if="requiresAcademicTeacher"
                     class="field"
+                    data-error-field="teacherEmail"
                   >
                     <BaseDropdown
                       v-model="form.teacherEmail"
@@ -801,21 +933,33 @@ const existingImageName = computed(() => {
           </div>
 
           <div class="experience-form__footer">
-            <BaseButton
+            <DeleteButton
+              v-if="isEdit"
               type="button"
-              variant="ghost"
-              @click="$emit('close')"
+              :disabled="loading"
+              @click="emit('delete')"
             >
-              Cancel
-            </BaseButton>
+              Delete
+            </DeleteButton>
+            <div class="experience-form__footer-actions">
+              <BaseButton
+                type="button"
+                variant="ghost"
+                :disabled="loading"
+                @click="$emit('close')"
+              >
+                Cancel
+              </BaseButton>
 
-            <BaseButton
-              type="submit"
-              variant="submit"
-              :loading
-            >
-              {{ isEdit ? 'Save changes' : `Submit ${props.type}` }}
-            </BaseButton>
+              <BaseButton
+                type="submit"
+                variant="submit"
+                :loading
+                :disabled="isEdit && !hasEditChanges"
+              >
+                {{ isEdit ? 'Save changes' : `Submit ${props.type}` }}
+              </BaseButton>
+            </div>
           </div>
         </form>
       </div>
@@ -916,6 +1060,7 @@ const existingImageName = computed(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scroll-behavior: smooth;
   display: grid;
   gap: var(--modal-field-gap);
   padding: var(--modal-edge-space);
@@ -1025,10 +1170,16 @@ textarea:focus {
   z-index: 10;
   flex-shrink: 0;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--space-sm);
   padding: var(--space-md) var(--modal-edge-space);
   border-top: 1px solid rgba(var(--color-primary-rgb), 0.12);
+}
+
+.experience-form__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
 }
 
 .experience-form__footer::before {

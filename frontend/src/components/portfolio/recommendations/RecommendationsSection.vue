@@ -296,12 +296,14 @@ onMounted(() => {
 
 .recommendations-track {
   display: flex;
+  align-items: stretch;
   width: max-content;
   gap: var(--space-lg);
 }
 
 .recommendations-loop-set {
   display: flex;
+  align-items: stretch;
   gap: var(--space-lg);
 }
 
@@ -309,7 +311,7 @@ onMounted(() => {
   animation: recommendations-marquee 42s linear infinite;
 }
 
-.recommendations-frame--moving:hover .recommendations-track {
+.recommendations-frame--moving .recommendations-scroller:hover .recommendations-track {
   animation-play-state: paused;
 }
 

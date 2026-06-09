@@ -3,7 +3,7 @@ export const placeholderRecommendations = [
     id: 'placeholder-rec-1',
     authorName: 'Mohammed Gailani',
     authorRole: 'Computer Science Professor',
-    content: 'Moussa brings clear thinking, steady execution, and strong technical curiosity to project work. He communicates progress well and follows through on feedback.',
+    content: 'Moussa brings clear thinking, steady execution, and strong technical curiosity to project work. He communicates progress well and turns ambiguous briefs into working prototypes with care.',
     date: '2026-04-16',
   },
   {
@@ -17,7 +17,7 @@ export const placeholderRecommendations = [
     id: 'placeholder-rec-3',
     authorName: 'Youssef Bennani',
     authorRole: 'Project Supervisor',
-    content: 'Moussa consistently demonstrates initiative, asks precise questions, and improves his work through iteration. He would be a strong contributor in collaborative teams.',
+    content: 'Moussa demonstrates initiative, asks precise questions, and improves his work through iteration. He turns feedback into cleaner flows and more reliable behavior.',
     date: '2026-02-12',
   },
   {
