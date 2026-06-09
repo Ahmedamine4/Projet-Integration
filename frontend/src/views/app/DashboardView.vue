@@ -57,12 +57,6 @@ const personalProjects = ref([
     }
 ])
 
-const statusOrder = {
-    accepted: 1,
-    pending: 2,
-    rejected: 3
-}
-
 const selectedStatus=ref ('');
 
 
@@ -207,27 +201,29 @@ const scoreHistory = [
 
     <section class="section">
       <div class="section-header">
-    <h2>Demandes envoyées</h2>
+        <h2>Demandes envoyées</h2>
 
-    <div class="right-side">
-      <div class="filter-container">
-        <label>Filtrer par statut :</label>
+        <div class="right-side">
+          <div class="filter-container">
+            <label>Filtrer par statut :</label>
 
-        <Filtre
-            class="status-filter" placeholder style="padding-left: 28px;"
-          v-model="selectedStatus"
-          :options="[
-            'all',
-            'accepted',
-            'pending',
-            'rejected'
-          ]"
-        />
+            <Filtre
+              v-model="selectedStatus"
+              class="status-filter"
+              placeholder
+              style="padding-left: 28px;"
+              :options="[
+                'all',
+                'accepted',
+                'pending',
+                'rejected'
+              ]"
+            />
+          </div>
+
+          <span>{{ sortedRequests.length }}</span>
+        </div>
       </div>
-
-      <span>{{ sortedRequests.length }}</span>
-    </div>
-  </div>
         
       <div class="table-responsive">
         <table class="data-table">

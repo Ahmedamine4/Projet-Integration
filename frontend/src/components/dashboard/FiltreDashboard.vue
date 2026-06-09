@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, useAttrs } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Input from '@/components/common/forms/BaseInput.vue';
 import { Filter } from 'lucide-vue-next';
 
@@ -69,7 +69,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="dropdownElement" class="dropdown" :class="{ 'dropdown--open': isOpen }">
+  <div
+    ref="dropdownElement"
+    class="dropdown"
+    :class="{ 'dropdown--open': isOpen }"
+  >
     <Input
       v-model="model"
       v-bind="$attrs"
@@ -78,25 +82,38 @@ onBeforeUnmount(() => {
       @click="isOpen = !isOpen"
     />
 
-    <Filter class="dropdown__filter-icon" :size="16" />
+    <Filter
+      class="dropdown__filter-icon"
+      :size="16"
+    />
     
-    <svg class="dropdown__chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="m6 9 6 6 6-6"/>
+    <svg
+      class="dropdown__chevron"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m6 9 6 6 6-6" />
     </svg>
 
     <Transition name="popover">
       <div
-        class="dropdown__list"
         v-if="shouldShowOptions"
+        class="dropdown__list"
         :style="{ '--visible-options': visibleOptions }"
       >
         <button
-          class="dropdown__option"
           v-for="option in filteredOptions"
           :key="option"
+          class="dropdown__option"
           type="button"
-          @click="selectOption(option)"
           :class="{ 'dropdown__option--active': option === model }"
+          @click="selectOption(option)"
         >
           {{ option }}
         </button>

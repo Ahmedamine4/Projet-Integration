@@ -58,7 +58,10 @@ const pages = computed(() => {
 </script>
 
 <template>
-  <nav class="pagination" aria-label="Pagination">
+  <nav
+    class="pagination"
+    aria-label="Pagination"
+  >
     <!-- Prev arrow -->
     <button
       type="button"
@@ -71,8 +74,14 @@ const pages = computed(() => {
     </button>
 
     <!-- Page numbers -->
-    <template v-for="(item, index) in pages" :key="index">
-      <span v-if="item === '...'" class="pagination__ellipsis">
+    <template
+      v-for="(item, index) in pages"
+      :key="index"
+    >
+      <span
+        v-if="item === '...'"
+        class="pagination__ellipsis"
+      >
         &hellip;
       </span>
       <button
