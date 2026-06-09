@@ -56,6 +56,7 @@ model Utilisateur {
   utilisateur_id   String          @id @default(cuid())
   nom              String          @db.VarChar(50)
   prenom           String          @db.VarChar(50)
+  photo            String?
   supabase_uid     String?         @unique
   provider         String?         @default("local")
   role             RoleUtilisateur
@@ -80,8 +81,22 @@ model Utilisateur {
   notifications Notification[]
   connexions    Connexion[]
   interactions  Interaction[]
+  following  Follow[] @relation("UserFollowing")
+  followers  Follow[] @relation("UserFollowers")
 
   @@map("utilisateurs")
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    Utilisateur @relation("UserFollowers", fields: [followerId], references: [utilisateur_id], onDelete: Cascade)
+  following   Utilisateur @relation("UserFollowing", fields: [followingId], references: [utilisateur_id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@map("follows")
 }
 
 model Administrateur {

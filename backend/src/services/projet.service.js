@@ -1,28 +1,10 @@
 import prisma from '../config/prisma.js';
-import { supabase } from '../config/supabase.js';
 import { creerNotification } from './notification.service.js';
 import { TypeExperience, TypeSpecifique } from '@prisma/client';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
+import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
-//upload photo sur supabase et collection de url
-export const uploadPhoto = async (file) => {
-  const fileName = `${Date.now()}_${file.originalname}`;
-
-  const { error } = await supabase.storage
-    .from('projets-photos')
-    .upload(fileName, file.buffer, { contentType: file.mimetype });
-
-  if (error) throw new Error('Erreur upload image : ' + error.message);
-
-  const { data } = supabase.storage
-    .from('projets-photos')
-    .getPublicUrl(fileName);
-
-  return data.publicUrl;
-};
-
-export const creeProjet = async (etudiantId, data, photoUrl) => {
-
+export const creeProjet = async (etudiantId, data, file) => {
   const projetExistant = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle },
   });
@@ -31,6 +13,9 @@ export const creeProjet = async (etudiantId, data, photoUrl) => {
   const technologies = JSON.parse(data.technologies || '[]');
   const domaines = JSON.parse(data.domains || '[]');
   const isAcademique = data.projetType === 'academique';
+
+  // Upload photo avant la transaction
+  const photoUrl = file ? await uploadPhoto(file, 'projets-photos') : null;
 
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.create({
@@ -106,11 +91,21 @@ export const getProjetsByEtudiant = async (etudiantId) => {
   });
 };
 
-export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
+export const editProjet = async (etudiantId, experienceId, data, file) => {
   const projetExistant = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle, experience_id: { not: experienceId } },
   });
   if (projetExistant) throw new Error('Projet déjà existant');
+
+  // Récupérer l'ancienne photo avant la transaction
+  const experienceActuelle = await prisma.experience.findFirst({
+    where: { experience_id: experienceId },
+    select: { photo: true },
+  });
+
+  const photoUrl = file
+    ? await remplacerPhoto(file, experienceActuelle?.photo, 'projets-photos')
+    : null;
 
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.findFirst({
@@ -122,12 +117,19 @@ export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
 
     if (!experience) throw new Error('Projet non trouvé');
 
-    const isAcademique = data.projetType ? data.projetType === 'academique' : experience.type_specifique === 'academique';
+    const isAcademique = data.projetType
+      ? data.projetType === 'academique'
+      : experience.type_specifique === 'academique';
 
-    if (
-      experience.technologies_locked &&
-      data.technologies !== undefined
-    ) {
+    // Vérification statut AVANT les updates
+    if (isAcademique && experience.projet?.validation) {
+      const statut = experience.projet.validation.statut;
+      if (statut === 'valide' || statut === 'refuse') {
+        throw new Error('Ce projet a déjà été traité par le professeur, vous ne pouvez plus le modifier');
+      }
+    }
+
+    if (experience.technologies_locked && data.technologies !== undefined) {
       throw new Error('Les technologies importées depuis GitHub sont verrouillées');
     }
 
@@ -138,7 +140,9 @@ export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
         date_experience: data.projectDate ? new Date(data.projectDate) : experience.date_experience,
         description: data.description ?? experience.description,
         visibilite: false,
-        type_specifique: data.projetType ? (data.projetType === 'academique' ? 'academique' : 'personnel') : experience.type_specifique,
+        type_specifique: data.projetType
+          ? (data.projetType === 'academique' ? 'academique' : 'personnel')
+          : experience.type_specifique,
         photo: photoUrl ?? experience.photo,
       },
     });
@@ -161,10 +165,6 @@ export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
     }
 
     if (experience.projet.validation) {
-      if (experience.projet.validation.statut !== 'en_attente') {
-        throw new Error('Ce projet a déjà été traité par le professeur, vous ne pouvez plus le modifier');
-      }
-
       let profId = experience.projet.validation.utilisateur_id;
 
       if (data.professorEmail) {
@@ -178,7 +178,7 @@ export const editProjet = async (etudiantId, experienceId, data, photoUrl) => {
 
       await tx.valideProjet.update({
         where: { experience_id: experienceId },
-        data: { statut: 'en_attente', utilisateur_id: profId, date_d_action: new Date(), commentaire: null },
+        data: { statut: 'en_attente', utilisateur_id: profId, date_d_action: new Date() },
       });
 
       const etudiant = await tx.utilisateur.findUnique({
@@ -340,3 +340,28 @@ export const createDraftProjectsFromRepos = async (etudiantId, repositories) => 
   return draftProjects;
 };
 
+
+export const supprimerProjetService = async (etudiantId, experienceId) => {
+  const experience = await prisma.experience.findFirst({
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet' },
+    include: {
+      projet: { include: { validation: true } },
+    },
+  });
+
+  if (!experience) throw new Error('Projet non trouvé');
+
+  //bloquer si deja traite par le professeur
+  if (experience.type_specifique === 'academique' && experience.projet?.validation) {
+    const statut = experience.projet.validation.statut;
+    if (statut === 'valide' || statut === 'refuse') {
+      throw new Error('Ce projet a déjà été traité par le professeur, vous ne pouvez plus le supprimer');
+    }
+  }
+
+  await supprimerPhoto(experience.photo, 'projets-photos');
+
+  await prisma.experience.delete({
+    where: { experience_id: experienceId },
+  });
+};

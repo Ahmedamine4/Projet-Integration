@@ -1,55 +1,43 @@
 import prisma from '../config/prisma.js';
+import crypto from 'crypto';
+import bcrypt from 'bcrypt';
+export async function assignerDirecteur({
+  utilisateur_id,
+  institution_id,
+  poste,
+  bureau,
+}) {
+  const motDePasse = genererMotDePasse();
+  const hash = await bcrypt.hash(motDePasse, 10);
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const institution = await tx.institution.findUnique({ where: { institution_id, }, select: { nom: true, }, });
+      const updatedUser = await tx.utilisateur.update({ where: { utilisateur_id, }, data: { role: 'directeur', mot_de_passe: hash, }, select: USER_SELECT, });
+      await tx.directeur.create({
+        data: {
+          directeur_utilisateur_id:
+            utilisateur_id,
+          institution_id,
+          poste:
+            poste || null,
+          bureau:
+            bureau || null,
+        },
+      });
 
-
-//j'ai ajouté la fonctionnalité que admin peut promouvoir un autre user
-export async function addAdmin({utilisateur_id,niveau_acces}) {
- const result = await prisma.$transaction(async (tx) => {
-      await tx.utilisateur.update({
-      where: { utilisateur_id },
-      data: { role: 'administrateur' },
-    });
-    const admin = await tx.administrateur.create({
-      data: {
-        admin_utilisateur_id: utilisateur_id,
-        niveau_acces,
-      },
-    });
-
-    return admin;
-  });
-
-  return {
-    message: 'Admin ajouté',
-    admin: result,
-  }; 
-}
-
-
-
-export async function assignerDirecteur({ utilisateur_id, institution_id, poste, bureau }) {
-
-  const result = await prisma.$transaction(async (tx) => {
-    const updatedUser = await tx.utilisateur.update({
-      where: { utilisateur_id },
-      data: { role: 'directeur' },
-      select: USER_SELECT,
-    });
-    await tx.directeur.create({
-      data: {
-        directeur_id: utilisateur_id,
-        institution_id,
-        poste: poste || null,
-        bureau: bureau || null,
-      },
-    });
-
-    return updatedUser;
-  });
+      return {
+        utilisateur:
+          updatedUser,
+        institution,
+      };
+    }
+  );
 
   return {
-    message: `${result.prenom} ${result.nom} est maintenant directeur de ${institution.nom}`,
-    utilisateur: result,
+    message: `${result.utilisateur.prenom} ${result.utilisateur.nom} est maintenant directeur de ${result.institution.nom}`,
+    utilisateur:result.utilisateur,
     institution_id,
+    mot_de_passe:motDePasse,
   };
 }
 
@@ -59,7 +47,7 @@ export async function promouvoirProfessionnel({ utilisateur_id, admin_id }) {
     where: { statut: 'en_attente' },
   });
 
-//màj statut pro
+  //màj statut pro
   const professionnel = await prisma.utilisateur.update({
     where: { professionnel_utilisateur_id: utilisateur_id },
     data: {
@@ -81,7 +69,7 @@ export async function rejecterProfessionnel({ utilisateur_id, admin_id }) {
     where: { statut: 'en_attente' },
   });
 
-//màj statut pro
+  //màj statut pro
   const professionnel = await prisma.utilisateur.update({
     where: { professionnel_utilisateur_id: utilisateur_id },
     data: {
@@ -124,7 +112,7 @@ export async function debloquerUtilisateur({ utilisateur_id }) {
 export async function getProfessionnelsEnAttente() {
   return prisma.professionnel.findMany({
     where: {
-        statut: 'en_attente',
+      statut: 'en_attente',
     },
     include: {
       utilisateur: {
