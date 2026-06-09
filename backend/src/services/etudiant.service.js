@@ -2,7 +2,89 @@ import prisma from '../config/prisma.js';
 
 const PAGE_SIZE = 10;
 
+export const getDashboardEtudiant = async (etudiantId) => {
+  // Toutes les requêtes en parallèle pour la performance
+  const [
+    followersCount,
+    projetsCount,
+    stagesCount,
+    lettresCount,
+    certificationsCount,
+    technologies,
+    domaines,
+  ] = await Promise.all([
+    // Nombre de followers
+    prisma.follow.count({
+      where: { followingId: etudiantId },
+    }),
 
+    // Nombre de projets
+    prisma.experience.count({
+      where: { utilisateur_id: etudiantId, type: 'projet' },
+    }),
+
+    // Nombre de stages
+    prisma.experience.count({
+      where: { utilisateur_id: etudiantId, type: 'stage' },
+    }),
+
+    // Nombre de lettres de recommandation
+    prisma.lettresDeRecommendations.count({
+      where: { utilisateur_id: etudiantId },
+    }),
+
+    // Nombre de certifications
+    prisma.experience.count({
+      where: { utilisateur_id: etudiantId, type: 'certification' },
+    }),
+
+    // Technologies avec niveau — une seule ligne par compétence (la plus récente)
+    prisma.competenceDeveloppee.findMany({
+      where: {
+        experience: { utilisateur_id: etudiantId },
+        competence: { type: 'technologie' },
+      },
+      select: {
+        niveau: true,
+        competence: { select: { competence_id: true, nom: true } },
+      },
+      orderBy: { niveau: 'desc' },
+      distinct: ['competence_id'],
+    }),
+
+    // Domaines avec niveau
+    prisma.competenceDeveloppee.findMany({
+      where: {
+        experience: { utilisateur_id: etudiantId },
+        competence: { type: 'domaine' },
+      },
+      select: {
+        niveau: true,
+        competence: { select: { competence_id: true, nom: true } },
+      },
+      orderBy: { niveau: 'desc' },
+      distinct: ['competence_id'],
+    }),
+  ]);
+
+  return {
+    stats: {
+      followers: followersCount,
+      projets: projetsCount,
+      stages: stagesCount,
+      lettres_recommandation: lettresCount,
+      certifications: certificationsCount,
+    },
+    technologies: technologies.map((t) => ({
+      nom: t.competence.nom,
+      niveau: parseInt(t.niveau ?? '1', 10),
+    })),
+    domaines: domaines.map((d) => ({
+      nom: d.competence.nom,
+      niveau: parseInt(d.niveau ?? '1', 10),
+    })),
+  };
+};
 
 export const getDemandesEtudiant = async (etudiantId, { type, statut, page }) => {
   const pageNum = Math.max(1, parseInt(page) || 1);

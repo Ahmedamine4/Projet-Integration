@@ -1,7 +1,18 @@
-import { getDemandesEtudiant } from '../services/etudiant.service.js';
+import { getDashboardEtudiant, getDemandesEtudiant } from '../services/etudiant.service.js';
 
 const TYPES_VALIDES   = ['stage', 'projet', 'activite', 'recommandation'];
 const STATUTS_VALIDES = ['en_attente', 'valide', 'refuse'];
+
+export const getDashboard = async (req, res) => {
+  try {
+    const etudiantId = req.user.utilisateur_id;
+    const result = await getDashboardEtudiant(etudiantId);
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error('Erreur getDashboard:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
 
 export const listMesDemandes = async (req, res) => {
   try {
