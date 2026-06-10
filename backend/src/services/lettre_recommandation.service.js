@@ -62,6 +62,12 @@ export const creerDemandeRecommandation = async (etudiantId, data) => {
     TYPES_NOTIFICATION.RECOMMANDATION_DEMANDEE,
   );
 
+  await creerNotification(
+    etudiantId,
+    `Votre demande de lettre de recommandation pour le professeur ${professeur.nom} ${professeur.prenom} a été créée avec succès.`,
+    TYPES_NOTIFICATION.RECOMMANDATION_DEMANDEE,
+  );
+
   return demande;
 };
 

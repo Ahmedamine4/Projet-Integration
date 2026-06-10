@@ -69,6 +69,12 @@ export const creeProjet = async (etudiantId, data, file) => {
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle}".`,
         TYPES_NOTIFICATION.VALIDATION_PROJET
       );
+
+      await creerNotification(
+        etudiantId,
+        `Votre projet "${data.projectTitle}" a été soumis pour validation au professeur ${professeur.nom} ${professeur.prenom}.`,
+        TYPES_NOTIFICATION.VALIDATION_PROJET
+      );
     }
 
     const result = await tx.projet.findUnique({
@@ -217,6 +223,12 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
         TYPES_NOTIFICATION.VALIDATION_PROJET
       );
 
+      await creerNotification(
+        etudiantId,
+        `Votre projet "${data.projectTitle ?? experience.titre}" a été modifié et soumis à nouveau pour validation au professeur.`,
+        TYPES_NOTIFICATION.VALIDATION_PROJET
+      );
+
     } else if (data.professorEmail) {
       const prof = await tx.utilisateur.findUnique({
         where: { email: data.professorEmail },
@@ -237,6 +249,12 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
         prof.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle ?? experience.titre}".`,
         TYPES_NOTIFICATION.VALIDATION_PROJET
+      );
+
+      await creerNotification(
+        etudiantId,
+         `Votre projet "${data.projectTitle ?? experience.titre}" a été soumis pour validation au professeur ${prof.nom} ${prof.prenom}.`,
+         TYPES_NOTIFICATION.VALIDATION_PROJET
       );
     }
 
