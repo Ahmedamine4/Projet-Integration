@@ -5,15 +5,15 @@ import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
 import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
-import TestRecommandationRequestView from '@/views/TestRecommandationRequestView.vue';
 import PortfolioView from '@/views/app/PortfolioView.vue';
 
 
 const routes = [
-  {
-  path: '/test-recommendation-request',
-  name: 'test-recommendation-request',
-  component: TestRecommandationRequestView,
+{
+  path: '/feed',
+  name: 'feed',
+  component: () => import('@/views/app/FeedPage.vue'),
+  meta: { requiresAuth: true },
 },
   {
     path: '/',

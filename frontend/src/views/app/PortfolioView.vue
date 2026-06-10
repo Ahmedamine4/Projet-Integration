@@ -286,6 +286,7 @@ const shouldShowInternshipSection = computed(() => {
   return isOwnPortfolio.value || visibleInternships.value.length > 0;
 });
 
+<<<<<<< HEAD
 const shouldShowRecommendationSection = computed(() => {
   return isOwnPortfolio.value || displayRecommendations.value.length > 0;
 });
@@ -294,6 +295,9 @@ const notification = ref({
   type: 'error',
   message: '',
 });
+=======
+
+>>>>>>> frontend-portfolio
 let notificationTimer = null;
 const isSchoolModalOpen = ref(false);
 
@@ -318,6 +322,10 @@ const experienceModalLoading = computed(() =>
   isExperienceSubmitting.value ||
   (experienceLoadingByType.value[experienceModal.value.type] ?? false)
 );
+const notification = ref({
+  type: 'error',
+  message: '',
+});
 
 function clearNotification() {
   notification.value.message = '';

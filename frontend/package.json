@@ -8,7 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "lint": "eslint ."
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+     "cypress:open": "cypress open",
+  "cypress:run": "cypress run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",
@@ -25,7 +29,9 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitejs/plugin-vue": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.8",
     "@vue/test-utils": "^2.4.6",
+    "cypress": "^15.17.0",
     "eslint": "^10.4.0",
     "eslint-plugin-vue": "^10.9.1",
     "globals": "^17.6.0",
