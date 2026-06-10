@@ -76,8 +76,29 @@ export const getMyRepositories = async (req, res) => {
     count: repositories.length,
     data: repositories
   });
-  //const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  //res.redirect(`${frontendUrl}/getting-started?github=connected`);
+};
+
+export const getMyContributions = async (req, res) => {
+  const etudiantId = req.user.utilisateur_id;
+
+  const repoWithToken = await prisma.repository.findFirst({
+    where: { etudiant_id: etudiantId },
+    select: { github_access_token: true }
+  });
+
+  if (!repoWithToken?.github_access_token) {
+    return res.status(400).json({
+      success: false,
+      message: 'Aucun token GitHub disponible. Connectez et synchronisez votre compte GitHub.'
+    });
+  }
+
+  const contributions = await githubService.getUserContributions(repoWithToken.github_access_token);
+
+  res.json({
+    success: true,
+    data: contributions
+  });
 };
 
 export const syncRepositories = async (req, res) => {

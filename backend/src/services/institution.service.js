@@ -9,6 +9,35 @@ export const getInstitutions = async () => {
   });
 };
 
+export const getAcademicInstitutions = async () => {
+  return prisma.institution.findMany({
+    where: { academique: true },
+    select: {
+      institution_id: true,
+      nom: true,
+      addresse: true,
+      email: true,
+      description: true,
+      academique: true,
+    },
+  });
+};
+
+export const getNonAcademicInstitutions = async () => {
+  return prisma.institution.findMany({
+    where:{ academique: false },
+    
+    select: {
+      institution_id: true,
+      nom: true,
+      addresse: true,
+      email: true,
+      description: true,
+      academique: true,
+    },
+  });
+};
+
 export const getInstitutionsValideEtudiant = async (etudiantId) => {
   const validations = await prisma.valideEtudiant.findMany({
     where: {

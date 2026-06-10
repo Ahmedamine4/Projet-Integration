@@ -1,20 +1,20 @@
 import prisma from '../config/prisma.js';
 import { creerNotification } from './notification.service.js';
 import { TypeExperience, TypeSpecifique } from '@prisma/client';
-import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
+import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompetencesByExperience } from './competence.helper.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
 export const creeProjet = async (etudiantId, data, file) => {
   const projetExistant = await prisma.experience.findFirst({
-    where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle },
+    where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle, deleted_at: null },
   });
   if (projetExistant) throw new Error('Projet déjà existant');
 
   const technologies = JSON.parse(data.technologies || '[]');
   const domaines = JSON.parse(data.domains || '[]');
   const isAcademique = data.projetType === 'academique';
+  const visibilite = data.visibilite !== undefined ? data.visibilite : false;
 
-  // Upload photo avant la transaction
   const photoUrl = file ? await uploadPhoto(file, 'projets-photos') : null;
 
   return await prisma.$transaction(async (tx) => {
@@ -22,30 +22,26 @@ export const creeProjet = async (etudiantId, data, file) => {
       data: {
         titre: data.projectTitle,
         date_experience: new Date(data.projectDate),
-        visibilite: false,
+        visibilite,
         type: 'projet',
         description: data.description,
         type_specifique: isAcademique ? 'academique' : 'personnel',
         utilisateur_id: etudiantId,
         photo: photoUrl ?? null,
+        deleted_at: null,
       },
     });
 
-    const projet = await tx.projet.create({
+    await tx.projet.create({
       data: {
         experience_id: experience.experience_id,
         lien_github: data.githubLink ?? null,
       },
     });
 
-    const competencesTech = await lierCompetencesExperience(
-      tx, experience.experience_id, etudiantId, technologies, 'technologie'
-    );
-    const competencesDomaines = await lierCompetencesExperience(
-      tx, experience.experience_id, etudiantId, domaines, 'domaine'
-    );
+    await lierCompetencesExperience(tx, experience.experience_id, etudiantId, technologies, 'technologie');
+    await lierCompetencesExperience(tx, experience.experience_id, etudiantId, domaines, 'domaine');
 
-    //si projet académique creer valideProjet avec statut en_attend et envoyer notification au prof
     let validation = null;
     if (isAcademique && data.professorEmail) {
       const professeur = await tx.utilisateur.findUnique({
@@ -75,31 +71,58 @@ export const creeProjet = async (etudiantId, data, file) => {
       );
     }
 
+    const result = await tx.projet.findUnique({
+      where: { experience_id: experience.experience_id },
+      include: {
+        experience: true,
+        validation: true,
+      },
+    });
 
-    return { experience, projet, competences: [...competencesTech, ...competencesDomaines], validation };
+    const competences = await getCompetencesByExperience(experience.experience_id);
+
+    return {
+      ...result,
+      experience: {
+        ...result.experience,
+        competences,
+      },
+    };
   });
 };
 
 export const getProjetsByEtudiant = async (etudiantId) => {
-  return prisma.experience.findMany({
-    where: { utilisateur_id: etudiantId, type: 'projet' },
+  const projets = await prisma.projet.findMany({
+    where: { experience: { utilisateur_id: etudiantId, deleted_at: null } },
     include: {
-      projet: { include: { validation: true } },
-      competence_dev: { include: { competence: true } },
+      validation: true,
+      experience: true,
     },
-    orderBy: { date_experience: 'desc' },
+    orderBy: { experience: { date_experience: 'desc' } },
   });
+
+  return Promise.all(
+    projets.map(async (projet) => {
+      const competences = await getCompetencesByExperience(projet.experience_id);
+      return {
+        ...projet,
+        experience: {
+          ...projet.experience,
+          competences,
+        },
+      };
+    })
+  );
 };
 
 export const editProjet = async (etudiantId, experienceId, data, file) => {
   const projetExistant = await prisma.experience.findFirst({
-    where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle, experience_id: { not: experienceId } },
+    where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle, deleted_at: null, experience_id: { not: experienceId } },
   });
   if (projetExistant) throw new Error('Projet déjà existant');
 
-  // Récupérer l'ancienne photo avant la transaction
   const experienceActuelle = await prisma.experience.findFirst({
-    where: { experience_id: experienceId },
+    where: { experience_id: experienceId, deleted_at: null },
     select: { photo: true },
   });
 
@@ -109,7 +132,7 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
 
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.findFirst({
-      where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet' },
+      where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet', deleted_at: null },
       include: {
         projet: { include: { validation: true } },
       },
@@ -121,7 +144,10 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
       ? data.projetType === 'academique'
       : experience.type_specifique === 'academique';
 
-    // Vérification statut AVANT les updates
+    const visibilite = data.visibilite !== undefined
+      ? data.visibilite
+      : experience.visibilite;
+
     if (isAcademique && experience.projet?.validation) {
       const statut = experience.projet.validation.statut;
       if (statut === 'valide' || statut === 'refuse') {
@@ -139,7 +165,7 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
         titre: data.projectTitle ?? experience.titre,
         date_experience: data.projectDate ? new Date(data.projectDate) : experience.date_experience,
         description: data.description ?? experience.description,
-        visibilite: false,
+        visibilite,
         type_specifique: data.projetType
           ? (data.projetType === 'academique' ? 'academique' : 'personnel')
           : experience.type_specifique,
@@ -159,7 +185,6 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
       const domaines = JSON.parse(data.domains || '[]');
 
       await supprimerCompetencesDeveloppees(tx, experienceId, etudiantId);
-
       await lierCompetencesExperience(tx, experienceId, etudiantId, technologies, 'technologie');
       await lierCompetencesExperience(tx, experienceId, etudiantId, domaines, 'domaine');
     }
@@ -199,7 +224,6 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
       });
       if (!prof || !prof.professeur) throw new Error('Professeur non trouvé avec cet email');
 
-
       await tx.valideProjet.create({
         data: { utilisateur_id: prof.utilisateur_id, experience_id: experienceId, statut: 'en_attente', date_d_action: new Date() },
       });
@@ -216,34 +240,61 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
       );
     }
 
-    return tx.experience.findUnique({
+    const result = await tx.projet.findUnique({
       where: { experience_id: experienceId },
       include: {
-        projet: { include: { validation: true } },
-        competence_dev: { include: { competence: true } },
+        experience: true,
+        validation: true,
       },
     });
+
+    const competences = await getCompetencesByExperience(experienceId);
+
+    return {
+      ...result,
+      experience: {
+        ...result.experience,
+        competences,
+      },
+    };
   });
 };
 
 export const getProjetsVisiblesByEtudiant = async (etudiantId) => {
-  return prisma.experience.findMany({
+  const projets = await prisma.experience.findMany({
     where: {
       utilisateur_id: etudiantId,
       type: 'projet',
       visibilite: true,
+      deleted_at: null,
+      OR: [
+        { type_specifique: 'personnel' },
+        {
+          type_specifique: 'academique',
+          projet: { validation: { statut: { in: ['valide', 'refuse'] } } },
+        },
+      ],
     },
     include: {
       projet: { include: { validation: true } },
-      competence_dev: { include: { competence: true } },
     },
     orderBy: { date_experience: 'desc' },
   });
+
+  return Promise.all(
+    projets.map(async (projet) => {
+      const competences = await getCompetencesByExperience(projet.experience_id);
+      return {
+        ...projet,
+        competences,
+      };
+    })
+  );
 };
 
 export const updateVisibiliteProjetService = async (etudiantId, experienceId, visibilite) => {
   const experience = await prisma.experience.findFirst({
-    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet' },
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet', deleted_at: null },
     include: { projet: { include: { validation: true } } },
   });
 
@@ -251,8 +302,8 @@ export const updateVisibiliteProjetService = async (etudiantId, experienceId, vi
 
   if (experience.type_specifique === 'academique') {
     const statut = experience.projet?.validation?.statut;
-    if (statut !== 'valide') {
-      throw new Error('Vous ne pouvez changer la visibilité que si le projet académique est validé');
+    if (statut !== 'valide' && statut !== 'refuse') {
+      throw new Error('Vous ne pouvez changer la visibilité que si le projet académique n\'est pas encore traité par le professeur');
     }
   }
 
@@ -343,7 +394,7 @@ export const createDraftProjectsFromRepos = async (etudiantId, repositories) => 
 
 export const supprimerProjetService = async (etudiantId, experienceId) => {
   const experience = await prisma.experience.findFirst({
-    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet' },
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet', deleted_at: null },
     include: {
       projet: { include: { validation: true } },
     },
@@ -351,17 +402,17 @@ export const supprimerProjetService = async (etudiantId, experienceId) => {
 
   if (!experience) throw new Error('Projet non trouvé');
 
-  //bloquer si deja traite par le professeur
   if (experience.type_specifique === 'academique' && experience.projet?.validation) {
     const statut = experience.projet.validation.statut;
-    if (statut === 'valide' || statut === 'refuse') {
-      throw new Error('Ce projet a déjà été traité par le professeur, vous ne pouvez plus le supprimer');
+    if (statut === 'valide') {
+      throw new Error('Ce projet a été validé, vous ne pouvez plus le supprimer. Utilisez la visibilité pour le masquer.');
     }
   }
 
   await supprimerPhoto(experience.photo, 'projets-photos');
 
-  await prisma.experience.delete({
+  await prisma.experience.update({
     where: { experience_id: experienceId },
+    data: { deleted_at: new Date() },
   });
 };

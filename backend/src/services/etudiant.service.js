@@ -12,6 +12,8 @@ export const getDashboardEtudiant = async (etudiantId) => {
     certificationsCount,
     technologies,
     domaines,
+    portfolio,
+    scoreHistory,
   ] = await Promise.all([
     // Nombre de followers
     prisma.follow.count({
@@ -65,6 +67,19 @@ export const getDashboardEtudiant = async (etudiantId) => {
       orderBy: { niveau: 'desc' },
       distinct: ['competence_id'],
     }),
+
+    prisma.portfolio.findUnique({
+      where: { utilisateur_id: etudiantId },
+      select: { score_credibilite: true },
+    }),
+
+    prisma.portfolioScoreHistory.findMany({
+      where: {
+        portfolio: { utilisateur_id: etudiantId },
+      },
+      select: { score: true, date: true },
+      orderBy: { date: 'desc' },
+    }),
   ]);
 
   return {
@@ -75,6 +90,11 @@ export const getDashboardEtudiant = async (etudiantId) => {
       lettres_recommandation: lettresCount,
       certifications: certificationsCount,
     },
+    score: portfolio?.score_credibilite ?? 0,
+    score_history: scoreHistory.map((item) => ({
+      score: item.score,
+      date: item.date,
+    })),
     technologies: technologies.map((t) => ({
       nom: t.competence.nom,
       niveau: parseInt(t.niveau ?? '1', 10),

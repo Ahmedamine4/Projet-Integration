@@ -5,6 +5,7 @@ import {
   githubLogin,
   githubCallback,
   getMyRepositories,
+  getMyContributions,
   syncRepositories,
 } from '../controllers/github.controller.js';
 
@@ -24,6 +25,13 @@ router.get(
   authMiddleware,
   authorizeRoles(ROLES.ETUDIANT),
   getMyRepositories
+);
+
+router.get(
+  '/contributions',
+  authMiddleware,
+  authorizeRoles(ROLES.ETUDIANT),
+  getMyContributions
 );
 
 router.post(

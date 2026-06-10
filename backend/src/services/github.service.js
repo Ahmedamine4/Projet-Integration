@@ -69,3 +69,48 @@ export const importReposToDB = async (etudiantId, repos, accessToken) => {
 
   return await Promise.all(operations);
 };
+
+export const getUserContributions = async (accessToken) => {
+  const query = `
+    query {
+      viewer {
+        login
+        contributionsCollection {
+          totalCommitContributions
+          totalIssueContributions
+          totalPullRequestContributions
+          totalPullRequestReviewContributions
+          totalRepositoryContributions
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+                weekday
+                color
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const response = await axios.post(
+    'https://api.github.com/graphql',
+    { query },
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+      },
+    }
+  );
+
+  if (response.data.errors) {
+    throw new Error(response.data.errors.map((err) => err.message).join(', '));
+  }
+
+  return response.data.data.viewer;
+};

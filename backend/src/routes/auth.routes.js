@@ -13,7 +13,7 @@ import {
   authorizeRoles,
   ROLES
 } from '../middlewares/auth.middleware.js';
-import { getMesSessions, getAdminSessions } from '../controllers/session.controller.js';
+import { getMesSessions, getAdminSessions, logoutSession, logoutAutresSessions, } from '../controllers/session.controller.js';
 
 const router = express.Router();
 
@@ -31,5 +31,8 @@ router.get('/admin/sessions', authMiddleware, authorizeRoles(ROLES.ADMIN), getAd
 router.get('/me', authMiddleware, getProfile);
 router.get('/profile', authMiddleware, getProfile);
 router.get('/users', authMiddleware, authorizeRoles(ROLES.ADMIN), getAllUsers);
+
+router.delete('/me/sessions', authMiddleware, logoutAutresSessions);
+router.delete('/me/sessions/:sessionId', authMiddleware, logoutSession);
 
 export default router;
