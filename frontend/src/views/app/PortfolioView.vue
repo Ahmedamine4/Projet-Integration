@@ -290,10 +290,7 @@ const shouldShowRecommendationSection = computed(() => {
   return isOwnPortfolio.value || displayRecommendations.value.length > 0;
 });
 
-const notification = ref({
-  type: 'error',
-  message: '',
-});
+
 let notificationTimer = null;
 const isSchoolModalOpen = ref(false);
 
