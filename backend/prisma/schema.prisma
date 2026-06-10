@@ -213,8 +213,20 @@ model Portfolio {
   utilisateur_id    String        @unique
   etudiant          Etudiant      @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
   interactions      Interaction[]
+  history           PortfolioScoreHistory[]
 
   @@map("portfolio")
+}
+
+model PortfolioScoreHistory {
+  history_id    String   @id @default(cuid())
+  portfolio_id  String
+  score         Int
+  breakdown     Json?
+  date          DateTime @default(now())
+  portfolio     Portfolio @relation(fields: [portfolio_id], references: [portfolio_id])
+
+  @@map("portfolio_score_history")
 }
 
 model Notification {
@@ -230,18 +242,22 @@ model Notification {
 }
 
 model Connexion {
-  connexion_id          String      @id @default(cuid())
-  utilisateur_id        String
-  action                ActionSession
-  browser               String?
-  device_type           String?
-  os                    String?
-  browser_version       String?
-  ip                    String?
-  ville                 String?
-  pays                  String?
-  date_action           DateTime @default(now())
-  utilisateur           Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  connexion_id    String      @id @default(cuid())
+  utilisateur_id  String
+  session_token   String      @unique
+  browser         String?
+  browser_version String?
+  device_type     String?
+  os              String?
+  ip              String?
+  ville           String?
+  pays            String?
+  is_current      Boolean     @default(false)
+  date_connexion  DateTime    @default(now())
+  last_active     DateTime    @default(now())
+  expires_at      DateTime
+
+  utilisateur     Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
 
   @@map("connexions")
 }
@@ -252,13 +268,14 @@ model Institution {
   addresse       String? @db.VarChar(50)
   email          String  @db.VarChar(255)
   description    String?
+  academique     Boolean?
 
   directeur      Directeur[]
   clubs          Club[]
   professeurs    Professeur[]
   activites      ValideActivite[]
   etudiants      ValideEtudiant[]
-  certifications ValideCertification[]
+  certifications Certification[]
 
   @@map("institutions")
 }
@@ -273,8 +290,9 @@ model Experience {
   type            TypeExperience
   type_specifique TypeSpecifique?
   description     String?
-  photo                String?
-  is_draft             Boolean    @default(false)
+  photo           String?
+  deleted_at      DateTime?
+  is_draft        Boolean    @default(false)
   technologies_locked  Boolean    @default(false)
   utilisateur_id  String
 
@@ -295,8 +313,9 @@ model Certification {
   document      String?
   lien_URL      String?
   code          String?
+  institution_id String?
+  institution    Institution? @relation(fields: [institution_id], references: [institution_id])
   experience    Experience           @relation(fields: [experience_id], references: [experience_id])
-  validation    ValideCertification?
 
   @@map("certifications")
 }
@@ -341,7 +360,7 @@ model Interaction {
   interaction_id   String            @id @default(cuid())
   type             String?           @db.VarChar(50)
   texte            String?
-  statut           StatutValidation?
+  visibilite       Boolean   @default(false)
   date_interaction DateTime?
   portfolio_id     String?
   experience_id    String?
@@ -424,20 +443,6 @@ model ValideStage {
 
   @@id([utilisateur_id, experience_id])
   @@map("valide_stage")
-}
-
-model ValideCertification {
-  institution_id String
-  experience_id  String            @unique
-  statut         StatutValidation?
-  date_d_action  DateTime?
-  commentaire    String?
-
-  institution   Institution   @relation(fields: [institution_id], references: [institution_id])
-  certification Certification @relation(fields: [experience_id], references: [experience_id])
-
-  @@id([institution_id, experience_id])
-  @@map("valide_certification")
 }
 
 model ValideEtudiant {

@@ -1,9 +1,11 @@
 import jwt from 'jsonwebtoken';
+import prisma from '../config/prisma.js';
 import {
   getAboutByUserId,
   updateUserAboutByUserId,
   getPortfolioEtudiant,
   getExperienceById,
+  getPortfolioScoreHistory,
 } from '../services/portfolio.service.js';
 
 import {
@@ -126,6 +128,27 @@ export const getPortfolioEtudiantController = async (req, res) => {
     if (error.message === 'Étudiant non trouvé') {
       return res.status(404).json({ success: false, message: error.message });
     }
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+export const getPortfolioScoreHistoryController = async (req, res) => {
+  try {
+    const { etudiantId } = req.params;
+
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { utilisateur_id: etudiantId },
+      select: { portfolio_id: true },
+    });
+
+    if (!portfolio) {
+      return res.status(404).json({ success: false, message: 'Portfolio introuvable' });
+    }
+
+    const history = await getPortfolioScoreHistory(portfolio.portfolio_id);
+    return res.status(200).json({ success: true, history });
+  } catch (error) {
+    console.error('Erreur getPortfolioScoreHistory:', error);
     return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };

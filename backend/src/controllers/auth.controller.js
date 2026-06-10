@@ -1,5 +1,5 @@
 import { generateLocalToken, generateRefreshToken, verifyRefreshToken} from '../config/jwt.js';
-import { loggerSession } from '../services/session.service.js';
+import { creerSession, fermerSession } from '../services/session.service.js';
 import { supabase } from '../config/supabase.js';
 import {
   registerLocalUser,// pour cree un user local
@@ -37,7 +37,8 @@ export async function register(req, res) {
         maxAge: 7 * 24 * 60 * 60 * 1000 
     });
 
-    loggerSession(user.utilisateur_id, 'LOGIN', req).catch(console.error);
+    const session = await creerSession(user.utilisateur_id, req);
+    res.cookie('sessionToken', session.session_token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     return res.status(201).json({
       success: true,
@@ -74,7 +75,8 @@ export async function login(req, res) {
         maxAge: 7 * 24 * 60 * 60 * 1000 
     });
 
-    loggerSession(resultat.user.utilisateur_id, 'LOGIN', req).catch(console.error);
+    const session = await creerSession(resultat.user.utilisateur_id, req);
+    res.cookie('sessionToken', session.session_token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     return res.status(200).json({
       success: true,
@@ -147,7 +149,8 @@ export async function googleAuth(req, res) {
         maxAge: 7 * 24 * 60 * 60 * 1000 
     });
 
-    loggerSession(user.utilisateur_id, 'LOGIN', req).catch(console.error);
+    const session = await creerSession(user.utilisateur_id, req);
+    res.cookie('sessionToken', session.session_token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     return res.status(200).json({
       success: true,
@@ -255,7 +258,9 @@ export async function logout(req, res) {
     
     const userId = req.user.utilisateur_id;
 
-    loggerSession(userId, 'LOGOUT', req).catch(console.error);
+    const sessionToken = req.cookies?.sessionToken;
+    if (sessionToken) await fermerSession(sessionToken).catch(() => null);
+    res.clearCookie('sessionToken');
 
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
