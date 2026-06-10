@@ -72,8 +72,6 @@ services:
       - "443:8443"
     volumes:
       - nginx-certs:/etc/nginx/ssl
-    security_opt:
-      - no-new-privileges:true
     cap_drop:
       - ALL
     depends_on:
