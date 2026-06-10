@@ -1,5 +1,5 @@
 import prisma from '../config/prisma.js';
-import { creerNotification } from './notification.service.js';
+import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
 import { TypeExperience, TypeSpecifique } from '@prisma/client';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompetencesByExperience } from './competence.helper.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
@@ -67,7 +67,7 @@ export const creeProjet = async (etudiantId, data, file) => {
       await creerNotification(
         professeur.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle}".`,
-        'validation_projet'
+        TYPES_NOTIFICATION.VALIDATION_PROJET
       );
     }
 
@@ -214,7 +214,7 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
       await creerNotification(
         profId,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son projet "${data.projectTitle ?? experience.titre}". Il demande une validation.`,
-        'validation_projet'
+        TYPES_NOTIFICATION.VALIDATION_PROJET
       );
 
     } else if (data.professorEmail) {
@@ -236,7 +236,7 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
       await creerNotification(
         prof.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son projet "${data.projectTitle ?? experience.titre}".`,
-        'validation_projet'
+        TYPES_NOTIFICATION.VALIDATION_PROJET
       );
     }
 

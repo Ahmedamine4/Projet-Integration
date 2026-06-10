@@ -33,7 +33,7 @@ SET
     "session_token" = COALESCE("session_token", 'restored-' || "connexion_id"),
     "expires_at" = COALESCE(
         "expires_at",
-        COALESCE("date_action", "date_de_connexion", CURRENT_TIMESTAMP) + INTERVAL '30 days'
+        COALESCE("date_action", "date_connexion", CURRENT_TIMESTAMP) + INTERVAL '30 days'
     );
 
 ALTER TABLE "connexions"

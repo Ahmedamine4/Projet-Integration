@@ -1,6 +1,6 @@
 import prisma from '../config/prisma.js';
-import { creerNotification } from './notification.service.js';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompetencesByExperience } from './competence.helper.js';
+import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
 export const creeActivite = async (etudiantId, data, file) => {
@@ -86,7 +86,7 @@ export const creeActivite = async (etudiantId, data, file) => {
         await creerNotification(
           institution.directeur.directeur_utilisateur_id,
           `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son activité "${data.titre}" auprès de ${institution.nom}.`,
-          'validation_activite'
+          TYPES_NOTIFICATION.VALIDATION_ACTIVITE
         );
       }
     }
@@ -266,7 +266,7 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
         await creerNotification(
           institutionFinale.directeur.directeur_utilisateur_id,
           `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son activité "${data.titre ?? experience.titre}". Il demande une validation auprès de ${institutionFinale.nom}.`,
-          'validation_activite'
+          TYPES_NOTIFICATION.VALIDATION_ACTIVITE
         );
       }
 
@@ -289,7 +289,7 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
         await creerNotification(
           nouvelleInstitution.directeur.directeur_utilisateur_id,
           `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son activité "${data.titre ?? experience.titre}" auprès de ${nouvelleInstitution.nom}.`,
-          'validation_activite'
+          TYPES_NOTIFICATION.VALIDATION_ACTIVITE
         );
       }
     }

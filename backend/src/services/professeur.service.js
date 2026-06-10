@@ -1,5 +1,5 @@
 import prisma from '../config/prisma.js';
-import { creerNotification } from './notification.service.js';
+import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
  
 const PAGE_SIZE = 10;
  
@@ -205,7 +205,7 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
     await creerNotification(
       validation.experience.etudiant.utilisateur.utilisateur_id,
       `Votre professeur a laissé un commentaire sur votre projet "${validation.experience.titre}".`,
-      'commentaire_projet'
+      TYPES_NOTIFICATION.COMMENTAIRE_PROJET
     );
 
     return updated;
@@ -224,9 +224,11 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
     : `Votre projet "${validation.experience.titre}" a été refusé. Motif : ${commentaire}`;
 
   await creerNotification(
-    validation.experience.etudiant.utilisateur.utilisateur_id, 
-    msg, 
-    'validation_projet'
+  validation.experience.etudiant.utilisateur.utilisateur_id,
+    msg,
+    statut === 'valide'
+      ? TYPES_NOTIFICATION.PROJET_VALIDE
+      : TYPES_NOTIFICATION.PROJET_REFUSE
   );
 
   return updated;
@@ -262,7 +264,7 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
     await creerNotification(
       validation.experience.etudiant.utilisateur.utilisateur_id,
       `Votre professeur a laissé un commentaire sur votre stage "${validation.experience.titre}".`,
-      'commentaire_stage'
+      TYPES_NOTIFICATION.COMMENTAIRE_STAGE
     );
 
     return updated;
@@ -281,9 +283,11 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
     : `Votre stage "${validation.experience.titre}" a été refusé. Motif : ${commentaire}`;
   
   await creerNotification(
-    validation.experience.etudiant.utilisateur.utilisateur_id, 
-    msg, 
-    'validation_stage'
+  validation.experience.etudiant.utilisateur.utilisateur_id,
+  msg,
+  statut === 'valide'
+    ? TYPES_NOTIFICATION.STAGE_VALIDE
+    : TYPES_NOTIFICATION.STAGE_REFUSE
   );
 
   return updated;
@@ -332,7 +336,7 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
     await creerNotification(
       etudiantId,
       `Votre professeur a laissé un commentaire sur votre demande de lettre : "${lettre.objet}".`,
-      'commentaire_recommandation'
+      TYPES_NOTIFICATION.COMMENTAIRE_RECOMMANDATION
     );
  
     return updated;
@@ -350,7 +354,7 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
     await creerNotification(
       etudiantId,
       `Votre demande de lettre de recommandation "${lettre.objet}" a été refusée. Motif : ${commentaire}`,
-      'refus_recommandation'
+      TYPES_NOTIFICATION.RECOMMANDATION_REFUSEE
     );
  
     return updated;
@@ -369,7 +373,7 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
     await creerNotification(
       etudiantId,
       `Votre lettre de recommandation "${lettre.objet}" est disponible.`,
-      'validation_recommandation'
+      TYPES_NOTIFICATION.RECOMMANDATION_VALIDEE
     );
  
     return updated;
