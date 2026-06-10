@@ -1,7 +1,7 @@
 stages:
-  - lint
-  - security
   - test
+  - security
+  - lint
   - build
   #- dast
   - quality
