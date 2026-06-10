@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import AppSidebar from '@/components/layout/AppSidebar.vue';
 import NotificationsPanel from '@/components/NotificationsPanel.vue';
 import { useAuthStore } from '@/stores/auth';
+import { getNotifications } from '@/services/notificationService';
 import { useRoute } from 'vue-router';
 import { X } from 'lucide-vue-next';
 
@@ -12,6 +13,8 @@ const route = useRoute();
 const { user, profileLoading, profileChecked } = storeToRefs(authStore);
 const isNotificationsOpen = ref(false);
 const isSidebarCollapsed = ref(true);
+const unreadNotificationsCount = ref(0);
+const hasUnreadNotifications = computed(() => unreadNotificationsCount.value > 0);
 
 function toggleNotifications() {
   isNotificationsOpen.value = !isNotificationsOpen.value;
@@ -21,12 +24,28 @@ function closeNotifications() {
   isNotificationsOpen.value = false;
 }
 
+function updateUnreadNotificationsCount(notifications) {
+  unreadNotificationsCount.value = notifications.filter(
+    (notification) => !notification.read,
+  ).length;
+}
+
+async function loadUnreadNotificationsCount() {
+  try {
+    updateUnreadNotificationsCount(await getNotifications());
+  } catch {
+    unreadNotificationsCount.value = 0;
+  }
+}
+
 watch(
   () => route.fullPath,
   () => {
     closeNotifications();
   },
 );
+
+onMounted(loadUnreadNotificationsCount);
 </script>
 
 <template>
@@ -35,6 +54,7 @@ watch(
       :user="user || undefined"
       :loading="profileLoading || !profileChecked"
       :notifications-open="isNotificationsOpen"
+      :has-unread-notifications="hasUnreadNotifications"
       @open-notifications="toggleNotifications"
       @update:collapsed="isSidebarCollapsed = $event"
     />
@@ -62,7 +82,7 @@ watch(
           <X :size="20" />
         </button>
 
-        <NotificationsPanel />
+        <NotificationsPanel @notifications-updated="updateUnreadNotificationsCount" />
       </div>
     </div>
   </main>

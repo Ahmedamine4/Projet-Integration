@@ -33,6 +33,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  hasUnreadNotifications: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['open-notifications', 'update:collapsed']);
@@ -171,6 +175,7 @@ async function handleLogout() {
           >
             <Bell />
             <span
+              v-if="hasUnreadNotifications"
               class="sidebar__notification-dot"
               aria-hidden="true"
             />

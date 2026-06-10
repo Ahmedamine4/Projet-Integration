@@ -5,6 +5,7 @@ import {
   getNotifications,
   markNotificationAsRead,
 } from '@/services/notificationService';
+import { CheckCheck } from 'lucide-vue-next';
 
 const props = defineProps({
   endpoint: {
@@ -12,6 +13,8 @@ const props = defineProps({
     default: '/notifications',
   },
 });
+
+const emit = defineEmits(['notifications-updated']);
 
 const notifications = ref([]);
 const activeFilter = ref('all');
@@ -174,6 +177,14 @@ watch(
   },
 );
 
+watch(
+  notifications,
+  () => {
+    emit('notifications-updated', notifications.value);
+  },
+  { deep: true },
+);
+
 onMounted(loadNotifications);
 </script>
 
@@ -229,7 +240,8 @@ onMounted(loadNotifications);
           Updating...
         </template>
         <template v-else>
-          &check; Mark All As Read
+          <CheckCheck :size="15" />
+          <span>Mark All As Read</span>
         </template>
       </button>
     </div>
@@ -341,17 +353,20 @@ onMounted(loadNotifications);
 
 .notifications-panel__mark-all {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 0;
   border-radius: 0;
   background: transparent;
-  color: #5b5ce2;
+  color: var(--color-secondary);
   font-size: var(--font-size-xs);
   font-weight: var(--font-bold);
   white-space: nowrap;
 }
 
 .notifications-panel__mark-all:hover:not(:disabled) {
-  color: #3434b8;
+  color: color-mix(in srgb, var(--color-secondary) 82%, var(--color-primary));
   text-decoration: underline;
 }
 
