@@ -13,6 +13,5 @@ RUN sed -i 's/\r$//' /entrypoint.sh \
     && chmod +x /entrypoint.sh \
     && chown nginx:nginx /entrypoint.sh
 
-USER nginx
-
+USER root
 ENTRYPOINT ["/entrypoint.sh"]
