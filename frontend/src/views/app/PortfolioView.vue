@@ -30,19 +30,6 @@ import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import ImageCropperModal from '@/components/common/forms/ImageCropperModal.vue';
 
-const professorEmails = [
-  'ahmed.elamrani@ensat.ac.ma',
-  'fatima.zahra@ensat.ac.ma',
-  'youssef.bennani@uae.ac.ma',
-  'sara.lahlou@fstt.ac.ma',
-  'nour.chaoui@encgt.ac.ma',
-  'karim.boukhari@ensate.uae.ac.ma',
-  'amina.tazi@fs-tanger.ac.ma',
-  'mehdi.elidrissi@ensah.ma',
-  'salma.aitali@fstt.ac.ma',
-  'omar.benali@uae.ac.ma'
-];
-
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -147,8 +134,23 @@ const hasSkills = computed(() => skillItems.value.length > 0 || domainItems.valu
 const shouldShowEducation = computed(() => isOwnPortfolio.value || hasEducation.value);
 const shouldShowSkills = computed(() => isOwnPortfolio.value || hasSkills.value);
 const hasProfileDetails = computed(() => shouldShowEducation.value || shouldShowSkills.value);
+const selectedAcademicInstitutions = computed(() => {
+  if (institutionStore.selectedInstitutions.length) {
+    return institutionStore.selectedInstitutions;
+  }
+
+  const selectedInstitutionIds = new Set(
+    educationItems.value
+      .map((item) => item.id)
+      .filter(Boolean)
+  );
+
+  return institutionStore.institutions.filter((institution) =>
+    selectedInstitutionIds.has(institution.institution_id)
+  );
+});
 const schoolOptions = computed(() =>
-  institutionStore.institutions.map((institution) => institution.nom).filter(Boolean)
+  selectedAcademicInstitutions.value.map((institution) => institution.nom).filter(Boolean)
 );
 
 onMounted(() => {
@@ -1095,8 +1097,9 @@ async function handleAiFiltersDetected(filters) {
       :initial-value="experienceModal.selected"
       :loading="experienceModalLoading"
       :school-options="schoolOptions"
-      :professor-emails="professorEmails"
+      :academic-institutions="selectedAcademicInstitutions"
       @close="closeExperienceModal"
+      @open-school-path="openSchoolModal"
       @submit="handleExperienceSubmit"
       @delete="openDeleteConfirm"
     />

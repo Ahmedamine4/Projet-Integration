@@ -25,7 +25,7 @@ export const updateValidationStatus = async (etudiantId, institutionId, newStatu
         },
         data: {
             statut: newStatus,
-            date_d_action: new Date()
+            date: new Date()
         }
     });
 };

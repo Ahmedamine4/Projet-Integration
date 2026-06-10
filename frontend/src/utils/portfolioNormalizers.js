@@ -76,6 +76,10 @@ export function normalizeProject(item) {
     description: experience.description ?? '',
     visibleToEveryone: experience.visibilite ?? false,
     githubLink: project.lien_github ?? '',
+    repositoryId: project.repository_id ?? '',
+    isDraft: Boolean(experience.is_draft),
+    technologiesLocked: Boolean(experience.technologies_locked),
+    isGithubDraft: Boolean(experience.is_draft && project.repository_id),
     technologies: projectTechnologies,
     domains: projectDomains,
     imagePreview: experience.photo ?? project.photo ?? experience.documentations?.[0]?.captures ?? '',
@@ -184,9 +188,10 @@ export function normalizeEducation(institutions = []) {
     id: entry.institution_id,
     school: entry.institution?.nom ?? 'Institution',
     level: entry.niveau ?? entry.statut ?? '',
+    status: entry.statut ?? '',
     description: entry.institution?.description ?? '',
-    period: entry.date_d_action
-      ? formatLocalDate(entry.date_d_action)
+    period: entry.date
+      ? formatLocalDate(entry.date)
       : '',
   }));
 }
