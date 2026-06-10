@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import AppSidebar from '@/components/layout/AppSidebar.vue';
 import NotificationsPanel from '@/components/NotificationsPanel.vue';
@@ -31,6 +31,11 @@ function updateUnreadNotificationsCount(notifications) {
 }
 
 async function loadUnreadNotificationsCount() {
+  if (!profileChecked.value || !user.value) {
+    unreadNotificationsCount.value = 0;
+    return;
+  }
+
   try {
     updateUnreadNotificationsCount(await getNotifications());
   } catch {
@@ -45,7 +50,11 @@ watch(
   },
 );
 
-onMounted(loadUnreadNotificationsCount);
+watch(
+  () => [profileChecked.value, user.value?.utilisateur_id, user.value?.role],
+  loadUnreadNotificationsCount,
+  { immediate: true },
+);
 </script>
 
 <template>

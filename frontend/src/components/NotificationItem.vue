@@ -168,7 +168,7 @@ function handleOpen() {
   justify-content: center;
   overflow: hidden;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--color-secondary);
 }
 
 .notification-item__avatar-image {

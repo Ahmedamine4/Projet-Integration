@@ -52,9 +52,10 @@ app.use('/api/select-institutions', LinkInstitutionsToEtudiantRoutes);
 //Validation Directeur - Etudiant
 app.use('/api/validation', ValidationEtudiantRoutes);
 
+app.use('/api/notifications', notificationRoutes);
+
 // Branchement des routes d'ajout du projet
 app.use('/api', projetRoutes);
-app.use('/api/notifications', notificationRoutes);
 app.use('/api/github', githubRoutes);
 //Modifications des infromations
 app.use('/api/users', updateUtilisateurRoutes);
