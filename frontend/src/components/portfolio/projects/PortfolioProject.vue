@@ -1,5 +1,5 @@
 <script setup>
-import { BadgeCheck, Clock3, Eye, EyeOff, Sparkles, XCircle } from 'lucide-vue-next';
+import { BadgeCheck, Clock3, Eye, EyeOff, Github, Sparkles, XCircle } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { useDoubleTap } from '@/composables/useDoubleTap';
 import ExploreButton from '@/components/portfolio/shared/ExploreButton.vue';
@@ -25,12 +25,17 @@ const isVisibleHighlight = computed(() => {
   return Boolean(props.project.highlighted && props.project.effectiveVisibleToEveryone);
 });
 
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('en-US', {
+const displayDate = computed(() => {
+  if (!props.project.date) return props.project.isDraft ? 'Draft' : '';
+
+  const date = new Date(props.project.date);
+  if (Number.isNaN(date.getTime())) return props.project.isDraft ? 'Draft' : '';
+
+  return date.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric',
-  })
-}
+  });
+});
 
 const { handleDoubleTap } = useDoubleTap(() => {
   if (!canEditExperience.value) return;
@@ -46,6 +51,7 @@ const { handleDoubleTap } = useDoubleTap(() => {
       'project-card--editable': canEditExperience,
       'project-card--hidden': !project.effectiveVisibleToEveryone,
       'project-card--highlighted': isVisibleHighlight,
+      'project-card--github-draft': project.isGithubDraft,
     }"
     @dblclick="canEditExperience && emit('edit', project)"
     @click="handleDoubleTap"
@@ -73,6 +79,17 @@ const { handleDoubleTap } = useDoubleTap(() => {
       />
     </div>
     <div
+      v-if="project.isGithubDraft"
+      class="project-draft-badge"
+      title="GitHub draft project"
+    >
+      <Github
+        :size="14"
+        :stroke-width="2.2"
+      />
+      <span>Draft</span>
+    </div>
+    <div
       v-if="isVisibleHighlight"
       class="project-match-badge"
       title="Matched by the current filter"
@@ -90,6 +107,15 @@ const { handleDoubleTap } = useDoubleTap(() => {
         :alt="project.title ? `${project.title} image` : 'Project image'"
         draggable="false"
       >
+      <div
+        v-else-if="project.isGithubDraft"
+        class="project-preview__draft"
+      >
+        <Github
+          :size="38"
+          :stroke-width="1.7"
+        />
+      </div>
     </div>
     <div class="project-content">
       <div class="project-header">
@@ -109,7 +135,12 @@ const { handleDoubleTap } = useDoubleTap(() => {
             />
           </span>
 
-          <span class="project-date">{{ formatDate(project.date) }}</span>
+          <span
+            v-if="displayDate"
+            class="project-date"
+          >
+            {{ displayDate }}
+          </span>
         </div>
       </div>
 
@@ -262,6 +293,14 @@ const { handleDoubleTap } = useDoubleTap(() => {
   -webkit-user-drag: none;
 }
 
+.project-preview__draft {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(var(--color-primary-rgb), 0.46);
+}
+
 .project-content {
   flex: 1;
   display: flex;
@@ -335,6 +374,29 @@ const { handleDoubleTap } = useDoubleTap(() => {
   color: var(--color-error);
 }
 
+.project-draft-badge {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.18);
+  border-radius: 999px;
+  padding: 0.38rem 0.58rem;
+  background: var(--color-background);
+  color: rgba(var(--color-primary-rgb), 0.72);
+  box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.project-draft-badge svg {
+  flex-shrink: 0;
+}
+
 .project-match-badge {
   position: absolute;
   top: 0.85rem;
@@ -357,6 +419,10 @@ const { handleDoubleTap } = useDoubleTap(() => {
 .project-match-badge svg {
   color: var(--color-secondary);
   flex-shrink: 0;
+}
+
+.project-card--github-draft .project-match-badge {
+  top: 3.55rem;
 }
 
 .project-visibility {

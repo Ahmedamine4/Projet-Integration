@@ -16,24 +16,29 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['toggle-visibility']);
+
 const viewMode = ref('loop');
-const hiddenRecommendationIds = ref(new Set());
 const scrollerRef = ref(null);
 const canScrollLeft = ref(false);
 const canScrollRight = ref(false);
 
 const normalizedRecommendations = computed(() =>
   props.recommendations.map((recommendation, index) => ({
-    id: recommendation.id ?? `${recommendation.authorName}-${index}`,
-    authorName: recommendation.authorName || 'Professor',
-    authorRole: recommendation.authorRole || 'Recommendation',
-    content: recommendation.content || '',
-    date: recommendation.date || '',
+    id: recommendation.interaction_id ?? recommendation.id ?? `${recommendation.authorName}-${index}`,
+    interaction_id: recommendation.interaction_id,
+    authorName: recommendation.utilisateur?.prenom && recommendation.utilisateur?.nom
+      ? `${recommendation.utilisateur.prenom} ${recommendation.utilisateur.nom}`
+      : recommendation.authorName || 'Professor',
+    authorRole: recommendation.utilisateur?.professionnel?.poste || recommendation.authorRole || 'Recommendation',
+    content: recommendation.texte || recommendation.content || '',
+    date: recommendation.date_interaction || recommendation.date || '',
+    visibilite: recommendation.visibilite ?? true,
   })).filter((recommendation) => recommendation.content)
 );
 
 const publicRecommendations = computed(() =>
-  normalizedRecommendations.value.filter((recommendation) => !hiddenRecommendationIds.value.has(recommendation.id))
+  normalizedRecommendations.value.filter((recommendation) => recommendation.visibilite)
 );
 
 const displayedRecommendations = computed(() =>
@@ -82,21 +87,11 @@ function toggleViewMode() {
 }
 
 function isRecommendationVisible(recommendation) {
-  return !hiddenRecommendationIds.value.has(recommendation.id);
+  return recommendation.visibilite;
 }
 
 function toggleRecommendationVisibility(recommendation) {
-  const nextHiddenIds = new Set(hiddenRecommendationIds.value);
-
-  if (nextHiddenIds.has(recommendation.id)) {
-    nextHiddenIds.delete(recommendation.id);
-  }
-  else {
-    nextHiddenIds.add(recommendation.id);
-  }
-
-  hiddenRecommendationIds.value = nextHiddenIds;
-  nextTick(updateScrollFades);
+  emit('toggle-visibility', recommendation, !recommendation.visibilite);
 }
 
 const {

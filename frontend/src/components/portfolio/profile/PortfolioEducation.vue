@@ -45,6 +45,12 @@ defineEmits(['add-education']);
           <p class="education__degree">
             {{ item.level }}
           </p>
+          <span
+            v-if="item.status === 'en_attente'"
+            class="education__status"
+          >
+            Pending validation
+          </span>
           <p class="education__description">
             {{ item.description }}
           </p>
@@ -156,6 +162,17 @@ defineEmits(['add-education']);
   color: rgba(var(--color-primary-rgb), 0.76);
   font-size: var(--font-size-xs);
   font-weight: var(--font-regular);
+}
+
+.education__status {
+  width: fit-content;
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.26);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: rgba(var(--color-secondary-rgb), 0.1);
+  color: rgba(var(--color-primary-rgb), 0.72);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-bold);
 }
 
 .education__description {

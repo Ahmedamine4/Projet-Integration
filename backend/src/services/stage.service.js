@@ -81,6 +81,12 @@ export const creeStage = async (etudiantId, data, file) => {
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre}".`,
         TYPES_NOTIFICATION.VALIDATION_STAGE
       );
+
+      await creerNotification(
+        etudiantId,
+        `Votre stage "${data.titre}" a été soumis pour validation au professeur ${professeur.nom} ${professeur.prenom}.`,
+         TYPES_NOTIFICATION.VALIDATION_STAGE
+      );
     }
 
     const result = await tx.stage.findUnique({
@@ -253,6 +259,11 @@ export const editStage = async (etudiantId, experienceId, data, file) => {
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son stage "${data.titre ?? experience.titre}". Il demande une validation.`,
         TYPES_NOTIFICATION.VALIDATION_STAGE
       );
+      await creerNotification(
+        etudiantId,
+        `Votre stage "${data.titre ?? experience.titre}" a été modifié et soumis à nouveau pour validation au professeur ${experience.stage.validation.professeur.utilisateur.prenom} ${experience.stage.validation.professeur.utilisateur.nom}.`,
+         TYPES_NOTIFICATION.VALIDATION_STAGE
+      );
 
     // le stage n'a pa de validation et l'etudiant veut ajouter un prof
     } else if (data.email_professeur) {
@@ -282,6 +293,12 @@ export const editStage = async (etudiantId, experienceId, data, file) => {
         prof.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre ?? experience.titre}".`,
         TYPES_NOTIFICATION.VALIDATION_STAGE
+      );
+
+      await creerNotification(
+        etudiantId,
+        `Votre stage "${data.titre ?? experience.titre}" a été soumis pour validation au professeur ${prof.nom} ${prof.prenom}.`,
+         TYPES_NOTIFICATION.VALIDATION_STAGE
       );
     }
 

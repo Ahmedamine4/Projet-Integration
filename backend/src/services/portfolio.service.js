@@ -249,7 +249,7 @@ export async function getPortfolioEtudiant(etudiantId, isOwner, filters = {}) {
       badges: true,
       clubs: true,
       institutions: {
-        where: { statut: 'valide' },
+        where: isOwner ? {} : { statut: 'valide' },
         include: { institution: true },
       },
     },

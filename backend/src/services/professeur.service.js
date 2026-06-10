@@ -210,6 +210,12 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
       TYPES_NOTIFICATION.COMMENTAIRE_PROJET
     );
 
+    await creerNotification(
+      validation.experience.etudiant.utilisateur.utilisateur_id,
+      `Votre projet "${validation.experience.titre}" a reçu un nouveau commentaire de votre professeur.`,
+      TYPES_NOTIFICATION.COMMENTAIRE_PROJET
+    );
+
     return updated;
   }
 
@@ -231,6 +237,12 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
     statut === 'valide'
       ? TYPES_NOTIFICATION.PROJET_VALIDE
       : TYPES_NOTIFICATION.PROJET_REFUSE
+  );
+
+  await creerNotification(
+    validation.experience.etudiant.utilisateur.utilisateur_id,
+    `Votre projet "${validation.experience.titre}" a reçu une mise à jour de statut de votre professeur.`,
+    statut === 'valide' ? TYPES_NOTIFICATION.PROJET_VALIDE : TYPES_NOTIFICATION.PROJET_REFUSE
   );
 
   return updated;
@@ -269,6 +281,12 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
       TYPES_NOTIFICATION.COMMENTAIRE_STAGE
     );
 
+    await creerNotification(
+      validation.experience.etudiant.utilisateur.utilisateur_id,
+      `Votre stage "${validation.experience.titre}" a reçu un nouveau commentaire de votre professeur.`,
+      TYPES_NOTIFICATION.COMMENTAIRE_STAGE
+    );
+
     return updated;
   }
 
@@ -290,6 +308,12 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
   statut === 'valide'
     ? TYPES_NOTIFICATION.STAGE_VALIDE
     : TYPES_NOTIFICATION.STAGE_REFUSE
+  );
+
+  await creerNotification(
+    validation.experience.etudiant.utilisateur.utilisateur_id,
+    `Votre stage "${validation.experience.titre}" a reçu une mise à jour de statut de votre professeur.`,
+    statut === 'valide' ? TYPES_NOTIFICATION.STAGE_VALIDE : TYPES_NOTIFICATION.STAGE_REFUSE
   );
 
   return updated;
@@ -340,7 +364,13 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
       `Votre professeur a laissé un commentaire sur votre demande de lettre : "${lettre.objet}".`,
       TYPES_NOTIFICATION.COMMENTAIRE_RECOMMANDATION
     );
- 
+
+    await creerNotification(
+      etudiantId,
+      `Votre demande de lettre de recommandation "${lettre.objet}" a reçu un nouveau commentaire de votre professeur.`,
+      TYPES_NOTIFICATION.COMMENTAIRE_RECOMMANDATION
+    );
+
     return updated;
   }
  
@@ -356,6 +386,12 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
     await creerNotification(
       etudiantId,
       `Votre demande de lettre de recommandation "${lettre.objet}" a été refusée. Motif : ${commentaire}`,
+      TYPES_NOTIFICATION.RECOMMANDATION_REFUSEE
+    );
+
+    await creerNotification(
+      etudiantId,
+      `Votre demande de lettre de recommandation "${lettre.objet}" a reçu une mise à jour de statut de votre professeur.`,
       TYPES_NOTIFICATION.RECOMMANDATION_REFUSEE
     );
  
@@ -375,6 +411,12 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
     await creerNotification(
       etudiantId,
       `Votre lettre de recommandation "${lettre.objet}" est disponible.`,
+      TYPES_NOTIFICATION.RECOMMANDATION_VALIDEE
+    );
+
+    await creerNotification(
+      etudiantId,
+      `Votre demande de lettre de recommandation "${lettre.objet}" a été validée par votre professeur.`,
       TYPES_NOTIFICATION.RECOMMANDATION_VALIDEE
     );
  

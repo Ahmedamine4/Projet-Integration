@@ -15,6 +15,7 @@ import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { formatLocalDate } from '@/utils/date';
 import ModificationRequest from '@/components/common/display/ModificationRequest.vue';
+import api from '@/services/api';
 
 const props = defineProps({
   open: {
@@ -40,6 +41,14 @@ const props = defineProps({
     default: null,
   },
   schoolOptions: {
+    type: Array,
+    default: () => [],
+  },
+  academicInstitutions: {
+    type: Array,
+    default: () => [],
+  },
+  certificationInstitutionOptions: {
     type: Array,
     default: () => [],
   },
@@ -137,6 +146,36 @@ const isEdit = computed(() => props.mode === 'edit');
 const requiresAcademicTeacher = computed(() => {
   return props.type !== 'activity';
 });
+
+const fetchedProfessorEmails = ref([]);
+const isLoadingProfessors = ref(false);
+const hasFetchedProfessors = ref(false);
+let professorRequestId = 0;
+
+const selectedAcademicInstitution = computed(() => {
+  return props.academicInstitutions.find((institution) => {
+    return institution?.nom === form.institution;
+  }) ?? null;
+});
+
+const professorEmailOptions = computed(() => {
+  if (form.isAcademic && requiresAcademicTeacher.value && form.institution) {
+    return fetchedProfessorEmails.value;
+  }
+
+  return props.professorEmails;
+});
+
+const noTeachersForInstitutionMessage = 'The institution you selected has no teachers. Please select another institution.';
+
+const selectedInstitutionHasNoTeachers = computed(() => (
+  form.isAcademic &&
+  requiresAcademicTeacher.value &&
+  form.institution &&
+  hasFetchedProfessors.value &&
+  !isLoadingProfessors.value &&
+  fetchedProfessorEmails.value.length === 0
+));
 
 const errors = reactive({
   title: '',
@@ -242,6 +281,7 @@ function getComparableExperience(source = {}, config = currentConfig.value) {
     ? getSelectedNames(domains.value)
     : source.domains ?? [];
   const isAcademicExperience = config.showAcademic && Boolean(source.isAcademic);
+  const hasInstitutionField = config.showCertificateFields || isAcademicExperience;
 
   return {
     title: normalizeComparableValue(source.title),
@@ -255,7 +295,7 @@ function getComparableExperience(source = {}, config = currentConfig.value) {
     certificateURL: config.showCertificateFields ? normalizeComparableValue(source.certificateURL) : '',
     certificateCode: config.showCertificateFields ? normalizeComparableValue(source.certificateCode) : '',
     isAcademic: isAcademicExperience,
-    institution: isAcademicExperience ? normalizeComparableValue(source.institution) : '',
+    institution: hasInstitutionField ? normalizeComparableValue(source.institution) : '',
     teacherEmail: isAcademicExperience && requiresAcademicTeacher.value
       ? normalizeComparableValue(source.teacherEmail)
       : '',
@@ -288,6 +328,63 @@ function resetErrors() {
   Object.keys(errors).forEach((key) => {
     errors[key] = '';
   });
+}
+
+async function fetchProfessorsForInstitution() {
+  const requestId = ++professorRequestId;
+  fetchedProfessorEmails.value = [];
+  hasFetchedProfessors.value = false;
+  errors.teacherEmail = '';
+
+  if (
+    !props.open ||
+    !form.isAcademic ||
+    !requiresAcademicTeacher.value ||
+    !form.institution
+  ) {
+    return;
+  }
+
+  const institutionId = selectedAcademicInstitution.value?.institution_id;
+  if (!institutionId) {
+    form.teacherEmail = '';
+    return;
+  }
+
+  isLoadingProfessors.value = true;
+
+  try {
+    const response = await api.get(`/getInstitutions/${institutionId}/professeurs`);
+    if (requestId !== professorRequestId) return;
+
+    fetchedProfessorEmails.value = (response.data?.data?.professeurs ?? [])
+      .map((professor) => professor?.utilisateur?.email)
+      .filter(Boolean);
+    hasFetchedProfessors.value = true;
+
+    if (!fetchedProfessorEmails.value.length) {
+      form.teacherEmail = '';
+      errors.teacherEmail = noTeachersForInstitutionMessage;
+      return;
+    }
+
+    if (
+      form.teacherEmail &&
+      !fetchedProfessorEmails.value.includes(form.teacherEmail)
+    ) {
+      form.teacherEmail = '';
+    }
+  } catch {
+    if (requestId === professorRequestId) {
+      fetchedProfessorEmails.value = [];
+      hasFetchedProfessors.value = false;
+      form.teacherEmail = '';
+    }
+  } finally {
+    if (requestId === professorRequestId) {
+      isLoadingProfessors.value = false;
+    }
+  }
 }
 
 function hasErrors() {
@@ -445,12 +542,14 @@ const submitExperience = () => {
     if (form.isAcademic && !form.institution)
       errors.institution = `Institution is required for academic ${props.type}s`;
 
-    if (requiresAcademicTeacher.value && form.isAcademic && !trimmedTeacherEmail)
+    if (requiresAcademicTeacher.value && selectedInstitutionHasNoTeachers.value)
+      errors.teacherEmail = noTeachersForInstitutionMessage;
+    else if (requiresAcademicTeacher.value && form.isAcademic && !trimmedTeacherEmail)
       errors.teacherEmail = `Teacher email is required for academic ${props.type}s`;
     else if (
       requiresAcademicTeacher.value &&
       form.isAcademic &&
-      !props.professorEmails.includes(trimmedTeacherEmail)
+      !professorEmailOptions.value.includes(trimmedTeacherEmail)
     )
       errors.teacherEmail = 'Select a valid teacher email';
   }
@@ -485,7 +584,9 @@ const submitExperience = () => {
       ? trimmedCertificateCode
       : '',
     isAcademic: config.showAcademic && form.isAcademic,
-    institution: config.showAcademic && form.isAcademic
+    institution: config.showCertificateFields
+      ? trimmedInstitution
+      : config.showAcademic && form.isAcademic
       ? trimmedInstitution
       : '',
     activityType: config.showActivityFields
@@ -549,6 +650,17 @@ watch(
   (value) => {
     if (!value) resetAcademicErrors();
 });
+
+watch(
+  [
+    () => props.open,
+    () => props.type,
+    () => form.isAcademic,
+    () => form.institution,
+    () => props.academicInstitutions,
+  ],
+  fetchProfessorsForInstitution
+);
 
 function getFileNameFromUrl(url) {
   if (!url) return '';
@@ -820,10 +932,12 @@ const existingImageName = computed(() => {
               class="form-group"
             >
               <div class="field">
-                <BaseInput
+                <BaseDropdown
                   v-model="form.institution"
+                  :options="certificationInstitutionOptions"
                   label="Issuing institution"
                   placeholder="Institution or platform name"
+                  autocomplete="nope"
                 />
               </div>
 
@@ -910,9 +1024,9 @@ const existingImageName = computed(() => {
                   >
                     <BaseDropdown
                       v-model="form.teacherEmail"
-                      :options="professorEmails"
+                      :options="professorEmailOptions"
                       label="Teacher email"
-                      placeholder="teacher@school.com"
+                      :placeholder="isLoadingProfessors ? 'Loading teachers...' : 'teacher@school.com'"
                       autocomplete="nope"
                     />
                     <BaseError

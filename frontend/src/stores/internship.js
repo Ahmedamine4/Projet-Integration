@@ -13,8 +13,9 @@ function buildInternshipFormData(internship) {
   formData.append('date_debut', internship.startDate);
   formData.append('date_fin', internship.endDate);
   formData.append('description', internship.description);
-  formData.append('is_academique', internship.isAcademic);
+  formData.append('is_academique', String(Boolean(internship.isAcademic)));
   formData.append('email_professeur', internship.teacherEmail);
+  formData.append('visibilite', String(internship.visibleToEveryone));
   formData.append('technologies', JSON.stringify(internship.technologies));
   formData.append('domaines', JSON.stringify(internship.domains));
   formData.append('rapport_stage', internship.report);

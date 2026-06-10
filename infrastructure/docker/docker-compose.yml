@@ -1,4 +1,17 @@
 services:
+  cadvisor:
+   image: gcr.io/cadvisor/cadvisor:latest
+   container_name: cadvisor
+   restart: unless-stopped
+   ports:
+      - "8081:8080"
+   volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+   privileged: true
   backend:
     container_name: back-app-container
     build:
@@ -74,8 +87,6 @@ services:
       - nginx-certs:/etc/nginx/ssl
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
     depends_on:
       - frontend
       - backend

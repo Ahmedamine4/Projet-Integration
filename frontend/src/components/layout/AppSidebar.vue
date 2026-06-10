@@ -43,6 +43,7 @@ const emit = defineEmits(['open-notifications', 'update:collapsed']);
 
 const collapsed = ref(true);
 
+<<<<<<< HEAD
 const sidebarItems = computed(() => {
   const items = [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -58,6 +59,19 @@ const sidebarItems = computed(() => {
 
   return items;
 });
+=======
+const sidebarItems = computed(() => [
+  {
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    path: authStore.user?.role === 'directeur' ? '/director-dashboard' : '/dashboard',
+  },
+  { label: 'Getting started', icon: Compass, path: '/getting-started' },
+  { label: 'Profile', icon: UserRound },
+  { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
+  { label: 'Settings', icon: Settings, path: '/settings' },
+]);
+>>>>>>> 67c2ce94d7abceb794894ef7e8780942fa6c5115
 
 function isItemActive(item) {
   if (!item.path) return false;

@@ -1,16 +1,21 @@
 <script setup>
-import { reactive } from 'vue';
+import { reactive, ref, computed, watch } from 'vue';
 import Button from '@/components/common/actions/BaseButton.vue';
 import Input from '@/components/common/forms/BaseInput.vue';
 import Dropdown from '@/components/common/forms/BaseDropdown.vue';
 import Select from '@/components/common/forms/BaseSelect.vue';
 import Error from '@/components/common/feedback/BaseError.vue';
 import CloseButton from '@/components/common/actions/CloseButton.vue';
+import api from '@/services/api';
 
 const props = defineProps({
   open: Boolean,
   loading: Boolean,
   schoolOptions: {
+    type: Array,
+    default: () => [],
+  },
+  academicInstitutions: {
     type: Array,
     default: () => [],
   },
@@ -36,10 +41,90 @@ const errors = reactive({
   teacherEmail: '',
 });
 
+const fetchedProfessorEmails = ref([]);
+const isLoadingProfessors = ref(false);
+const hasFetchedProfessors = ref(false);
+let professorRequestId = 0;
+
+const selectedAcademicInstitution = computed(() => {
+  return props.academicInstitutions.find((institution) => {
+    return institution?.nom === form.institution;
+  }) ?? null;
+});
+
+const professorEmailOptions = computed(() => {
+  if (form.institution) {
+    return fetchedProfessorEmails.value;
+  }
+
+  return props.professorEmails;
+});
+
+const noTeachersForInstitutionMessage = 'The institution you selected has no teachers. Please select another institution.';
+
+const selectedInstitutionHasNoTeachers = computed(() => (
+  form.institution &&
+  hasFetchedProfessors.value &&
+  !isLoadingProfessors.value &&
+  fetchedProfessorEmails.value.length === 0
+));
+
 function resetErrors() {
   Object.keys(errors).forEach((key) => {
     errors[key] = '';
   });
+}
+
+async function fetchProfessorsForInstitution() {
+  const requestId = ++professorRequestId;
+  fetchedProfessorEmails.value = [];
+  hasFetchedProfessors.value = false;
+  errors.teacherEmail = '';
+
+  if (!props.open || !form.institution) {
+    return;
+  }
+
+  const institutionId = selectedAcademicInstitution.value?.institution_id;
+  if (!institutionId) {
+    form.teacherEmail = '';
+    return;
+  }
+
+  isLoadingProfessors.value = true;
+
+  try {
+    const response = await api.get(`/getInstitutions/${institutionId}/professeurs`);
+    if (requestId !== professorRequestId) return;
+
+    fetchedProfessorEmails.value = (response.data?.data?.professeurs ?? [])
+      .map((professor) => professor?.utilisateur?.email)
+      .filter(Boolean);
+    hasFetchedProfessors.value = true;
+
+    if (!fetchedProfessorEmails.value.length) {
+      form.teacherEmail = '';
+      errors.teacherEmail = noTeachersForInstitutionMessage;
+      return;
+    }
+
+    if (
+      form.teacherEmail &&
+      !fetchedProfessorEmails.value.includes(form.teacherEmail)
+    ) {
+      form.teacherEmail = '';
+    }
+  } catch {
+    if (requestId === professorRequestId) {
+      fetchedProfessorEmails.value = [];
+      hasFetchedProfessors.value = false;
+      form.teacherEmail = '';
+    }
+  } finally {
+    if (requestId === professorRequestId) {
+      isLoadingProfessors.value = false;
+    }
+  }
 }
 
 function submitRequest() {
@@ -53,8 +138,9 @@ function submitRequest() {
   if (!title) errors.title = 'Request title is required';
   if (description.length < 20) errors.description = 'Description must be at least 20 characters';
   if (!institution) errors.institution = 'Institution is required';
-  if (!teacherEmail) errors.teacherEmail = 'Teacher email is required';
-  else if (!props.professorEmails.includes(teacherEmail)) {
+  if (selectedInstitutionHasNoTeachers.value) errors.teacherEmail = noTeachersForInstitutionMessage;
+  else if (!teacherEmail) errors.teacherEmail = 'Teacher email is required';
+  else if (!professorEmailOptions.value.includes(teacherEmail)) {
     errors.teacherEmail = 'Select a valid teacher email';
   }
 
@@ -67,6 +153,15 @@ function submitRequest() {
     teacherEmail,
   });
 }
+
+watch(
+  [
+    () => props.open,
+    () => form.institution,
+    () => props.academicInstitutions,
+  ],
+  fetchProfessorsForInstitution
+);
 </script>
 
 <template>
@@ -137,9 +232,9 @@ function submitRequest() {
             <div class="field">
               <Dropdown
                 v-model="form.teacherEmail"
-                :options="professorEmails"
+                :options="professorEmailOptions"
                 label="Professor email"
-                placeholder="teacher@school.com"
+                :placeholder="isLoadingProfessors ? 'Loading teachers...' : 'teacher@school.com'"
               />
               <Error
                 v-if="errors.teacherEmail"
