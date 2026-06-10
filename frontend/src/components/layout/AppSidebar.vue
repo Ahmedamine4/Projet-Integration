@@ -54,8 +54,7 @@ const sidebarItems = computed(() => {
 
   if (authStore.user?.role === 'professeur') {
     items[0] = { label: 'Dashboard', icon: LayoutDashboard, path: '/prof-dashboard' };
-  }
-  if (authStore.user?.role === 'directeur') {
+  }else if(authStore.user?.role === 'directeur') {
     items[0] = { label: 'Dashboard', icon: LayoutDashboard, path: '/director-dashboard' };
   }
   return items;
