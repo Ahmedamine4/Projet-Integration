@@ -217,9 +217,7 @@ trivy-images:
     - trivy image --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN" --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-image-ai.json ahmedamine04/foliocraft:ai || true
 
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "main"'
-    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 # FRONTEND TESTS
 frontend-tests:
