@@ -141,21 +141,12 @@ router.beforeEach((to) => {
     };
   }
 
-<<<<<<< HEAD
   if (to.meta.role && authStore.user?.role) {
     if (authStore.user.role !== to.meta.role) {
       return {
         path: authStore.user.role === 'professeur' ? '/prof-dashboard' : '/dashboard',
       };
     }
-=======
-  if (
-    authStore.profileChecked
-    && to.meta.roles
-    && !to.meta.roles.includes(authStore.user?.role)
-  ) {
-    return { name: 'home' };
->>>>>>> 67c2ce94d7abceb794894ef7e8780942fa6c5115
   }
 
   return true;
