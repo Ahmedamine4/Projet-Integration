@@ -29,7 +29,7 @@ export const LinkInstitutionsToEtudiant = async (etudiantId, institutionId) => {
                     utilisateur_id: etudiantId,
                     institution_id: inst.institution_id,
                     statut: 'en_attente',
-                    date_d_action: new Date()
+                    date: new Date()
                 }
             })
         )

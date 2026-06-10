@@ -12,6 +12,7 @@ export const ROLES = {
   PROFESSEUR: 'professeur',
   ETUDIANT: 'etudiant',
   PROFESSIONNEL: 'professionnel',
+  DIRECTEUR: 'directeur',
 };
 
 // Récupérer le token depuis : Authorization: Bearer TOKEN
