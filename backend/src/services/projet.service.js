@@ -4,6 +4,8 @@ import { TypeExperience, TypeSpecifique } from '@prisma/client';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompetencesByExperience } from './competence.helper.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
+const parseBoolean = (value) => value === true || value === 'true' || value === '1' || value === 1;
+
 export const creeProjet = async (etudiantId, data, file) => {
   const projetExistant = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'projet', titre: data.projectTitle, deleted_at: null },
@@ -13,7 +15,7 @@ export const creeProjet = async (etudiantId, data, file) => {
   const technologies = JSON.parse(data.technologies || '[]');
   const domaines = JSON.parse(data.domains || '[]');
   const isAcademique = data.projetType === 'academique';
-  const visibilite = data.visibilite !== undefined ? data.visibilite : false;
+  const visibilite = data.visibilite !== undefined ? parseBoolean(data.visibilite) : false;
 
   const photoUrl = file ? await uploadPhoto(file, 'projets-photos') : null;
 
@@ -145,7 +147,7 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
       : experience.type_specifique === 'academique';
 
     const visibilite = data.visibilite !== undefined
-      ? data.visibilite
+      ? parseBoolean(data.visibilite)
       : experience.visibilite;
 
     if (isAcademique && experience.projet?.validation) {
@@ -309,7 +311,7 @@ export const updateVisibiliteProjetService = async (etudiantId, experienceId, vi
 
   return prisma.experience.update({
     where: { experience_id: experienceId },
-    data: { visibilite },
+    data: { visibilite: parseBoolean(visibilite) },
     select: { experience_id: true, visibilite: true },
   });
 };
