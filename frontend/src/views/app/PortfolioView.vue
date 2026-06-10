@@ -16,7 +16,6 @@ import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
 import { useInstitutionStore } from '@/stores/institution';
 import api from '@/services/api';
-import BaseError from '@/components/common/feedback/BaseError.vue';
 import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
 import ConfirmDialog from '@/components/common/feedback/ConfirmDialog.vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -175,8 +174,14 @@ watch(
     isResolvingPortfolio.value = true;
 
     try {
+      clearNotification();
       await portfolioStore.fetchPortfolio(id);
     } catch (error) {
+      showNotification('error', portfolioStore.error ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch portfolio');
+
       if (error.response?.status === 404) {
         await router.replace({ name: 'not-found' });
       }
@@ -839,9 +844,6 @@ async function handleAiFiltersDetected(filters) {
     />
 
     <main>
-      <BaseError v-if="portfolioStore.error">
-        {{ portfolioStore.error }}
-      </BaseError>
       <div class="profile">
         <div
           class="profile__photo"

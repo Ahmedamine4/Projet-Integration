@@ -2,7 +2,17 @@ import { defineStore } from 'pinia';
 import api from '@/services/api';
 import { supabase } from '@/services/supabase';
 import { ref, computed } from 'vue';
-import { normalizeUser } from '@/utils/portfolioNormalizers';
+
+function normalizeAuthUser(user) {
+  if (!user) return null;
+
+  return {
+    ...user,
+    firstName: user.prenom ?? '',
+    lastName: user.nom ?? '',
+    phone: user.telephone ?? '',
+  };
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
@@ -16,7 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       try {
           const { data } = await api.get('/auth/profile');
-          user.value = normalizeUser(data.user);
+          user.value = normalizeAuthUser(data.user);
       } catch {
           user.value = null; // Cookie expiré ou absent
       } finally {
@@ -46,7 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
       password,
     });
 
-    user.value = normalizeUser(data.user);
+    user.value = normalizeAuthUser(data.user);
   }
 
   async function register(userData) {
@@ -59,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
       password,
     });
 
-    user.value = normalizeUser(data.user);
+    user.value = normalizeAuthUser(data.user);
   }
 
   async function startGoogleAuth() {
@@ -91,7 +101,7 @@ export const useAuthStore = defineStore('auth', () => {
       access_token: supabaseToken,
     });
 
-    user.value = normalizeUser(response.data.user);
+    user.value = normalizeAuthUser(response.data.user);
   }
 
   async function logout() {

@@ -38,21 +38,15 @@ const emit = defineEmits(['cancel', 'confirm']);
     <div
       v-if="open"
       class="confirm-dialog"
-      role="presentation"
       @click.self="emit('cancel')"
     >
-      <section
-        class="confirm-dialog__panel"
-        role="dialog"
-        aria-modal="true"
-        :aria-labelledby="`${$attrs.id || 'confirm-dialog'}-title`"
-      >
+      <section class="confirm-dialog__panel">
         <header class="confirm-dialog__header">
           <span class="confirm-dialog__icon">
             <AlertTriangle :size="22" />
           </span>
           <div>
-            <h2 :id="`${$attrs.id || 'confirm-dialog'}-title`">
+            <h2>
               {{ title }}
             </h2>
             <p>{{ message }}</p>
