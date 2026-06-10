@@ -125,6 +125,7 @@ const displayRecommendations = computed(() => {
 
   return recommendations;
 });
+
 const recommendationsCount = computed(() => displayRecommendations.value.length);
 const educationItems = computed(() => portfolio.value?.education ?? []);
 const skillItems = computed(() => portfolio.value?.skills ?? []);
