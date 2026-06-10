@@ -144,14 +144,6 @@ function getExperienceRoute(experienceId) {
 
       <p>{{ internship.description }}</p>
 
-      <img
-        v-if="internship.imagePreview"
-        class="internship-card__image"
-        :src="internship.imagePreview"
-        :alt="internship.title ? `${internship.title} image` : 'Internship image'"
-        draggable="false"
-      >
-
       <div class="internship-card__footer">
         <RouterLink
           class="internship-card__report"
@@ -232,7 +224,6 @@ function getExperienceRoute(experienceId) {
 .internship-card--hidden .internship-card__heading,
 .internship-card--hidden .internship-card__date,
 .internship-card--hidden p,
-.internship-card--hidden .internship-card__image,
 .internship-card--hidden .internship-card__tags span,
 .internship-card--hidden .internship-card__hint {
   filter: grayscale(1) saturate(0);
@@ -366,15 +357,6 @@ function getExperienceRoute(experienceId) {
   font-size: var(--font-size-xxs);
   font-weight: var(--font-medium);
   line-height: 1;
-}
-
-.internship-card__image {
-  width: min(100%, 48rem);
-  aspect-ratio: 16 / 6;
-  display: block;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
 }
 
 .internship-card__footer {

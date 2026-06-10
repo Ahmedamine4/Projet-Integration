@@ -699,7 +699,7 @@ const handleOrbChange = (event) => {
   display: flex;
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
-  z-index: 999999;
+  z-index: 2;
 }
 
 .icons {

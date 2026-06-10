@@ -8,6 +8,7 @@ import ProjectsSection from '@/components/portfolio/projects/ProjectsSection.vue
 import { Camera, QrCode, UserRound } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/contact/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
+import FollowButton from '@/components/common/actions/FollowButton.vue';
 import { useProjectStore } from '@/stores/project';
 import { useActivityStore } from '@/stores/activity';
 import { useCertificationStore } from '@/stores/certification';
@@ -15,7 +16,8 @@ import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
 import { useInstitutionStore } from '@/stores/institution';
 import api from '@/services/api';
-import BaseError from '@/components/common/feedback/BaseError.vue';
+import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
+import ConfirmDialog from '@/components/common/feedback/ConfirmDialog.vue';
 import { useRoute, useRouter } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
@@ -121,7 +123,10 @@ const profilePhotoInput = ref(null);
 const selectedProfilePhotoFile = ref(null);
 const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
-const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
+const loadedFollowersCount = ref(null);
+const followersCount = computed(() => loadedFollowersCount.value ?? 0);
+const isFollowing = ref(false);
+const isFollowLoading = ref(false);
 const localRecommendations = ref([]);
 const displayRecommendations = computed(() => {
   const recommendations = [
@@ -169,8 +174,14 @@ watch(
     isResolvingPortfolio.value = true;
 
     try {
+      clearNotification();
       await portfolioStore.fetchPortfolio(id);
     } catch (error) {
+      showNotification('error', portfolioStore.error ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch portfolio');
+
       if (error.response?.status === 404) {
         await router.replace({ name: 'not-found' });
       }
@@ -185,6 +196,14 @@ watch(portfolioUserId, () => {
   localRecommendations.value = [];
   closeRecommendationModal();
 });
+
+watch(
+  [portfolioUserId, userId, isOwnPortfolio],
+  () => {
+    loadFollowState();
+  },
+  { immediate: true }
+);
 
 function sortVisibleHighlightedExperiences(list, isVisible = (experience) => experience.effectiveVisibleToEveryone) {
   return [...list].sort((firstProject, secondProject) => {
@@ -259,13 +278,11 @@ const shouldShowInternshipSection = computed(() => {
   return isOwnPortfolio.value || visibleInternships.value.length > 0;
 });
 
-const experienceErrors = ref({
-  project: '',
-  internship: '',
-  activity: '',
-  certificate: '',
+const notification = ref({
+  type: 'error',
+  message: '',
 });
-const schoolPathError = ref('');
+let notificationTimer = null;
 const isSchoolModalOpen = ref(false);
 
 const experienceModal = ref({
@@ -274,6 +291,7 @@ const experienceModal = ref({
   mode: 'create',
   selected: null,
 });
+const isDeleteConfirmOpen = ref(false);
 
 const isExperienceSubmitting = ref(false);
 
@@ -289,8 +307,16 @@ const experienceModalLoading = computed(() =>
   (experienceLoadingByType.value[experienceModal.value.type] ?? false)
 );
 
+function clearNotification() {
+  notification.value.message = '';
+}
+
+function showNotification(type, message) {
+  notification.value = { type, message };
+}
+
 function openExperienceModal(type) {
-  experienceErrors.value[type] = '';
+  clearNotification();
   experienceModal.value = {
     open: true,
     type,
@@ -302,7 +328,7 @@ function openExperienceModal(type) {
 function openEditExperienceModal(type, experience) {
   if (isRejectedExperience(experience)) return;
 
-  experienceErrors.value[type] = '';
+  clearNotification();
   experienceModal.value = {
     open: true,
     type,
@@ -316,6 +342,7 @@ function isRejectedExperience(experience) {
 }
 
 function closeExperienceModal() {
+  isDeleteConfirmOpen.value = false;
   experienceModal.value = {
     ...experienceModal.value,
     open: false,
@@ -324,9 +351,19 @@ function closeExperienceModal() {
   };
 }
 
+function openDeleteConfirm() {
+  isDeleteConfirmOpen.value = true;
+}
+
+function closeDeleteConfirm() {
+  if (isExperienceSubmitting.value) return;
+
+  isDeleteConfirmOpen.value = false;
+}
+
 async function handleExperienceSubmit(experience) {
   const type = experienceModal.value.type;
-  experienceErrors.value[type] = '';
+  clearNotification();
   isExperienceSubmitting.value = true;
 
   try {
@@ -345,12 +382,14 @@ async function handleExperienceSubmit(experience) {
         );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdProject = await projectStore.createProject(experience);
       projects.value.unshift(createdProject);
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
       return;
     }
 
@@ -366,12 +405,14 @@ async function handleExperienceSubmit(experience) {
         );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdActivity = await activityStore.createActivity(experience);
       activities.value = [createdActivity, ...activities.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
     }
 
     if (type === 'internship') {
@@ -385,12 +426,14 @@ async function handleExperienceSubmit(experience) {
           internship.id === selectedId ? updatedInternship : internship
         );
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdInternship = await internshipStore.createInternship(experience);
       internships.value = [createdInternship, ...internships.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
       return;
     }
 
@@ -406,18 +449,61 @@ async function handleExperienceSubmit(experience) {
         );
 
         closeExperienceModal();
+        showNotification('success', 'Experience updated successfully.');
         return;
       }
 
       const createdCertification = await certificationStore.createCertification(experience);
       certifications.value = [createdCertification, ...certifications.value];
       closeExperienceModal();
+      showNotification('success', 'Experience created successfully.');
     }
   }
   catch (error) {
-    experienceErrors.value[type] = error.response?.data?.message ||
+    showNotification('error', error.response?.data?.message ||
       error.message ||
-      `Failed to save ${type}`;
+      `Failed to save ${type}`);
+  }
+  finally {
+    isExperienceSubmitting.value = false;
+  }
+}
+
+async function handleExperienceDelete() {
+  const type = experienceModal.value.type;
+  const selectedId = experienceModal.value.selected?.id;
+
+  if (!selectedId) return;
+
+  clearNotification();
+  isExperienceSubmitting.value = true;
+
+  try {
+    if (type === 'project') {
+      await projectStore.deleteProject(selectedId);
+      projects.value = projects.value.filter((project) => project.id !== selectedId);
+    }
+    else if (type === 'activity') {
+      await activityStore.deleteActivity(selectedId);
+      activities.value = activities.value.filter((activity) => activity.id !== selectedId);
+    }
+    else if (type === 'internship') {
+      await internshipStore.deleteInternship(selectedId);
+      internships.value = internships.value.filter((internship) => internship.id !== selectedId);
+    }
+    else if (type === 'certificate') {
+      await certificationStore.deleteCertification(selectedId);
+      certifications.value = certifications.value.filter((certification) => certification.id !== selectedId);
+    }
+
+    closeExperienceModal();
+    isDeleteConfirmOpen.value = false;
+    showNotification('success', 'Experience deleted successfully.');
+  }
+  catch (error) {
+    showNotification('error', error.response?.data?.message ||
+      error.message ||
+      `Failed to delete ${type}`);
   }
   finally {
     isExperienceSubmitting.value = false;
@@ -439,6 +525,68 @@ function openRecommendationModal() {
 
 function closeRecommendationModal() {
   isRecommendationModalOpen.value = false;
+}
+
+async function loadFollowState() {
+  loadedFollowersCount.value = null;
+  isFollowing.value = false;
+
+  if (!portfolioUserId.value || !userId.value) return;
+
+  try {
+    const followersResponse = await api.get(`/follow/${portfolioUserId.value}/followers`);
+    const followers = followersResponse.data?.data ?? [];
+    loadedFollowersCount.value = followers.length;
+
+    if (isOwnPortfolio.value) return;
+
+    const followingResponse = await api.get(`/follow/${userId.value}/following`);
+    const following = followingResponse.data?.data ?? [];
+    isFollowing.value = following.some((user) =>
+      String(user.utilisateur_id) === String(portfolioUserId.value)
+    );
+  }
+  catch (error) {
+    loadedFollowersCount.value = null;
+  }
+}
+
+async function toggleFollow() {
+  if (!portfolioUserId.value || isOwnPortfolio.value || isFollowLoading.value) return;
+
+  isFollowLoading.value = true;
+  clearNotification();
+
+  const nextIsFollowing = !isFollowing.value;
+  const previousIsFollowing = isFollowing.value;
+  const previousFollowersCount = loadedFollowersCount.value;
+
+  isFollowing.value = nextIsFollowing;
+  loadedFollowersCount.value = Math.max(
+    0,
+    (loadedFollowersCount.value ?? followersCount.value) + (nextIsFollowing ? 1 : -1)
+  );
+
+  try {
+    if (nextIsFollowing) {
+      await api.post('/follow', { targetId: portfolioUserId.value });
+      showNotification('success', `You are now following ${profileName.value}.`);
+      return;
+    }
+
+    await api.delete(`/follow/${portfolioUserId.value}`);
+    showNotification('success', `You unfollowed ${profileName.value}.`);
+  }
+  catch (error) {
+    isFollowing.value = previousIsFollowing;
+    loadedFollowersCount.value = previousFollowersCount;
+    showNotification('error', error.response?.data?.message ||
+      error.message ||
+      'Failed to update follow status.');
+  }
+  finally {
+    isFollowLoading.value = false;
+  }
 }
 
 function handlePortfolioRecommendationSubmit(recommendation) {
@@ -463,12 +611,12 @@ function handlePortfolioRecommendationSubmit(recommendation) {
 function openSchoolModal() {
   if (!isOwnPortfolio.value) return;
 
-  schoolPathError.value = '';
+  clearNotification();
   isSchoolModalOpen.value = true;
 }
 
 async function completeSchoolPath(schoolData) {
-  schoolPathError.value = '';
+  clearNotification();
 
   try {
     institutionStore.setSchoolPath(schoolData.schoolPath);
@@ -493,12 +641,14 @@ async function completeSchoolPath(schoolData) {
     if (portfolioUserId.value) {
       await portfolioStore.fetchPortfolio(portfolioUserId.value);
     }
+
+    showNotification('success', 'Academic path saved successfully.');
   }
   catch (error) {
-    schoolPathError.value = error.response?.data?.message ||
+    showNotification('error', error.response?.data?.message ||
       error.response?.data?.error ||
       error.message ||
-      'Failed to save academic path';
+      'Failed to save academic path');
   }
 }
 
@@ -568,7 +718,28 @@ onUnmounted(() => {
   if (localProfilePhoto.value) {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
+
+  if (notificationTimer) {
+    clearTimeout(notificationTimer);
+  }
 });
+
+watch(
+  () => notification.value.message,
+  (message) => {
+    if (notificationTimer) {
+      clearTimeout(notificationTimer);
+      notificationTimer = null;
+    }
+
+    if (!message) return;
+
+    notificationTimer = setTimeout(() => {
+      clearNotification();
+      notificationTimer = null;
+    }, 4500);
+  }
+);
 
 async function handleAiFiltersDetected(filters) {
   if (!portfolioUserId.value) return;
@@ -666,11 +837,13 @@ async function handleAiFiltersDetected(filters) {
     class="portfolio"
   >
     <div class="portfolio__banner" />
+    <BaseNotification
+      :message="notification.message"
+      :type="notification.type"
+      @close="clearNotification"
+    />
 
     <main>
-      <BaseError v-if="portfolioStore.error">
-        {{ portfolioStore.error }}
-      </BaseError>
       <div class="profile">
         <div
           class="profile__photo"
@@ -744,9 +917,11 @@ async function handleAiFiltersDetected(filters) {
             v-if="!isOwnPortfolio"
             class="actions"
           >
-            <button class="follow-button">
-              Follow
-            </button>
+            <FollowButton
+              :following="isFollowing"
+              :loading="isFollowLoading"
+              @toggle="toggleFollow"
+            />
             <button
               type="button"
               class="recommend-button"
@@ -774,9 +949,6 @@ async function handleAiFiltersDetected(filters) {
             :can-add="isOwnPortfolio"
             @add-education="openSchoolModal"
           />
-          <BaseError v-if="schoolPathError">
-            {{ schoolPathError }}
-          </BaseError>
           <PortfolioSkills
             v-if="shouldShowSkills"
             :user-id="portfolioUserId"
@@ -795,10 +967,6 @@ async function handleAiFiltersDetected(filters) {
           @add-project="openExperienceModal('project')"
           @edit-project="project => openEditExperienceModal('project', project)"
         />
-
-        <BaseError v-if="experienceErrors.project">
-          {{ experienceErrors.project }}
-        </BaseError>
       </div>
       <div
         v-if="shouldShowInternshipSection"
@@ -810,10 +978,6 @@ async function handleAiFiltersDetected(filters) {
           @add-internship="openExperienceModal('internship')"
           @edit-internship="internship => openEditExperienceModal('internship', internship)"
         />
-
-        <BaseError v-if="experienceErrors.internship">
-          {{ experienceErrors.internship }}
-        </BaseError>
       </div>
       <div
         v-if="shouldShowActivitySection || shouldShowCertificationSection"
@@ -830,10 +994,6 @@ async function handleAiFiltersDetected(filters) {
             @edit-activity="activity => openEditExperienceModal('activity', activity)"
             @update-max-card-height="updateActivityMaxCardHeight"
           />
-
-          <BaseError v-if="experienceErrors.activity">
-            {{ experienceErrors.activity }}
-          </BaseError>
         </div>
 
         <div
@@ -847,10 +1007,6 @@ async function handleAiFiltersDetected(filters) {
             @add-certification="openExperienceModal('certificate')"
             @edit-certification="certification => openEditExperienceModal('certificate', certification)"
           />
-
-          <BaseError v-if="experienceErrors.certificate">
-            {{ experienceErrors.certificate }}
-          </BaseError>
         </div>
       </div>
       <RecommendationsSection
@@ -896,6 +1052,16 @@ async function handleAiFiltersDetected(filters) {
       :professor-emails="professorEmails"
       @close="closeExperienceModal"
       @submit="handleExperienceSubmit"
+      @delete="openDeleteConfirm"
+    />
+    <ConfirmDialog
+      :open="isDeleteConfirmOpen"
+      title="Delete experience?"
+      message="This experience will be permanently removed from your portfolio."
+      confirm-text="Delete"
+      :loading="isExperienceSubmitting"
+      @cancel="closeDeleteConfirm"
+      @confirm="handleExperienceDelete"
     />
 
     <SchoolPathModal
@@ -1167,13 +1333,13 @@ async function handleAiFiltersDetected(filters) {
 	transform: translateY(-1px);
 }
 
-:is(.qr-button, .follow-button, .recommend-button):focus-visible {
+:is(.qr-button, .recommend-button):focus-visible {
 	outline: none;
 	border-color: var(--color-secondary);
 	box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
-:is(.qr-button, .follow-button, .recommend-button):hover {
+:is(.qr-button, .recommend-button):not(:disabled):hover {
 	transform: translateY(-1px);
 }
 
@@ -1181,29 +1347,11 @@ async function handleAiFiltersDetected(filters) {
 	color: var(--color-primary);
 }
 
-.follow-button,
 .recommend-button {
 	font-size: var(--font-size-xxs);
 	padding: 0.45rem var(--space-md);
 	border-radius: var(--radius-md);
 	cursor: pointer;
-}
-
-.follow-button {
-	min-width: 6.2rem;
-	border: 1.5px solid var(--color-primary);
-	background-color: var(--color-primary);
-	color: var(--color-background);
-	box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
-	transition:
-		background-color var(--transition-fast),
-		box-shadow var(--transition-fast),
-		transform var(--transition-fast);
-}
-
-.follow-button:hover {
-	background-color: rgba(var(--color-primary-rgb), 0.92);
-  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.34);
 }
 
 .recommend-button {
@@ -1385,7 +1533,7 @@ async function handleAiFiltersDetected(filters) {
   bottom: 2rem;
   width: 64px;
   height: 64px;
-  z-index: 999;
+  z-index: 700;
   overflow: visible;
 }
 

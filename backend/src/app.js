@@ -20,6 +20,7 @@ import followRoutes from './routes/follow.routes.js';
 import professeurRoutes from './routes/professeur.routes.js'
 import etudiantRoutes from './routes/etudiant.routes.js'
 import adminRoutes from './routes/admin.routes.js';
+import interactionRoutes from './routes/interaction.routes.js';
 
 const app = express();
 app.use(cors({
@@ -57,6 +58,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/github', githubRoutes);
 //Modifications des infromations
 app.use('/api/users', updateUtilisateurRoutes);
+app.use('/api/interactions', interactionRoutes);
 
 
 app.use('/api/users', socialMediaRoutes);

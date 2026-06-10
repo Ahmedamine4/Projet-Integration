@@ -94,11 +94,27 @@ export const useCertificationStore = defineStore('certification', () => {
     }
   }
 
+  async function deleteCertification(certificationId) {
+    loading.value = true;
+    error.value = '';
+
+    try {
+      await api.delete(`/certifications/${certificationId}`);
+      certifications.value = certifications.value.filter((item) => item.id !== certificationId);
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to delete certification';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     certifications,
     loading,
     error,
     createCertification,
     editCertification,
+    deleteCertification,
   };
 });

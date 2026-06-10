@@ -1,5 +1,7 @@
 import {
   getInstitutions,
+  getAcademicInstitutions,
+  getNonAcademicInstitutions,
   getInstitutionsValideEtudiant,
   getProfesseursByInstitution,
 } from '../services/institution.service.js';
@@ -11,6 +13,26 @@ export const getInstitution = async (req, res) => {
   } catch (error) {
     console.error('Error fetching institutions:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getAcademicInstitutionsController = async (req, res) => {
+  try {
+    const institutions = await getAcademicInstitutions();
+    return res.status(200).json({ success: true, data: institutions });
+  } catch (error) {
+    console.error('Error fetching academic institutions:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+export const getNonAcademicInstitutionsController = async (req, res) => {
+  try {
+    const institutions = await getNonAcademicInstitutions();
+    return res.status(200).json({ success: true, data: institutions });
+  } catch (error) {
+    console.error('Error fetching non-academic institutions:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
