@@ -50,7 +50,7 @@ function handleSubmit(data) {
       :open="isModalOpen"
       :loading="isLoading"
       :school-options="schoolOptions"
-      :professor-emails="testProfessorEmails"
+      :academic-institutions="institutionStore.institutions"
       @close="isModalOpen = false"
       @submit="handleSubmit"
     />
