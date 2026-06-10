@@ -51,6 +51,7 @@ const sidebarItems = computed(() => {
     { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
     { label: 'Settings', icon: Settings, path: '/settings' },
   ];
+  
 
   if (authStore.user?.role === 'professeur') {
     items[0] = { label: 'Dashboard', icon: LayoutDashboard, path: '/prof-dashboard' };
