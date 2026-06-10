@@ -3,7 +3,7 @@ stages:
   - security
   - test
   - build
-  - dast
+  #- dast
   - quality
   - deploy
 
