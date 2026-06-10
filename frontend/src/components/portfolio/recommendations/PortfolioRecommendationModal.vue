@@ -20,6 +20,10 @@ const props = defineProps({
     type: String,
     default: 'Portfolio recommendation',
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['close', 'submit']);
@@ -58,11 +62,12 @@ function validate() {
 }
 
 function closeModal() {
+  if (props.loading) return;
   emit('close');
 }
 
 function submitRecommendation() {
-  if (!validate()) return;
+  if (!validate() || props.loading) return;
 
   emit('submit', {
     content: trimmedContent.value,
@@ -148,6 +153,7 @@ onBeforeUnmount(() => {
               <BaseButton
                 variant="button"
                 type="button"
+                :disabled="props.loading"
                 @click="closeModal"
               >
                 Cancel
@@ -155,7 +161,8 @@ onBeforeUnmount(() => {
               <BaseButton
                 variant="submit"
                 type="submit"
-                :disabled="!canSubmit"
+                :disabled="!canSubmit || props.loading"
+                :loading="props.loading"
               >
                 Submit
               </BaseButton>

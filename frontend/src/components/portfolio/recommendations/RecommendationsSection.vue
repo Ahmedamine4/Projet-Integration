@@ -16,6 +16,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['toggle-visibility']);
+
 const viewMode = ref('loop');
 const hiddenRecommendationIds = ref(new Set());
 const scrollerRef = ref(null);
@@ -24,11 +26,15 @@ const canScrollRight = ref(false);
 
 const normalizedRecommendations = computed(() =>
   props.recommendations.map((recommendation, index) => ({
-    id: recommendation.id ?? `${recommendation.authorName}-${index}`,
-    authorName: recommendation.authorName || 'Professor',
-    authorRole: recommendation.authorRole || 'Recommendation',
-    content: recommendation.content || '',
-    date: recommendation.date || '',
+    id: recommendation.interaction_id ?? recommendation.id ?? `${recommendation.authorName}-${index}`,
+    interaction_id: recommendation.interaction_id,
+    authorName: recommendation.utilisateur?.prenom && recommendation.utilisateur?.nom
+      ? `${recommendation.utilisateur.prenom} ${recommendation.utilisateur.nom}`
+      : recommendation.authorName || 'Professor',
+    authorRole: recommendation.utilisateur?.professionnel?.poste || recommendation.authorRole || 'Recommendation',
+    content: recommendation.texte || recommendation.content || '',
+    date: recommendation.date_interaction || recommendation.date || '',
+    visibilite: recommendation.visibilite ?? true,
   })).filter((recommendation) => recommendation.content)
 );
 
@@ -97,6 +103,8 @@ function toggleRecommendationVisibility(recommendation) {
 
   hiddenRecommendationIds.value = nextHiddenIds;
   nextTick(updateScrollFades);
+
+  emit('toggle-visibility', recommendation, !nextHiddenIds.has(recommendation.id));
 }
 
 const {

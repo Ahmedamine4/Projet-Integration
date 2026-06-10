@@ -1,36 +1,102 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
+import { ref } from 'vue';
+import api from '@/services/api';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+export const useRecommendationStore = defineStore('recommendation', () => {
+  const recommendations = ref([]);
+  const myRecommendations = ref([]);
+  const loading = ref(false);
+  const error = ref(null);
 
-export const useRecommendationStore = defineStore('recommendation', {
-  state: () => ({
-    loading: false,
-    error: null,
-  }),
+  async function fetchPortfolioRecommendations(etudiantId) {
+    if (!etudiantId) return [];
 
-  actions: {
-    async createRequest(payload) {
-      this.loading = true;
-      this.error = null;
+    loading.value = true;
+    error.value = null;
 
-      try {
-        const response = await axios.post(
-          `${API_URL}/recommendations/request`,
-          payload,
-          { withCredentials: true }
-        );
+    try {
+      const response = await api.get(`/interactions/recommandations/portfolio/${etudiantId}`);
+      recommendations.value = response.data.data || [];
+      return recommendations.value;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to fetch recommendations';
+      recommendations.value = [];
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
 
-        return response.data;
-      } catch (error) {
-        this.error =
-          error.response?.data?.message ||
-          'Failed to send recommendation request';
+  async function fetchMyRecommendations() {
+    loading.value = true;
+    error.value = null;
 
-        throw error;
-      } finally {
-        this.loading = false;
+    try {
+      const response = await api.get('/interactions/recommandations/me');
+      myRecommendations.value = response.data.data || [];
+      return myRecommendations.value;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to fetch your recommendations';
+      myRecommendations.value = [];
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function createRecommendation(portfolioId, texte) {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await api.post(`/interactions/recommandations/${portfolioId}`, { texte });
+      const newRecommendation = response.data.data;
+      recommendations.value.unshift(newRecommendation);
+      return newRecommendation;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to create recommendation';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function toggleRecommendationVisibility(interactionId, visibilite) {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await api.patch(
+        `/interactions/recommandations/${interactionId}/visibilite`,
+        { visibilite }
+      );
+
+      const updatedRecommendation = response.data.data;
+      const index = recommendations.value.findIndex(r => r.interaction_id === interactionId);
+      if (index !== -1) {
+        recommendations.value[index] = {
+          ...recommendations.value[index],
+          visibilite: updatedRecommendation.visibilite,
+        };
       }
-    },
-  },
+
+      return updatedRecommendation;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Failed to update recommendation visibility';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  return {
+    recommendations,
+    myRecommendations,
+    loading,
+    error,
+    fetchPortfolioRecommendations,
+    fetchMyRecommendations,
+    createRecommendation,
+    toggleRecommendationVisibility,
+  };
 });

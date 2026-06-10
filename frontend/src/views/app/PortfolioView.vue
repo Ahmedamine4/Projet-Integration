@@ -14,6 +14,7 @@ import { useActivityStore } from '@/stores/activity';
 import { useCertificationStore } from '@/stores/certification';
 import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
+import { useRecommendationStore } from '@/stores/recommandation';
 import { useInstitutionStore } from '@/stores/institution';
 import api from '@/services/api';
 import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
@@ -25,7 +26,6 @@ import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vu
 import InternshipsSection from '@/components/portfolio/internships/InternshipsSection.vue';
 import RecommendationsSection from '@/components/portfolio/recommendations/RecommendationsSection.vue';
 import PortfolioRecommendationModal from '@/components/portfolio/recommendations/PortfolioRecommendationModal.vue';
-import { placeholderRecommendations } from '@/tmp/portfolioRecommendations';
 import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import ImageCropperModal from '@/components/common/forms/ImageCropperModal.vue';
@@ -47,6 +47,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const portfolioStore = usePortfolioStore();
+const recommendationStore = useRecommendationStore();
 const institutionStore = useInstitutionStore();
 const projectStore = useProjectStore();
 const activityStore = useActivityStore();
@@ -127,16 +128,15 @@ const loadedFollowersCount = ref(null);
 const followersCount = computed(() => loadedFollowersCount.value ?? 0);
 const isFollowing = ref(false);
 const isFollowLoading = ref(false);
-const localRecommendations = ref([]);
 const displayRecommendations = computed(() => {
   const recommendations = [
-    ...localRecommendations.value,
+    ...recommendationStore.recommendations,
     ...(portfolio.value?.recommendations ?? []),
   ].filter((recommendation) => {
     return !recommendation.status || recommendation.status === 'valide';
   });
 
-  return recommendations.length ? recommendations : placeholderRecommendations;
+  return recommendations;
 });
 const recommendationsCount = computed(() => displayRecommendations.value.length);
 const educationItems = computed(() => portfolio.value?.education ?? []);
@@ -176,6 +176,7 @@ watch(
     try {
       clearNotification();
       await portfolioStore.fetchPortfolio(id);
+      await recommendationStore.fetchPortfolioRecommendations(id);
     } catch (error) {
       showNotification('error', portfolioStore.error ||
         error.response?.data?.message ||
@@ -193,7 +194,7 @@ watch(
 );
 
 watch(portfolioUserId, () => {
-  localRecommendations.value = [];
+  recommendationStore.recommendations = [];
   closeRecommendationModal();
 });
 
@@ -276,6 +277,10 @@ const shouldShowCertificationSection = computed(() => {
 
 const shouldShowInternshipSection = computed(() => {
   return isOwnPortfolio.value || visibleInternships.value.length > 0;
+});
+
+const shouldShowRecommendationSection = computed(() => {
+  return isOwnPortfolio.value || displayRecommendations.value.length > 0;
 });
 
 const notification = ref({
@@ -516,6 +521,7 @@ function openQRModal() {
 }
 
 const isRecommendationModalOpen = ref(false);
+const isRecommendationSubmitting = ref(false);
 
 function openRecommendationModal() {
   if (isOwnPortfolio.value) return;
@@ -546,7 +552,7 @@ async function loadFollowState() {
       String(user.utilisateur_id) === String(portfolioUserId.value)
     );
   }
-  catch (error) {
+  catch {
     loadedFollowersCount.value = null;
   }
 }
@@ -592,20 +598,48 @@ async function toggleFollow() {
 function handlePortfolioRecommendationSubmit(recommendation) {
   if (!portfolioUserId.value) return;
 
-  localRecommendations.value = [
-    {
-      id: `local-recommendation-${Date.now()}`,
-      authorName: recommenderName.value,
-      authorRole: recommenderRole.value,
-      content: recommendation.content,
-      date: new Date().toISOString(),
-      status: 'valide',
-      portfolioOwnerId: portfolioUserId.value,
-    },
-    ...localRecommendations.value,
-  ];
+  submitRecommendation(recommendation);
+}
 
-  closeRecommendationModal();
+async function submitRecommendation(recommendation) {
+  clearNotification();
+  isRecommendationSubmitting.value = true;
+
+  try {
+    await recommendationStore.createRecommendation(
+      portfolioUserId.value,
+      recommendation.content
+    );
+
+    closeRecommendationModal();
+    showNotification('success', 'Recommendation submitted successfully!');
+  } catch (error) {
+    const errorMessage = error.response?.data?.message ||
+      error.message ||
+      'Failed to submit recommendation';
+    showNotification('error', errorMessage);
+  } finally {
+    isRecommendationSubmitting.value = false;
+  }
+}
+
+async function handleRecommendationVisibilityToggle(recommendation, isVisible) {
+  clearNotification();
+
+  try {
+    const id = recommendation.interaction_id || recommendation.id;
+    await recommendationStore.toggleRecommendationVisibility(
+      id,
+      isVisible
+    );
+
+    showNotification('success', `Recommendation ${isVisible ? 'shown' : 'hidden'} successfully!`);
+  } catch (error) {
+    const errorMessage = error.response?.data?.message ||
+      error.message ||
+      'Failed to update recommendation visibility';
+    showNotification('error', errorMessage);
+  }
 }
 
 function openSchoolModal() {
@@ -1009,10 +1043,16 @@ async function handleAiFiltersDetected(filters) {
           />
         </div>
       </div>
-      <RecommendationsSection
-        :recommendations="displayRecommendations"
-        :is-owner="isOwnPortfolio"
-      />
+      <div
+        v-if="shouldShowRecommendationSection"
+        class="portfolio-section-wrapper"
+      >
+        <RecommendationsSection
+          :recommendations="displayRecommendations"
+          :is-owner="isOwnPortfolio"
+          @toggle-visibility="handleRecommendationVisibilityToggle"
+        />
+      </div>
     </main>
 
     <footer>
@@ -1037,6 +1077,7 @@ async function handleAiFiltersDetected(filters) {
       :portfolio-owner-name="profileName"
       :recommender-name="recommenderName"
       :recommender-role="recommenderRole"
+      :loading="isRecommendationSubmitting"
       @close="closeRecommendationModal"
       @submit="handlePortfolioRecommendationSubmit"
     />
