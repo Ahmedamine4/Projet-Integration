@@ -142,7 +142,6 @@ export const creerNotification = async (
       subject,
       message,
       userSource: notification.utilisateur_source,
-      // imageUrl://supabase
     }).catch((err) => {
       console.error("Erreur lors de l'envoi de l'email :", err);
     });

@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export async function envoyerNotificationEmail({ email, sujet, message ,imageUrl}) {
+export async function envoyerNotificationEmail({ email, sujet, message ,imageUrl ="https://xfnburehcqkcmebvpfqh.supabase.co/storage/v1/object/public/notification/foliocraft.jpeg"}) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
