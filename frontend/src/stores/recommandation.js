@@ -34,7 +34,8 @@ export const useRecommendationStore = defineStore('recommendation', () => {
     try {
       const response = await api.get('/interactions/recommandations/me');
       myRecommendations.value = response.data.data || [];
-      return myRecommendations.value;
+      recommendations.value = myRecommendations.value;
+      return recommendations.value;
     } catch (err) {
       error.value = err.response?.data?.message || 'Failed to fetch your recommendations';
       myRecommendations.value = [];
@@ -72,10 +73,22 @@ export const useRecommendationStore = defineStore('recommendation', () => {
       );
 
       const updatedRecommendation = response.data.data;
-      const index = recommendations.value.findIndex(r => r.interaction_id === interactionId);
+      const index = recommendations.value.findIndex(r =>
+        String(r.interaction_id) === String(interactionId)
+      );
       if (index !== -1) {
         recommendations.value[index] = {
           ...recommendations.value[index],
+          visibilite: updatedRecommendation.visibilite,
+        };
+      }
+
+      const myIndex = myRecommendations.value.findIndex(r =>
+        String(r.interaction_id) === String(interactionId)
+      );
+      if (myIndex !== -1) {
+        myRecommendations.value[myIndex] = {
+          ...myRecommendations.value[myIndex],
           visibilite: updatedRecommendation.visibilite,
         };
       }

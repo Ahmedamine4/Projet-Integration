@@ -12,7 +12,7 @@ function buildProjectFormData(experience) {
   formData.append('githubLink', experience.githubLink);
   formData.append('projetType', experience.isAcademic ? 'academique' : 'personnel');
   formData.append('professorEmail', experience.teacherEmail);
-  formData.append('visibleToEveryone', String(experience.visibleToEveryone));
+  formData.append('visibilite', String(experience.visibleToEveryone));
   formData.append('technologies', JSON.stringify(experience.technologies));
   formData.append('domains', JSON.stringify(experience.domains));
 

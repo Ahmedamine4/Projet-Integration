@@ -11,7 +11,8 @@ function buildCertificationFormData(certification) {
   formData.append('credentialUrl', certification.certificateURL);
   formData.append('description', certification.description);
   formData.append('code', certification.certificateCode);
-  formData.append('visibleToEveryone', String(certification.visibleToEveryone));
+  formData.append('nom_institution', certification.institution ?? '');
+  formData.append('visibilite', String(certification.visibleToEveryone));
   formData.append(
     'competences',
     JSON.stringify([

@@ -43,6 +43,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  certificationInstitutionOptions: {
+    type: Array,
+    default: () => [],
+  },
   professorEmails: {
     type: Array,
     default: () => [],
@@ -242,6 +246,7 @@ function getComparableExperience(source = {}, config = currentConfig.value) {
     ? getSelectedNames(domains.value)
     : source.domains ?? [];
   const isAcademicExperience = config.showAcademic && Boolean(source.isAcademic);
+  const hasInstitutionField = config.showCertificateFields || isAcademicExperience;
 
   return {
     title: normalizeComparableValue(source.title),
@@ -255,7 +260,7 @@ function getComparableExperience(source = {}, config = currentConfig.value) {
     certificateURL: config.showCertificateFields ? normalizeComparableValue(source.certificateURL) : '',
     certificateCode: config.showCertificateFields ? normalizeComparableValue(source.certificateCode) : '',
     isAcademic: isAcademicExperience,
-    institution: isAcademicExperience ? normalizeComparableValue(source.institution) : '',
+    institution: hasInstitutionField ? normalizeComparableValue(source.institution) : '',
     teacherEmail: isAcademicExperience && requiresAcademicTeacher.value
       ? normalizeComparableValue(source.teacherEmail)
       : '',
@@ -485,7 +490,9 @@ const submitExperience = () => {
       ? trimmedCertificateCode
       : '',
     isAcademic: config.showAcademic && form.isAcademic,
-    institution: config.showAcademic && form.isAcademic
+    institution: config.showCertificateFields
+      ? trimmedInstitution
+      : config.showAcademic && form.isAcademic
       ? trimmedInstitution
       : '',
     activityType: config.showActivityFields
@@ -820,10 +827,12 @@ const existingImageName = computed(() => {
               class="form-group"
             >
               <div class="field">
-                <BaseInput
+                <BaseDropdown
                   v-model="form.institution"
+                  :options="certificationInstitutionOptions"
                   label="Issuing institution"
                   placeholder="Institution or platform name"
+                  autocomplete="nope"
                 />
               </div>
 

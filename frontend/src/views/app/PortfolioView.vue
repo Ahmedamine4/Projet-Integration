@@ -167,8 +167,8 @@ watch(
 );
 
 watch(
-  portfolioUserId,
-  async (id) => {
+  [portfolioUserId, userId],
+  async ([id]) => {
     if (!id) return;
 
     isResolvingPortfolio.value = true;
@@ -176,7 +176,12 @@ watch(
     try {
       clearNotification();
       await portfolioStore.fetchPortfolio(id);
-      await recommendationStore.fetchPortfolioRecommendations(id);
+      if (isOwnPortfolio.value) {
+        await recommendationStore.fetchMyRecommendations();
+      }
+      else {
+        await recommendationStore.fetchPortfolioRecommendations(id);
+      }
     } catch (error) {
       showNotification('error', portfolioStore.error ||
         error.response?.data?.message ||
