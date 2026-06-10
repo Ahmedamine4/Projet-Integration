@@ -7,8 +7,6 @@ import RecommandationRequestModal from '@/components/StudentDashboard/Recommanda
 const isModalOpen = ref(false);
 const isLoading = ref(false);
 
-
-
 const institutionStore = useInstitutionStore();
 
 onMounted(() => {
