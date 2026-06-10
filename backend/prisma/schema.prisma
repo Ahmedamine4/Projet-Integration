@@ -78,7 +78,8 @@ model Utilisateur {
   professionnel  Professionnel?
 
   // Autres relations
-  notifications Notification[]
+  notifications_recues Notification[] @relation("NotificationCible")
+  notifications_envoyees Notification[] @relation("NotificationSource")
   connexions    Connexion[]
   interactions  Interaction[]
   following  Follow[] @relation("UserFollowing")
@@ -230,15 +231,17 @@ model PortfolioScoreHistory {
 }
 
 model Notification {
-  notification_id   String      @id @default(cuid())
-  message           String?
-  date_notification DateTime?
-  lu                Boolean?
-  type              String?     @db.VarChar(50)
-  utilisateur_id    String
-  utilisateur       Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  notification_id       String @id @default(cuid())
+  message               String?
+  date_notification     DateTime?
+  lu                    Boolean?
+  type                  String?
 
-  @@map("notifications")
+  utilisateur_cible_id  String
+  utilisateur_source_id String?
+
+  utilisateur_cible Utilisateur @relation("NotificationCible", fields: [utilisateur_cible_id], references: [utilisateur_id])
+  utilisateur_source Utilisateur? @relation("NotificationSource", fields: [utilisateur_source_id], references: [utilisateur_id])
 }
 
 model Connexion {

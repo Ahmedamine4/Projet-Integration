@@ -1,6 +1,6 @@
 import prisma from '../config/prisma.js';
-import { creerNotification } from './notification.service.js';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompetencesByExperience } from './competence.helper.js';
+import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
 export const creeStage = async (etudiantId, data, file) => {
@@ -79,7 +79,7 @@ export const creeStage = async (etudiantId, data, file) => {
       await creerNotification(
         professeur.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre}".`,
-        'validation_stage'
+        TYPES_NOTIFICATION.VALIDATION_STAGE
       );
     }
 
@@ -251,7 +251,7 @@ export const editStage = async (etudiantId, experienceId, data, file) => {
       await creerNotification(
         profId,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son stage "${data.titre ?? experience.titre}". Il demande une validation.`,
-        'validation_stage'
+        TYPES_NOTIFICATION.VALIDATION_STAGE
       );
 
     // le stage n'a pa de validation et l'etudiant veut ajouter un prof
@@ -281,7 +281,7 @@ export const editStage = async (etudiantId, experienceId, data, file) => {
       await creerNotification(
         prof.utilisateur_id,
         `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son stage "${data.titre ?? experience.titre}".`,
-        'validation_stage'
+        TYPES_NOTIFICATION.VALIDATION_STAGE
       );
     }
 

@@ -5,7 +5,7 @@ import {
   bloquerUtilisateur,
   debloquerUtilisateur,
   getProfessionnelsEnAttente,
-} from '../services/admin.services.js';
+} from '../services/admin.service.js';
 
 
 export async function ajoutDirecteur(req, res) {
