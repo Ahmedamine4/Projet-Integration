@@ -44,6 +44,7 @@ const routes = [
     component: () => import('@/views/app/DashboardView.vue'),
     meta: {
       requiresAuth: true,
+      role: 'etudiant',
       layout: 'app',
     },
   },
@@ -93,6 +94,16 @@ const routes = [
     },
   },
   {
+    path: '/prof-dashboard',
+    name: 'prof-dashboard',
+    component: () => import('@/views/app/dashboard/ProfDashboardView.vue'),
+    meta: {
+      requiresAuth: true,
+      role: 'professeur',
+      layout: 'app',
+    },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: NotFoundView,
@@ -118,6 +129,14 @@ router.beforeEach((to) => {
       name: 'login',
       query: { redirect: to.fullPath },
     };
+  }
+
+  if (to.meta.role && authStore.user?.role) {
+    if (authStore.user.role !== to.meta.role) {
+      return {
+        path: authStore.user.role === 'professeur' ? '/prof-dashboard' : '/dashboard',
+      };
+    }
   }
 
   return true;

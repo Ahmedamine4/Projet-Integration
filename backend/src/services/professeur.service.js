@@ -69,6 +69,7 @@ export const getDemandes = async (profId, { type, statut, page }) => {
     rawLettres = await prisma.lettresDeRecommendations.findMany({
       where: baseWhereLettre,
       select: {
+        utilisateur_id: true,
         statut: true,
         date_lettre: true,
         objet: true,
@@ -108,6 +109,7 @@ export const getDemandes = async (profId, { type, statut, page }) => {
   const lettres = rawLettres.map((item) => ({
     type: 'recommandation',
     experience_id: null,
+    etudiant_id: item.utilisateur_id,
     titre: item.objet ?? null,
     statut: item.statut,
     commentaire: item.commentaire ?? null,

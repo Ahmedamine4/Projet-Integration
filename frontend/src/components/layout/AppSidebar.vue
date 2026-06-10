@@ -43,13 +43,21 @@ const emit = defineEmits(['open-notifications', 'update:collapsed']);
 
 const collapsed = ref(true);
 
-const sidebarItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { label: 'Getting started', icon: Compass, path: '/getting-started' },
-  { label: 'Profile', icon: UserRound },
-  { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
-  { label: 'Settings', icon: Settings, path: '/settings' },
-];
+const sidebarItems = computed(() => {
+  const items = [
+    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { label: 'Getting started', icon: Compass, path: '/getting-started' },
+    { label: 'Profile', icon: UserRound },
+    { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
+    { label: 'Settings', icon: Settings, path: '/settings' },
+  ];
+
+  if (authStore.user?.role === 'professeur') {
+    items[0] = { label: 'Dashboard', icon: LayoutDashboard, path: '/prof-dashboard' };
+  }
+
+  return items;
+});
 
 function isItemActive(item) {
   if (!item.path) return false;
@@ -58,7 +66,7 @@ function isItemActive(item) {
 }
 
 const activeIndex = computed(() => {
-  const index = sidebarItems.findIndex(isItemActive);
+  const index = sidebarItems.value.findIndex(isItemActive);
   return index >= 0 ? index : 0;
 });
 

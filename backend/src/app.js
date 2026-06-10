@@ -33,6 +33,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/professeur', professeurRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/users', portfolioRoutes);
 app.use('/api/lettre-recommandation', lettreRecommandationRoutes);
@@ -63,7 +64,7 @@ app.use('/api/interactions', interactionRoutes);
 
 
 app.use('/api/users', socialMediaRoutes);
-app.use('/api/professeur', professeurRoutes);
+
 app.use('/api/etudiant', etudiantRoutes);
 
 // Route de test
