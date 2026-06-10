@@ -29,17 +29,31 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  notificationsOpen: {
+    type: Boolean,
+    default: false,
+  },
+  hasUnreadNotifications: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const emit = defineEmits(['open-notifications', 'update:collapsed']);
 
 const collapsed = ref(true);
 
-const sidebarItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+const sidebarItems = computed(() => [
+  {
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    path: authStore.user?.role === 'directeur' ? '/director-dashboard' : '/dashboard',
+  },
   { label: 'Getting started', icon: Compass, path: '/getting-started' },
   { label: 'Profile', icon: UserRound },
   { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
   { label: 'Settings', icon: Settings, path: '/settings' },
-];
+]);
 
 function isItemActive(item) {
   if (!item.path) return false;
@@ -48,7 +62,7 @@ function isItemActive(item) {
 }
 
 const activeIndex = computed(() => {
-  const index = sidebarItems.findIndex(isItemActive);
+  const index = sidebarItems.value.findIndex(isItemActive);
   return index >= 0 ? index : 0;
 });
 
@@ -64,6 +78,19 @@ function selectItem(item) {
   router.push(item.path);
 }
 
+function setCollapsed(value) {
+  collapsed.value = value;
+  emit('update:collapsed', value);
+}
+
+function toggleSidebar() {
+  setCollapsed(!collapsed.value);
+}
+
+function toggleNotifications() {
+  emit('open-notifications');
+}
+
 async function handleLogout() {
   try {
     await authStore.logout();
@@ -76,17 +103,17 @@ async function handleLogout() {
 <template>
   <div
     class="sidebar-space"
-    :class="{ collapsed, 'is-loading': loading }"
+    :class="{ collapsed, 'is-loading': loading, 'notifications-open': notificationsOpen }"
   >
     <button
       class="mobile-toggle"
-      @click="collapsed = false"
+      @click="setCollapsed(false)"
     >
       <Menu :size="20" />
     </button>
     <div
       class="sidebar-overlay"
-      @click="collapsed = true"
+      @click="setCollapsed(true)"
     />
     <aside class="sidebar">
       <header>
@@ -99,7 +126,7 @@ async function handleLogout() {
 
         <button
           class="sidebar__toggle"
-          @click="collapsed = !collapsed"
+          @click="toggleSidebar"
         >
           <PanelLeftOpen v-if="collapsed" />
           <PanelLeftClose v-else />
@@ -143,8 +170,19 @@ async function handleLogout() {
           <span class="sidebar__user">
             {{ user?.firstName || 'User' }}
           </span>
-          <button class="sidebar__notification">
+          <button
+            class="sidebar__notification"
+            title="Notifications"
+            aria-label="Ouvrir ou fermer les notifications"
+            :aria-pressed="notificationsOpen"
+            @click="toggleNotifications"
+          >
             <Bell />
+            <span
+              v-if="hasUnreadNotifications"
+              class="sidebar__notification-dot"
+              aria-hidden="true"
+            />
           </button>
         </div>
         <button
@@ -273,17 +311,40 @@ async function handleLogout() {
 
 .sidebar__toggle,
 .sidebar__notification {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   justify-self: end;
   width: var(--sidebar-rail-width);
-  aspect-ratio: 1;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
   color: rgba(var(--color-background-rgb), 0.76);
   cursor: pointer;
+}
+
+.sidebar-space.notifications-open {
+  z-index: 1300;
+}
+
+.sidebar__toggle {
+  aspect-ratio: 1;
+}
+
+.sidebar__notification {
+  aspect-ratio: 1;
+}
+
+.sidebar__notification-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--color-primary);
+  border-radius: 50%;
+  background: var(--color-error);
 }
 
 .sidebar > :is(nav, footer) {
@@ -484,11 +545,29 @@ async function handleLogout() {
   column-gap: 0;
 }
 
+.collapsed .sidebar__account {
+  grid-template-columns: var(--sidebar-rail-width);
+  grid-template-rows: var(--sidebar-rail-width) var(--sidebar-rail-width);
+  justify-items: center;
+  row-gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.collapsed .sidebar__notification {
+  grid-row: 1;
+  justify-self: center;
+}
+
+.collapsed .sidebar__avatar {
+  grid-row: 2;
+  margin-left: 0;
+}
+
 .collapsed .sidebar__item {
   width: var(--sidebar-rail-width);
 }
 
-.collapsed :is(.sidebar__user, .sidebar__notification) {
+.collapsed .sidebar__user {
   max-width: 0;
   opacity: 0;
   pointer-events: none;

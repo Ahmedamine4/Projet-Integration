@@ -20,6 +20,8 @@ import followRoutes from './routes/follow.routes.js';
 import professeurRoutes from './routes/professeur.routes.js'
 import etudiantRoutes from './routes/etudiant.routes.js'
 import adminRoutes from './routes/admin.routes.js';
+import interactionRoutes from './routes/interaction.routes.js';
+import directeurRoutes from './routes/directeur.routes.js';
 
 const app = express();
 app.use(cors({
@@ -51,24 +53,27 @@ app.use('/api/select-institutions', LinkInstitutionsToEtudiantRoutes);
 //Validation Directeur - Etudiant
 app.use('/api/validation', ValidationEtudiantRoutes);
 
-// Branchement des routes d'ajout du projet
-app.use('/api', projetRoutes);
 app.use('/api/notifications', notificationRoutes);
+
 app.use('/api/github', githubRoutes);
 //Modifications des infromations
 app.use('/api/users', updateUtilisateurRoutes);
+app.use('/api/interactions', interactionRoutes);
 
 
 app.use('/api/users', socialMediaRoutes);
 app.use('/api/professeur', professeurRoutes);
 app.use('/api/etudiant', etudiantRoutes);
+app.use('/api/directeur', directeurRoutes);
+app.use('/api/admin', adminRoutes);
+// Branchement des routes d'ajout du projet
+app.use('/api', projetRoutes);
 
 // Route de test
 app.get("/", (req, res) => {
   res.send('<h1> Hello, API is running maintenant ! </h1>');
 });
 
-app.use('/api/admin', adminRoutes);
 app.set('trust proxy', true);
 
 

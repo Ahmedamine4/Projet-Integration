@@ -15,9 +15,10 @@ router.use(authMiddleware);
 router.use(authorizeRoles(ROLES.ETUDIANT));
 
 router.post('/', upload.single('img'), addActivite);
-router.get('/me', getActivites);
 router.patch('/:experienceId', upload.single('img'), updateActivite);
 router.delete('/:experienceId', deleteActivite);
+
+router.get('/me', getActivites);
 router.patch('/:experienceId/visibilite', updateVisibiliteActivite);
 
 export default router;

@@ -48,6 +48,16 @@ const routes = [
     },
   },
   {
+    path: '/director-dashboard',
+    name: 'director-dashboard',
+    component: () => import('@/views/app/DirectorDashboardView.vue'),
+    meta: {
+      requiresAuth: true,
+      layout: 'app',
+      roles: ['directeur'],
+    },
+  },
+  {
     path: '/getting-started',
     name: 'getting-started',
     component: () => import('@/views/app/GettingStartedView.vue'),
@@ -118,6 +128,14 @@ router.beforeEach((to) => {
       name: 'login',
       query: { redirect: to.fullPath },
     };
+  }
+
+  if (
+    authStore.profileChecked
+    && to.meta.roles
+    && !to.meta.roles.includes(authStore.user?.role)
+  ) {
+    return { name: 'home' };
   }
 
   return true;

@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 3000
 #changement du port
 
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run dev"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run seed && npm run dev"]
 
 
 FROM base AS production
@@ -34,4 +34,4 @@ USER node
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run seed && npm start"]

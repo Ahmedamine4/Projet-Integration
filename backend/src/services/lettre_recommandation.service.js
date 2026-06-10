@@ -1,5 +1,8 @@
-import prisma from '../config/prisma.js';
-import { creerNotification } from './notification.service.js';
+import prisma from "../config/prisma.js";
+import {
+  creerNotification,
+  TYPES_NOTIFICATION,
+} from "./notification.service.js";
 
 export const creerDemandeRecommandation = async (etudiantId, data) => {
   const { objet, description, email_professeur } = data;
@@ -8,9 +11,26 @@ export const creerDemandeRecommandation = async (etudiantId, data) => {
     where: { email: email_professeur },
     include: { professeur: true },
   });
-  if (!professeur || !professeur.professeur) throw new Error('Professeur non trouvé avec cet email');
+  if (!professeur || !professeur.professeur)
+    throw new Error("Professeur non trouvé avec cet email");
 
   const profId = professeur.professeur.prof_utilisateur_id;
+
+  const existante = await prisma.lettresDeRecommendations.findUnique({
+    where: {
+      utilisateur_id_prof_utilisateur_id: {
+        utilisateur_id: etudiantId,
+        prof_utilisateur_id: profId,
+      },
+    },
+  });
+
+  
+  if (existante) {
+    throw new Error(
+      "Une demande de recommandation existe déjà pour ce professeur.",
+    );
+  }
 
   const demande = await prisma.lettresDeRecommendations.create({
     data: {
@@ -18,7 +38,7 @@ export const creerDemandeRecommandation = async (etudiantId, data) => {
       prof_utilisateur_id: profId,
       objet,
       description: description ?? null,
-      statut: 'en_attente',
+      statut: "en_attente",
       date_lettre: new Date(),
     },
     include: {
@@ -34,11 +54,12 @@ export const creerDemandeRecommandation = async (etudiantId, data) => {
     where: { utilisateur_id: etudiantId },
     select: { nom: true, prenom: true },
   });
+  if (!etudiant) throw new Error("Étudiant introuvable");
 
   await creerNotification(
-    professeur.utilisateur_id,
+    profId,
     `L'étudiant ${etudiant.prenom} ${etudiant.nom} vous demande une lettre de recommandation : "${objet}".`,
-    'recommandation'
+    TYPES_NOTIFICATION.RECOMMANDATION_DEMANDEE,
   );
 
   return demande;
@@ -54,6 +75,6 @@ export const getMesDemandesRecommandation = async (etudiantId) => {
         },
       },
     },
-    orderBy: { date_lettre: 'desc' },
+    orderBy: { date_lettre: "desc" },
   });
 };

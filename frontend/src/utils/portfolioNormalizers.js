@@ -5,24 +5,34 @@ export function normalizeUser(data) {
 
   return {
     ...data,
-    firstName: data.firstName ?? data.prenom ?? '',
-    lastName: data.lastName ?? data.nom ?? '',
-    phone: data.phone ?? data.telephone ?? '',
+    firstName: data.prenom ?? '',
+    lastName: data.nom ?? '',
+    phone: data.telephone ?? '',
   };
 }
 
-export const getCompetenceNames = (item, type) =>
-  [
-    ...(item?.competences ?? []),
+export function getCompetenceNames(item, type) {
+  const groupedCompetences = item?.competences;
+
+  if (groupedCompetences && !Array.isArray(groupedCompetences)) {
+    const key = type === 'technologie' ? 'technologies' : 'domaines';
+    return (groupedCompetences[key] ?? [])
+      .map((competence) => competence?.nom)
+      .filter(Boolean);
+  }
+
+  return [
+    ...(Array.isArray(groupedCompetences) ? groupedCompetences : []),
     ...(item?.competence_dev ?? []).map((entry) => entry.competence),
   ]
     .filter((competence) => competence?.type === type)
     .map((competence) => competence.nom)
     .filter(Boolean);
+}
 
 const getExperience = (item) => item?.experience ?? item ?? {};
 
-const getProject = (item) => item?.projet ?? {};
+const getProject = (item) => item?.projet ?? item ?? {};
 
 const getActivity = (item) => item?.activite ?? item ?? {};
 
@@ -47,6 +57,12 @@ const getValidationState = (experience, validation) => {
 export function normalizeProject(item) {
   const experience = getExperience(item);
   const project = getProject(item);
+  const projectTechnologies = project.technologies?.length
+    ? project.technologies
+    : getCompetenceNames(experience, 'technologie');
+  const projectDomains = project.domains?.length
+    ? project.domains
+    : getCompetenceNames(experience, 'domaine');
   const validationState = getValidationState(
     experience,
     project.validation ?? item?.validation
@@ -60,8 +76,8 @@ export function normalizeProject(item) {
     description: experience.description ?? '',
     visibleToEveryone: experience.visibilite ?? false,
     githubLink: project.lien_github ?? '',
-    technologies: project.technologies ?? getCompetenceNames(experience, 'technologie'),
-    domains: project.domains ?? getCompetenceNames(experience, 'domaine'),
+    technologies: projectTechnologies,
+    domains: projectDomains,
     imagePreview: experience.photo ?? project.photo ?? experience.documentations?.[0]?.captures ?? '',
     highlighted: Boolean(item?.highlighted ?? experience.highlighted),
     score: item?.score ?? experience.score ?? 0,
@@ -111,12 +127,12 @@ export function normalizeCertification(item) {
     date: formatLocalDate(experience.date_experience),
     description: experience.description ?? '',
     visibleToEveryone: experience.visibilite ?? false,
-    institution: certification.validation?.institution?.nom ?? '',
+    institution: certification.institution?.nom ?? '',
     certificateCode: certification.code ?? '',
     certificateURL: certification.lien_URL ?? certification.document ?? '',
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
-    imagePreview: experience.photo ?? experience.documentations?.[0]?.captures ?? '',
+    imagePreview: '',
     highlighted: Boolean(item?.highlighted ?? experience.highlighted),
     score: item?.score ?? experience.score ?? 0,
     techCount: item?.techCount ?? experience.techCount ?? 0,
@@ -126,7 +142,7 @@ export function normalizeCertification(item) {
 
 export function normalizeInternship(item) {
   const experience = getExperience(item);
-  const stage = experience.stage ?? item?.stage ?? {};
+  const stage = experience.stage ?? item?.stage ?? item ?? {};
   const validationState = getValidationState(
     experience,
     stage.validation ?? item?.validation
@@ -149,7 +165,7 @@ export function normalizeInternship(item) {
     report: stage.rapport_stage ?? '',
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
-    imagePreview: experience.documentations?.[0]?.captures ?? '',
+    imagePreview: '',
     ...validationState,
   };
 }

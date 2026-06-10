@@ -5,7 +5,7 @@ import {
   bloquerUtilisateur,
   debloquerUtilisateur,
   getProfessionnelsEnAttente,
-} from '../services/admin.services.js';
+} from '../services/admin.service.js';
 
 
 export async function ajoutDirecteur(req, res) {
@@ -75,7 +75,6 @@ export async function refuserProfessionnel(req, res) {
   }
 }
 
-// ─── 4. Bloquer un utilisateur ───────────────────────────────────────────────
 export async function bloquerUtilisateurController(req, res) {
   try {
     const utilisateur_id = req.params.id;

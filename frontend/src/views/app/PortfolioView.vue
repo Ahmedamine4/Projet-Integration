@@ -8,6 +8,7 @@ import ProjectsSection from '@/components/portfolio/projects/ProjectsSection.vue
 import { Camera, QrCode, UserRound } from 'lucide-vue-next';
 import QRcodeModal from '@/components/portfolio/contact/QRcodeModal.vue';
 import ExperienceModal from '@/components/portfolio/shared/ExperienceModal.vue';
+import FollowButton from '@/components/common/actions/FollowButton.vue';
 import { useProjectStore } from '@/stores/project';
 import { useActivityStore } from '@/stores/activity';
 import { useCertificationStore } from '@/stores/certification';
@@ -15,7 +16,6 @@ import { useInternshipStore } from '@/stores/internship';
 import { usePortfolioStore } from '@/stores/portfolio';
 import { useInstitutionStore } from '@/stores/institution';
 import api from '@/services/api';
-import BaseError from '@/components/common/feedback/BaseError.vue';
 import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
 import ConfirmDialog from '@/components/common/feedback/ConfirmDialog.vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -123,7 +123,10 @@ const profilePhotoInput = ref(null);
 const selectedProfilePhotoFile = ref(null);
 const displayedProfilePhoto = computed(() => localProfilePhoto.value || profilePhoto.value);
 const portfolioScore = computed(() => portfolio.value?.portfolio?.score_credibilite ?? 0);
-const followersCount = computed(() => portfolio.value?.portfolio?.interactions?.length ?? 0);
+const loadedFollowersCount = ref(null);
+const followersCount = computed(() => loadedFollowersCount.value ?? 0);
+const isFollowing = ref(false);
+const isFollowLoading = ref(false);
 const localRecommendations = ref([]);
 const displayRecommendations = computed(() => {
   const recommendations = [
@@ -171,8 +174,14 @@ watch(
     isResolvingPortfolio.value = true;
 
     try {
+      clearNotification();
       await portfolioStore.fetchPortfolio(id);
     } catch (error) {
+      showNotification('error', portfolioStore.error ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch portfolio');
+
       if (error.response?.status === 404) {
         await router.replace({ name: 'not-found' });
       }
@@ -187,6 +196,14 @@ watch(portfolioUserId, () => {
   localRecommendations.value = [];
   closeRecommendationModal();
 });
+
+watch(
+  [portfolioUserId, userId, isOwnPortfolio],
+  () => {
+    loadFollowState();
+  },
+  { immediate: true }
+);
 
 function sortVisibleHighlightedExperiences(list, isVisible = (experience) => experience.effectiveVisibleToEveryone) {
   return [...list].sort((firstProject, secondProject) => {
@@ -510,6 +527,68 @@ function closeRecommendationModal() {
   isRecommendationModalOpen.value = false;
 }
 
+async function loadFollowState() {
+  loadedFollowersCount.value = null;
+  isFollowing.value = false;
+
+  if (!portfolioUserId.value || !userId.value) return;
+
+  try {
+    const followersResponse = await api.get(`/follow/${portfolioUserId.value}/followers`);
+    const followers = followersResponse.data?.data ?? [];
+    loadedFollowersCount.value = followers.length;
+
+    if (isOwnPortfolio.value) return;
+
+    const followingResponse = await api.get(`/follow/${userId.value}/following`);
+    const following = followingResponse.data?.data ?? [];
+    isFollowing.value = following.some((user) =>
+      String(user.utilisateur_id) === String(portfolioUserId.value)
+    );
+  }
+  catch (error) {
+    loadedFollowersCount.value = null;
+  }
+}
+
+async function toggleFollow() {
+  if (!portfolioUserId.value || isOwnPortfolio.value || isFollowLoading.value) return;
+
+  isFollowLoading.value = true;
+  clearNotification();
+
+  const nextIsFollowing = !isFollowing.value;
+  const previousIsFollowing = isFollowing.value;
+  const previousFollowersCount = loadedFollowersCount.value;
+
+  isFollowing.value = nextIsFollowing;
+  loadedFollowersCount.value = Math.max(
+    0,
+    (loadedFollowersCount.value ?? followersCount.value) + (nextIsFollowing ? 1 : -1)
+  );
+
+  try {
+    if (nextIsFollowing) {
+      await api.post('/follow', { targetId: portfolioUserId.value });
+      showNotification('success', `You are now following ${profileName.value}.`);
+      return;
+    }
+
+    await api.delete(`/follow/${portfolioUserId.value}`);
+    showNotification('success', `You unfollowed ${profileName.value}.`);
+  }
+  catch (error) {
+    isFollowing.value = previousIsFollowing;
+    loadedFollowersCount.value = previousFollowersCount;
+    showNotification('error', error.response?.data?.message ||
+      error.message ||
+      'Failed to update follow status.');
+  }
+  finally {
+    isFollowLoading.value = false;
+  }
+}
+
 function handlePortfolioRecommendationSubmit(recommendation) {
   if (!portfolioUserId.value) return;
 
@@ -765,9 +844,6 @@ async function handleAiFiltersDetected(filters) {
     />
 
     <main>
-      <BaseError v-if="portfolioStore.error">
-        {{ portfolioStore.error }}
-      </BaseError>
       <div class="profile">
         <div
           class="profile__photo"
@@ -841,9 +917,11 @@ async function handleAiFiltersDetected(filters) {
             v-if="!isOwnPortfolio"
             class="actions"
           >
-            <button class="follow-button">
-              Follow
-            </button>
+            <FollowButton
+              :following="isFollowing"
+              :loading="isFollowLoading"
+              @toggle="toggleFollow"
+            />
             <button
               type="button"
               class="recommend-button"
@@ -1255,13 +1333,13 @@ async function handleAiFiltersDetected(filters) {
 	transform: translateY(-1px);
 }
 
-:is(.qr-button, .follow-button, .recommend-button):focus-visible {
+:is(.qr-button, .recommend-button):focus-visible {
 	outline: none;
 	border-color: var(--color-secondary);
 	box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
-:is(.qr-button, .follow-button, .recommend-button):hover {
+:is(.qr-button, .recommend-button):not(:disabled):hover {
 	transform: translateY(-1px);
 }
 
@@ -1269,29 +1347,11 @@ async function handleAiFiltersDetected(filters) {
 	color: var(--color-primary);
 }
 
-.follow-button,
 .recommend-button {
 	font-size: var(--font-size-xxs);
 	padding: 0.45rem var(--space-md);
 	border-radius: var(--radius-md);
 	cursor: pointer;
-}
-
-.follow-button {
-	min-width: 6.2rem;
-	border: 1.5px solid var(--color-primary);
-	background-color: var(--color-primary);
-	color: var(--color-background);
-	box-shadow: 0 6px 10px rgba(0, 0, 0, 0.38);
-	transition:
-		background-color var(--transition-fast),
-		box-shadow var(--transition-fast),
-		transform var(--transition-fast);
-}
-
-.follow-button:hover {
-	background-color: rgba(var(--color-primary-rgb), 0.92);
-  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.34);
 }
 
 .recommend-button {

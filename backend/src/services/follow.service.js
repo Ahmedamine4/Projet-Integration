@@ -1,5 +1,5 @@
 import prisma from '../config/prisma.js';
-import { creerNotification } from './notification.service.js';
+import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
 
 export const followUser = async (followerId, followingId) => {
   if (followerId === followingId) throw new Error('Vous ne pouvez pas vous suivre vous-même');
@@ -27,7 +27,7 @@ export const followUser = async (followerId, followingId) => {
   await creerNotification(
     followingId,
     `${suiveur.prenom} ${suiveur.nom} a commencé à vous suivre.`,
-    'nouveau_follower'
+    TYPES_NOTIFICATION.NOUVEAU_FOLLOWER
   );
 
   return follow;

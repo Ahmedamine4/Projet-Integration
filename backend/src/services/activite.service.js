@@ -1,6 +1,6 @@
 import prisma from '../config/prisma.js';
-import { creerNotification } from './notification.service.js';
-import { lierCompetencesExperience, supprimerCompetencesDeveloppees } from './competence.helper.js';
+import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompetencesByExperience } from './competence.helper.js';
+import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
 export const creeActivite = async (etudiantId, data, file) => {
@@ -11,6 +11,7 @@ export const creeActivite = async (etudiantId, data, file) => {
 
   const competences = JSON.parse(data.competences || '[]');
   const isAcademique = data.is_academique === 'true';
+  const visibilite = data.visibilite !== undefined ? data.visibilite : false;
 
   // Upload photo avant la transaction
   const photoUrl = file ? await uploadPhoto(file, 'activites-photos') : null;
@@ -39,12 +40,13 @@ export const creeActivite = async (etudiantId, data, file) => {
       data: {
         titre: data.titre,
         date_experience: new Date(data.date_experience),
-        visibilite: false,
+        visibilite,
         type: 'activite',
         description: data.description,
         type_specifique: isAcademique ? 'academique' : 'personnel',
         utilisateur_id: etudiantId,
         photo: photoUrl ?? null,
+        deleted_at: null,
       },
     });
 
@@ -84,39 +86,54 @@ export const creeActivite = async (etudiantId, data, file) => {
         await creerNotification(
           institution.directeur.directeur_utilisateur_id,
           `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son activité "${data.titre}" auprès de ${institution.nom}.`,
-          'validation_activite'
+          TYPES_NOTIFICATION.VALIDATION_ACTIVITE
         );
       }
     }
 
-    return tx.activite.findUnique({
+    const result = await tx.activite.findUnique({
       where: { experience_id: experience.experience_id },
       include: {
-        experience: {
-          include: {
-            competence_dev: { include: { competence: true } },
-          },
-        },
+        experience: true,
         validation: { include: { institution: true } },
       },
     });
+    
+    const competences = await getCompetencesByExperience(experience.experience_id);
+    
+    return {
+      ...result,
+      experience: {
+        ...result.experience,
+        competences,
+      },
+    };
   });
 };
 
 export const getActivitesByEtudiant = async (etudiantId) => {
-  return prisma.activite.findMany({
-    where: { experience: { utilisateur_id: etudiantId } },
+  const activites = await prisma.activite.findMany({
+    where: { experience: { utilisateur_id: etudiantId, deleted_at: null } },
     include: {
       clubs: true,
       validation: { include: { institution: true } },
-      experience: {
-        include: {
-          competence_dev: { include: { competence: true } },
-        },
-      },
+      experience: true,
     },
     orderBy: { experience: { date_experience: 'desc' } },
   });
+
+  return Promise.all(
+    activites.map(async (activite) => {
+      const competences = await getCompetencesByExperience(activite.experience_id);
+      return {
+        ...activite,
+        experience: {
+          ...activite.experience,
+          competences,
+        },
+      };
+    })
+  );
 };
 
 export const editActivite = async (etudiantId, experienceId, data, file) => {
@@ -125,6 +142,7 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
       utilisateur_id: etudiantId,
       type: 'activite',
       titre: data.titre,
+      deleted_at: null,
       experience_id: { not: experienceId },
     },
   });
@@ -132,7 +150,7 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
 
   // Récupérer l'ancienne photo avant la transaction
   const experienceActuelle = await prisma.experience.findFirst({
-    where: { experience_id: experienceId },
+    where: { experience_id: experienceId, deleted_at: null },
     select: { photo: true },
   });
 
@@ -161,7 +179,7 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
 
   return await prisma.$transaction(async (tx) => {
     const experience = await tx.experience.findFirst({
-      where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'activite' },
+      where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'activite', deleted_at: null },
       include: {
         activite: { include: { validation: true } },
         competence_dev: true,
@@ -182,13 +200,17 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
       ? data.is_academique === 'true'
       : experience.type_specifique === 'academique';
 
+    const visibilite = data.visibilite !== undefined
+      ? data.visibilite
+      : experience.visibilite;
+
     await tx.experience.update({
-      where: { experience_id: experienceId },
+      where: { experience_id: experienceId, deleted_at: null },
       data: {
         titre: data.titre ?? experience.titre,
         date_experience: data.date_experience ? new Date(data.date_experience) : experience.date_experience,
         description: data.description ?? experience.description,
-        visibilite: false,
+        visibilite,
         type_specifique: data.is_academique
           ? (isAcademique ? 'academique' : 'personnel')
           : experience.type_specifique,
@@ -244,7 +266,7 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
         await creerNotification(
           institutionFinale.directeur.directeur_utilisateur_id,
           `L'étudiant ${etudiant.prenom} ${etudiant.nom} a modifié son activité "${data.titre ?? experience.titre}". Il demande une validation auprès de ${institutionFinale.nom}.`,
-          'validation_activite'
+          TYPES_NOTIFICATION.VALIDATION_ACTIVITE
         );
       }
 
@@ -267,28 +289,34 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
         await creerNotification(
           nouvelleInstitution.directeur.directeur_utilisateur_id,
           `L'étudiant ${etudiant.prenom} ${etudiant.nom} demande la validation de son activité "${data.titre ?? experience.titre}" auprès de ${nouvelleInstitution.nom}.`,
-          'validation_activite'
+          TYPES_NOTIFICATION.VALIDATION_ACTIVITE
         );
       }
     }
 
-    return tx.activite.findUnique({
+    const result = await tx.activite.findUnique({
       where: { experience_id: experienceId },
       include: {
-        experience: {
-          include: {
-            competence_dev: { include: { competence: true } },
-          },
-        },
+        experience: true,
         validation: { include: { institution: true } },
       },
     });
+
+    const competences = await getCompetencesByExperience(experienceId);
+
+    return {
+      ...result,
+      experience: {
+        ...result.experience,
+        competences,
+      },
+    };
   });
 };
 
 export const updateVisibiliteActiviteService = async (etudiantId, experienceId, visibilite) => {
   const experience = await prisma.experience.findFirst({
-    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'activite' },
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'activite', deleted_at: null },
     include: {
       activite: { include: { validation: true } },
     },
@@ -298,8 +326,8 @@ export const updateVisibiliteActiviteService = async (etudiantId, experienceId, 
 
   if (experience.type_specifique === 'academique') {
     const statut = experience.activite?.validation?.statut;
-    if (statut !== 'valide') {
-      throw new Error("Vous ne pouvez changer la visibilité que si l'activité académique est validée");
+    if (statut !== 'valide' && statut !== 'refuse') {
+      throw new Error("Vous ne pouvez changer la visibilité que si l'activité académique n'est pas encore traitée par l'institution");
     }
   }
 
@@ -311,8 +339,20 @@ export const updateVisibiliteActiviteService = async (etudiantId, experienceId, 
 };
 
 export async function getActivitesVisiblesByEtudiant(etudiantId) {
-  return prisma.experience.findMany({
-    where: { utilisateur_id: etudiantId, type: 'activite', visibilite: true },
+  const activites = await prisma.experience.findMany({
+    where: {
+      utilisateur_id: etudiantId,
+      type: 'activite',
+      deleted_at: null,
+      visibilite: true,
+      OR: [
+        { type_specifique: 'personnel' },
+        {
+          type_specifique: 'academique',
+          activite: { validation: { statut: { in: ['valide', 'refuse'] } } },
+        },
+      ],
+    },
     include: {
       activite: {
         include: {
@@ -320,14 +360,24 @@ export async function getActivitesVisiblesByEtudiant(etudiantId) {
           clubs: true,
         },
       },
-      competence_dev: { include: { competence: true } },
     },
     orderBy: { date_experience: 'desc' },
   });
+
+  return Promise.all(
+    activites.map(async (activite) => {
+      const competences = await getCompetencesByExperience(activite.experience_id);
+      return {
+        ...activite,
+        competences,
+      };
+    })
+  );
 }
+
 export const supprimerActiviteService = async (etudiantId, experienceId) => {
   const experience = await prisma.experience.findFirst({
-    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'activite' },
+    where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'activite', deleted_at: null },
     include: {
       activite: { include: { validation: true } },
     },
@@ -335,17 +385,17 @@ export const supprimerActiviteService = async (etudiantId, experienceId) => {
 
   if (!experience) throw new Error('Activité non trouvée');
 
-  // bloquer la suppression si deja traitee par l'institution
   if (experience.type_specifique === 'academique' && experience.activite?.validation) {
     const statut = experience.activite.validation.statut;
-    if (statut === 'valide' || statut === 'refuse') {
-      throw new Error("Cette activité a déjà été traitée par l'institution, vous ne pouvez plus la supprimer");
+    if (statut === 'valide') {
+      throw new Error("Cette activité a été validée par l'institution, vous ne pouvez plus la supprimer. Utilisez la visibilité pour la masquer.");
     }
   }
 
   await supprimerPhoto(experience.photo, 'activites-photos');
 
-  await prisma.experience.delete({
+  await prisma.experience.update({
     where: { experience_id: experienceId },
+    data: { deleted_at: new Date() },
   });
 };
