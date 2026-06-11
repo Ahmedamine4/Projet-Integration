@@ -93,3 +93,20 @@ export const createProfessionnelProfile = async (userid, { entreprise, poste, em
     }
   });
 };
+
+export const deleteUserAccount = async (userid, password) => {
+  const user = await prisma.utilisateur.findUnique({
+    where: { utilisateur_id: userid },
+  });
+
+  if (!user) throw new Error("Utilisateur introuvable.");
+
+  const isMatched = await bcrypt.compare(password, user.mot_de_passe);
+  if (!isMatched) throw new Error("Mot de passe incorrect. La suppression a échoué.");
+
+  await prisma.utilisateur.delete({ 
+    where: { utilisateur_id: userid } 
+  });
+
+  return true;
+};

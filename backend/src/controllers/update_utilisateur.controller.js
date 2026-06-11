@@ -50,3 +50,20 @@ export const requestProfessionnelStatusController = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const deleteAccountController = async (req, res) => {
+  try {
+    const userId = req.user.utilisateur_id; 
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: "Veuillez entrer votre mot de passe pour confirmer la suppression." });
+    }
+
+    await UserService.deleteUserAccount(userId, password);
+
+    res.status(200).json({ message: "Compte et données associées supprimés avec succès." });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
