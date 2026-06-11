@@ -202,7 +202,10 @@ watch(
       </div>
 
       <div class="calendar-shell">
-        <div class="calendar-board">
+        <div
+          class="calendar-board"
+          :style="{ '--weeks-count': contributionWeeks.length }"
+        >
           <div class="month-labels" aria-hidden="true">
             <span class="weekday-spacer" />
             <span
@@ -289,7 +292,7 @@ watch(
   flex-direction: column;
   gap: 1.4rem;
   width: 100%;
-  margin-bottom: var(--space-xl);
+  margin-block: var(--space-xl);
 }
 
 .contributions-header {
@@ -319,13 +322,30 @@ watch(
 }
 
 .calendar-shell {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   padding: 0.75rem 0 0.15rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--color-primary-rgb), 0.22) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.calendar-shell::-webkit-scrollbar {
+  height: 0.45rem;
+}
+
+.calendar-shell::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(var(--color-primary-rgb), 0.18);
 }
 
 .calendar-board {
+  --day-gap: 4px;
+  --weekday-column: 2.2rem;
   width: 100%;
-  min-width: 58rem;
+  min-width: 0;
   box-sizing: border-box;
   border: 1px solid rgba(var(--color-primary-rgb), 0.1);
   border-radius: var(--radius-md);
@@ -335,8 +355,8 @@ watch(
 
 .month-labels {
   display: grid;
-  grid-template-columns: 2.2rem repeat(var(--weeks-count, 53), minmax(15px, 1fr));
-  gap: 4px;
+  grid-template-columns: var(--weekday-column) repeat(var(--weeks-count, 53), minmax(0, 1fr));
+  gap: var(--day-gap);
   width: 100%;
   margin-bottom: 0.5rem;
   color: rgba(var(--color-primary-rgb), 0.54);
@@ -349,36 +369,39 @@ watch(
 
 .calendar-layout {
   display: grid;
-  grid-template-columns: 2.2rem minmax(0, 1fr);
-  gap: 4px;
+  grid-template-columns: var(--weekday-column) minmax(0, 1fr);
+  gap: var(--day-gap);
   width: 100%;
 }
 
 .weekday-labels {
   display: grid;
-  grid-template-rows: repeat(7, 15px);
-  gap: 4px;
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  align-items: center;
+  gap: var(--day-gap);
   color: rgba(var(--color-primary-rgb), 0.54);
   font-size: var(--font-size-xxs);
-  line-height: 15px;
+  line-height: 1;
 }
 
 .calendar {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(15px, 1fr);
-  gap: 4px;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--day-gap);
   width: 100%;
+  min-width: 0;
 }
 
 .calendar-week {
   display: grid;
-  grid-template-rows: repeat(7, minmax(15px, auto));
-  gap: 4px;
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  gap: var(--day-gap);
 }
 
 .day {
   width: 100%;
+  min-height: 8px;
   aspect-ratio: 1;
   border-radius: 3px;
   cursor: pointer;
@@ -405,8 +428,8 @@ watch(
 
 .legend-box {
   display: block;
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
   border-radius: 3px;
   box-shadow: inset 0 0 0 1px rgba(var(--color-primary-rgb), 0.04);
 }
@@ -551,47 +574,52 @@ watch(
 }
 
 @media (max-width: 640px) {
+  .contributions-grid {
+    gap: 1rem;
+  }
+
   .calendar-board {
-    min-width: 48rem;
-    padding: 1rem;
+    --day-gap: 3px;
+    --weekday-column: 1.65rem;
+    width: 46rem;
+    min-width: 46rem;
+    padding: 0.9rem;
   }
 
-  .month-labels {
-    grid-template-columns: 1.75rem repeat(var(--weeks-count, 53), minmax(12px, 1fr));
-    gap: 3px;
-  }
-
-  .calendar-layout {
-    grid-template-columns: 1.75rem max-content;
-    gap: 3px;
-  }
-
+  .month-labels,
   .weekday-labels,
-  .calendar-week {
-    grid-template-rows: repeat(7, minmax(12px, auto));
-    gap: 3px;
+  .calendar-legend {
+    font-size: 0.62rem;
   }
 
-  .weekday-labels {
-    line-height: 12px;
+  .calendar-shell {
+    margin-inline: calc(var(--space-sm) * -1);
+    padding-inline: var(--space-sm);
   }
 
-  .calendar {
-    grid-auto-columns: minmax(12px, 1fr);
-    gap: 3px;
-  }
-
-  .day {
-    width: 100%;
-  }
-
-  .legend-box {
-    width: 12px;
-    height: 12px;
+  .calendar-legend {
+    justify-content: flex-start;
   }
 
   .contributions-stats-list {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contributions-header {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 420px) {
+  .calendar-board {
+    --weekday-column: 1.45rem;
+    width: 42rem;
+    min-width: 42rem;
+    padding: 0.75rem;
+  }
+
+  .contributions-stats-list {
+    grid-template-columns: 1fr;
   }
 
   .contributions-header {
