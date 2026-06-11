@@ -127,6 +127,7 @@ model Etudiant {
   etudiant_utilisateur_id String                     @id
   promotion               String?                    @db.VarChar(50)
   niveau                  String?                    @db.VarChar(50)
+  etudie                  Boolean?
   github_API              String?
   repositories            Repository[]
   utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
@@ -452,7 +453,8 @@ model ValideEtudiant {
   utilisateur_id String
   institution_id String
   statut         StatutValidation?
-  date           DateTime?
+  date_debut           DateTime?
+  date_fin             DateTime?
   description    String?
   niveau         String?
 

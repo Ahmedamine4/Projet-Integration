@@ -2,6 +2,7 @@ import prisma from '../config/prisma.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompetencesByExperience } from './competence.helper.js';
 
+const parseBoolean = (value) => value === true || value === 'true' || value === '1' || value === 1;
 
 export const creeCertification = async (etudiantId, data, file) => {
   const certExistante = await prisma.experience.findFirst({
@@ -9,8 +10,8 @@ export const creeCertification = async (etudiantId, data, file) => {
   });
   if (certExistante) throw new Error('Certification déjà existante');
 
-  const competences = JSON.parse(data.competences || '[]');
-  const visibilite = data.visibilite !== undefined ? data.visibilite : false;
+  const competencesInput = JSON.parse(data.competences || '[]');
+  const visibilite = data.visibilite !== undefined ? parseBoolean(data.visibilite) : false;
 
   const photoUrl = file ? await uploadPhoto(file, 'certifications-photos') : null;
 
@@ -46,7 +47,7 @@ export const creeCertification = async (etudiantId, data, file) => {
     });
 
     await Promise.all(
-      competences.map(({ nom, type }) =>
+      competencesInput.map(({ nom, type }) =>
         lierCompetencesExperience(tx, experience.experience_id, etudiantId, [nom], type)
       )
     );
@@ -137,7 +138,7 @@ export const editCertification = async (etudiantId, experienceId, data, file) =>
     if (!experience) throw new Error('Certification non trouvée');
 
     const visibilite = data.visibilite !== undefined
-      ? data.visibilite
+      ? parseBoolean(data.visibilite)
       : experience.visibilite;
 
     await tx.experience.update({
@@ -161,10 +162,10 @@ export const editCertification = async (etudiantId, experienceId, data, file) =>
     });
 
     if (data.competences !== undefined) {
-      const competences = JSON.parse(data.competences || '[]');
+      const competencesInput = JSON.parse(data.competences || '[]');
       await supprimerCompetencesDeveloppees(tx, experienceId, etudiantId);
       await Promise.all(
-        competences.map(({ nom, type }) =>
+        competencesInput.map(({ nom, type }) =>
           lierCompetencesExperience(tx, experienceId, etudiantId, [nom], type)
         )
       );

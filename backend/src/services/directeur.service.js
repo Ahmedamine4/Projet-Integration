@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '../config/prisma.js';
 import { envoyerIdentifiants } from '../utils/sendMail.js';
-import { getPendingValidations } from './validation_etudiant.service.js';
 
 const USER_SELECT = {
   utilisateur_id: true,
@@ -11,6 +10,7 @@ const USER_SELECT = {
   email: true,
   role: true,
   provider: true,
+  photo: true,
 };
 
 function generatePassword() {
@@ -20,43 +20,7 @@ function generatePassword() {
 async function getDirectorInstitution(directeurId) {
   const directeur = await prisma.directeur.findUnique({
     where: { directeur_utilisateur_id: directeurId },
-    include: {
-      institution: {
-        include: {
-          professeurs: {
-            include: {
-              utilisateur: {
-                select: {
-                  utilisateur_id: true,
-                  nom: true,
-                  prenom: true,
-                  email: true,
-                  photo: true,
-                },
-              },
-            },
-          },
-          etudiants: {
-            where: { statut: 'valide' },
-            include: {
-              etudiant: {
-                include: {
-                  utilisateur: {
-                    select: {
-                      utilisateur_id: true,
-                      nom: true,
-                      prenom: true,
-                      email: true,
-                      photo: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+    include: { institution: true },
   });
 
   if (!directeur?.institution) {
@@ -66,18 +30,158 @@ async function getDirectorInstitution(directeurId) {
   return directeur.institution;
 }
 
-export async function getDirecteurDashboard(directeurId) {
+export async function getDashboardStats(directeurId) {
   const institution = await getDirectorInstitution(directeurId);
-  const pendingStudents = await getPendingValidations(institution.institution_id);
+  const currentDate = new Date();
+
+  const totalProfessors = await prisma.professeur.count({
+    where: { institutions: { some: { institution_id: institution.institution_id } } }
+  });
+
+  const totalStudents = await prisma.valideEtudiant.count({
+    where: {
+      institution_id: institution.institution_id,
+      statut: 'valide',
+      date_debut: { lte: currentDate },
+      OR: [{ date_fin: { gte: currentDate } }, { date_fin: null }],
+      etudiant: { etudie: true }
+    }
+  });
+
+  const pendingInscriptions = await prisma.valideEtudiant.count({
+    where: { institution_id: institution.institution_id, statut: 'en_attente' }
+  });
+
+  const pendingActivites = await prisma.valideActivite.count({
+    where: { institution_id: institution.institution_id, statut: 'en_attente' }
+  });
 
   return {
     institution,
-    professors: institution.professeurs,
-    pendingStudents,
     stats: {
-      totalProfessors: institution.professeurs.length,
-      totalStudents: institution.etudiants.length,
-    },
+      totalProfessors,
+      totalStudents,
+      pendingInscriptions,
+      pendingActivites,
+      totalPending: pendingInscriptions + pendingActivites
+    }
+  };
+}
+
+export async function getInstitutionMembers(directeurId, page = 1, type) {
+  const institution = await getDirectorInstitution(directeurId);
+  const currentDate = new Date();
+  
+  const limit = 10;
+  const skip = (page - 1) * limit;
+
+  let membres = [];
+  let totalItems = 0;
+
+  if (type === 'professeur') {
+    totalItems = await prisma.professeur.count({
+      where: { institutions: { some: { institution_id: institution.institution_id } } }
+    });
+    
+    membres = await prisma.professeur.findMany({
+      where: { institutions: { some: { institution_id: institution.institution_id } } },
+      skip,
+      take: limit,
+      include: { utilisateur: { select: USER_SELECT } }
+    });
+  } else if (type === 'etudiant') {
+    const whereClause = {
+      institution_id: institution.institution_id,
+      statut: 'valide',
+      date_debut: { lte: currentDate },
+      OR: [{ date_fin: { gte: currentDate } }, { date_fin: null }],
+      etudiant: { etudie: true }
+    };
+
+    totalItems = await prisma.valideEtudiant.count({ where: whereClause });
+    
+    membres = await prisma.valideEtudiant.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      include: { etudiant: { include: { utilisateur: { select: USER_SELECT } } } }
+    });
+  } else {
+    throw new Error("Le type de membre doit être 'etudiant' ou 'professeur'");
+  }
+
+  return {
+    membres,
+    pagination: {
+      page,
+      limit,
+      totalPages: Math.ceil(totalItems / limit),
+      totalItems
+    }
+  };
+}
+
+export async function getPendingRequests(directeurId, page = 1, type) {
+  const institution = await getDirectorInstitution(directeurId);
+  
+  const limit = 10;
+  const skip = (page - 1) * limit;
+
+  let demandes = [];
+  let totalItems = 0;
+
+  if (type === 'inscription') {
+    const whereClause = {
+      institution_id: institution.institution_id,
+      statut: 'en_attente'
+    };
+
+    totalItems = await prisma.valideEtudiant.count({ where: whereClause });
+    
+    demandes = await prisma.valideEtudiant.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      include: { etudiant: { include: { utilisateur: { select: USER_SELECT } } } }
+    });
+  } else if (type === 'activite') {
+    const whereClause = {
+      institution_id: institution.institution_id,
+      statut: 'en_attente'
+    };
+
+    totalItems = await prisma.valideActivite.count({ where: whereClause });
+    
+    demandes = await prisma.valideActivite.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      include: {
+        activite: {
+          include: {
+            experience: {
+              include: {
+                etudiant: {
+                  include: { utilisateur: { select: USER_SELECT } }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+  } else {
+    throw new Error("Le type de demande doit être 'inscription' ou 'activite'");
+  }
+
+  return {
+    demandes,
+    pagination: {
+      page,
+      limit,
+      totalPages: Math.ceil(totalItems / limit),
+      totalItems
+    }
   };
 }
 
@@ -131,13 +235,7 @@ export async function createInstitutionProfessor({
       },
       include: {
         utilisateur: {
-          select: {
-            utilisateur_id: true,
-            nom: true,
-            prenom: true,
-            email: true,
-            photo: true,
-          },
+          select: USER_SELECT,
         },
       },
     });
@@ -152,15 +250,9 @@ export async function createInstitutionProfessor({
       role: 'professeur',
     });
 
-    return {
-      professeur,
-      emailSent: true,
-    };
+    return { professeur, emailSent: true };
   } catch (error) {
-    if (process.env.NODE_ENV === 'production') {
-      throw error;
-    }
-
+    if (process.env.NODE_ENV === 'production') throw error;
     return {
       professeur,
       emailSent: false,
@@ -168,4 +260,47 @@ export async function createInstitutionProfessor({
       warning: error.message,
     };
   }
+}
+
+export async function traiterDemandeInscription(directeurId, etudiantId, statut) {
+  const institution = await getDirectorInstitution(directeurId);
+
+  if (!['valide', 'refuse'].includes(statut)) {
+    throw new Error("Le statut doit être 'valide' ou 'refuse'");
+  }
+
+  const updatedDemande = await prisma.valideEtudiant.update({
+    where: {
+      utilisateur_id_institution_id: {
+        utilisateur_id: etudiantId,
+        institution_id: institution.institution_id
+      }
+    },
+    data: { statut }
+  });
+
+  return updatedDemande;
+}
+
+export async function traiterDemandeActivite(directeurId, experienceId, statut) {
+  const institution = await getDirectorInstitution(directeurId);
+
+  if (!['valide', 'refuse'].includes(statut)) {
+    throw new Error("Le statut doit être 'valide' ou 'refuse'");
+  }
+
+  const updatedActivite = await prisma.valideActivite.update({
+    where: {
+      experience_id_institution_id: {
+        experience_id: experienceId,
+        institution_id: institution.institution_id
+      }
+    },
+    data: { 
+      statut,
+      date_d_action: new Date()
+    }
+  });
+
+  return updatedActivite;
 }
