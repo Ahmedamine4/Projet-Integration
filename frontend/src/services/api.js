@@ -40,7 +40,6 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         // Déconnecter proprement et le rediriger vers la page de Login
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
