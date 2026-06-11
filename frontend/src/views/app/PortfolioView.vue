@@ -1354,8 +1354,8 @@ async function handleAiFiltersDetected(filters) {
 
 .profile-role-badge {
 	position: absolute;
-	top: -0.45rem;
-	right: -0.45rem;
+	top: 0.25rem;
+	right: 0.25rem;
 	z-index: 3;
 	display: inline-flex;
 	align-items: center;

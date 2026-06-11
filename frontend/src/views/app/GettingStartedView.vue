@@ -96,7 +96,11 @@ async function completeSchoolStep(schoolData) {
       .map(([fieldKey, school]) => ({
         institutionId: school.institutionId,
         date_debut: school.startYear ? new Date(school.startYear, 0, 1) : null,
-        date_fin: school.endYear ? new Date(school.endYear, 11, 31) : null,
+        date_fin: school.isCurrent
+          ? null
+          : school.endYear
+            ? new Date(school.endYear, 11, 31)
+            : null,
         niveau: levelMap[fieldKey] || 'bachelor',
       }));
 

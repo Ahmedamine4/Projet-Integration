@@ -452,6 +452,7 @@ function handleItemTap(item, event) {
 .education__hint {
   margin: 0;
   padding-top: var(--space-xs);
+  text-align: right;
 }
 
 .education__empty {
@@ -526,6 +527,10 @@ function handleItemTap(item, event) {
 
   .education__period {
     white-space: normal;
+  }
+
+  .education__hint {
+    text-align: left;
   }
 }
 

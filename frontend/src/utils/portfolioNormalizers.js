@@ -194,10 +194,13 @@ export function normalizeEducation(institutions = []) {
     const endDate = entry.date_fin ? new Date(entry.date_fin) : null;
     const endYear = endDate ? endDate.getFullYear() : '';
     const isPresent = endDate && endDate > new Date();
+    const hasOpenEndDate = startYear && !endDate;
 
     let period = '';
     if (startYear && endYear) {
       period = isPresent ? `${startYear} - Present` : `${startYear} - ${endYear}`;
+    } else if (hasOpenEndDate) {
+      period = `${startYear} - Present`;
     } else if (startYear) {
       period = `${startYear}`;
     }
