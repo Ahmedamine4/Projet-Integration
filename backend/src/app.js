@@ -32,7 +32,7 @@ app.use(cors({
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
-
+app.use('/api/directeur', directeurRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/professeur', professeurRoutes);
 app.use('/api/interactions', interactionRoutes);
@@ -63,7 +63,7 @@ app.use('/api/users', updateUtilisateurRoutes);
 app.use('/api/users', socialMediaRoutes);
 
 app.use('/api/etudiant', etudiantRoutes);
-app.use('/api/directeur', directeurRoutes);
+
 app.use('/api/admin', adminRoutes);
 // Branchement des routes d'ajout du projet
 app.use('/api', projetRoutes);

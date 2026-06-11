@@ -248,7 +248,6 @@ const feedConfigByRole = {
 
   professeur: {
     topSectionTitle: 'Top students',
-    topSectionSubtitle: 'Discover high-performing students from your school.',
     sidebarTitle: 'Students from your school',
     sidebarSubtitle: 'Profiles you may want to follow.',
     emptyMessage: 'Aucun élément ne correspond à vos filtres.',

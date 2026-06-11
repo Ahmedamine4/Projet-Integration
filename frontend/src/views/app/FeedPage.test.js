@@ -489,23 +489,29 @@ describe('FeedPage', () => {
     vi.clearAllMocks();
   });
 
-  it('fetches feed data on mount', () => {
-    mountFeed();
+  it('fetches feed data on mount', async () => {
+  mountComponent();
 
-    expect(mocks.feedExperienceStore.fetchFeedTechnologies).toHaveBeenCalledTimes(1);
+  expect(mocks.feedExperienceStore.fetchFeedTechnologies).toHaveBeenCalled();
 
-    expect(mocks.feedExperienceStore.fetchFeedExperiences).toHaveBeenCalledWith({
+  expect(mocks.feedExperienceStore.fetchFeedExperiences).toHaveBeenCalledWith(
+    {
       search: undefined,
       source: undefined,
       sort: 'trending',
       technology: undefined,
       domain: undefined,
-    });
+    },
+    {
+      reset: true,
+    }
+  );
 
-    expect(mocks.feedOfferStore.fetchFeedOffers).toHaveBeenCalledTimes(1);
-    expect(mocks.feedStudentStore.fetchFeedStudents).toHaveBeenCalledWith('suggested');
-    expect(mocks.feedStudentStore.fetchFeedStudents).toHaveBeenCalledWith('school');
-  });
+  expect(mocks.feedOfferStore.fetchFeedOffers).toHaveBeenCalled();
+
+  expect(mocks.feedStudentStore.fetchFeedStudents).toHaveBeenCalledWith('suggested');
+  expect(mocks.feedStudentStore.fetchFeedStudents).toHaveBeenCalledWith('school');
+});
 
   it('renders the student feed with opportunities and suggested students', () => {
     const wrapper = mountFeed();

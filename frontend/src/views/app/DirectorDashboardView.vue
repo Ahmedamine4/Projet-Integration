@@ -85,7 +85,7 @@ async function loadDashboard() {
   error.value = '';
 
   try {
-    const { data } = await api.get('/directeur/dashboard');
+    const { data } = await api.get('/directeur/dashboard/stats');
     const payload = data.data || {};
 
     dashboard.institution = payload.institution || null;
