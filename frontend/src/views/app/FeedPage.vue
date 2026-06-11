@@ -124,7 +124,7 @@
       @open-student="openProjectOwnerPortfolio"
     />
 
-    <div
+    <!--<div
       v-if="feedExperienceStore.hasMore && !feedExperienceStore.loadingMore"
       ref="loadMoreTrigger"
       class="load-more-trigger"
@@ -135,7 +135,7 @@
       class="feed-loading-more"
     >
       Chargement du feed...
-    </div>
+    </div>-->
   </template>
 
   <div
@@ -182,14 +182,10 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Check, Plus, SearchX } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useFeedExperienceStore } from '@/stores/feedExperience';
-import { useFeedOfferStore } from '@/stores/feedOffer';
-import { useFeedStudentStore } from '@/stores/feedStudent';
-
 import Sidebar from '@/components/layout/AppSidebar.vue';
 import FeedHeader from '@/components/feed/feedHeader.vue';
 import FeedFiltersPanel from '@/components/feed/FeedFiltersPanel.vue';
@@ -198,12 +194,17 @@ import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
 import FeedOffersCarousel from '@/components/feed/FeedOffersCarousel.vue';
 import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
 import ApplyOfferModal from '@/components/feed/ApplyOfferModal.vue';
+import { useFeedStore } from '@/stores/feed';
 
+const feedStore = useFeedStore();
+
+onMounted(() => {
+  feedStore.fetchFeed({
+    sort: 'trending',
+  });
+});
 const router = useRouter();
 const authStore = useAuthStore();
-const feedExperienceStore = useFeedExperienceStore();
-const feedOfferStore = useFeedOfferStore();
-const feedStudentStore = useFeedStudentStore();
 
 
 const sidebarUser = computed(() => {
@@ -220,13 +221,72 @@ const sidebarUser = computed(() => {
 const currentRole = computed(() => sidebarUser.value.role || 'etudiant');
 const isRecruiter = computed(() => currentRole.value === 'professionnel');
 const isProfessor = computed(() => currentRole.value === 'professeur');
-const feedItems = computed(() => feedExperienceStore.items);
-const offers = computed(() => feedOfferStore.offers);
-const suggestedStudents = computed(() => feedStudentStore.suggestedStudents);
-const studentsFromSchool = computed(() => feedStudentStore.studentsFromSchool);
+const feedItems = computed(() => {
+  return feedStore.experiences.map((experience) => ({
+    feedKey: experience.experience_id,
+    id: experience.experience_id,
 
-const isLoadingFeed = computed(() => feedExperienceStore.loading);
-const feedError = computed(() => feedExperienceStore.error);
+    title: experience.titre,
+    description: experience.description,
+    image: experience.photo,
+
+    type: experience.type,
+    specificType: experience.type_specifique,
+    date: experience.date,
+
+    studentName: `${experience.auteur?.prenom || ''} ${experience.auteur?.nom || ''}`.trim(),
+    schoolName: experience.auteur?.institution || '',
+    portfolioUserId: experience.auteur?.utilisateur_id,
+
+    technologies: experience.technologies || [],
+    domains: experience.domaines || [],
+
+    likes: experience.stats?.likes || 0,
+    comments: experience.stats?.commentaires || 0,
+
+    score: experience.score || 0,
+    isFollowingAuthor: experience.is_following_auteur || false,
+
+    raw: experience,
+  }));
+});
+
+const offers = computed(() => feedStore.offres || []);
+
+const suggestedStudents = computed(() => {
+  return feedStore.utilisateursSuggeres.map((user) => {
+    const fullName = `${user.prenom || ''} ${user.nom || ''}`.trim();
+
+    return {
+      id: user.utilisateur_id,
+      userId: user.utilisateur_id,
+      portfolioUserId: user.utilisateur_id,
+
+      name: fullName,
+      initials: `${user.prenom?.[0] || ''}${user.nom?.[0] || ''}`.toUpperCase() || 'U',
+
+      speciality: user.sous_titre || user.role || '',
+      schoolName: user.sous_titre || '',
+      role: user.role,
+
+      photo: user.photo,
+      stack: [],
+      technologies: [],
+      domains: [],
+
+      isFollowing: false,
+      portfolioScore: 0,
+      rankScore: 0,
+
+      raw: user,
+    };
+  });
+});
+
+const studentsFromSchool = computed(() => suggestedStudents.value);
+
+const isLoadingFeed = computed(() => feedStore.loading);
+const feedError = computed(() => feedStore.error);
 const feedConfigByRole = {
   etudiant: {
     topSectionTitle: 'Recommended opportunities',
@@ -262,7 +322,7 @@ const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
 const applyingOffer = ref(null);
-const loadMoreTrigger = ref(null);
+
 
 const defaultFilters = () => ({
   source: 'all',
@@ -287,7 +347,7 @@ const sidebarStudents = computed(() => {
 });
 
 let filtersTimer = null;
-let observer = null;
+
 
 function buildExperienceParams() {
   return {
@@ -300,47 +360,8 @@ function buildExperienceParams() {
 }
 
 async function fetchFeedExperiences() {
-  await feedExperienceStore.fetchFeedExperiences(buildExperienceParams(), {
-    reset: true,
-  });
-  await nextTick();
-  setupInfiniteScroll();
+  await feedStore.fetchFeed(buildExperienceParams());
 }
-
-function setupInfiniteScroll() {
-  if (observer) {
-    observer.disconnect();
-  }
-
-  if (!loadMoreTrigger.value) return;
-
-  observer = new IntersectionObserver(async ([entry]) => {
-    if (
-      entry.isIntersecting &&
-      feedExperienceStore.hasMore &&
-      !feedExperienceStore.loading &&
-      !feedExperienceStore.loadingMore
-    ) {
-      await feedExperienceStore.fetchNextFeedExperiences(buildExperienceParams());
-      await nextTick();
-      setupInfiniteScroll();
-    }
-  });
-
-  observer.observe(loadMoreTrigger.value);
-}
-
-onMounted(async () => {
-  feedExperienceStore.fetchFeedTechnologies();
-
-  await fetchFeedExperiences();
-
-  feedOfferStore.fetchFeedOffers();
-
-  feedStudentStore.fetchFeedStudents('suggested');
-  feedStudentStore.fetchFeedStudents('school');
-});
-
 watch(
   [search, filters],
   () => {
@@ -358,10 +379,6 @@ watch(
 onUnmounted(() => {
   if (filtersTimer) {
     clearTimeout(filtersTimer);
-  }
-
-  if (observer) {
-    observer.disconnect();
   }
 });
 const topCarouselItems = computed(() => {
@@ -387,7 +404,13 @@ const topCarouselItems = computed(() => {
 }));
 });
 
-const allTechnologies = computed(() => feedExperienceStore.filterTechnologies);
+const allTechnologies = computed(() => {
+  const technologies = feedStore.experiences.flatMap((experience) => {
+    return experience.technologies || [];
+  });
+
+  return [...new Set(technologies)];
+});
 
 const allDomains = computed(() => [
   'Mobile Development',
@@ -433,15 +456,12 @@ function handleTopCarouselSelect(item) {
 }
 
 function openProjectDetail(project) {
-  feedExperienceStore.setSelectedProject?.(project);
-
   const ownerId =
     project.portfolioUserId ||
     project.userId ||
     project.utilisateur_id ||
     project.etudiant_id;
 
-  // TODO: activer cette navigation quand la route detail projet sera disponible.
   if (ownerId && router.hasRoute?.('feed-project-detail')) {
     router.push({
       name: 'feed-project-detail',
@@ -452,6 +472,10 @@ function openProjectDetail(project) {
     });
 
     return;
+  }
+
+  if (ownerId) {
+    router.push(`/portfolio/${ownerId}`);
   }
 }
 
@@ -475,12 +499,12 @@ function closeApplyOffer() {
 async function handleApplyOfferSubmit(payload) {
   if (!applyingOffer.value?.id) return;
 
-  try {
-    await feedOfferStore.applyToOffer(applyingOffer.value.id, payload);
-    closeApplyOffer();
-  } catch (error) {
-    console.error('Erreur candidature offre:', error);
-  }
+  console.log('Apply offer payload:', {
+    offer: applyingOffer.value,
+    payload,
+  });
+
+  closeApplyOffer();
 }
 
 function openAddOfferModal() {
@@ -488,7 +512,7 @@ function openAddOfferModal() {
 }
 
 function handleSidebarStudentAction(student) {
-  feedStudentStore.toggleFollow(student);
+  student.isFollowing = !student.isFollowing;
 }
 
 function sidebarActionLabel(student) {
