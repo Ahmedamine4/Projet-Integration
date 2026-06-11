@@ -15,10 +15,12 @@ const ROUTE_TYPE_MAP = {
   recommandation: 'recommandations',
 };
 
+// 📑 Remplace ton ancienne fonction de normalisation par cette version corrigée :
 const normalizeListItem = (item) => {
   return {
     ...item,
-    id: item.experience_id || item.etudiant_id, 
+    // 🍏 CORRECTION : On utilise utilisateur_id renvoyé par le backend pour les lettres
+    id: item.experience_id || item.utilisateur_id, 
     status: STATUS_MAP[item.statut] || item.statut,
     student: {
       firstName: item.etudiant?.prenom || '',
@@ -28,7 +30,6 @@ const normalizeListItem = (item) => {
 };
 
 const normalizeDetail = (item, type) => {
-  // Normalize type string just in case 'recommandations' or 'recommandation' is passed
   if (type === 'recommandation' || type === 'recommandations') {
     const userNode = item.etudiant?.utilisateur || {};
     return {
@@ -47,7 +48,8 @@ const normalizeDetail = (item, type) => {
     };
   }
 
-  const expNode = item.experience || {};
+  // 2. 🍏 CORRECTION : Extraction dynamique selon l'arborescence réelle de Prisma
+  const expNode = item.stage?.experience || item.projet?.experience || item.experience || {};
   const studentNode = expNode.etudiant?.utilisateur || {};
 
   const normalized = {
@@ -73,6 +75,7 @@ const normalizeDetail = (item, type) => {
     domaines: (expNode.competence_dev || []).map(c => c.competence?.nom).filter(Boolean),
   };
 
+  // Le reste de ta fonction (if type === 'stage'...) reste identique
   if ((type === 'stage' || type === 'stages') && item.stage) {
     normalized.duree = item.stage.duree;
     normalized.missions_realisees = item.stage.missions_realisees;
