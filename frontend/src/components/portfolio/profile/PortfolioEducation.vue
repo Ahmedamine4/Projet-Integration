@@ -10,6 +10,8 @@ const levelLabels = {
   master: 'Master',
   doctorat: 'PhD / Doctorate',
 };
+const DESCRIPTION_MAX_LENGTH = 180;
+const DESCRIPTION_MAX_LINES = 2;
 
 const props = defineProps({
   userId: { type: String, required: true },
@@ -40,17 +42,42 @@ function formatLevel(level) {
   return levelLabels[level?.toLowerCase()] || level || 'Education';
 }
 
+function getTextareaElement() {
+  return Array.isArray(textarea.value)
+    ? textarea.value[0]
+    : textarea.value;
+}
+
+function resizeTextarea() {
+  const field = getTextareaElement();
+  if (!field) return;
+
+  const styles = window.getComputedStyle(field);
+  const lineHeight = Number.parseFloat(styles.lineHeight) || 18;
+  const paddingTop = Number.parseFloat(styles.paddingTop) || 0;
+  const paddingBottom = Number.parseFloat(styles.paddingBottom) || 0;
+  const borderTop = Number.parseFloat(styles.borderTopWidth) || 0;
+  const borderBottom = Number.parseFloat(styles.borderBottomWidth) || 0;
+  const maxHeight = (lineHeight * DESCRIPTION_MAX_LINES) +
+    paddingTop +
+    paddingBottom +
+    borderTop +
+    borderBottom;
+
+  field.style.height = 'auto';
+  field.style.height = `${Math.min(field.scrollHeight, maxHeight)}px`;
+  field.style.overflowY = field.scrollHeight > maxHeight ? 'auto' : 'hidden';
+}
+
 function startDescriptionEdit(item) {
   if (!props.canAdd || savingId.value) return;
 
   editingId.value = item.id;
   editDescription.value = item.description ?? '';
   nextTick(() => {
-    const field = Array.isArray(textarea.value)
-      ? textarea.value[0]
-      : textarea.value;
-
+    const field = getTextareaElement();
     field?.focus();
+    resizeTextarea();
   });
 }
 
@@ -150,13 +177,14 @@ function handleItemTap(item, event) {
               ref="textarea"
               v-model="editDescription"
               class="education__textarea"
-              maxlength="500"
-              placeholder="Add a short description for this education item..."
+              :maxlength="DESCRIPTION_MAX_LENGTH"
+              placeholder="Add a short two-line description..."
               @dblclick.stop
               @click.stop
+              @input="resizeTextarea"
             />
             <div class="education__editor-footer">
-              <span>{{ editDescription.length }} / 500</span>
+              <span>{{ editDescription.length }} / {{ DESCRIPTION_MAX_LENGTH }}</span>
               <div class="education__editor-actions">
                 <BaseButton
                   size="xs"
@@ -350,22 +378,55 @@ function handleItemTap(item, event) {
 
 .education__textarea {
   width: 100%;
-  min-height: 6.5rem;
-  resize: vertical;
+  min-height: 3.45rem;
+  max-height: 3.45rem;
+  resize: none;
   border: 1px solid rgba(var(--color-primary-rgb), 0.14);
-  border-radius: var(--radius-sm);
-  padding: 0.8rem 0.9rem;
-  background: rgba(var(--color-background-rgb), 0.82);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.7rem;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.32),
+      rgba(255, 255, 255, 0)
+    ),
+    color-mix(in srgb, var(--color-surface) 22%, var(--color-background));
   color: var(--color-primary);
-  font: inherit;
+  font-family: var(--font-ui);
   font-size: var(--font-size-xs);
-  line-height: 1.45;
+  font-weight: var(--font-light);
+  line-height: 1.15rem;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.education__textarea::placeholder {
+  color: rgba(var(--color-primary-rgb), 0.42);
+}
+
+.education__textarea:hover {
+  border-color: rgba(var(--color-primary-rgb), 0.24);
 }
 
 .education__textarea:focus {
   outline: none;
-  border-color: rgba(var(--color-secondary-rgb), 0.6);
-  box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.12);
+  border-color: var(--color-secondary);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.42),
+      rgba(255, 255, 255, 0)
+    ),
+    color-mix(in srgb, var(--color-surface) 12%, var(--color-background));
+  box-shadow:
+    0 0 0 3px rgba(var(--color-secondary-rgb), 0.14),
+    0 8px 18px rgba(0, 0, 0, 0.05);
 }
 
 .education__editor-footer {
