@@ -163,18 +163,18 @@ function formatDate(iso) {
           <span class="stat-chip__label">Éléments correspondants</span>
         </div>
         
-        <div class="stat-chip pending-card">
-          <span class="stat-chip__num pending-num">{{ stats?.stagePending ?? 0 }}</span>
+        <div class="stat-chip">
+          <span class="stat-chip__num">{{ stats?.stagePending ?? 0 }}</span>
           <span class="stat-chip__label">Stages en attente</span>
         </div>
         
-        <div class="stat-chip pending-card">
-          <span class="stat-chip__num pending-num">{{ stats?.projetPending ?? 0 }}</span>
+        <div class="stat-chip">
+          <span class="stat-chip__num">{{ stats?.projetPending ?? 0 }}</span>
           <span class="stat-chip__label">Projets en attente</span>
         </div>
         
-        <div class="stat-chip pending-card">
-          <span class="stat-chip__num pending-num">{{ stats?.recommandationPending ?? 0 }}</span>
+        <div class="stat-chip">
+          <span class="stat-chip__num">{{ stats?.recommandationPending ?? 0 }}</span>
           <span class="stat-chip__label">Lettres en attente</span>
         </div>
       </div>
@@ -721,12 +721,5 @@ function formatDate(iso) {
   .filter-dropdown {
     max-width: 50%; /* Keeps them exactly 50/50 side-by-side on mobile */
   }
-}
-.pending-card {
-  border-left: 3px solid var(--color-secondary, #7a4700);
-}
-
-.pending-num {
-  color: #7a4700; /* Distinct amber/warm layout contrast accent for actions needing review */
 }
 </style>

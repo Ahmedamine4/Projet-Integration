@@ -83,12 +83,12 @@ const normalizeDetail = (item, type) => {
   }
 
   if ((type === 'projet' || type === 'projets') && item.projet) {
-    normalized.photo = item.projet.photo;
+    normalized.photo = expNode.photo;
     normalized.lien_github = item.projet.lien_github;
     normalized.lien_youtube = item.projet.lien_youtube;
     normalized.technologies = item.projet.technologies || [];
     normalized.role = item.projet.role;
-    normalized.resultat_obtenus = item.projet.resultat_obtenus;
+    normalized.resultat_obtenus = item.projet.resultat_obtenu;
   }
 
   return normalized;
