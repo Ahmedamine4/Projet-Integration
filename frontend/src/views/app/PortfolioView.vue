@@ -110,7 +110,11 @@ const profileHeadline = computed(() => {
 
   return `Student at ${school}`;
 });
-const profilePhoto = computed(() => profile.value?.photo || '');
+const profilePhoto = computed(() =>
+  isOwnPortfolio.value
+    ? authStore.user?.photo || profile.value?.photo || ''
+    : profile.value?.photo || ''
+);
 const localProfilePhoto = ref('');
 const profilePhotoInput = ref(null);
 const selectedProfilePhotoFile = ref(null);
@@ -788,13 +792,37 @@ function handleProfilePhotoChange(event) {
   selectedProfilePhotoFile.value = file;
 }
 
-function handleProfilePhotoCropped(file) {
+async function handleProfilePhotoCropped(file) {
   if (localProfilePhoto.value) {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
 
   localProfilePhoto.value = URL.createObjectURL(file);
   selectedProfilePhotoFile.value = null;
+
+  try {
+    const photo = await authStore.uploadProfilePhoto(file);
+
+    if (localProfilePhoto.value) {
+      URL.revokeObjectURL(localProfilePhoto.value);
+      localProfilePhoto.value = '';
+    }
+
+    if (portfolio.value?.user && isOwnPortfolio.value) {
+      portfolio.value.user.photo = photo;
+    }
+
+    showNotification('success', 'Profile photo updated successfully.');
+  } catch (error) {
+    if (localProfilePhoto.value) {
+      URL.revokeObjectURL(localProfilePhoto.value);
+      localProfilePhoto.value = '';
+    }
+
+    showNotification('error', error.response?.data?.message ||
+      error.message ||
+      'Failed to update profile photo.');
+  }
 }
 
 function closeProfilePhotoCropper() {
@@ -1354,8 +1382,8 @@ async function handleAiFiltersDetected(filters) {
 
 .profile-role-badge {
 	position: absolute;
-	top: 0.25rem;
-	right: 0.25rem;
+	top: 0.18rem;
+	right: 0.18rem;
 	z-index: 3;
 	display: inline-flex;
 	align-items: center;

@@ -172,7 +172,14 @@ async function handleLogout() {
           class="sidebar__account"
         >
           <span class="sidebar__avatar">
-            {{ user?.firstName?.[0] || 'U' }}
+            <img
+              v-if="user?.photo"
+              :src="user.photo"
+              alt=""
+            >
+            <span v-else>
+              {{ user?.firstName?.[0] || 'U' }}
+            </span>
           </span>
           <span class="sidebar__user">
             {{ user?.firstName || 'User' }}
@@ -472,6 +479,7 @@ async function handleLogout() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   width: var(--sidebar-media-size);
   height: var(--sidebar-media-size);
   border-radius: 50%;
@@ -484,6 +492,13 @@ async function handleLogout() {
       (var(--collapsed-sidebar-width) - var(--sidebar-media-size)) / 2
       - var(--sidebar-padding)
   );
+}
+
+.sidebar__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .sidebar__account--loading {

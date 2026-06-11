@@ -12,6 +12,7 @@ const USER_SELECT = {
   provider: true,
   date_de_creation: true,
   bloque: true,
+  photo: true,
 };
 
 // Normaliser email
