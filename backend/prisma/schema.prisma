@@ -59,11 +59,10 @@ model Utilisateur {
   photo            String?
   supabase_uid     String?         @unique
   provider         String?         @default("local")
+  bloque           Boolean?        @default(false)
   role             RoleUtilisateur
   email            String          @unique @db.VarChar(100)
   mot_de_passe     String?         @db.VarChar(255)
-  // Admin dashboard needs a durable block flag because the frontend no longer deletes users.
-  bloque           Boolean         @default(false)
   telephone        String?         @db.VarChar(20)
   a_propos         String?
   date_de_creation DateTime?       @default(now())
@@ -106,7 +105,7 @@ model Administrateur {
   admin_utilisateur_id String  @id
   niveau_acces         String? @db.VarChar(50)
 
-  utilisateur            Utilisateur     @relation(fields: [admin_utilisateur_id], references: [utilisateur_id])
+  utilisateur            Utilisateur     @relation(fields: [admin_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
   professionnels_valides Professionnel[] @relation("AdminValidation")
 
   @@map("administrateurs")
@@ -119,8 +118,8 @@ model Directeur {
 
   institution_id String @unique
 
-  utilisateur Utilisateur @relation(fields: [directeur_utilisateur_id], references: [utilisateur_id])
-  institution Institution @relation(fields: [institution_id], references: [institution_id])
+  utilisateur Utilisateur @relation(fields: [directeur_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  institution Institution @relation(fields: [institution_id], references: [institution_id], onDelete: Cascade)
 
   @@map("directeurs")
 }
@@ -129,9 +128,10 @@ model Etudiant {
   etudiant_utilisateur_id String                     @id
   promotion               String?                    @db.VarChar(50)
   niveau                  String?                    @db.VarChar(50)
+  etudie                  Boolean?
   github_API              String?
   repositories            Repository[]
-  utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
+  utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
   portfolio               Portfolio?
   experiences             Experience[]
   clubs                   Club[]
@@ -147,7 +147,7 @@ model Professeur {
   departement         String? @db.VarChar(50)
   specialite          String? @db.VarChar(50)
 
-  utilisateur             Utilisateur                @relation(fields: [prof_utilisateur_id], references: [utilisateur_id])
+  utilisateur             Utilisateur                @relation(fields: [prof_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
   lettres_recommandations LettresDeRecommendations[]
   institutions            Institution[]
   projets                 ValideProjet[]
@@ -164,8 +164,8 @@ model Professionnel {
   statut                       StatutValidation?
   admin_id                     String?
 
-  utilisateur Utilisateur     @relation(fields: [professionnel_utilisateur_id], references: [utilisateur_id])
-  admin       Administrateur? @relation("AdminValidation", fields: [admin_id], references: [admin_utilisateur_id])
+  utilisateur Utilisateur     @relation(fields: [professionnel_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  admin       Administrateur? @relation("AdminValidation", fields: [admin_id], references: [admin_utilisateur_id], onDelete: SetNull)
 
   @@map("professionnels")
 }
@@ -214,7 +214,7 @@ model Portfolio {
   date_generation   DateTime?
   score_credibilite Int?
   utilisateur_id    String        @unique
-  etudiant          Etudiant      @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  etudiant          Etudiant      @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
   interactions      Interaction[]
   history           PortfolioScoreHistory[]
 
@@ -227,7 +227,7 @@ model PortfolioScoreHistory {
   score         Int
   breakdown     Json?
   date          DateTime @default(now())
-  portfolio     Portfolio @relation(fields: [portfolio_id], references: [portfolio_id])
+  portfolio     Portfolio @relation(fields: [portfolio_id], references: [portfolio_id], onDelete: Cascade)
 
   @@map("portfolio_score_history")
 }
@@ -242,8 +242,8 @@ model Notification {
   utilisateur_cible_id  String
   utilisateur_source_id String?
 
-  utilisateur_cible Utilisateur @relation("NotificationCible", fields: [utilisateur_cible_id], references: [utilisateur_id])
-  utilisateur_source Utilisateur? @relation("NotificationSource", fields: [utilisateur_source_id], references: [utilisateur_id])
+  utilisateur_cible Utilisateur @relation("NotificationCible", fields: [utilisateur_cible_id], references: [utilisateur_id], onDelete: Cascade)
+  utilisateur_source Utilisateur? @relation("NotificationSource", fields: [utilisateur_source_id], references: [utilisateur_id], onDelete: SetNull)
 }
 
 model Connexion {
@@ -264,7 +264,7 @@ model Connexion {
   last_active     DateTime    @default(now())
   expires_at      DateTime
 
-  utilisateur     Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  utilisateur     Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
 
   @@map("connexions")
 }
@@ -303,7 +303,7 @@ model Experience {
   technologies_locked  Boolean    @default(false)
   utilisateur_id  String
 
-  etudiant      Etudiant       @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  etudiant      Etudiant       @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
   certification Certification?
   projet        Projet?
   activite      Activite?
@@ -322,7 +322,7 @@ model Certification {
   code          String?
   institution_id String?
   institution    Institution? @relation(fields: [institution_id], references: [institution_id])
-  experience    Experience           @relation(fields: [experience_id], references: [experience_id])
+  experience    Experience           @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
 
   @@map("certifications")
 }
@@ -334,7 +334,7 @@ model Projet {
   lien_github          String?
   lien_youtube         String?
   resultat_obtenu      String?
-  experience           Experience  @relation(fields: [experience_id], references: [experience_id])
+  experience           Experience  @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
   repository           Repository? @relation(fields: [repository_id], references: [repository_id], onDelete: SetNull)
   validation           ValideProjet?
 
@@ -344,7 +344,7 @@ model Activite {
   experience_id String          @id
   type          String?         @db.VarChar(50)
   lieu          String?         @db.VarChar(100)
-  experience    Experience      @relation(fields: [experience_id], references: [experience_id])
+  experience    Experience      @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
   validation    ValideActivite?
   clubs         Club[]
 
@@ -357,7 +357,7 @@ model Stage {
   duree              String?      @db.VarChar(50)
   missions_realisees String?
   rapport_stage      String?
-  experience         Experience   @relation(fields: [experience_id], references: [experience_id])
+  experience         Experience   @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
   validation         ValideStage?
 
   @@map("stages")
@@ -373,9 +373,9 @@ model Interaction {
   experience_id    String?
   utilisateur_id   String
 
-  portfolio   Portfolio?  @relation(fields: [portfolio_id], references: [portfolio_id])
-  experience  Experience? @relation(fields: [experience_id], references: [experience_id])
-  utilisateur Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  portfolio   Portfolio?  @relation(fields: [portfolio_id], references: [portfolio_id], onDelete: Cascade)
+  experience  Experience? @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  utilisateur Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
 
   @@map("interactions")
 }
@@ -392,8 +392,8 @@ model LettresDeRecommendations {
   date_lettre         DateTime?            @default(now())
   commentaire         String?
 
-  etudiant   Etudiant   @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
-  professeur Professeur @relation(fields: [prof_utilisateur_id], references: [prof_utilisateur_id])
+  etudiant   Etudiant   @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
+  professeur Professeur @relation(fields: [prof_utilisateur_id], references: [prof_utilisateur_id], onDelete: Cascade)
 
   @@id([utilisateur_id, prof_utilisateur_id])
   @@map("lettres_de_recommendations")
@@ -404,8 +404,8 @@ model CompetenceDeveloppee {
   competence_id String
   niveau        String?
 
-  experience    Experience @relation(fields: [experience_id], references: [experience_id])
-  competence    Competence @relation(fields: [competence_id], references: [competence_id])
+  experience    Experience @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  competence    Competence @relation(fields: [competence_id], references: [competence_id], onDelete: Cascade)
 
   @@id([experience_id, competence_id])
   @@map("Competences_Developpees")
@@ -417,8 +417,8 @@ model ValideActivite {
   statut         StatutValidation?
   date_d_action  DateTime?
   commentaire    String?
-  activite       Activite          @relation(fields: [experience_id], references: [experience_id])
-  institution    Institution       @relation(fields: [institution_id], references: [institution_id])
+  activite       Activite          @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  institution    Institution       @relation(fields: [institution_id], references: [institution_id], onDelete: Cascade)
 
   @@id([experience_id, institution_id])
   @@map("valide_activite")
@@ -431,8 +431,8 @@ model ValideProjet {
   date_d_action  DateTime?
   commentaire    String?
 
-  projet     Projet     @relation(fields: [experience_id], references: [experience_id])
-  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
+  projet     Projet     @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id], onDelete: Cascade)
 
   @@id([experience_id, utilisateur_id])
   @@map("valide_projet")
@@ -445,25 +445,27 @@ model ValideStage {
   date_d_action  DateTime?
   commentaire    String?
 
-  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
-  stage      Stage      @relation(fields: [experience_id], references: [experience_id])
+  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id], onDelete: Cascade)
+  stage      Stage      @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
 
   @@id([utilisateur_id, experience_id])
   @@map("valide_stage")
 }
 
 model ValideEtudiant {
-  utilisateur_id String
-  institution_id String
-  statut         StatutValidation?
-  date           DateTime?
-  description    String?
-  niveau         String?
+  valide_etudiant_id String @id @default(cuid())
+  utilisateur_id     String
+  institution_id     String
+  statut             StatutValidation?
+  date_debut         DateTime?
+  date_fin           DateTime?
+  description        String?
+  niveau             String?
 
-  etudiant    Etudiant    @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
-  institution Institution @relation(fields: [institution_id], references: [institution_id])
+  etudiant    Etudiant    @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
+  institution Institution @relation(fields: [institution_id], references: [institution_id], onDelete: Cascade)
 
-  @@id([utilisateur_id, institution_id])
+  @@index([utilisateur_id, institution_id])
   @@map("valide_etudiant")
 }
 
@@ -482,7 +484,7 @@ model Repository {
   last_synced         DateTime @default(now())
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
-  etudiant            Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id])
+  etudiant            Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
   projets             Projet[]
 
   @@map("repositories")

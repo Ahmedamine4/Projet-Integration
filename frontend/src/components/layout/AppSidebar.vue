@@ -46,22 +46,19 @@ const collapsed = ref(true);
 
 const sidebarItems = computed(() => {
   const items = [
-    {
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      path: authStore.user?.role === 'directeur' ? '/director-dashboard' : '/dashboard',
-    },
+    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Getting started', icon: Compass, path: '/getting-started' },
     { label: 'Profile', icon: UserRound },
     { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
     { label: 'Settings', icon: Settings, path: '/settings' },
   ];
+  
 
-  // Show Administration link ONLY for admins
-  if (authStore.user?.role === 'administrateur') {
-    items.push({ label: 'Administration', icon: Shield, path: '/admin' });
+  if (authStore.user?.role === 'professeur') {
+    items[0] = { label: 'Dashboard', icon: LayoutDashboard, path: '/prof-dashboard' };
+  }else if(authStore.user?.role === 'directeur') {
+    items[0] = { label: 'Dashboard', icon: LayoutDashboard, path: '/director-dashboard' };
   }
-
   return items;
 });
 

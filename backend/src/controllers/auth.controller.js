@@ -9,13 +9,14 @@ import {
   getAllPublicUsers,
   findUserByEmail
 } from '../services/auth.service.js';
+import { createPortfolioIfNotExists } from '../services/portfolio.service.js';
 
 // Inscription locale
 export async function register(req, res) {
   
   try {
     const user = await registerLocalUser(req.body);
-    
+    await createPortfolioIfNotExists(user.utilisateur_id);
     const token = generateLocalToken(user); 
     const refreshToken = generateRefreshToken(user);
 
@@ -128,12 +129,9 @@ export async function googleAuth(req, res) {
       //hna le nom prenom sont dans user_metadata
 
     });
-    if (user.bloque) {
-      return res.status(403).json({
-        success: false,
-        message: 'Votre compte est bloqué. Veuillez contacter un administrateur',
-      });
-    }
+
+    await createPortfolioIfNotExists(user.utilisateur_id);
+
     const localToken = generateLocalToken(user);
     const refreshToken = generateRefreshToken(user);
 
@@ -219,6 +217,12 @@ export async function refreshAccessToken(req, res) {
     return res.status(500).json({ success: false, error: error.message || 'Erreur serveur' });
   }
 }
+    if (user.bloque) {
+      return res.status(403).json({
+        success: false,
+        message: 'Votre compte est bloqué. Veuillez contacter un administrateur',
+      });
+    }
 
 //profil utilisateur connecté
 export async function getProfile(req, res) {

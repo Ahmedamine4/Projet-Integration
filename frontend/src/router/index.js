@@ -5,15 +5,15 @@ import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
 import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
-import TestRecommandationRequestView from '@/views/TestRecommandationRequestView.vue';
 import PortfolioView from '@/views/app/PortfolioView.vue';
 
 
 const routes = [
-  {
-  path: '/test-recommendation-request',
-  name: 'test-recommendation-request',
-  component: TestRecommandationRequestView,
+{
+  path: '/feed',
+  name: 'feed',
+  component: () => import('@/views/app/FeedPage.vue'),
+  meta: { requiresAuth: true },
 },
   {
     path: '/',
@@ -44,6 +44,7 @@ const routes = [
     component: () => import('@/views/app/DashboardView.vue'),
     meta: {
       requiresAuth: true,
+      role: 'etudiant',
       layout: 'app',
     },
   },
@@ -103,13 +104,13 @@ const routes = [
     },
   },
   {
-    path: '/admin',
-    name: 'admin',
-    component: () => import('@/views/app/AdminDashboardView.vue'),
+    path: '/prof-dashboard',
+    name: 'prof-dashboard',
+    component: () => import('@/views/app/dashboard/ProfDashboardView.vue'),
     meta: {
       requiresAuth: true,
+      role: 'professeur',
       layout: 'app',
-      roles: ['administrateur'],
     },
   },
   {
@@ -140,12 +141,12 @@ router.beforeEach((to) => {
     };
   }
 
-  if (
-    authStore.profileChecked
-    && to.meta.roles
-    && !to.meta.roles.includes(authStore.user?.role)
-  ) {
-    return { name: 'home' };
+  if (to.meta.role && authStore.user?.role) {
+    if (authStore.user.role !== to.meta.role) {
+      return {
+        path: authStore.user.role === 'professeur' ? '/prof-dashboard' : '/dashboard',
+      };
+    }
   }
 
   return true;

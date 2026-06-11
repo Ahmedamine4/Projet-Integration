@@ -12,6 +12,8 @@ export const creerRecommandation = async (professionnelId, portfolioId, texte) =
   const auteur = await prisma.utilisateur.findUnique({
     where: { utilisateur_id: professionnelId },
   });
+
+console.log(`[DEBUG] Auteur trouvé: ${auteur ? auteur.email : 'Aucun'} avec rôle ${auteur ? auteur.role : 'N/A'}`);
   if (!auteur) throw new Error('Utilisateur non trouvé');
   if (auteur.role !== 'professionnel' && auteur.role !== 'professeur') {
     throw new Error('Accès refusé');
@@ -77,8 +79,10 @@ export const getAllRecommandations = async (etudiantId) => {
     },
     include: {
       utilisateur: {
-        select: { nom: true, prenom: true, email: true },
-        include: {
+        select: {
+          nom: true,
+          prenom: true,
+          email: true,
           professionnel: { select: { entreprise: true, poste: true } },
         },
       },
@@ -103,8 +107,10 @@ export const getRecommandationsVisibles = async (etudiantId) => {
     },
     include: {
       utilisateur: {
-        select: { nom: true, prenom: true, email: true },
-        include: {
+        select: {
+          nom: true,
+          prenom: true,
+          email: true,
           professionnel: { select: { entreprise: true, poste: true } },
         },
       },

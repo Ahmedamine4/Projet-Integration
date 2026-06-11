@@ -42,9 +42,28 @@ export const useUserStore = defineStore('user', () => {
     return response.data.data;
   }
 
+  async function requestProfessionnelStatus(data) {
+  return await api.post('/users/request-professionnel', data);
+}
+
+async function deleteAccount(password) {
+    // Axios requires the payload to be inside a 'data' object for DELETE requests
+    await api.delete('/users/delete-account', {
+      data: { password }
+    });
+
+    // Clear local auth state and force them back to login
+    const authStore = useAuthStore();
+    authStore.token = null;
+    authStore.user = null;
+    localStorage.removeItem('token');
+  }
+
   return {
     updateProfile,
     changePassword,
     fetchSessions,
+    requestProfessionnelStatus,
+    deleteAccount,
   };
 });

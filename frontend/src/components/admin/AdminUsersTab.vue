@@ -8,6 +8,7 @@ import ToggleSwitch from '@/components/common/forms/ToggleSwitch.vue';
 import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
 import BaseSpinner from '@/components/common/feedback/BaseSpinner.vue';
 import BaseError from '@/components/common/feedback/BaseError.vue';
+import ConfirmDialog from '@/components/common/feedback/ConfirmDialog.vue';
 import PaginationComponent from '@/components/dashboard/PaginationComponent.vue';
 import { Users } from 'lucide-vue-next';
 
@@ -19,6 +20,14 @@ const currentPage = ref(1);
 const itemsPerPage = 10;
 const actionLoadingId = ref(null);
 const notification = ref({ message: '', type: 'success' });
+const confirmDialog = ref({
+  open: false,
+  variant: 'danger',
+  title: '',
+  message: '',
+  confirmText: '',
+  user: null,
+});
 
 onMounted(() => adminStore.fetchUtilisateurs());
 
@@ -52,30 +61,48 @@ function showNotif(message, type = 'success') {
   setTimeout(() => { notification.value.message = ''; }, 3500);
 }
 
-async function toggleBlocked(user) {
+function toggleBlocked(user) {
   const willUnblock = Boolean(user.bloque);
   const label = `${user.prenom ?? ''} ${user.nom ?? ''}`.trim() || user.email;
-  const confirmed = window.confirm(
-    willUnblock
-      ? `Débloquer le compte de ${label} ?`
-      : `Bloquer le compte de ${label} ? L'utilisateur ne pourra plus se connecter.`,
-  );
 
-  if (!confirmed) return;
+  confirmDialog.value = {
+    open: true,
+    variant: willUnblock ? 'info' : 'danger',
+    title: willUnblock ? 'Unblock user?' : 'Block user?',
+    message: willUnblock
+      ? `${label} will regain access to the platform.`
+      : `${label} will be suspended and unable to log in.`,
+    confirmText: willUnblock ? 'Unblock' : 'Block',
+    user,
+  };
+}
 
+function closeBlockDialog() {
+  confirmDialog.value = {
+    ...confirmDialog.value,
+    open: false,
+    user: null,
+  };
+}
+
+async function confirmBlockToggle() {
+  const user = confirmDialog.value.user;
+  if (!user) return;
+
+  const willUnblock = Boolean(user.bloque);
   actionLoadingId.value = user.utilisateur_id;
   try {
     const res = willUnblock
       ? await adminStore.debloquerUtilisateur(user.utilisateur_id)
       : await adminStore.bloquerUtilisateur(user.utilisateur_id);
-    showNotif(res?.message ?? (willUnblock ? 'Utilisateur débloqué.' : 'Utilisateur bloqué.'), 'success');
+    showNotif(res?.message ?? (willUnblock ? 'Utilisateur debloque.' : 'Utilisateur bloque.'), 'success');
+    closeBlockDialog();
   } catch (error) {
     showNotif(error.message || "Impossible d'appliquer l'action.", 'error');
   } finally {
     actionLoadingId.value = null;
   }
 }
-
 function formatDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('en-US', {
@@ -93,6 +120,19 @@ function formatDate(d) {
         :message="notification.message"
         :type="notification.type"
         @close="notification.message = ''"
+      />
+    </Teleport>
+
+    <Teleport to="body">
+      <ConfirmDialog
+        :open="confirmDialog.open"
+        :variant="confirmDialog.variant"
+        :title="confirmDialog.title"
+        :message="confirmDialog.message"
+        :confirm-text="confirmDialog.confirmText"
+        :loading="actionLoadingId !== null"
+        @confirm="confirmBlockToggle"
+        @cancel="closeBlockDialog"
       />
     </Teleport>
 

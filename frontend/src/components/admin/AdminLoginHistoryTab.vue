@@ -149,19 +149,10 @@ const hasActiveFilter = computed(
           :placeholder="ALL_ROLES"
           label=""
           :visible-options="6"
+          readonly
         />
       </div>
 
-      <!-- Action filter: LOGIN / LOGOUT (FiltreDashboard) -->
-      <div class="filters-bar__dropdown filters-bar__dropdown--sm">
-        <FilterDropdown
-          v-model="filterAction"
-          :options="actionOptions"
-          :placeholder="ALL_ACTIONS"
-          label=""
-          :visible-options="3"
-        />
-      </div>
 
       <!-- Reset -->
       <button v-if="hasActiveFilter" class="btn-reset" @click="clearFilters">

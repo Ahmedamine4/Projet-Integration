@@ -3,15 +3,17 @@ import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompeten
 import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
+const parseBoolean = (value) => value === true || value === 'true' || value === '1' || value === 1;
+
 export const creeActivite = async (etudiantId, data, file) => {
   const activiteExistante = await prisma.experience.findFirst({
     where: { utilisateur_id: etudiantId, type: 'activite', titre: data.titre },
   });
   if (activiteExistante) throw new Error('Activité déjà existante');
 
-  const competences = JSON.parse(data.competences || '[]');
+  const competencesInput = JSON.parse(data.competences || '[]');
   const isAcademique = data.is_academique === 'true';
-  const visibilite = data.visibilite !== undefined ? data.visibilite : false;
+  const visibilite = data.visibilite !== undefined ? parseBoolean(data.visibilite) : false;
 
   // Upload photo avant la transaction
   const photoUrl = file ? await uploadPhoto(file, 'activites-photos') : null;
@@ -60,7 +62,7 @@ export const creeActivite = async (etudiantId, data, file) => {
     });
 
     // Créer les compétences via CompetenceDeveloppee
-    for (const { nom, type } of competences) {
+    for (const { nom, type } of competencesInput) {
       await lierCompetencesExperience(tx, experience.experience_id, etudiantId, [nom], type);
     }
 
@@ -201,7 +203,7 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
       : experience.type_specifique === 'academique';
 
     const visibilite = data.visibilite !== undefined
-      ? data.visibilite
+      ? parseBoolean(data.visibilite)
       : experience.visibilite;
 
     await tx.experience.update({
@@ -229,9 +231,9 @@ export const editActivite = async (etudiantId, experienceId, data, file) => {
 
     // Mise à jour des compétences
     if (data.competences !== undefined) {
-      const competences = JSON.parse(data.competences || '[]');
+      const competencesInput = JSON.parse(data.competences || '[]');
       await supprimerCompetencesDeveloppees(tx, experienceId, etudiantId);
-      for (const { nom, type } of competences) {
+      for (const { nom, type } of competencesInput) {
         await lierCompetencesExperience(tx, experienceId, etudiantId, [nom], type);
       }
     }
@@ -333,7 +335,7 @@ export const updateVisibiliteActiviteService = async (etudiantId, experienceId, 
 
   return prisma.experience.update({
     where: { experience_id: experienceId },
-    data: { visibilite },
+    data: { visibilite: parseBoolean(visibilite) },
     select: { experience_id: true, visibilite: true },
   });
 };

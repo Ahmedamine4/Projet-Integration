@@ -1,7 +1,7 @@
 import prisma from '../config/prisma.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { envoyerIdentifiants, isMailConfigured } from '../utils/sendMail.js';
+import { creerNotification } from './notification.service.js';
 
 const ADMIN_USER_SELECT = {
   utilisateur_id: true,
@@ -138,20 +138,18 @@ export async function creerInstitutionAvecDirecteur({ nom, email_directeur }) {
     return { institution, directeur };
   });
 
-  let emailEnvoye = false;
-  if (isMailConfigured()) {
-    try {
-      await envoyerIdentifiants({
-        email: directeurEmail,
-        prenom: result.directeur.prenom,
-        motDePasse,
-        institution: institutionName,
-        role: 'directeur',
-      });
-      emailEnvoye = true;
-    } catch {
-      emailEnvoye = false;
-    }
+  await creerNotification(
+      directeur.utilisateur_id,
+      `VOTRE MDPS EST ${hash}`,
+      'Test',
+    );
+
+  
+
+  if (!emailEnvoye) {
+    throw new Error(
+      "Institution creee, mais l'email du directeur n'a pas ete envoye. Verifiez PLATFORM_EMAIL, PLATFORM_EMAIL_PASSWORD et utilisez un mot de passe d'application Gmail.",
+    );
   }
 
   return {
