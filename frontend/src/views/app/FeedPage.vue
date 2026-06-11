@@ -441,6 +441,7 @@ function handleTopCarouselSelect(item) {
   }
 
   if (item.carouselType === 'student-profile') {
+    openStudentPortfolio(item);
     return;
   }
 
