@@ -17,10 +17,35 @@ const isLoading = ref(false);
 const error = ref(null);
 
 const contributions = computed(() => githubStore.contributions);
+const needsGithubConnection = computed(() => {
+  const message = String(error.value || '').toLowerCase();
+  return message.includes('token github') || message.includes('connect');
+});
 
 const contributionWeeks = computed(() => {
-  if (!contributions.value?.contributionCalendar?.weeks) return [];
-  return contributions.value.contributionCalendar.weeks;
+  const weeks = contributions.value?.contributionsCollection?.contributionCalendar?.weeks;
+  return Array.isArray(weeks) ? weeks : [];
+});
+
+const totalContributions = computed(() =>
+  contributions.value?.contributionsCollection?.contributionCalendar?.totalContributions ?? 0
+);
+
+const monthLabels = computed(() => {
+  let previousMonth = '';
+
+  return contributionWeeks.value.map((week) => {
+    const firstDay = week.contributionDays?.[0];
+    if (!firstDay?.date) return '';
+
+    const month = new Date(firstDay.date).toLocaleDateString('en-US', {
+      month: 'short',
+    });
+
+    if (month === previousMonth) return '';
+    previousMonth = month;
+    return month;
+  });
 });
 
 const maxContributions = computed(() => {
@@ -58,13 +83,20 @@ function getOpacity(day) {
   return Math.max(0.3, day.contributionCount / maxContributions.value);
 }
 
+function getGridRow(day) {
+  return Number(day.weekday ?? 0) + 1;
+}
+
 async function loadContributions() {
   try {
     isLoading.value = true;
     error.value = null;
-    await githubStore.fetchContributions();
+    await githubStore.fetchContributions(props.userId);
   } catch (err) {
-    error.value = err.message || 'Failed to load contributions';
+    error.value = err.response?.data?.message ||
+      githubStore.error ||
+      err.message ||
+      'Failed to load contributions';
   } finally {
     isLoading.value = false;
   }
@@ -75,10 +107,27 @@ async function syncAndLoad() {
     isLoading.value = true;
     error.value = null;
     await githubStore.syncRepositories();
-    await githubStore.fetchContributions();
+    await githubStore.fetchContributions(props.userId);
   } catch (err) {
-    error.value = err.message || 'Failed to sync with GitHub';
+    error.value = err.response?.data?.message ||
+      githubStore.error ||
+      err.message ||
+      'Failed to sync with GitHub';
   } finally {
+    isLoading.value = false;
+  }
+}
+
+async function connectGithub() {
+  try {
+    isLoading.value = true;
+    error.value = null;
+    await githubStore.connectGithub();
+  } catch (err) {
+    error.value = err.response?.data?.message ||
+      githubStore.error ||
+      err.message ||
+      'Failed to connect GitHub';
     isLoading.value = false;
   }
 }
@@ -109,11 +158,11 @@ watch(
         <button
           type="button"
           class="action-button secondary"
-          @click="syncAndLoad"
+          @click="needsGithubConnection ? connectGithub() : syncAndLoad()"
           :disabled="isLoading"
         >
           <RefreshCw :size="16" />
-          <span>Sync</span>
+          <span>{{ needsGithubConnection ? 'Connect GitHub' : 'Sync' }}</span>
         </button>
       </div>
     </div>
@@ -124,11 +173,11 @@ watch(
         <button
           type="button"
           class="action-button secondary"
-          @click="syncAndLoad"
+          @click="connectGithub"
           :disabled="isLoading"
         >
           <RefreshCw :size="16" />
-          <span>Sync</span>
+          <span>Connect GitHub</span>
         </button>
       </div>
     </div>
@@ -138,7 +187,7 @@ watch(
         <div>
           <span class="contributions-label">{{ contributions?.login || 'Contributions' }}</span>
           <span class="contributions-stats">
-            {{ contributions?.contributionsCollection?.totalCommitContributions }} commits
+            {{ totalContributions }} contributions in the last year
           </span>
         </div>
         <button
@@ -152,17 +201,64 @@ watch(
         </button>
       </div>
 
-      <div class="calendar">
-        <div
-          v-for="day in allDays"
-          :key="day.date"
-          class="day"
-          :title="getTooltip(day)"
-          :style="{
-            backgroundColor: day.color,
-            opacity: getOpacity(day)
-          }"
-        />
+      <div class="calendar-shell">
+        <div class="calendar-board">
+          <div class="month-labels" aria-hidden="true">
+            <span class="weekday-spacer" />
+            <span
+              v-for="(label, index) in monthLabels"
+              :key="`month-${index}`"
+            >
+              {{ label }}
+            </span>
+          </div>
+
+          <div class="calendar-layout">
+            <div class="weekday-labels" aria-hidden="true">
+              <span />
+              <span>Mon</span>
+              <span />
+              <span>Wed</span>
+              <span />
+              <span>Fri</span>
+              <span />
+            </div>
+
+            <div
+              class="calendar"
+              role="img"
+              :aria-label="`${totalContributions} GitHub contributions in the last year`"
+            >
+              <div
+                v-for="(week, weekIndex) in contributionWeeks"
+                :key="`week-${weekIndex}`"
+                class="calendar-week"
+              >
+                <div
+                  v-for="day in week.contributionDays"
+                  :key="day.date"
+                  class="day"
+                  :title="getTooltip(day)"
+                  :style="{
+                    gridRow: getGridRow(day),
+                    backgroundColor: day.color,
+                    opacity: getOpacity(day)
+                  }"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="calendar-legend" aria-hidden="true">
+            <span>Less</span>
+            <i class="legend-box legend-box--empty" />
+            <i class="legend-box legend-box--low" />
+            <i class="legend-box legend-box--mid" />
+            <i class="legend-box legend-box--high" />
+            <i class="legend-box legend-box--max" />
+            <span>More</span>
+          </div>
+        </div>
       </div>
 
       <div class="contributions-stats-list">
@@ -191,7 +287,9 @@ watch(
 .contributions-grid {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.4rem;
+  width: 100%;
+  margin-bottom: var(--space-xl);
 }
 
 .contributions-header {
@@ -210,9 +308,9 @@ watch(
 }
 
 .contributions-label {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-primary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
 }
 
 .contributions-stats {
@@ -220,23 +318,117 @@ watch(
   color: rgba(var(--color-primary-rgb), 0.7);
 }
 
+.calendar-shell {
+  overflow-x: auto;
+  padding: 0.75rem 0 0.15rem;
+}
+
+.calendar-board {
+  width: 100%;
+  min-width: 58rem;
+  box-sizing: border-box;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.35rem 1rem;
+  background: rgba(var(--color-background-rgb), 0.42);
+}
+
+.month-labels {
+  display: grid;
+  grid-template-columns: 2.2rem repeat(var(--weeks-count, 53), minmax(15px, 1fr));
+  gap: 4px;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  color: rgba(var(--color-primary-rgb), 0.54);
+  font-size: var(--font-size-xxs);
+}
+
+.month-labels span:not(.weekday-spacer) {
+  min-width: 0;
+}
+
+.calendar-layout {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+.weekday-labels {
+  display: grid;
+  grid-template-rows: repeat(7, 15px);
+  gap: 4px;
+  color: rgba(var(--color-primary-rgb), 0.54);
+  font-size: var(--font-size-xxs);
+  line-height: 15px;
+}
+
 .calendar {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12px, 1fr));
-  gap: 3px;
-  padding: 1rem 0;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15px, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+.calendar-week {
+  display: grid;
+  grid-template-rows: repeat(7, minmax(15px, auto));
+  gap: 4px;
 }
 
 .day {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
   cursor: pointer;
   transition: transform 150ms ease;
+  box-shadow: inset 0 0 0 1px rgba(var(--color-primary-rgb), 0.04);
 }
 
 .day:hover {
-  transform: scale(1.2);
+  transform: scale(1.18);
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--color-primary-rgb), 0.12),
+    0 2px 8px rgba(var(--color-primary-rgb), 0.16);
+}
+
+.calendar-legend {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.9rem;
+  color: rgba(var(--color-primary-rgb), 0.58);
+  font-size: var(--font-size-xxs);
+}
+
+.legend-box {
+  display: block;
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(var(--color-primary-rgb), 0.04);
+}
+
+.legend-box--empty {
+  background: #ebedf0;
+}
+
+.legend-box--low {
+  background: #9be9a8;
+}
+
+.legend-box--mid {
+  background: #40c463;
+}
+
+.legend-box--high {
+  background: #30a14e;
+}
+
+.legend-box--max {
+  background: #216e39;
 }
 
 .contributions-loading,
@@ -331,15 +523,17 @@ watch(
 .contributions-stats-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  gap: 0.75rem;
 }
 
 .stat {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 0.9rem;
+  background: rgba(var(--color-background-rgb), 0.34);
 }
 
 .stat-label {
@@ -357,13 +551,43 @@ watch(
 }
 
 @media (max-width: 640px) {
+  .calendar-board {
+    min-width: 48rem;
+    padding: 1rem;
+  }
+
+  .month-labels {
+    grid-template-columns: 1.75rem repeat(var(--weeks-count, 53), minmax(12px, 1fr));
+    gap: 3px;
+  }
+
+  .calendar-layout {
+    grid-template-columns: 1.75rem max-content;
+    gap: 3px;
+  }
+
+  .weekday-labels,
+  .calendar-week {
+    grid-template-rows: repeat(7, minmax(12px, auto));
+    gap: 3px;
+  }
+
+  .weekday-labels {
+    line-height: 12px;
+  }
+
   .calendar {
-    grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+    grid-auto-columns: minmax(12px, 1fr);
+    gap: 3px;
   }
 
   .day {
-    width: 10px;
-    height: 10px;
+    width: 100%;
+  }
+
+  .legend-box {
+    width: 12px;
+    height: 12px;
   }
 
   .contributions-stats-list {

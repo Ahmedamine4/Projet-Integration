@@ -246,6 +246,7 @@ export async function getPortfolioEtudiant(etudiantId, isOwner, filters = {}) {
           x: true,
           linkedin: true,
           photo: true,
+          role: true,
           _count: {
             select: { followers: true },
           },
@@ -348,7 +349,7 @@ export async function getExperienceById(experienceId) {
         },
       },
       certification: {
-        include: { validation: { include: { institution: true } } },
+        include: { institution: true },
       },
     },
   });

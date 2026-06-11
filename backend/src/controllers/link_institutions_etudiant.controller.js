@@ -32,7 +32,7 @@ export const LinkInstitutionsToEtudiantController = async (req, res) => {
 export const updateValidEtudiantDescriptionController = async (req, res) => {
   try {
     const etudiantId = req.user?.utilisateur_id;
-    const { description } = req.body;
+    const { description, institutionId } = req.body;
 
     if (!etudiantId || typeof description !== 'string') {
       return res.status(400).json({
@@ -40,7 +40,11 @@ export const updateValidEtudiantDescriptionController = async (req, res) => {
       });
     }
 
-    const updated = await updateValidEtudiantDescriptionService(etudiantId, description);
+    const updated = await updateValidEtudiantDescriptionService(
+      etudiantId,
+      institutionId,
+      description.trim()
+    );
 
     return res.status(200).json({
       message: 'Description enregistrée avec succès.',

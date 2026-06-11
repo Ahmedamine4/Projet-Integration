@@ -53,6 +53,23 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     portfolio.value.certifications = [certification, ...portfolio.value.certifications];
   }
 
+  async function updateEducationDescription(institutionId, description) {
+    const response = await api.patch('/select-institutions/description', {
+      institutionId,
+      description,
+    });
+
+    if (portfolio.value?.education) {
+      portfolio.value.education = portfolio.value.education.map((item) =>
+        item.id === institutionId
+          ? { ...item, description }
+          : item
+      );
+    }
+
+    return response.data?.data;
+  }
+
   return {
     portfolio,
     loading,
@@ -61,5 +78,6 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     prependProject,
     prependActivity,
     prependCertification,
+    updateEducationDescription,
   };
 });
