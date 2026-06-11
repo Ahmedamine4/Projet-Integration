@@ -59,6 +59,7 @@ model Utilisateur {
   photo            String?
   supabase_uid     String?         @unique
   provider         String?         @default("local")
+  bloque           Boolean?        @default(false)
   role             RoleUtilisateur
   email            String          @unique @db.VarChar(100)
   mot_de_passe     String?         @db.VarChar(255)

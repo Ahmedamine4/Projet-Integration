@@ -526,9 +526,7 @@ const submitExperience = () => {
     errors.description = `Description must be ${MAX_TEXT_LEN} characters or fewer`;
 
   if (config.showGithub) {
-    if (!trimmedGithubLink)
-      errors.githubLink = 'GitHub link is required';
-    else if (!isValidGithubLink(trimmedGithubLink))
+    if (trimmedGithubLink && !isValidGithubLink(trimmedGithubLink))
       errors.githubLink = 'Enter a valid GitHub project URL';
   }
 

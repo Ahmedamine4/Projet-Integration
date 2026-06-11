@@ -7,7 +7,7 @@ const props = defineProps({
   item: Object,
   itemType: {
     type: String,
-    validator: (value) => ['', 'stage', 'projet'].includes(value),
+    validator: (value) => ['', 'stage', 'projet', 'recommandation'].includes(value),
   },
 });
 const emit = defineEmits(['close', 'submit-decision']);
@@ -15,6 +15,13 @@ const emit = defineEmits(['close', 'submit-decision']);
 const mode = ref('view');
 const detailComment = ref('');
 const detailCommentError = ref('');
+
+const selectedFile = ref(null);
+const fileInput = ref(null);
+
+function onFileChange(event) {
+  selectedFile.value = event.target.files[0];
+}
 
 watch(
   () => props.open,
@@ -31,9 +38,7 @@ const status = computed(() => props.item?.status || props.item?.statut);
 const isActionable = computed(() => status.value === 'pending');
 const techTags = computed(() => {
   const technologies = props.item?.technologies || [];
-  const domains = props.itemType === 'stage'
-    ? props.item?.domaines || []
-    : props.item?.domains || [];
+  const domains = props.item?.domaines || [];
   return [...(technologies || []), ...(domains || [])].filter(Boolean);
 });
 
@@ -85,6 +90,10 @@ function setMode(newMode) {
 function submitDecision(actionType) {
   if (!props.item) return;
 
+  if (props.itemType === 'recommandation' && actionType === 'validate' && mode.value !== 'validate') {
+    setMode('validate');
+    return;
+  }
   const comment = detailComment.value.trim();
   if ((actionType === 'refuse' || actionType === 'comment') && !comment) {
     detailCommentError.value = 'Ce champ est requis.';
@@ -100,6 +109,9 @@ function submitDecision(actionType) {
     payload.commentaire = comment;
   } else if (actionType === 'comment') {
     payload.commentaire = comment;
+  }
+  if (actionType === 'validate' && selectedFile.value) {
+    payload.fichier = selectedFile.value;
   }
 
   emit('submit-decision', {
@@ -124,8 +136,8 @@ function submitDecision(actionType) {
                 {{ item.student?.firstName }} {{ item.student?.lastName }}
               </p>
             </div>
-            <span class="badge" :class="statusMap[status.value]?.cls">
-              {{ statusMap[status.value]?.label }}
+            <span class="badge" :class="statusMap[status]?.cls">
+              {{ statusMap[status]?.label }}
             </span>
           </div>
           <button class="close-button" type="button" @click="handleClose">
@@ -246,6 +258,7 @@ function submitDecision(actionType) {
           </div>
 
           <Transition name="field-reveal">
+            <div>
             <div v-if="mode === 'comment' || mode === 'refuse'" class="detail-action-form">
               <label class="modal-label">
                 {{ mode === 'refuse' ? 'Motif du refus *' : 'Votre message *' }}
@@ -261,6 +274,11 @@ function submitDecision(actionType) {
                 @input="detailCommentError = ''"
               />
               <p v-if="detailCommentError" class="field-error">{{ detailCommentError }}</p>
+            </div>
+            <div v-if="itemType === 'recommandation' && mode === 'validate'" class="detail-action-form">
+              <label class="modal-label">Upload de la lettre (PDF) *</label>
+              <input type="file" ref="fileInput" @change="onFileChange" accept="application/pdf" />
+            </div>
             </div>
           </Transition>
         </div>
@@ -281,16 +299,16 @@ function submitDecision(actionType) {
           </template>
 
           <template v-else>
-            <button class="act-btn act-btn--ghost" @click="setMode('view')" type="button">Annuler</button>
-            <button
-              class="act-btn"
-              :class="mode === 'refuse' ? 'act-btn--refuse-confirm' : 'act-btn--comment-confirm'"
-              @click="submitDecision(mode)"
-              type="button"
-            >
-              {{ mode === 'refuse' ? 'Confirmer le refus' : 'Envoyer le commentaire' }}
-            </button>
-          </template>
+  <button class="act-btn act-btn--ghost" @click="setMode('view')" type="button">Annuler</button>
+  <button
+    class="act-btn"
+    :class="mode === 'refuse' ? 'act-btn--refuse-confirm' : 'act-btn--comment-confirm'"
+    @click="submitDecision(mode)"
+    type="button"
+  >
+    {{ mode === 'refuse' ? 'Confirmer le refus' : (mode === 'validate' ? 'Confirmer la validation' : 'Envoyer le commentaire') }}
+  </button>
+</template>
         </div>
       </div>
     </div>

@@ -407,3 +407,28 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
  
   throw new Error('Statut invalide');
 };
+
+export const getPendingStats = async (profId) => {
+  try {
+    const [stagesCount, projetsCount, lettresCount] = await Promise.all([
+      prisma.valideStage.count({
+        where: { utilisateur_id: profId, statut: 'en_attente' },
+      }),
+      prisma.valideProjet.count({
+        where: { utilisateur_id: profId, statut: 'en_attente' },
+      }),
+      prisma.lettresDeRecommendations.count({
+        where: { prof_utilisateur_id: profId, statut: 'en_attente' },
+      }),
+    ]);
+
+    return {
+      stagePending: stagesCount,
+      projetPending: projetsCount,
+      recommandationPending: lettresCount,
+    };
+  } catch (error) {
+    console.error('Erreur getPendingStats service:', error);
+    throw new Error('Erreur lors du calcul des statistiques');
+  }
+};
