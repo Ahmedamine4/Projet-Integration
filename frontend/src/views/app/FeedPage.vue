@@ -114,9 +114,9 @@
     <p>{{ feedError }}</p>
   </div>
 
-  <template v-else-if="filteredProjects.length">
+  <template v-else-if="feedItems.length">
     <FeedProjectCard
-      v-for="project in filteredProjects"
+      v-for="project in feedItems"
       :key="project.feedKey || project.id"
       :project="project"
       @click="openProjectDetail(project)"
@@ -124,14 +124,18 @@
       @open-student="openProjectOwnerPortfolio"
     />
 
-    <button
-      v-if="hasMoreProjects"
-      type="button"
-      class="load-more-button"
-      @click="loadMoreProjects"
+    <div
+      v-if="feedExperienceStore.hasMore && !feedExperienceStore.loadingMore"
+      ref="loadMoreTrigger"
+      class="load-more-trigger"
+    ></div>
+
+    <div
+      v-if="feedExperienceStore.loadingMore"
+      class="feed-loading-more"
     >
-      Voir plus
-    </button>
+      Chargement du feed...
+    </div>
   </template>
 
   <div
@@ -178,7 +182,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Check, Plus, SearchX } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -259,9 +263,7 @@ const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
 const applyingOffer = ref(null);
-const initialVisibleProjects = 20;
-const visibleProjectsStep = 10;
-const visibleLimit = ref(initialVisibleProjects);
+const loadMoreTrigger = ref(null);
 
 const defaultFilters = () => ({
   source: 'all',
@@ -286,6 +288,7 @@ const sidebarStudents = computed(() => {
 });
 
 let filtersTimer = null;
+let observer = null;
 
 function buildExperienceParams() {
   return {
@@ -297,14 +300,41 @@ function buildExperienceParams() {
   };
 }
 
-function fetchFeedExperiences() {
-  feedExperienceStore.fetchFeedExperiences(buildExperienceParams());
+async function fetchFeedExperiences() {
+  await feedExperienceStore.fetchFeedExperiences(buildExperienceParams(), {
+    reset: true,
+  });
+  await nextTick();
+  setupInfiniteScroll();
 }
 
-onMounted(() => {
+function setupInfiniteScroll() {
+  if (observer) {
+    observer.disconnect();
+  }
+
+  if (!loadMoreTrigger.value) return;
+
+  observer = new IntersectionObserver(async ([entry]) => {
+    if (
+      entry.isIntersecting &&
+      feedExperienceStore.hasMore &&
+      !feedExperienceStore.loading &&
+      !feedExperienceStore.loadingMore
+    ) {
+      await feedExperienceStore.fetchNextFeedExperiences(buildExperienceParams());
+      await nextTick();
+      setupInfiniteScroll();
+    }
+  });
+
+  observer.observe(loadMoreTrigger.value);
+}
+
+onMounted(async () => {
   feedExperienceStore.fetchFeedTechnologies();
 
-  fetchFeedExperiences();
+  await fetchFeedExperiences();
 
   feedOfferStore.fetchFeedOffers();
 
@@ -315,8 +345,6 @@ onMounted(() => {
 watch(
   [search, filters],
   () => {
-    visibleLimit.value = initialVisibleProjects;
-
     if (filtersTimer) {
       clearTimeout(filtersTimer);
     }
@@ -331,6 +359,10 @@ watch(
 onUnmounted(() => {
   if (filtersTimer) {
     clearTimeout(filtersTimer);
+  }
+
+  if (observer) {
+    observer.disconnect();
   }
 });
 const topCarouselItems = computed(() => {
@@ -370,48 +402,6 @@ const allDomains = computed(() => [
   'Web Backend',
 ]);
 
-const rankedProjects = computed(() => {
-  const keyword = search.value.trim().toLowerCase();
-
-  return [...feedItems.value]
-    .filter((item) => {
-      if (!keyword) return true;
-
-      const text = [
-        item.title,
-        item.description,
-        item.studentName,
-        item.schoolName,
-        item.type,
-        ...(item.technologies || []),
-        ...(item.domains || []),
-      ]
-        .join(' ')
-        .toLowerCase();
-
-      return text.includes(keyword);
-    })
-    .sort((a, b) => {
-      if (filters.value.sort === 'recent') {
-        return new Date(b.date || 0) - new Date(a.date || 0);
-      }
-
-      if (filters.value.sort === 'portfolio-score') {
-        return (b.portfolioScore || 0) - (a.portfolioScore || 0);
-      }
-
-      return (b.rankScore || 0) - (a.rankScore || 0);
-    });
-});
-
-const filteredProjects = computed(() => {
-  return rankedProjects.value.slice(0, visibleLimit.value);
-});
-
-const hasMoreProjects = computed(() => {
-  return visibleLimit.value < rankedProjects.value.length;
-});
-
 function buildStudentCarouselDescription(student) {
   const score = student.portfolioScore
     ? `Portfolio score ${student.portfolioScore}`
@@ -427,11 +417,6 @@ function buildStudentCarouselDescription(student) {
 function resetFilters() {
   filters.value = defaultFilters();
   search.value = '';
-  visibleLimit.value = initialVisibleProjects;
-}
-
-function loadMoreProjects() {
-  visibleLimit.value += visibleProjectsStep;
 }
 
 function handleTopCarouselSelect(item) {
@@ -449,15 +434,18 @@ function handleTopCarouselSelect(item) {
 }
 
 function openProjectDetail(project) {
+  feedExperienceStore.setSelectedProject?.(project);
+
   const ownerId =
     project.portfolioUserId ||
     project.userId ||
     project.utilisateur_id ||
     project.etudiant_id;
 
-  if (ownerId) {
+  // TODO: activer cette navigation quand la route detail projet sera disponible.
+  if (ownerId && router.hasRoute?.('feed-project-detail')) {
     router.push({
-      name: 'portfolio-experience',
+      name: 'feed-project-detail',
       params: {
         id: ownerId,
         experienceId: project.id,
@@ -466,13 +454,6 @@ function openProjectDetail(project) {
 
     return;
   }
-
-  router.push({
-    name: 'my-portfolio-experience',
-    params: {
-      experienceId: project.id,
-    },
-  });
 }
 
 function openOfferDetail(offer) {
@@ -704,36 +685,16 @@ function openProjectOwnerPortfolio(project) {
   color: rgba(var(--color-primary-rgb), 0.62);
 }
 
-.load-more-button {
+.load-more-trigger {
+  width: 100%;
+  min-height: 2rem;
+}
+
+.feed-loading-more {
   justify-self: center;
-  min-height: 2.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.18);
-  border-radius: 999px;
-  padding: 0 var(--space-lg);
-  background: rgba(var(--color-surface-rgb), 0.72);
-  color: rgba(var(--color-primary-rgb), 0.82);
+  color: rgba(var(--color-primary-rgb), 0.48);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-bold);
-  cursor: pointer;
-  transition:
-    transform var(--transition-fast),
-    border-color var(--transition-fast),
-    background-color var(--transition-fast);
-}
-
-.load-more-button:hover {
-  transform: translateY(-1px);
-  border-color: rgba(var(--color-primary-rgb), 0.32);
-  background: rgba(var(--color-surface-rgb), 0.92);
-}
-
-.load-more-button:focus-visible {
-  outline: none;
-  border-color: var(--color-secondary);
-  box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
+  font-weight: var(--font-medium);
 }
 
 .feed-sidebar {

@@ -6,37 +6,27 @@ const FEED_STUDENTS_ENDPOINT = '/feed/students';
 const USE_MOCK_FOLLOW = false;
 const MOCK_SUGGESTED_STUDENTS = [
   {
-    id: 'cmq8g1cin0000nt0j9uigva4r',
-    portfolioUserId: 'cmq8g1cin0000nt0j9uigva4r',
-    name: 'Sara Idrissi',
-    speciality: 'Frontend Developer',
-    schoolName: 'ENSA Casablanca',
-    stack: ['Vue', 'Node'],
-    technologies: ['Vue 3', 'Node.js', 'PostgreSQL'],
-    domains: ['Web Frontend', 'Web Backend'],
-    rankScore: 86,
-    portfolioScore: 86,
-    isFollowing: false,
-  },
-  {
-    id: 'cmq8yl8580001qn3zmqhoo341',
-    portfolioUserId: 'cmq8yl8580001qn3zmqhoo341',
-    name: 'Yassine Karim',
-    speciality: 'AI & Data Student',
-    schoolName: 'ENSIAS Rabat',
-    stack: ['Python', 'FastAPI'],
-    technologies: ['Python', 'FastAPI', 'LangChain'],
-    domains: ['Machine Learning & AI', 'Data Engineering'],
-    rankScore: 91,
-    portfolioScore: 91,
+    id: 'cmq8df62g0001qv3yfa7kwkxm',
+    userId: 'cmq8df62g0001qv3yfa7kwkxm',
+    portfolioUserId: 'cmq8df62g0001qv3yfa7kwkxm',
+    utilisateur_id: 'cmq8df62g0001qv3yfa7kwkxm',
+
+    name: 'Test Etudiant',
+    speciality: 'Étudiant test DB',
+    schoolName: 'Compte local',
+    stack: ['Vue 3', 'Node.js'],
+    technologies: ['Vue 3', 'Node.js'],
+    domains: ['Web Frontend'],
+
+    rankScore: 999,
+    portfolioScore: 0,
     isFollowing: false,
   },
 ];
-
 const MOCK_STUDENTS_FROM_SCHOOL = [
   {
     id: 'cmq8dwlml0000qv5lkuxtdqdu',
-    portfolioUserId: 'cmq8dwlml0000qv5lkuxtdqdu',
+    portfolioUserId: 'cmq8yl8660003qn3zbl6xqja6',
     name: 'Amine Kettani',
     speciality: 'Software Engineering Student',
     schoolName: 'ENSA Casablanca',

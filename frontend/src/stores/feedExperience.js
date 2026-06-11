@@ -6,106 +6,75 @@ const USE_MOCK = true;
 // Quand le backend sera prêt, tu changes juste ces 2 lignes.
 const FEED_EXPERIENCES_ENDPOINT = '/feed/experiences';
 
-const MOCK_EXPERIENCES = [
+const MOCK_EXPERIENCES = [  
   {
-    id: 'project-1',
+  id: 'cmq8efs2t000jqv5lwfma5vei',
+  type: 'project',
+
+  portfolioUserId: 'cmq8efenu000bqv5lu13zr2a8',
+  userId: 'cmq8efenu000bqv5lu13zr2a8',
+  utilisateur_id: 'cmq8efenu000bqv5lu13zr2a8',
+  etudiant_id: 'cmq8efenu000bqv5lu13zr2a8',
+
+  title: 'Projet 1',
+  description: 'Projet importé depuis GitHub : new-project',
+  date: '2026-06-10',
+  imagePreview: null,
+
+  studentName: 'Nour Bakkali',
+  schoolName: 'Compte local',
+  feedReason: 'Projet réel visible en base',
+
+  rankScore: 999,
+  portfolioScore: 0,
+  credibilityScore: 0,
+
+  isVerified: true,
+  recommendationsCount: 0,
+  githubReposCount: 1,
+  githubUrl: null,
+
+  technologies: ['GitHub'],
+  domains: ['Web Frontend'],
+},
+...Array.from({ length: 11 }, (_, index) => {
+  const number = index + 2;
+
+  return {
+    id: `mock-project-${number}`,
     type: 'project',
-    portfolioUserId: 4,
-    title: 'SmartStudyRoom Platform',
-    description:
-      "Une plateforme collaborative qui utilise l'IA pour optimiser les espaces d'étude partagés.",
-    date: '2025-05-18',
-    imagePreview: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80',
-    studentName: 'Amine Kettani',
-    schoolName: 'ENSA Casablanca',
-    feedReason: 'Même école',
-    rankScore: 94,
-    portfolioScore: 82,
-    credibilityScore: 82,
-    isVerified: true,
-    recommendationsCount: 128,
-    githubReposCount: 3,
-    githubUrl: 'https://github.com/demo/smart-study-room',
-    technologies: ['Vue 3', 'FastAPI', 'PostgreSQL'],
-    domains: ['Web Frontend', 'Web Backend', 'Machine Learning & AI'],
-  },
-  {
-    id: 'internship-1',
-    type: 'internship',
-    portfolioUserId: 5,
-    title: 'Software Engineering Internship',
-    description:
-      'Stage validé portant sur le développement d’une application web interne et la documentation technique.',
-    date: '2025-04-12',
+
+    portfolioUserId: `mock-user-${number}`,
+    userId: `mock-user-${number}`,
+    utilisateur_id: `mock-user-${number}`,
+    etudiant_id: `mock-user-${number}`,
+
+    title: `Projet ${number}`,
+    description: `Experience mock ${number}`,
+    date: `2026-06-${String(number).padStart(2, '0')}`,
     imagePreview: null,
-    studentName: 'Youssef Benmoussa',
-    schoolName: 'ENSA Casablanca',
-    feedReason: 'Stage validé',
-    rankScore: 86,
-    portfolioScore: 74,
-    credibilityScore: 74,
+
+    studentName: `Etudiant ${number}`,
+    schoolName: 'Compte local',
+    feedReason: 'Projet mock visible',
+
+    rankScore: 100 - number,
+    portfolioScore: number,
+    credibilityScore: number,
+
     isVerified: true,
-    recommendationsCount: 22,
-    githubReposCount: 0,
+    recommendationsCount: number,
+    githubReposCount: 1,
     githubUrl: null,
-    technologies: ['Node.js', 'PostgreSQL'],
-    domains: ['Web Backend'],
-  },
-  {
-    id: 'certification-1',
-    type: 'certification',
-    portfolioUserId: 6,
-    title: 'Docker Fundamentals Certification',
-    description:
-      'Certification validée autour des bases Docker, images, conteneurs et orchestration simple.',
-    date: '2025-03-20',
-    imagePreview: null,
-    studentName: 'Nour Berrada',
-    schoolName: 'ENSA Casablanca',
-    feedReason: 'Certification vérifiée',
-    rankScore: 78,
-    portfolioScore: 88,
-    credibilityScore: 88,
-    isVerified: true,
-    recommendationsCount: 18,
-    githubReposCount: 0,
-    githubUrl: null,
-    technologies: ['Docker', 'Linux'],
-    domains: ['DevOps & Cloud Infrastructure'],
-  },
-  {
-    id: 'activity-1',
-    type: 'activity',
-    portfolioUserId: 2,
-    title: 'Hackathon AI Challenge',
-    description:
-      'Participation à un hackathon autour de solutions IA appliquées aux services étudiants.',
-    date: '2025-06-02',
-    imagePreview: null,
-    studentName: 'Sara Idrissi',
-    schoolName: 'ENSIAS Rabat',
-    feedReason: 'Activité vérifiée',
-    rankScore: 91,
-    portfolioScore: 86,
-    credibilityScore: 86,
-    isVerified: true,
-    recommendationsCount: 34,
-    githubReposCount: 0,
-    githubUrl: null,
-    technologies: ['Python', 'LangChain', 'FastAPI'],
-    domains: ['Machine Learning & AI'],
-  },
+
+    technologies: ['GitHub'],
+    domains: ['Web Frontend'],
+  };
+})
 ];
+
 const MOCK_FILTER_TECHNOLOGIES = [
-  'Vue 3',
-  'React',
-  'Node.js',
-  'FastAPI',
-  'PostgreSQL',
-  'Docker',
-  'Python',
-  'LangChain',
-  'Linux',
+  ...new Set(MOCK_EXPERIENCES.flatMap((item) => item.technologies || [])),
 ];
 
 function extractArray(data, keys = []) {
@@ -118,6 +87,29 @@ function extractArray(data, keys = []) {
   if (Array.isArray(data?.data)) return data.data;
 
   return [];
+}
+
+function getFeedPayload(data) {
+  if (Array.isArray(data)) {
+    return {
+      payload: {},
+      items: data,
+      hasMore: undefined,
+      nextCursor: null,
+    };
+  }
+
+  const payload =
+    data?.data && !Array.isArray(data.data)
+      ? data.data
+      : data;
+
+  return {
+    payload,
+    items: extractArray(payload, ['items', 'feedItems', 'experiences']),
+    hasMore: payload?.hasMore,
+    nextCursor: payload?.nextCursor ?? payload?.cursor ?? null,
+  };
 }
 
 function normalizeType(type) {
@@ -356,59 +348,123 @@ function matchesMockFilters(item, params) {
   return true;
 }
 
-function sortExperiences(items, sort = 'trending') {
-  return [...items].sort((a, b) => {
-    if (sort === 'recent') {
-      return new Date(b.date || 0) - new Date(a.date || 0);
-    }
-
-    if (sort === 'portfolio-score') {
-      return (b.portfolioScore || 0) - (a.portfolioScore || 0);
-    }
-
-    return (b.rankScore || 0) - (a.rankScore || 0);
-  });
-}
-
 export const useFeedExperienceStore = defineStore('feedExperience', {
   state: () => ({
     items: [],
+    selectedProject: null,
     filterTechnologies: [],
     loading: false,
+    loadingMore: false,
     error: null,
+    limit: 4,
+    page: 1,
+    nextCursor: null,
+    hasMore: true,
     lastParams: {},
   }),
 
   actions: {
-    async fetchFeedExperiences(params = {}) {
+    resetPagination() {
+      this.items = [];
+      this.page = 1;
+      this.nextCursor = null;
+      this.hasMore = true;
+    },
+
+    setSelectedProject(project) {
+      this.selectedProject = project;
+    },
+
+    buildRequestParams(params = {}) {
+      return {
+        ...params,
+        limit: this.limit,
+        page: this.page,
+        cursor: this.nextCursor || undefined,
+      };
+    },
+
+    applyFeedResponse(rawItems, hasMore, nextCursor, { append = false } = {}) {
+      const normalizedItems = rawItems.map((item) => normalizeExperience(item));
+      const existingKeys = new Set(
+        this.items.map((item) => item.feedKey || item.id).filter(Boolean)
+      );
+
+      const nextItems = append
+        ? normalizedItems.filter((item) => {
+            const key = item.feedKey || item.id;
+
+            if (!key) return true;
+            if (existingKeys.has(key)) return false;
+
+            existingKeys.add(key);
+            return true;
+          })
+        : normalizedItems;
+
+      this.items = append
+        ? [...this.items, ...nextItems]
+        : nextItems;
+
+      this.nextCursor = nextCursor ?? null;
+      this.hasMore = typeof hasMore === 'boolean'
+        ? hasMore
+        : normalizedItems.length >= this.limit;
+      this.page += 1;
+    },
+
+    getMockFeedPage(params = {}) {
+      const currentPage = Number(params.page || 1);
+      const limit = Number(params.limit || this.limit);
+      const start = (currentPage - 1) * limit;
+      const normalized = MOCK_EXPERIENCES
+        .map((item) => normalizeExperience(item))
+        .filter((item) => matchesMockFilters(item, params));
+      const items = normalized.slice(start, start + limit);
+      const nextOffset = start + items.length;
+
+      return {
+        items: items.map((item) => item.raw || item),
+        hasMore: nextOffset < normalized.length,
+        nextCursor: nextOffset < normalized.length ? String(nextOffset) : null,
+      };
+    },
+
+    async fetchFeedExperiences(params = {}, options = { reset: true }) {
+      const shouldReset = options.reset !== false;
+
+      if (shouldReset) {
+        this.resetPagination();
+      }
+
       this.loading = true;
       this.error = null;
       this.lastParams = params;
 
       try {
-        if (USE_MOCK) {
-          const normalized = MOCK_EXPERIENCES
-            .map((item) => normalizeExperience(item))
-            .filter((item) => matchesMockFilters(item, params));
+        const requestParams = this.buildRequestParams(params);
 
-          this.items = sortExperiences(normalized, params.sort);
+        if (USE_MOCK) {
+          const page = this.getMockFeedPage(requestParams);
+          this.applyFeedResponse(page.items, page.hasMore, page.nextCursor, {
+            append: !shouldReset,
+          });
           return;
         }
 
-        const response = await api.get(FEED_EXPERIENCES_ENDPOINT, { params });
-        const data = response.data;
+        const response = await api.get(FEED_EXPERIENCES_ENDPOINT, {
+          params: requestParams,
+        });
+        const feedPayload = getFeedPayload(response.data);
+        const data = feedPayload.payload;
 
-        const mixedItems = extractArray(data, ['items', 'feedItems', 'experiences'])
-          .map((item) => normalizeExperience(item));
+        const mixedItems = feedPayload.items;
 
-        const projects = extractArray(data, ['projects', 'projets'])
-          .map((item) => normalizeExperience(item, 'project'));
+        const projects = extractArray(feedPayload.payload, ['projects', 'projets']);
 
-        const internships = extractArray(data, ['internships', 'stages'])
-          .map((item) => normalizeExperience(item, 'internship'));
+        const internships = extractArray(feedPayload.payload, ['internships', 'stages']);
 
-        const certifications = extractArray(data, ['certifications', 'certificates'])
-          .map((item) => normalizeExperience(item, 'certification'));
+        const certifications = extractArray(feedPayload.payload, ['certifications', 'certificates']);
 
         const activities = extractArray(data, ['activities', 'activites', 'activités'])
           .map((item) => normalizeExperience(item, 'activity'));
@@ -417,7 +473,9 @@ export const useFeedExperienceStore = defineStore('feedExperience', {
           ? mixedItems
           : [...projects, ...internships, ...certifications, ...activities];
 
-        this.items = sortExperiences(allItems, params.sort);
+        this.applyFeedResponse(allItems, feedPayload.hasMore, feedPayload.nextCursor, {
+          append: !shouldReset,
+        });
       } catch (error) {
         console.error('Erreur chargement expériences feed:', error);
 
@@ -428,6 +486,43 @@ export const useFeedExperienceStore = defineStore('feedExperience', {
         this.items = [];
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchNextFeedExperiences(params = {}) {
+      if (!this.hasMore || this.loading || this.loadingMore) return;
+
+      this.loadingMore = true;
+      this.error = null;
+      this.lastParams = params;
+
+      try {
+        const requestParams = this.buildRequestParams(params);
+
+        if (USE_MOCK) {
+          const page = this.getMockFeedPage(requestParams);
+          this.applyFeedResponse(page.items, page.hasMore, page.nextCursor, {
+            append: true,
+          });
+          return;
+        }
+
+        const response = await api.get(FEED_EXPERIENCES_ENDPOINT, {
+          params: requestParams,
+        });
+        const feedPayload = getFeedPayload(response.data);
+
+        this.applyFeedResponse(feedPayload.items, feedPayload.hasMore, feedPayload.nextCursor, {
+          append: true,
+        });
+      } catch (error) {
+        console.error('Erreur chargement suite feed:', error);
+
+        this.error =
+          error.response?.data?.message ||
+          'Impossible de charger la suite du feed.';
+      } finally {
+        this.loadingMore = false;
       }
     },
 
