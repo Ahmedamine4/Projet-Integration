@@ -6,6 +6,18 @@ import { getActivitesVisiblesByEtudiant, getActivitesByEtudiant } from './activi
 import { getCertificationsVisiblesByEtudiant, getCertificationsByEtudiant } from './certification.service.js';
 import { getCompetencesByExperience } from './competence.helper.js';
 
+
+export const createPortfolioIfNotExists = async (utilisateurId) => {
+    // L'utilisation de upsert permet de vérifier si le portfolio existe déjà.
+    // S'il existe, il ne fait rien (update vide), sinon il le crée.
+    return await prisma.portfolio.upsert({
+        where: { utilisateur_id: utilisateurId },
+        update: {}, 
+        create: {
+            utilisateur_id: utilisateurId,
+        },
+    });
+};
 // Recuperer "a_propos" d'un utilisateur par son id
 export async function getAboutByUserId(userId) {
   const user = await prisma.utilisateur.findUnique({

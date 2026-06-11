@@ -8,15 +8,16 @@ import {
 import { authMiddleware, authorizeRoles, ROLES } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
+router.use(authMiddleware);
 
 
-router.post('/recommandations/:portfolioId', authMiddleware, authorizeRoles(ROLES.PROFESSIONNEL, ROLES.PROFESSEUR), addRecommandation);
+router.post('/recommandations/:portfolioId', authorizeRoles(ROLES.PROFESSEUR, ROLES.PROFESSIONNEL), addRecommandation);
 
 
-router.patch('/recommandations/:interactionId/visibilite', authMiddleware, authorizeRoles(ROLES.ETUDIANT), toggleVisibiliteRecommandation);
+router.patch('/recommandations/:interactionId/visibilite', authorizeRoles(ROLES.ETUDIANT), toggleVisibiliteRecommandation);
 
 
-router.get('/recommandations/me', authMiddleware, authorizeRoles(ROLES.ETUDIANT), getMesRecommandations);
+router.get('/recommandations/me', authorizeRoles(ROLES.ETUDIANT), getMesRecommandations);
 
 
 router.get('/recommandations/portfolio/:etudiantId', getRecommandationsPortfolio);
