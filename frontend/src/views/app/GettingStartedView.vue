@@ -5,13 +5,17 @@ import ProgressMeter from '@/components/common/display/ProgressMeter.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import { useInstitutionStore } from '@/stores/institution';
 import { useGithubStore } from '@/stores/github';
+import { useAuthStore } from '@/stores/auth';
+import api from '@/services/api';
 import Button from '@/components/common/actions/BaseButton.vue';
 import { GithubIcon } from 'lucide-vue-next';
 import gettingStartedIllustration from '@/assets/getting-started-illustration.png';
 
 const institutionStore = useInstitutionStore();
 const githubStore = useGithubStore();
+const authStore = useAuthStore();
 const phoneError = ref('');
+const schoolError = ref('');
 onMounted(() => {
   institutionStore.fetchInstitutions();
 
@@ -75,10 +79,54 @@ async function connectGithub() {
   await githubStore.connectGithub();
 }
 
-function completeSchoolStep(schoolData) {
-  institutionStore.setSchoolPath(schoolData.schoolPath);
-  stepStatus.school = 'done';
-  isSchoolModalOpen.value = false;
+async function completeSchoolStep(schoolData) {
+  schoolError.value = '';
+
+  try {
+    institutionStore.setSchoolPath(schoolData.schoolPath);
+
+    const levelMap = {
+      bachelorSchool: 'bachelor',
+      masterSchool: 'master',
+      phdInstitution: 'doctorat',
+    };
+
+    const institutions = Object.entries(schoolData.schoolPath ?? {})
+      .filter(([_, school]) => school?.institutionId)
+      .map(([fieldKey, school]) => ({
+        institutionId: school.institutionId,
+        date_debut: school.startYear ? new Date(school.startYear, 0, 1) : null,
+        date_fin: school.isCurrent
+          ? null
+          : school.endYear
+            ? new Date(school.endYear, 11, 31)
+            : null,
+        niveau: levelMap[fieldKey] || 'bachelor',
+      }));
+
+    const etudiantId = authStore.user?.utilisateur_id;
+
+    if (!etudiantId) {
+      throw new Error('User profile is not loaded yet.');
+    }
+
+    if (institutions.length) {
+      await api.post('/select-institutions', {
+        etudiantId,
+        etudie: schoolData.isCurrentlyStudying,
+        institutions,
+      });
+    }
+
+    stepStatus.school = 'done';
+    isSchoolModalOpen.value = false;
+  } catch (error) {
+    schoolError.value = error.response?.data?.details ||
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      error.message ||
+      'Failed to save academic path';
+  }
 }
 
 function savePhoneNumber() {
@@ -213,6 +261,12 @@ function savePhoneNumber() {
     @close="isSchoolModalOpen = false"
     @complete="completeSchoolStep"
   />
+  <p
+    v-if="schoolError"
+    class="school-error"
+  >
+    {{ schoolError }}
+  </p>
 </template>
 
 <style scoped>
@@ -411,6 +465,24 @@ function savePhoneNumber() {
   color:var(--color-error);
   font-size: var(--font-size-xs);
   }
+
+.school-error {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-lg);
+  z-index: 50;
+  max-width: min(28rem, calc(100vw - 2rem));
+  margin: 0;
+  transform: translateX(-50%);
+  border: 1px solid rgba(var(--color-error-rgb), 0.24);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+  color: var(--color-error);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-medium);
+}
 
 @media (max-width: 480px) {
   .wrapper-header {

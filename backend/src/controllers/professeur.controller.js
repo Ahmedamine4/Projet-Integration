@@ -1,5 +1,6 @@
 import {
   getDemandes,
+  getPendingStats,
   getStageById,
   getProjetById,
   traiterValidationProjet,
@@ -30,8 +31,15 @@ export const listDemandes = async (req, res) => {
       });
     }
  
-    const result = await getDemandes(profId, { type, statut, page });
-    return res.status(200).json({ success: true, ...result });
+    const [result, stats] = await Promise.all([
+      getDemandes(profId, { type, statut, page }),
+      getPendingStats(profId)
+    ]);
+    return res.status(200).json({ 
+      success: true, 
+      ...result, 
+      stats 
+    });
   } catch (error) {
     console.error('Erreur listDemandes:', error);
     return res.status(500).json({ success: false, message: 'Erreur serveur' });

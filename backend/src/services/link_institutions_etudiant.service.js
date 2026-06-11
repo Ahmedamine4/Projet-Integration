@@ -39,6 +39,7 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
             date_debut: dateDebut,
             date_fin: dateFin,
             niveau: inst.niveau,
+            description: inst.description ?? null,
             statut: 'en_attente' // Statut défini dans ton Enum Prisma
         };
     });
@@ -62,36 +63,54 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
             data: { etudie: isEtudiantActif }
         });
 
-        // B. Ajouter ou mettre à jour les institutions dans ValideEtudiant
-        // On utilise upsert pour éviter les erreurs de doublons si l'étudiant 
-        // renvoie la requête pour une institution qu'il a déjà.
-        const upsertPromises = validesEtudiantsData.map((data) =>
-            tx.valideEtudiant.upsert({
-                where: {
-                    utilisateur_id_institution_id: {
-                        utilisateur_id: data.utilisateur_id,
-                        institution_id: data.institution_id
-                    }
-                },
-                update: {
-                    date_debut: data.date_debut,
-                    date_fin: data.date_fin,
-                    niveau: data.niveau,
-                    statut: data.statut
-                },
-                create: {
-                    utilisateur_id: data.utilisateur_id,
-                    institution_id: data.institution_id,
-                    date_debut: data.date_debut,
-                    date_fin: data.date_fin,
-                    niveau: data.niveau,
-                    statut: data.statut
-                }
+        const createPromises = validesEtudiantsData.map((data) =>
+            tx.valideEtudiant.create({
+                data
             })
         );
 
-        return await Promise.all(upsertPromises);
+        return await Promise.all(createPromises);
     });
 
     return resultats;
+};
+
+export const updateValidEtudiantDescriptionService = async (etudiantId, institutionId, description) => {
+  const record = institutionId
+    ? await prisma.valideEtudiant.findFirst({
+        where: {
+          utilisateur_id: etudiantId,
+          institution_id: institutionId,
+        },
+        orderBy: {
+          date_debut: 'desc',
+        },
+        select: {
+          valide_etudiant_id: true,
+        },
+      })
+    : await prisma.valideEtudiant.findFirst({
+        where: {
+          utilisateur_id: etudiantId,
+        },
+        orderBy: {
+          date_debut: 'desc',
+        },
+        select: {
+          valide_etudiant_id: true,
+        },
+      });
+
+  if (!record) {
+    throw new Error('Aucune demande trouvée pour cet étudiant.');
+  }
+
+  return prisma.valideEtudiant.update({
+    where: {
+      valide_etudiant_id: record.valide_etudiant_id,
+    },
+    data: {
+      description,
+    },
+  });
 };

@@ -11,7 +11,7 @@ import Pagination from '@/components/dashboard/PaginationComponent.vue';
 const profStore = useProfesseurStore();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
-const { demandes, pagination, filters, loading } = storeToRefs(profStore);
+const { demandes, pagination, stats, filters, loading } = storeToRefs(profStore);
 
 const professorLastName = computed(() => user.value?.lastName || 'enseignant');
 const todayLabel = computed(() =>
@@ -161,6 +161,21 @@ function formatDate(iso) {
         <div class="stat-chip">
           <span class="stat-chip__num">{{ pagination.total }}</span>
           <span class="stat-chip__label">Éléments correspondants</span>
+        </div>
+        
+        <div class="stat-chip">
+          <span class="stat-chip__num">{{ stats?.stagePending ?? 0 }}</span>
+          <span class="stat-chip__label">Stages en attente</span>
+        </div>
+        
+        <div class="stat-chip">
+          <span class="stat-chip__num">{{ stats?.projetPending ?? 0 }}</span>
+          <span class="stat-chip__label">Projets en attente</span>
+        </div>
+        
+        <div class="stat-chip">
+          <span class="stat-chip__num">{{ stats?.recommandationPending ?? 0 }}</span>
+          <span class="stat-chip__label">Lettres en attente</span>
         </div>
       </div>
     </header>

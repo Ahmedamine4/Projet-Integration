@@ -6,6 +6,8 @@ import {
   updateVisibiliteStageService,
 } from '../services/stage.service.js';
 
+const parseBoolean = (value) => value === true || value === 'true' || value === '1' || value === 1;
+
 export const addStage = async (req, res) => {
   try {
     const etudiantId = req.user.utilisateur_id;
@@ -129,11 +131,17 @@ export const updateVisibiliteStage = async (req, res) => {
     const { experienceId } = req.params;
     const { visibilite } = req.body;
 
-    if (typeof visibilite !== 'boolean') {
-      return res.status(400).json({ success: false, message: 'visibilite doit être un boolean' });
+    if (visibilite === undefined) {
+      return res.status(400).json({ success: false, message: 'visibilite est requis' });
     }
 
-    const result = await updateVisibiliteStageService(etudiantId, experienceId, visibilite);
+    const visibiliteBoolean = parseBoolean(visibilite);
+
+    if (typeof visibiliteBoolean !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'visibilite doit être un boolean ou une chaîne true/false' });
+    }
+
+    const result = await updateVisibiliteStageService(etudiantId, experienceId, visibiliteBoolean);
     return res.status(200).json({ success: true, data: result });
 
   } catch (error) {

@@ -47,7 +47,7 @@ export const useGithubStore = defineStore('github', {
 
       try {
         const response = await api.post('/github/sync', {});
-        this.repositories = response.data.data || [];
+        this.repositories = response.data.data?.repositories || response.data.data || [];
         return this.repositories;
       } catch (error) {
         this.error = error.response?.data?.message || 'Failed to sync repositories';
@@ -57,12 +57,15 @@ export const useGithubStore = defineStore('github', {
       }
     },
 
-    async fetchContributions() {
+    async fetchContributions(userId = null) {
       this.loading = true;
       this.error = null;
 
       try {
-        const response = await api.get('/github/contributions');
+        const endpoint = userId
+          ? `/github/contributions/${userId}`
+          : '/github/contributions';
+        const response = await api.get(endpoint);
         this.contributions = response.data.data || null;
         return this.contributions;
       } catch (error) {

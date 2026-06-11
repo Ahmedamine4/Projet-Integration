@@ -83,12 +83,12 @@ const normalizeDetail = (item, type) => {
   }
 
   if ((type === 'projet' || type === 'projets') && item.projet) {
-    normalized.photo = item.projet.photo;
+    normalized.photo = expNode.photo;
     normalized.lien_github = item.projet.lien_github;
     normalized.lien_youtube = item.projet.lien_youtube;
     normalized.technologies = item.projet.technologies || [];
     normalized.role = item.projet.role;
-    normalized.resultat_obtenus = item.projet.resultat_obtenus;
+    normalized.resultat_obtenus = item.projet.resultat_obtenu;
   }
 
   return normalized;
@@ -102,6 +102,12 @@ export const useProfesseurStore = defineStore('professeur', () => {
     totalPages: 1,
     total: 0,
     pageSize: 10
+  });
+
+  const stats = ref({
+    stagePending: 0,
+    projetPending: 0,
+    recommandationPending: 0
   });
   
   const filters = ref({
@@ -126,6 +132,9 @@ export const useProfesseurStore = defineStore('professeur', () => {
       
       demandes.value = (response.data.data || []).map(normalizeListItem);
       pagination.value = response.data.pagination || pagination.value;
+      if (response.data?.stats) {
+           stats.value = response.data.stats;
+    }
     } catch (err) {
       error.value = err.response?.data?.message || 'Erreur lors de la récupération des demandes';
       throw err;
@@ -189,6 +198,7 @@ export const useProfesseurStore = defineStore('professeur', () => {
   return {
     demandes,
     pagination,
+    stats,
     filters,
     loading,
     error,

@@ -269,14 +269,25 @@ export async function traiterDemandeInscription(directeurId, etudiantId, statut)
     throw new Error("Le statut doit être 'valide' ou 'refuse'");
   }
 
+  const demande = await prisma.valideEtudiant.findFirst({
+    where: {
+      utilisateur_id: etudiantId,
+      institution_id: institution.institution_id,
+    },
+    orderBy: {
+      date_debut: 'desc',
+    },
+  });
+
+  if (!demande) {
+    throw new Error('Aucune demande trouvée pour cet étudiant et cette institution.');
+  }
+
   const updatedDemande = await prisma.valideEtudiant.update({
     where: {
-      utilisateur_id_institution_id: {
-        utilisateur_id: etudiantId,
-        institution_id: institution.institution_id
-      }
+      valide_etudiant_id: demande.valide_etudiant_id,
     },
-    data: { statut }
+    data: { statut },
   });
 
   return updatedDemande;

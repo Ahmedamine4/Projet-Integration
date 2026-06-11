@@ -9,6 +9,7 @@ import aiRoutes from './routes/ai.route.js';
 import stageRoutes from './routes/stage.routes.js';
 import activiteRoutes from './routes/activite.routes.js';
 import portfolioRoutes from './routes/portfolio.routes.js';
+import photoRoutes from './routes/photo.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import updateUtilisateurRoutes from './routes/update_utilisateur.routes.js';
 import githubRoutes from './routes/github.route.js';
@@ -21,6 +22,7 @@ import etudiantRoutes from './routes/etudiant.routes.js'
 import adminRoutes from './routes/admin.routes.js';
 import interactionRoutes from './routes/interaction.routes.js';
 import directeurRoutes from './routes/directeur.routes.js';
+import feedRoutes from './routes/feed.routes.js';
 
 const app = express();
 app.use(cors({
@@ -34,8 +36,10 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/professeur', professeurRoutes);
+app.use('/api/interactions', interactionRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/users', portfolioRoutes);
+app.use('/api/users', photoRoutes);
 app.use('/api/lettre-recommandation', lettreRecommandationRoutes);
 app.use('/api/certifications', certificationRoutes);
 app.use('/api/follow', followRoutes);
@@ -43,6 +47,7 @@ app.use('/api/follow', followRoutes);
 app.use('/api/stages', stageRoutes);
 // Branchement des routes de gestion des activites
 app.use('/api/activites', activiteRoutes);
+app.use('/api', feedRoutes);
 
 //Getting institutions
 app.use('/api/getInstitutions', getInstitutionRoutes);
@@ -55,7 +60,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/github', githubRoutes);
 //Modifications des infromations
 app.use('/api/users', updateUtilisateurRoutes);
-app.use('/api/interactions', interactionRoutes);
 
 
 app.use('/api/users', socialMediaRoutes);

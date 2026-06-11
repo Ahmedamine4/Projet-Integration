@@ -9,13 +9,14 @@ import {
   getAllPublicUsers,
   findUserByEmail
 } from '../services/auth.service.js';
+import { createPortfolioIfNotExists } from '../services/portfolio.service.js';
 
 // Inscription locale
 export async function register(req, res) {
   
   try {
     const user = await registerLocalUser(req.body);
-    
+    await createPortfolioIfNotExists(user.utilisateur_id);
     const token = generateLocalToken(user); 
     const refreshToken = generateRefreshToken(user);
 
@@ -128,6 +129,9 @@ export async function googleAuth(req, res) {
       //hna le nom prenom sont dans user_metadata
 
     });
+
+    await createPortfolioIfNotExists(user.utilisateur_id);
+
     const localToken = generateLocalToken(user);
     const refreshToken = generateRefreshToken(user);
 

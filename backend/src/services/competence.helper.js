@@ -130,3 +130,17 @@ export const getCompetencesByExperience = async (experienceId) => {
  
   return { technologies, domaines };
 };
+
+export const getAllTechnologies = async () => {
+  return prisma.competence.findMany({
+    where: { type: TypeCompetence.technologie },
+    orderBy: { nom: 'asc' },
+  });
+};
+
+export const getAllDomaines = async () => {
+  return prisma.competence.findMany({
+    where: { type: TypeCompetence.domaine },
+    orderBy: { nom: 'asc' },
+  });
+};
