@@ -327,10 +327,10 @@ docker-push-prod:
       -f infrastructure/docker/docker-compose.prod.yml \
       build
 
-    - docker push ahmedamine04/foliocraft:backend
-    - docker push ahmedamine04/foliocraft:frontend
-    - docker push ahmedamine04/foliocraft:ai
-    - docker push ahmedamine04/foliocraft:nginx
+    - docker push tijabdel/ai:prod
+    - docker push tijabdel/backend:prod
+    - docker push tijabdel/frontend:prod
+    - docker push tijabdel/nginx:prod
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'

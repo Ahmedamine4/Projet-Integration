@@ -184,16 +184,28 @@ export function normalizeCreatedInternship(data) {
 }
 
 export function normalizeEducation(institutions = []) {
-  return institutions.map((entry) => ({
-    id: entry.institution_id,
-    school: entry.institution?.nom ?? 'Institution',
-    level: entry.niveau ?? entry.statut ?? '',
-    status: entry.statut ?? '',
-    description: entry.institution?.description ?? '',
-    period: entry.date
-      ? formatLocalDate(entry.date)
-      : '',
-  }));
+  return institutions.map((entry) => {
+    const startYear = entry.date_debut ? new Date(entry.date_debut).getFullYear() : '';
+    const endDate = entry.date_fin ? new Date(entry.date_fin) : null;
+    const endYear = endDate ? endDate.getFullYear() : '';
+    const isPresent = endDate && endDate > new Date();
+
+    let period = '';
+    if (startYear && endYear) {
+      period = isPresent ? `${startYear} - Present` : `${startYear} - ${endYear}`;
+    } else if (startYear) {
+      period = `${startYear}`;
+    }
+
+    return {
+      id: entry.institution_id,
+      school: entry.institution?.nom ?? 'Institution',
+      level: entry.niveau ?? entry.statut ?? '',
+      status: entry.statut ?? '',
+      description: entry.institution?.description ?? '',
+      period,
+    };
+  });
 }
 
 export function normalizeRecommendation(item, index = 0) {

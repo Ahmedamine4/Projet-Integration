@@ -19,7 +19,7 @@ import { useInstitutionStore } from '@/stores/institution';
 import api from '@/services/api';
 import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
 import ConfirmDialog from '@/components/common/feedback/ConfirmDialog.vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
 import ActivitiesSection from '@/components/portfolio/activities/ActivitiesSection.vue';
 import CertificationsSection from '@/components/portfolio/certifications/CertificationsSection.vue';
 import PortfolioContact from '@/components/portfolio/contact/PortfolioContact.vue';
@@ -29,6 +29,7 @@ import PortfolioRecommendationModal from '@/components/portfolio/recommendations
 import AiOrb from '@/components/portfolio/shared/AiOrb.vue';
 import SchoolPathModal from '@/components/getting-started/SchoolPathModal.vue';
 import ImageCropperModal from '@/components/common/forms/ImageCropperModal.vue';
+import GitHubContributionsSection from '@/components/portfolio/contributions/GitHubContributionsSection.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -156,7 +157,25 @@ const schoolOptions = computed(() =>
 
 onMounted(() => {
   institutionStore.fetchInstitutions();
+  if (portfolioUserId.value) {
+    portfolioStore.fetchPortfolio(portfolioUserId.value);
+  }
 });
+
+onBeforeRouteUpdate(() => {
+  portfolioStore.portfolio = null;
+  isResolvingPortfolio.value = true;
+});
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (route.name === 'portfolio') {
+      portfolioStore.portfolio = null;
+      isResolvingPortfolio.value = true;
+    }
+  }
+);
 
 watch(
   portfolio,
@@ -664,18 +683,28 @@ async function completeSchoolPath(schoolData) {
   try {
     institutionStore.setSchoolPath(schoolData.schoolPath);
 
-    const institutionIds = [
-      ...new Set(
-        Object.values(schoolData.schoolPath ?? {})
-          .map((school) => school?.institutionId)
-          .filter(Boolean)
-      ),
-    ];
+    const institutions = Object.entries(schoolData.schoolPath ?? {})
+      .filter(([_, school]) => school?.institutionId)
+      .map(([fieldKey, school]) => {
+        const levelMap = {
+          bachelorSchool: 'bachelor',
+          masterSchool: 'master',
+          phdInstitution: 'doctorat',
+        };
 
-    if (institutionIds.length && userId.value) {
+        return {
+          institutionId: school.institutionId,
+          date_debut: school.startYear ? new Date(school.startYear, 0, 1) : null,
+          date_fin: school.endYear ? new Date(school.endYear, 11, 31) : null,
+          niveau: levelMap[fieldKey] || 'bachelor',
+        };
+      });
+
+    if (institutions.length && userId.value) {
       await api.post('/select-institutions', {
         etudiantId: userId.value,
-        institutionId: institutionIds,
+        etudie: schoolData.isCurrentlyStudying,
+        institutions,
       });
     }
 
@@ -999,6 +1028,12 @@ async function handleAiFiltersDetected(filters) {
             :domains="domainItems"
           />
         </div>
+      </div>
+      <div
+        v-if="isOwnPortfolio"
+        class="portfolio-section-wrapper"
+      >
+        <GitHubContributionsSection :user-id="portfolioUserId" />
       </div>
       <div
         v-if="shouldShowProjectSection"
