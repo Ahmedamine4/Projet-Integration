@@ -77,15 +77,16 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
 
 export const updateValidEtudiantDescriptionService = async (etudiantId, institutionId, description) => {
   const record = institutionId
-    ? await prisma.valideEtudiant.findUnique({
+    ? await prisma.valideEtudiant.findFirst({
         where: {
-          utilisateur_id_institution_id: {
-            utilisateur_id: etudiantId,
-            institution_id: institutionId,
-          },
+          utilisateur_id: etudiantId,
+          institution_id: institutionId,
+        },
+        orderBy: {
+          date_debut: 'desc',
         },
         select: {
-          institution_id: true,
+          valide_etudiant_id: true,
         },
       })
     : await prisma.valideEtudiant.findFirst({
@@ -96,7 +97,7 @@ export const updateValidEtudiantDescriptionService = async (etudiantId, institut
           date_debut: 'desc',
         },
         select: {
-          institution_id: true,
+          valide_etudiant_id: true,
         },
       });
 
