@@ -128,6 +128,12 @@ export async function googleAuth(req, res) {
       //hna le nom prenom sont dans user_metadata
 
     });
+    if (user.bloque) {
+      return res.status(403).json({
+        success: false,
+        message: 'Votre compte est bloqué. Veuillez contacter un administrateur',
+      });
+    }
     const localToken = generateLocalToken(user);
     const refreshToken = generateRefreshToken(user);
 

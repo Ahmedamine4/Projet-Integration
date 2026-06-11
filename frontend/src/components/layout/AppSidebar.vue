@@ -12,6 +12,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  Shield,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter, useRoute } from 'vue-router';
@@ -43,17 +44,26 @@ const emit = defineEmits(['open-notifications', 'update:collapsed']);
 
 const collapsed = ref(true);
 
-const sidebarItems = computed(() => [
-  {
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    path: authStore.user?.role === 'directeur' ? '/director-dashboard' : '/dashboard',
-  },
-  { label: 'Getting started', icon: Compass, path: '/getting-started' },
-  { label: 'Profile', icon: UserRound },
-  { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
-  { label: 'Settings', icon: Settings, path: '/settings' },
-]);
+const sidebarItems = computed(() => {
+  const items = [
+    {
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      path: authStore.user?.role === 'directeur' ? '/director-dashboard' : '/dashboard',
+    },
+    { label: 'Getting started', icon: Compass, path: '/getting-started' },
+    { label: 'Profile', icon: UserRound },
+    { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
+    { label: 'Settings', icon: Settings, path: '/settings' },
+  ];
+
+  // Show Administration link ONLY for admins
+  if (authStore.user?.role === 'administrateur') {
+    items.push({ label: 'Administration', icon: Shield, path: '/admin' });
+  }
+
+  return items;
+});
 
 function isItemActive(item) {
   if (!item.path) return false;

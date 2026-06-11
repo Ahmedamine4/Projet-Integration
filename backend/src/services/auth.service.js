@@ -10,6 +10,8 @@ const USER_SELECT = {
   email: true,
   role: true,
   provider: true,
+  date_de_creation: true,
+  bloque: true,
 };
 
 // Normaliser email
@@ -122,6 +124,10 @@ export async function loginLocalUser({ email, password }) {
 
   if (user.provider !== 'local') {
     throw new Error('Utiliser Google pour se connecter');
+  }
+
+  if (user.bloque) {
+    throw new Error('Votre compte est bloqué. Veuillez contacter un administrateur');
   }
 
   const valid = await bcrypt.compare(password, user.mot_de_passe);

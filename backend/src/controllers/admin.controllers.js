@@ -5,8 +5,27 @@ import {
   bloquerUtilisateur,
   debloquerUtilisateur,
   getProfessionnelsEnAttente,
+  getAdminInstitutions,
+  creerInstitutionAvecDirecteur,
+  rechercherUtilisateursParEmail,
 } from '../services/admin.service.js';
 
+export async function ajouterAdmin(req, res) {
+  try {
+    const { utilisateur_id, niveau_acces } = req.body;
+    const result = await addAdmin({ utilisateur_id, niveau_acces });
+    return res.status(201).json({
+      success: true,
+      message: result.message,
+      admin: result.admin,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+}
 
 export async function ajoutDirecteur(req, res) {
   try {
@@ -75,6 +94,7 @@ export async function refuserProfessionnel(req, res) {
   }
 }
 
+// ─── 4. Bloquer un utilisateur ───────────────────────────────────────────────
 export async function bloquerUtilisateurController(req, res) {
   try {
     const utilisateur_id = req.params.id;
@@ -124,6 +144,75 @@ export async function listProfessionnelsEnAttente(req, res) {
     return res.status(500).json({
       success: false,
       error: error.message || 'Erreur lors de la récupération des professionnels',
+    });
+  }
+}
+
+export async function listAdminInstitutions(req, res) {
+  try {
+    const institutions = await getAdminInstitutions();
+    return res.status(200).json({
+      success: true,
+      institutions,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erreur lors de la récupération des institutions',
+    });
+  }
+}
+
+export async function createAdminInstitution(req, res) {
+  try {
+    const { nom, email_directeur } = req.body;
+    const result = await creerInstitutionAvecDirecteur({ nom, email_directeur });
+
+    return res.status(201).json({
+      success: true,
+      message: result.message,
+      institution: result.institution,
+      directeur: result.directeur,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message || "Erreur lors de la création de l'institution",
+    });
+  }
+}
+
+export async function rechercherUtilisateursController(req, res) {
+  try {
+    const users = await rechercherUtilisateursParEmail(req.query.email || '');
+    return res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erreur lors de la recherche des utilisateurs',
+    });
+  }
+}
+
+export async function promouvoirUtilisateurProController(req, res) {
+  try {
+    const utilisateur_id = req.params.id;
+    const admin_id = req.user.utilisateur_id;
+    const result = await promouvoirProfessionnel({ utilisateur_id, admin_id });
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      utilisateur: result.utilisateur,
+      professionnel: result.professionnel,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message || 'Erreur lors de la promotion en professionnel',
     });
   }
 }
