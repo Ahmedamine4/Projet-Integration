@@ -1,6 +1,6 @@
 <template>
   <div class="feed-shell">
-    <Sidebar :user="mockUser" />
+    <Sidebar :user="sidebarUser" />
 
     <main class="feed-page">
       <FeedHeader class="sticky-header" />
@@ -99,25 +99,49 @@
           </aside>
 
           <section class="feed-list">
-            <template v-if="filteredProjects.length">
-              <FeedProjectCard
-                v-for="project in filteredProjects"
-                :key="project.id"
-                :project="project"
-                @click="openProjectDetail(project)"
-                @share="shareProject = $event"
-                @open-student="openProjectOwnerPortfolio"
-              />
-            </template>
+  <div
+    v-if="isLoadingFeed"
+    class="feed-empty"
+  >
+    <p>Chargement du feed...</p>
+  </div>
 
-            <div
-              v-else
-              class="feed-empty"
-            >
-              <SearchX :size="32" />
-              <p>{{ feedConfig.emptyMessage }}</p>
-            </div>
-          </section>
+  <div
+    v-else-if="feedError"
+    class="feed-empty"
+  >
+    <SearchX :size="32" />
+    <p>{{ feedError }}</p>
+  </div>
+
+  <template v-else-if="filteredProjects.length">
+    <FeedProjectCard
+      v-for="project in filteredProjects"
+      :key="project.feedKey || project.id"
+      :project="project"
+      @click="openProjectDetail(project)"
+      @share="shareProject = $event"
+      @open-student="openProjectOwnerPortfolio"
+    />
+
+    <button
+      v-if="hasMoreProjects"
+      type="button"
+      class="load-more-button"
+      @click="loadMoreProjects"
+    >
+      Voir plus
+    </button>
+  </template>
+
+  <div
+    v-else
+    class="feed-empty"
+  >
+    <SearchX :size="32" />
+    <p>{{ feedConfig.emptyMessage }}</p>
+  </div>
+</section>
 
           <aside class="feed-sidebar sticky-filters">
             <FeedFiltersPanel
@@ -154,9 +178,13 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Check, Plus, SearchX } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import { useFeedExperienceStore } from '@/stores/feedExperience';
+import { useFeedOfferStore } from '@/stores/feedOffer';
+import { useFeedStudentStore } from '@/stores/feedStudent';
 
 import Sidebar from '@/components/layout/AppSidebar.vue';
 import FeedHeader from '@/components/feed/feedHeader.vue';
@@ -168,20 +196,33 @@ import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
 import ApplyOfferModal from '@/components/feed/ApplyOfferModal.vue';
 
 const router = useRouter();
+const authStore = useAuthStore();
+const feedExperienceStore = useFeedExperienceStore();
+const feedOfferStore = useFeedOfferStore();
+const feedStudentStore = useFeedStudentStore();
 
-const mockUser = {
-  prenom: 'Wissam',
-  nom: 'Bakkali',
 
-  // Test roles:
-  // 'etudiant' | 'professionnel' | 'professeur'
-  role: 'professeur',
-};
+const sidebarUser = computed(() => {
+  const user = authStore.user || {};
 
-const currentRole = computed(() => mockUser.role || 'etudiant');
+  return {
+    ...user,
+    prenom: user.prenom || user.firstName || '',
+    nom: user.nom || user.lastName || '',
+    role: String(user.role || 'etudiant').toLowerCase(),
+  };
+});
+
+const currentRole = computed(() => sidebarUser.value.role || 'etudiant');
 const isRecruiter = computed(() => currentRole.value === 'professionnel');
 const isProfessor = computed(() => currentRole.value === 'professeur');
+const feedItems = computed(() => feedExperienceStore.items);
+const offers = computed(() => feedOfferStore.offers);
+const suggestedStudents = computed(() => feedStudentStore.suggestedStudents);
+const studentsFromSchool = computed(() => feedStudentStore.studentsFromSchool);
 
+const isLoadingFeed = computed(() => feedExperienceStore.loading);
+const feedError = computed(() => feedExperienceStore.error);
 const feedConfigByRole = {
   etudiant: {
     topSectionTitle: 'Recommended opportunities',
@@ -214,108 +255,13 @@ const feedConfigByRole = {
 const feedConfig = computed(() => {
   return feedConfigByRole[currentRole.value] || feedConfigByRole.etudiant;
 });
-
-const suggestedStudents = ref([
-  {
-    id: 1,
-    portfolioUserId: 1,
-    initials: 'SI',
-    name: 'Sara Idrissi',
-    speciality: 'Frontend Developer',
-    schoolName: 'ENSA Casablanca',
-    stack: ['Vue', 'Node'],
-    technologies: ['Vue 3', 'Node.js', 'PostgreSQL'],
-    domains: ['Web Frontend', 'Web Backend'],
-    portfolioScore: 86,
-    isFollowing: false,
-  },
-  {
-    id: 2,
-    portfolioUserId: 2,
-    initials: 'YK',
-    name: 'Yassine Karim',
-    speciality: 'AI & Data Student',
-    schoolName: 'ENSIAS Rabat',
-    stack: ['Python', 'FastAPI'],
-    technologies: ['Python', 'FastAPI', 'LangChain'],
-    domains: ['Machine Learning & AI', 'Data Engineering'],
-    portfolioScore: 91,
-    isFollowing: false,
-  },
-  {
-    id: 3,
-    portfolioUserId: 3,
-    initials: 'AB',
-    name: 'Amal Benali',
-    speciality: 'DevOps Student',
-    schoolName: 'ENSA Casablanca',
-    stack: ['Docker', 'CI/CD'],
-    technologies: ['Docker', 'GitLab CI', 'Linux'],
-    domains: ['DevOps & Cloud Infrastructure'],
-    portfolioScore: 78,
-    isFollowing: false,
-  },
-]);
-
-const studentsFromSchool = ref([
-  {
-    id: 4,
-    portfolioUserId: 4,
-    initials: 'AK',
-    name: 'Amine Kettani',
-    speciality: 'Software Engineering Student',
-    schoolName: 'ENSA Casablanca',
-    stack: ['Vue 3', 'FastAPI'],
-    technologies: ['Vue 3', 'FastAPI', 'PostgreSQL'],
-    domains: ['Web Frontend', 'Web Backend'],
-    portfolioScore: 82,
-    isFollowing: false,
-  },
-  {
-    id: 5,
-    portfolioUserId: 5,
-    initials: 'YB',
-    name: 'Youssef Benmoussa',
-    speciality: 'Mobile Development Student',
-    schoolName: 'ENSA Casablanca',
-    stack: ['Flutter', 'Node.js'],
-    technologies: ['Flutter', 'Node.js', 'Firebase'],
-    domains: ['Mobile Development', 'Web Backend'],
-    portfolioScore: 74,
-    isFollowing: false,
-  },
-  {
-    id: 6,
-    portfolioUserId: 6,
-    initials: 'NB',
-    name: 'Nour Berrada',
-    speciality: 'Cybersecurity Student',
-    schoolName: 'ENSA Casablanca',
-    stack: ['Linux', 'Security'],
-    technologies: ['Linux', 'Python', 'Networking'],
-    domains: ['Cybersecurity'],
-    portfolioScore: 88,
-    isFollowing: false,
-  },
-]);
-
-const topStudents = computed(() => {
-  return [...suggestedStudents.value].sort((a, b) => {
-    return (b.portfolioScore || 0) - (a.portfolioScore || 0);
-  });
-});
-
-const sidebarStudents = computed(() => {
-  if (isRecruiter.value) return topStudents.value;
-  if (isProfessor.value) return studentsFromSchool.value;
-
-  return suggestedStudents.value;
-});
-
 const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
 const applyingOffer = ref(null);
+const initialVisibleProjects = 20;
+const visibleProjectsStep = 10;
+const visibleLimit = ref(initialVisibleProjects);
 
 const defaultFilters = () => ({
   source: 'all',
@@ -326,125 +272,67 @@ const defaultFilters = () => ({
 
 const filters = ref(defaultFilters());
 
-const mockProjects = [
-  {
-    id: 'cmq2w34ze000dug4a8r9byuqb',
-    type: 'projet',
-    portfolioUserId: 4,
-    campusRankScore: 94,
-    portfolioScore: 82,
-    credibilityScore: 82,
-    title: 'SmartStudyRoom Platform',
-    description:
-      'Une plateforme collaborative qui utilise l\'IA pour optimiser les espaces d\'étude partagés. Les étudiants peuvent réserver des salles, former des groupes d\'étude et recevoir des recommandations de ressources personnalisées en fonction de leur cours et de leurs objectifs.',
-    date: '2025-05-18',
-    imagePreview:
-      'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80',
-    shareUrl: null,
-    studentName: 'Amine Kettani',
-    schoolName: 'ENSA Casablanca',
-    feedReason: 'Même école',
-    isVerified: true,
-    recommendationsCount: 128,
-    githubReposCount: 3,
-    technologies: ['Vue 3', 'FastAPI', 'PostgreSQL'],
-    domains: ['Web Frontend', 'Web Backend', 'Machine Learning & AI'],
-  },
-  {
-    id: 2,
-    type: 'projet',
-    portfolioUserId: 2,
-    campusRankScore: 88,
-    portfolioScore: 91,
-    credibilityScore: 91,
-    title: 'AI Portfolio Recommendation System',
-    description:
-      'Un système intelligent qui analyse les projets académiques des étudiants et propose des recommandations de compétences à acquérir, ainsi que des profils d\'entreprises susceptibles d\'être intéressées par leur profil. Utilise des embeddings NLP pour comparer les portfolios.',
-    date: '2025-06-02',
-    imagePreview:
-      'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80',
-    shareUrl: null,
-    studentName: 'Sara Idrissi',
-    schoolName: 'ENSIAS Rabat',
-    feedReason: 'Abonnement',
-    isVerified: true,
-    recommendationsCount: 97,
-    githubReposCount: 2,
-    technologies: ['Python', 'LangChain', 'React'],
-    domains: ['Machine Learning & AI', 'Data Engineering'],
-  },
-  {
-    id: 3,
-    type: 'projet',
-    portfolioUserId: 5,
-    campusRankScore: 72,
-    portfolioScore: 74,
-    credibilityScore: 74,
-    title: 'Campus Event Aggregator',
-    description:
-      'Application mobile et web qui centralise tous les événements du campus — workshops, hackathons, séminaires — et envoie des notifications personnalisées aux étudiants selon leurs centres d\'intérêt et leur parcours académique.',
-    date: '2025-04-30',
-    imagePreview:
-      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
-    shareUrl: null,
-    studentName: 'Youssef Benmoussa',
-    schoolName: 'ENSA Casablanca',
-    feedReason: 'Même école',
-    isVerified: false,
-    recommendationsCount: 54,
-    githubReposCount: 1,
-    technologies: ['Flutter', 'Node.js', 'Firebase'],
-    domains: ['Mobile Development', 'Web Backend'],
-  },
-];
+const topStudents = computed(() => {
+  return [...suggestedStudents.value].sort((a, b) => {
+    return (b.rankScore || b.portfolioScore || 0) - (a.rankScore || a.portfolioScore || 0);
+  });
+});
 
-const mockOffers = [
-  {
-    id: 1,
-    title: 'Frontend Developer Intern',
-    company: 'Capgemini',
-    location: 'Casablanca',
-    duration: '4 to 6 months',
-    level: 'Student / Junior',
-    technologies: ['Vue 3', 'JavaScript', 'HTML', 'CSS', 'Git'],
-    description:
-      'Join the frontend team to build reusable Vue components, improve UI consistency and contribute to internal web platforms.',
-  },
-  {
-    id: 2,
-    title: 'Junior Full-Stack Developer',
-    company: 'Inetum',
-    location: 'Rabat',
-    duration: 'Permanent contract',
-    level: 'Junior',
-    technologies: ['React', 'Node.js', 'PostgreSQL', 'Docker'],
-    description:
-      'Work on full-stack web applications, participate in API development, database integration and frontend feature delivery.',
-  },
-  {
-    id: 3,
-    title: 'AI Engineering Intern',
-    company: 'OCP Solutions',
-    location: 'Hybrid',
-    duration: '6 months',
-    level: 'Final-year student',
-    technologies: ['Python', 'FastAPI', 'LangChain', 'PostgreSQL'],
-    description:
-      'Contribute to AI-powered internal tools, build APIs, test LLM-based workflows and support data-driven product features.',
-  },
-  {
-    id: 4,
-    title: 'DevOps Intern',
-    company: 'Orange Business',
-    location: 'Casablanca',
-    duration: '4 months',
-    level: 'Student',
-    technologies: ['Docker', 'CI/CD', 'Linux', 'GitLab'],
-    description:
-      'Assist the DevOps team with deployment pipelines, containerized environments and monitoring improvements.',
-  },
-];
+const sidebarStudents = computed(() => {
+  if (isRecruiter.value) return topStudents.value;
+  if (isProfessor.value) return studentsFromSchool.value;
 
+  return suggestedStudents.value;
+});
+
+let filtersTimer = null;
+
+function buildExperienceParams() {
+  return {
+    search: search.value.trim() || undefined,
+    source: filters.value.source !== 'all' ? filters.value.source : undefined,
+    sort: filters.value.sort || 'trending',
+    technology: filters.value.technology || undefined,
+    domain: filters.value.domain || undefined,
+  };
+}
+
+function fetchFeedExperiences() {
+  feedExperienceStore.fetchFeedExperiences(buildExperienceParams());
+}
+
+onMounted(() => {
+  feedExperienceStore.fetchFeedTechnologies();
+
+  fetchFeedExperiences();
+
+  feedOfferStore.fetchFeedOffers();
+
+  feedStudentStore.fetchFeedStudents('suggested');
+  feedStudentStore.fetchFeedStudents('school');
+});
+
+watch(
+  [search, filters],
+  () => {
+    visibleLimit.value = initialVisibleProjects;
+
+    if (filtersTimer) {
+      clearTimeout(filtersTimer);
+    }
+
+    filtersTimer = setTimeout(() => {
+      fetchFeedExperiences();
+    }, 350);
+  },
+  { deep: true }
+);
+
+onUnmounted(() => {
+  if (filtersTimer) {
+    clearTimeout(filtersTimer);
+  }
+});
 const topCarouselItems = computed(() => {
   if (isRecruiter.value || isProfessor.value) {
     return topStudents.value.map((student) => ({
@@ -462,27 +350,13 @@ const topCarouselItems = computed(() => {
     }));
   }
 
-  return mockOffers.map((offer) => ({
-    ...offer,
-    carouselType: 'offer',
-  }));
+  return offers.value.map((offer) => ({
+  ...offer,
+  carouselType: 'offer',
+}));
 });
 
-const allTechnologies = computed(() => {
-  const technologiesMap = new Map();
-
-  mockProjects.forEach((project) => {
-    (project.technologies || []).forEach((technology) => {
-      const key = normalizeFilterValue(technology);
-
-      if (!technologiesMap.has(key)) {
-        technologiesMap.set(key, technology);
-      }
-    });
-  });
-
-  return [...technologiesMap.values()].sort((a, b) => a.localeCompare(b));
-});
+const allTechnologies = computed(() => feedExperienceStore.filterTechnologies);
 
 const allDomains = computed(() => [
   'Mobile Development',
@@ -496,67 +370,46 @@ const allDomains = computed(() => [
   'Web Backend',
 ]);
 
-const filteredProjects = computed(() => {
+const rankedProjects = computed(() => {
   const keyword = search.value.trim().toLowerCase();
-  const currentFilters = filters.value;
 
-  let result = mockProjects.filter((project) => {
-    if (keyword) {
-      const searchableText = [
-        project.title,
-        project.description,
-        project.studentName,
-        project.schoolName,
-        project.type,
-        ...(project.technologies || []),
-        ...(project.domains || []),
+  return [...feedItems.value]
+    .filter((item) => {
+      if (!keyword) return true;
+
+      const text = [
+        item.title,
+        item.description,
+        item.studentName,
+        item.schoolName,
+        item.type,
+        ...(item.technologies || []),
+        ...(item.domains || []),
       ]
         .join(' ')
         .toLowerCase();
 
-      if (!searchableText.includes(keyword)) return false;
-    }
+      return text.includes(keyword);
+    })
+    .sort((a, b) => {
+      if (filters.value.sort === 'recent') {
+        return new Date(b.date || 0) - new Date(a.date || 0);
+      }
 
-    if (
-      currentFilters.source === 'same-school' &&
-      project.feedReason !== 'Même école'
-    ) {
-      return false;
-    }
+      if (filters.value.sort === 'portfolio-score') {
+        return (b.portfolioScore || 0) - (a.portfolioScore || 0);
+      }
 
-    if (
-      currentFilters.source === 'following' &&
-      project.feedReason !== 'Abonnement'
-    ) {
-      return false;
-    }
+      return (b.rankScore || 0) - (a.rankScore || 0);
+    });
+});
 
-    if (!itemHasTechnology(project, currentFilters.technology)) {
-      return false;
-    }
+const filteredProjects = computed(() => {
+  return rankedProjects.value.slice(0, visibleLimit.value);
+});
 
-    if (!itemHasDomain(project, currentFilters.domain)) {
-      return false;
-    }
-
-    return true;
-  });
-
-  if (currentFilters.sort === 'portfolio-score') {
-    result = [...result].sort(
-      (a, b) => (b.portfolioScore || 0) - (a.portfolioScore || 0)
-    );
-  } else if (currentFilters.sort === 'trending') {
-    result = [...result].sort(
-      (a, b) => (b.campusRankScore || 0) - (a.campusRankScore || 0)
-    );
-  } else if (currentFilters.sort === 'recent') {
-    result = [...result].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
-  }
-
-  return result;
+const hasMoreProjects = computed(() => {
+  return visibleLimit.value < rankedProjects.value.length;
 });
 
 function buildStudentCarouselDescription(student) {
@@ -571,49 +424,14 @@ function buildStudentCarouselDescription(student) {
   return `${score} with experience in ${domains}.`;
 }
 
-function normalizeFilterValue(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '')
-    .replace(/\./g, '');
-}
-
-function itemHasTechnology(item, selectedTechnology) {
-  if (!selectedTechnology) return true;
-
-  const selected = normalizeFilterValue(selectedTechnology);
-
-  return (item.technologies || []).some((technology) => {
-    const normalizedTechnology = normalizeFilterValue(technology);
-
-    return (
-      normalizedTechnology === selected ||
-      normalizedTechnology.includes(selected) ||
-      selected.includes(normalizedTechnology)
-    );
-  });
-}
-
-function itemHasDomain(item, selectedDomain) {
-  if (!selectedDomain) return true;
-
-  const selected = normalizeFilterValue(selectedDomain);
-
-  return (item.domains || []).some((domain) => {
-    const normalizedDomain = normalizeFilterValue(domain);
-
-    return (
-      normalizedDomain === selected ||
-      normalizedDomain.includes(selected) ||
-      selected.includes(normalizedDomain)
-    );
-  });
-}
-
 function resetFilters() {
   filters.value = defaultFilters();
   search.value = '';
+  visibleLimit.value = initialVisibleProjects;
+}
+
+function loadMoreProjects() {
+  visibleLimit.value += visibleProjectsStep;
 }
 
 function handleTopCarouselSelect(item) {
@@ -673,9 +491,15 @@ function closeApplyOffer() {
   applyingOffer.value = null;
 }
 
-function handleApplyOfferSubmit(payload) {
-  console.log('Offer application payload:', payload);
-  closeApplyOffer();
+async function handleApplyOfferSubmit(payload) {
+  if (!applyingOffer.value?.id) return;
+
+  try {
+    await feedOfferStore.applyToOffer(applyingOffer.value.id, payload);
+    closeApplyOffer();
+  } catch (error) {
+    console.error('Erreur candidature offre:', error);
+  }
 }
 
 function openAddOfferModal() {
@@ -683,7 +507,7 @@ function openAddOfferModal() {
 }
 
 function handleSidebarStudentAction(student) {
-  student.isFollowing = !student.isFollowing;
+  feedStudentStore.toggleFollow(student);
 }
 
 function sidebarActionLabel(student) {
@@ -877,6 +701,38 @@ function openProjectOwnerPortfolio(project) {
   border-color: rgba(var(--color-primary-rgb), 0.1);
   background: rgba(var(--color-primary-rgb), 0.035);
   color: rgba(var(--color-primary-rgb), 0.62);
+}
+
+.load-more-button {
+  justify-self: center;
+  min-height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.18);
+  border-radius: 999px;
+  padding: 0 var(--space-lg);
+  background: rgba(var(--color-surface-rgb), 0.72);
+  color: rgba(var(--color-primary-rgb), 0.82);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-bold);
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.load-more-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(var(--color-primary-rgb), 0.32);
+  background: rgba(var(--color-surface-rgb), 0.92);
+}
+
+.load-more-button:focus-visible {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
 }
 
 .feed-sidebar {
