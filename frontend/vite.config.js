@@ -17,12 +17,17 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    allowedHosts: ['frontend', 'localhost'],
+    allowedHosts: ['frontend', 'localhost', '192.168.56.11'],
+    hmr: {
+      protocol: 'wss',
+      host: '192.168.56.11',
+      clientPort: 443,
+    },
     proxy: {
       '/api': {
-        target: 'http://backend:3000',
-        changeOrigin: true,
+      target: 'http://backend:3000',
+      changeOrigin: true,
       },
     },
-  },
+  }
 });
