@@ -451,18 +451,19 @@ model ValideStage {
 }
 
 model ValideEtudiant {
-  utilisateur_id String
-  institution_id String
-  statut         StatutValidation?
-  date_debut           DateTime?
-  date_fin             DateTime?
-  description    String?
-  niveau         String?
+  valide_etudiant_id String @id @default(cuid())
+  utilisateur_id     String
+  institution_id     String
+  statut             StatutValidation?
+  date_debut         DateTime?
+  date_fin           DateTime?
+  description        String?
+  niveau             String?
 
   etudiant    Etudiant    @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
   institution Institution @relation(fields: [institution_id], references: [institution_id], onDelete: Cascade)
 
-  @@id([utilisateur_id, institution_id])
+  @@index([utilisateur_id, institution_id])
   @@map("valide_etudiant")
 }
 

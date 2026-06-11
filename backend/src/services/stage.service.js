@@ -3,6 +3,8 @@ import { lierCompetencesExperience, supprimerCompetencesDeveloppees, getCompeten
 import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
 import { uploadPhoto, remplacerPhoto, supprimerPhoto } from '../utils/photo.utils.js';
 
+const parseBoolean = (value) => value === true || value === 'true' || value === '1' || value === 1;
+
 export const creeStage = async (etudiantId, data, file) => {
 
   const stageExistant = await prisma.experience.findFirst({
@@ -16,7 +18,7 @@ export const creeStage = async (etudiantId, data, file) => {
 
   const technologies = JSON.parse(data.technologies || '[]');
   const domaines = JSON.parse(data.domaines || '[]');
-  const visibilite = data.visibilite !== undefined ? data.visibilite : false;
+  const visibilite = data.visibilite !== undefined ? parseBoolean(data.visibilite) : false;
 
   // Upload photo avant la transaction
   const photoUrl = file ? await uploadPhoto(file, 'stages-photos') : null;
@@ -183,7 +185,7 @@ export const editStage = async (etudiantId, experienceId, data, file) => {
       : experience.stage.duree;
 
     const visibilite = data.visibilite !== undefined
-      ? data.visibilite
+      ? parseBoolean(data.visibilite)
       : experience.visibilite;
 
     await tx.experience.update({

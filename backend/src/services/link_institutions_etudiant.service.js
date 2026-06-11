@@ -63,37 +63,16 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
             data: { etudie: isEtudiantActif }
         });
 
-        // B. Ajouter ou mettre à jour les institutions dans ValideEtudiant
-        // On utilise upsert pour éviter les erreurs de doublons si l'étudiant 
-        // renvoie la requête pour une institution qu'il a déjà.
-        const upsertPromises = validesEtudiantsData.map((data) =>
-            tx.valideEtudiant.upsert({
-                where: {
-                    utilisateur_id_institution_id: {
-                        utilisateur_id: data.utilisateur_id,
-                        institution_id: data.institution_id
-                    }
-                },
-                update: {
-                    date_debut: data.date_debut,
-                    date_fin: data.date_fin,
-                    niveau: data.niveau,
-                    description: data.description,
-                    statut: data.statut
-                },
-                create: {
-                    utilisateur_id: data.utilisateur_id,
-                    institution_id: data.institution_id,
-                    date_debut: data.date_debut,
-                    date_fin: data.date_fin,
-                    niveau: data.niveau,
-                    description: data.description,
-                    statut: data.statut
-                }
+        // B. Ajouter les institutions dans ValideEtudiant
+        // On crée un enregistrement pour chaque institution, même si le même
+        // étudiant et la même institution apparaissent plusieurs fois.
+        const createPromises = validesEtudiantsData.map((data) =>
+            tx.valideEtudiant.create({
+                data
             })
         );
 
-        return await Promise.all(upsertPromises);
+        return await Promise.all(createPromises);
     });
 
     return resultats;
@@ -108,7 +87,7 @@ export const updateValidEtudiantDescriptionService = async (etudiantId, descript
       date_debut: 'desc',
     },
     select: {
-      institution_id: true,
+      valide_etudiant_id: true,
     },
   });
 
@@ -118,10 +97,7 @@ export const updateValidEtudiantDescriptionService = async (etudiantId, descript
 
   return prisma.valideEtudiant.update({
     where: {
-      utilisateur_id_institution_id: {
-        utilisateur_id: etudiantId,
-        institution_id: record.institution_id,
-      },
+      valide_etudiant_id: record.valide_etudiant_id,
     },
     data: {
       description,
