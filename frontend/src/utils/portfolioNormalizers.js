@@ -202,7 +202,7 @@ export function normalizeEducation(institutions = []) {
       school: entry.institution?.nom ?? 'Institution',
       level: entry.niveau ?? entry.statut ?? '',
       status: entry.statut ?? '',
-      description: entry.institution?.description ?? '',
+      description: entry.description ?? '',
       period,
     };
   });
@@ -260,6 +260,7 @@ export function normalizePortfolio(data) {
       email: user.email ?? '',
       phone: user.phone ?? '',
       photo: user.photo ?? '',
+      role: user.role ?? '',
       github: user.github ?? '',
       linkedin: user.linkedin ?? '',
       x: user.x ?? '',

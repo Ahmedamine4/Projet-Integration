@@ -78,18 +78,30 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
     return resultats;
 };
 
-export const updateValidEtudiantDescriptionService = async (etudiantId, description) => {
-  const record = await prisma.valideEtudiant.findFirst({
-    where: {
-      utilisateur_id: etudiantId,
-    },
-    orderBy: {
-      date_debut: 'desc',
-    },
-    select: {
-      valide_etudiant_id: true,
-    },
-  });
+export const updateValidEtudiantDescriptionService = async (etudiantId, institutionId, description) => {
+  const record = institutionId
+    ? await prisma.valideEtudiant.findUnique({
+        where: {
+          utilisateur_id_institution_id: {
+            utilisateur_id: etudiantId,
+            institution_id: institutionId,
+          },
+        },
+        select: {
+          institution_id: true,
+        },
+      })
+    : await prisma.valideEtudiant.findFirst({
+        where: {
+          utilisateur_id: etudiantId,
+        },
+        orderBy: {
+          date_debut: 'desc',
+        },
+        select: {
+          institution_id: true,
+        },
+      });
 
   if (!record) {
     throw new Error('Aucune demande trouvée pour cet étudiant.');
