@@ -1,32 +1,51 @@
 import { defineComponent, nextTick } from 'vue';
-import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mount, flushPromises } from '@vue/test-utils';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import Feed from './FeedPage.vue';
+import FeedPage from './FeedPage.vue';
 
-const routerPushMock = vi.hoisted(() => vi.fn());
+const mocks = vi.hoisted(() => ({
+  routerPush: vi.fn(),
+  authStore: {},
+  feedExperienceStore: {},
+  feedOfferStore: {},
+  feedStudentStore: {},
+}));
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({
-    push: routerPushMock,
+    push: mocks.routerPush,
   }),
+}));
+
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: () => mocks.authStore,
+}));
+
+vi.mock('@/stores/feedExperience', () => ({
+  useFeedExperienceStore: () => mocks.feedExperienceStore,
+}));
+
+vi.mock('@/stores/feedOffer', () => ({
+  useFeedOfferStore: () => mocks.feedOfferStore,
+}));
+
+vi.mock('@/stores/feedStudent', () => ({
+  useFeedStudentStore: () => mocks.feedStudentStore,
 }));
 
 vi.mock('lucide-vue-next', () => ({
   Check: {
     name: 'Check',
-    props: ['size', 'strokeWidth'],
-    template: '<svg data-test="check-icon" />',
+    template: '<span data-test="icon-check" />',
   },
   Plus: {
     name: 'Plus',
-    props: ['size', 'strokeWidth'],
-    template: '<svg data-test="plus-icon" />',
+    template: '<span data-test="icon-plus" />',
   },
   SearchX: {
     name: 'SearchX',
-    props: ['size'],
-    template: '<svg data-test="search-x-icon" />',
+    template: '<span data-test="icon-search-x" />',
   },
 }));
 
@@ -35,16 +54,16 @@ const SidebarStub = defineComponent({
   props: {
     user: {
       type: Object,
-      default: null,
+      default: () => ({}),
     },
   },
   template: `
     <aside
       data-test="sidebar"
-      :data-user-role="user?.role || ''"
-    >
-      {{ user?.prenom }} {{ user?.nom }}
-    </aside>
+      :data-role="user.role"
+      :data-prenom="user.prenom"
+      :data-nom="user.nom"
+    />
   `,
 });
 
@@ -71,41 +90,20 @@ const FeedOffersCarouselStub = defineComponent({
   },
   emits: ['select-offer'],
   template: `
-    <section
-      data-test="offers-carousel"
-      :data-title="title"
-      :data-subtitle="subtitle"
-    >
-      <h2>{{ title }}</h2>
-      <p>{{ subtitle }}</p>
-
-      <article
-        v-for="offer in offers"
-        :key="offer.id"
-        data-test="carousel-item"
-        :data-title="offer.title"
-        :data-type="offer.carouselType"
-        @click="$emit('select-offer', offer)"
-      >
-        {{ offer.title }}
-      </article>
+    <section data-test="offers-carousel">
+      <h2 data-test="carousel-title">{{ title }}</h2>
+      <p data-test="carousel-subtitle">{{ subtitle }}</p>
 
       <button
+        v-for="item in offers"
+        :key="item.id"
         type="button"
-        data-test="select-custom-offer"
-        @click="$emit('select-offer', {
-          id: 99,
-          title: 'Frontend Developer Intern',
-          company: 'Capgemini',
-          location: 'Casablanca',
-          duration: '6 months',
-          level: 'Internship',
-          technologies: ['Vue 3'],
-          description: 'Offer description',
-          carouselType: 'offer'
-        })"
+        data-test="carousel-item"
+        :data-id="item.id"
+        :data-carousel-type="item.carouselType"
+        @click="$emit('select-offer', item)"
       >
-        Select custom offer
+        {{ item.title }}
       </button>
     </section>
   `,
@@ -123,13 +121,13 @@ const FeedProjectCardStub = defineComponent({
   template: `
     <article
       data-test="project-card"
-      :data-id="String(project.id)"
+      :data-id="project.id"
       :data-title="project.title"
-      :data-student="project.studentName"
       @click="$emit('click')"
     >
       <h3>{{ project.title }}</h3>
-      <p>{{ project.studentName }}</p>
+      <p>{{ project.description }}</p>
+      <span>{{ project.studentName }}</span>
 
       <button
         type="button"
@@ -144,7 +142,7 @@ const FeedProjectCardStub = defineComponent({
         data-test="open-project-owner"
         @click.stop="$emit('open-student', project)"
       >
-        Open owner
+        Open student
       </button>
     </article>
   `,
@@ -155,7 +153,7 @@ const FeedFiltersPanelStub = defineComponent({
   props: {
     filters: {
       type: Object,
-      required: true,
+      default: () => ({}),
     },
     search: {
       type: String,
@@ -172,76 +170,27 @@ const FeedFiltersPanelStub = defineComponent({
   },
   emits: ['update:filters', 'update:search', 'reset'],
   template: `
-    <section
-      data-test="filters-panel"
-      :data-search="search"
-      :data-source="filters.source"
-      :data-sort="filters.sort"
-      :data-technology="filters.technology || ''"
-      :data-domain="filters.domain || ''"
-    >
-      <button
-        type="button"
-        data-test="search-campus"
-        @click="$emit('update:search', 'Campus Event')"
+    <section data-test="filters-panel">
+      <input
+        data-test="filters-search"
+        :value="search"
+        @input="$emit('update:search', $event.target.value)"
       >
-        Search Campus Event
-      </button>
-
-      <button
-        type="button"
-        data-test="search-empty"
-        @click="$emit('update:search', 'zzzzzz')"
-      >
-        Search empty
-      </button>
-
-      <button
-        type="button"
-        data-test="filter-same-school"
-        @click="$emit('update:filters', { ...filters, source: 'same-school' })"
-      >
-        Same school
-      </button>
-
-      <button
-        type="button"
-        data-test="filter-following"
-        @click="$emit('update:filters', { ...filters, source: 'following' })"
-      >
-        Following
-      </button>
-
-      <button
-        type="button"
-        data-test="filter-vue"
-        @click="$emit('update:filters', { ...filters, technology: 'Vue3' })"
-      >
-        Vue
-      </button>
-
-      <button
-        type="button"
-        data-test="filter-mobile"
-        @click="$emit('update:filters', { ...filters, domain: 'Mobile' })"
-      >
-        Mobile
-      </button>
 
       <button
         type="button"
         data-test="sort-recent"
         @click="$emit('update:filters', { ...filters, sort: 'recent' })"
       >
-        Recent
+        Sort recent
       </button>
 
       <button
         type="button"
-        data-test="sort-portfolio"
-        @click="$emit('update:filters', { ...filters, sort: 'portfolio-score' })"
+        data-test="filter-vue"
+        @click="$emit('update:filters', { ...filters, technology: 'Vue.js' })"
       >
-        Portfolio score
+        Filter Vue
       </button>
 
       <button
@@ -251,24 +200,6 @@ const FeedFiltersPanelStub = defineComponent({
       >
         Reset
       </button>
-
-      <div data-test="technologies-list">
-        <span
-          v-for="technology in technologies"
-          :key="technology"
-        >
-          {{ technology }}
-        </span>
-      </div>
-
-      <div data-test="domains-list">
-        <span
-          v-for="domain in domains"
-          :key="domain"
-        >
-          {{ domain }}
-        </span>
-      </div>
     </section>
   `,
 });
@@ -285,15 +216,15 @@ const ShareProjectModalStub = defineComponent({
   template: `
     <div
       v-if="project"
-      data-test="share-project-modal"
-      :data-title="project.title"
+      data-test="share-modal"
     >
+      <span>{{ project.title }}</span>
       <button
         type="button"
         data-test="close-share-modal"
         @click="$emit('close')"
       >
-        Close share
+        Close
       </button>
     </div>
   `,
@@ -312,15 +243,8 @@ const FeedOfferDetailModalStub = defineComponent({
     <div
       v-if="offer"
       data-test="offer-detail-modal"
-      :data-title="offer.title"
     >
-      <button
-        type="button"
-        data-test="close-offer-detail"
-        @click="$emit('close')"
-      >
-        Close offer
-      </button>
+      <span>{{ offer.title }}</span>
 
       <button
         type="button"
@@ -328,6 +252,14 @@ const FeedOfferDetailModalStub = defineComponent({
         @click="$emit('apply', offer)"
       >
         Apply
+      </button>
+
+      <button
+        type="button"
+        data-test="close-offer-detail"
+        @click="$emit('close')"
+      >
+        Close
       </button>
     </div>
   `,
@@ -346,29 +278,129 @@ const ApplyOfferModalStub = defineComponent({
     <div
       v-if="offer"
       data-test="apply-offer-modal"
-      :data-title="offer.title"
     >
+      <span>{{ offer.title }}</span>
+
       <button
         type="button"
-        data-test="close-apply-offer"
-        @click="$emit('close')"
+        data-test="submit-application"
+        @click="$emit('submit', { message: 'Interested in this offer.' })"
       >
-        Close apply
+        Submit application
       </button>
 
       <button
         type="button"
-        data-test="submit-apply-offer"
-        @click="$emit('submit', { message: 'I am interested' })"
+        data-test="close-apply-modal"
+        @click="$emit('close')"
       >
-        Submit apply
+        Close
       </button>
     </div>
   `,
 });
 
+function createProject(overrides = {}) {
+  return {
+    id: 1,
+    title: 'Vue Portfolio',
+    description: 'A Vue portfolio project',
+    studentName: 'Nour Alami',
+    schoolName: 'ENSA Tanger',
+    type: 'projet',
+    technologies: ['Vue.js'],
+    domains: ['Web Frontend'],
+    rankScore: 80,
+    portfolioScore: 70,
+    date: '2026-06-01',
+    portfolioUserId: 101,
+    ...overrides,
+  };
+}
+
+function createProjects(count) {
+  return Array.from({ length: count }, (_, index) => {
+    const number = index + 1;
+
+    return createProject({
+      id: number,
+      title: `Project ${number}`,
+      description: `Description ${number}`,
+      rankScore: 100 - number,
+      portfolioScore: number,
+      date: `2026-05-${String(number).padStart(2, '0')}`,
+      portfolioUserId: 1000 + number,
+    });
+  });
+}
+
+const suggestedStudents = [
+  {
+    id: 1,
+    userId: 201,
+    portfolioUserId: 301,
+    initials: 'NA',
+    name: 'Nour Alami',
+    speciality: 'Frontend',
+    stack: ['Vue.js', 'CSS'],
+    technologies: ['Vue.js'],
+    domains: ['Web Frontend'],
+    schoolName: 'ENSA Tanger',
+    portfolioScore: 82,
+    rankScore: 70,
+    isFollowing: false,
+  },
+  {
+    id: 2,
+    userId: 202,
+    portfolioUserId: 302,
+    initials: 'YA',
+    name: 'Youssef Amrani',
+    speciality: 'DevOps',
+    stack: ['Docker'],
+    technologies: ['Docker'],
+    domains: ['DevOps & Cloud Infrastructure'],
+    schoolName: 'ENSIAS',
+    portfolioScore: 91,
+    rankScore: 95,
+    isFollowing: true,
+  },
+];
+
+const studentsFromSchool = [
+  {
+    id: 3,
+    userId: 203,
+    portfolioUserId: 303,
+    initials: 'SA',
+    name: 'Sara Alaoui',
+    speciality: 'Cybersecurity',
+    stack: ['Security'],
+    technologies: ['Security'],
+    domains: ['Cybersecurity'],
+    schoolName: 'ENSA Tanger',
+    portfolioScore: 88,
+    rankScore: 88,
+    isFollowing: false,
+  },
+];
+
+const offers = [
+  {
+    id: 11,
+    title: 'Frontend Internship',
+    company: 'Tech Corp',
+    location: 'Tanger',
+    duration: '3 months',
+    level: 'Internship',
+    technologies: ['Vue.js'],
+    domains: ['Web Frontend'],
+    description: 'Frontend internship description',
+  },
+];
+
 function mountFeed() {
-  return mount(Feed, {
+  return mount(FeedPage, {
     global: {
       stubs: {
         Sidebar: SidebarStub,
@@ -384,329 +416,354 @@ function mountFeed() {
   });
 }
 
-function getProjectTitles(wrapper) {
-  return wrapper
-    .findAll('[data-test="project-card"]')
-    .map((card) => card.attributes('data-title'));
-}
-
-describe('Feed', () => {
+describe('FeedPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-  });
+    vi.useFakeTimers();
 
-  it('renders the main feed layout', () => {
-    const wrapper = mountFeed();
+    mocks.routerPush.mockReset();
 
-    expect(wrapper.find('[data-test="sidebar"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="sidebar"]').text()).toContain('Wissam Bakkali');
-    expect(wrapper.find('[data-test="sidebar"]').attributes('data-user-role')).toBe('professeur');
-
-    expect(wrapper.find('[data-test="feed-header"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="offers-carousel"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="filters-panel"]').exists()).toBe(true);
-  });
-
-  it('renders professor feed configuration', () => {
-    const wrapper = mountFeed();
-
-    expect(wrapper.text()).toContain('Top students');
-    expect(wrapper.text()).toContain('Discover high-performing students from your school.');
-    expect(wrapper.text()).toContain('Students from your school');
-    expect(wrapper.text()).toContain('Profiles you may want to follow.');
-
-    expect(wrapper.find('.feed-add-offer-button').exists()).toBe(false);
-  });
-
-  it('renders top students in the carousel for professor role', () => {
-    const wrapper = mountFeed();
-
-    const carouselItems = wrapper.findAll('[data-test="carousel-item"]');
-
-    expect(carouselItems).toHaveLength(3);
-    expect(carouselItems[0].attributes('data-title')).toBe('Yassine Karim');
-    expect(carouselItems[0].attributes('data-type')).toBe('student-profile');
-    expect(carouselItems[1].attributes('data-title')).toBe('Sara Idrissi');
-    expect(carouselItems[2].attributes('data-title')).toBe('Amal Benali');
-  });
-
-  it('renders students from school in the left sidebar', () => {
-    const wrapper = mountFeed();
-
-    expect(wrapper.text()).toContain('Amine Kettani');
-    expect(wrapper.text()).toContain('Youssef Benmoussa');
-    expect(wrapper.text()).toContain('Nour Berrada');
-
-    expect(wrapper.text()).not.toContain('Sara IdrissiFrontend Developer');
-  });
-
-  it('toggles follow state for a sidebar student', async () => {
-    const wrapper = mountFeed();
-
-    const firstFollowButton = wrapper.findAll('.follow-mini-button')[0];
-
-    expect(firstFollowButton.attributes('aria-label')).toBe('Follow Amine Kettani');
-    expect(firstFollowButton.classes()).not.toContain('is-following');
-
-    await firstFollowButton.trigger('click');
-
-    expect(firstFollowButton.attributes('aria-label')).toBe('Following Amine Kettani');
-    expect(firstFollowButton.classes()).toContain('is-following');
-    expect(firstFollowButton.text()).toContain('Following');
-  });
-
-  it('opens a sidebar student portfolio', async () => {
-    const wrapper = mountFeed();
-
-    const firstStudentButton = wrapper.findAll('.suggested-name-button')[0];
-
-    await firstStudentButton.trigger('click');
-
-    expect(routerPushMock).toHaveBeenCalledWith('/portfolio/4');
-  });
-
-  it('renders projects sorted by trending by default', () => {
-    const wrapper = mountFeed();
-
-    expect(getProjectTitles(wrapper)).toEqual([
-      'SmartStudyRoom Platform',
-      'AI Portfolio Recommendation System',
-      'Campus Event Aggregator',
-    ]);
-  });
-
-  it('opens project detail when clicking a project card', async () => {
-    const wrapper = mountFeed();
-
-    await wrapper.findAll('[data-test="project-card"]')[0].trigger('click');
-
-    expect(routerPushMock).toHaveBeenCalledWith({
-      name: 'portfolio-experience',
-      params: {
-        id: 4,
-        experienceId: 'cmq2w34ze000dug4a8r9byuqb',
+    mocks.authStore = {
+      user: {
+        prenom: 'Nour',
+        nom: 'Bakkali',
+        role: 'etudiant',
       },
+    };
+
+    mocks.feedExperienceStore = {
+      items: [
+        createProject({
+          id: 1,
+          title: 'Vue Portfolio',
+          description: 'A Vue portfolio project',
+          technologies: ['Vue.js'],
+          rankScore: 70,
+          date: '2026-06-01',
+          portfolioUserId: 101,
+        }),
+        createProject({
+          id: 2,
+          title: 'Cyber Security Dashboard',
+          description: 'A cybersecurity monitoring dashboard',
+          technologies: ['Node.js'],
+          domains: ['Cybersecurity'],
+          rankScore: 90,
+          date: '2026-06-05',
+          portfolioUserId: 102,
+        }),
+        createProject({
+          id: 3,
+          title: 'DevOps Pipeline',
+          description: 'Docker and CI/CD pipeline',
+          technologies: ['Docker'],
+          domains: ['DevOps & Cloud Infrastructure'],
+          rankScore: 50,
+          date: '2026-05-15',
+          portfolioUserId: 103,
+        }),
+      ],
+      loading: false,
+      error: null,
+      filterTechnologies: ['Vue.js', 'Node.js', 'Docker'],
+      fetchFeedTechnologies: vi.fn(),
+      fetchFeedExperiences: vi.fn(),
+    };
+
+    mocks.feedOfferStore = {
+      offers,
+      fetchFeedOffers: vi.fn(),
+      applyToOffer: vi.fn().mockResolvedValue({ success: true }),
+    };
+
+    mocks.feedStudentStore = {
+      suggestedStudents,
+      studentsFromSchool,
+      fetchFeedStudents: vi.fn(),
+      toggleFollow: vi.fn(),
+    };
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('fetches feed data on mount', () => {
+    mountFeed();
+
+    expect(mocks.feedExperienceStore.fetchFeedTechnologies).toHaveBeenCalledTimes(1);
+
+    expect(mocks.feedExperienceStore.fetchFeedExperiences).toHaveBeenCalledWith({
+      search: undefined,
+      source: undefined,
+      sort: 'trending',
+      technology: undefined,
+      domain: undefined,
+    });
+
+    expect(mocks.feedOfferStore.fetchFeedOffers).toHaveBeenCalledTimes(1);
+    expect(mocks.feedStudentStore.fetchFeedStudents).toHaveBeenCalledWith('suggested');
+    expect(mocks.feedStudentStore.fetchFeedStudents).toHaveBeenCalledWith('school');
+  });
+
+  it('renders the student feed with opportunities and suggested students', () => {
+    const wrapper = mountFeed();
+
+    expect(wrapper.find('[data-test="sidebar"]').attributes('data-role')).toBe('etudiant');
+    expect(wrapper.find('[data-test="carousel-title"]').text()).toBe('Recommended opportunities');
+    expect(wrapper.text()).toContain('Suggested students');
+    expect(wrapper.text()).toContain('Frontend Internship');
+    expect(wrapper.text()).toContain('Nour Alami');
+  });
+
+  it('shows loading state', () => {
+    mocks.feedExperienceStore.loading = true;
+
+    const wrapper = mountFeed();
+
+    expect(wrapper.text()).toContain('Chargement du feed...');
+    expect(wrapper.findAll('[data-test="project-card"]')).toHaveLength(0);
+  });
+
+  it('shows error state', () => {
+    mocks.feedExperienceStore.error = 'Erreur de chargement du feed';
+
+    const wrapper = mountFeed();
+
+    expect(wrapper.text()).toContain('Erreur de chargement du feed');
+    expect(wrapper.findAll('[data-test="project-card"]')).toHaveLength(0);
+  });
+
+  it('shows empty state when there are no matching projects', () => {
+    mocks.feedExperienceStore.items = [];
+
+    const wrapper = mountFeed();
+
+    expect(wrapper.text()).toContain('Aucun élément ne correspond à vos filtres.');
+    expect(wrapper.findAll('[data-test="project-card"]')).toHaveLength(0);
+  });
+
+  it('renders projects sorted by trending score by default', () => {
+    const wrapper = mountFeed();
+
+    const cards = wrapper.findAll('[data-test="project-card"]');
+
+    expect(cards).toHaveLength(3);
+    expect(cards[0].attributes('data-title')).toBe('Cyber Security Dashboard');
+    expect(cards[1].attributes('data-title')).toBe('Vue Portfolio');
+    expect(cards[2].attributes('data-title')).toBe('DevOps Pipeline');
+  });
+
+  it('filters projects by search and fetches again after debounce', async () => {
+    const wrapper = mountFeed();
+
+    mocks.feedExperienceStore.fetchFeedExperiences.mockClear();
+
+    await wrapper.find('[data-test="filters-search"]').setValue('cyber');
+    await nextTick();
+
+    const cards = wrapper.findAll('[data-test="project-card"]');
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0].attributes('data-title')).toBe('Cyber Security Dashboard');
+
+    vi.advanceTimersByTime(350);
+    await nextTick();
+
+    expect(mocks.feedExperienceStore.fetchFeedExperiences).toHaveBeenCalledWith({
+      search: 'cyber',
+      source: undefined,
+      sort: 'trending',
+      technology: undefined,
+      domain: undefined,
     });
   });
 
-  it('opens project owner portfolio when project card emits open-student', async () => {
+  it('updates filters and sends filter params after debounce', async () => {
     const wrapper = mountFeed();
 
-    await wrapper.findAll('[data-test="open-project-owner"]')[1].trigger('click');
-
-    expect(routerPushMock).toHaveBeenCalledWith('/portfolio/2');
-  });
-
-  it('opens and closes share project modal', async () => {
-    const wrapper = mountFeed();
-
-    await wrapper.findAll('[data-test="share-project"]')[0].trigger('click');
-
-    expect(wrapper.find('[data-test="share-project-modal"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="share-project-modal"]').attributes('data-title')).toBe(
-      'SmartStudyRoom Platform'
-    );
-
-    await wrapper.find('[data-test="close-share-modal"]').trigger('click');
-
-    expect(wrapper.find('[data-test="share-project-modal"]').exists()).toBe(false);
-  });
-
-  it('filters projects with search', async () => {
-    const wrapper = mountFeed();
-
-    await wrapper.find('[data-test="search-campus"]').trigger('click');
-    await nextTick();
-
-    expect(getProjectTitles(wrapper)).toEqual(['Campus Event Aggregator']);
-  });
-
-  it('shows empty state when no project matches search', async () => {
-    const wrapper = mountFeed();
-
-    await wrapper.find('[data-test="search-empty"]').trigger('click');
-    await nextTick();
-
-    expect(wrapper.findAll('[data-test="project-card"]')).toHaveLength(0);
-    expect(wrapper.find('.feed-empty').exists()).toBe(true);
-    expect(wrapper.find('[data-test="search-x-icon"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Aucun élément ne correspond à vos filtres.');
-  });
-
-  it('filters projects by same school source', async () => {
-    const wrapper = mountFeed();
-
-    await wrapper.find('[data-test="filter-same-school"]').trigger('click');
-    await nextTick();
-
-    expect(getProjectTitles(wrapper)).toEqual([
-      'SmartStudyRoom Platform',
-      'Campus Event Aggregator',
-    ]);
-  });
-
-  it('filters projects by following source', async () => {
-    const wrapper = mountFeed();
-
-    await wrapper.find('[data-test="filter-following"]').trigger('click');
-    await nextTick();
-
-    expect(getProjectTitles(wrapper)).toEqual([
-      'AI Portfolio Recommendation System',
-    ]);
-  });
-
-  it('filters projects by technology with normalized value', async () => {
-    const wrapper = mountFeed();
+    mocks.feedExperienceStore.fetchFeedExperiences.mockClear();
 
     await wrapper.find('[data-test="filter-vue"]').trigger('click');
     await nextTick();
 
-    expect(getProjectTitles(wrapper)).toEqual([
-      'SmartStudyRoom Platform',
-    ]);
-  });
-
-  it('filters projects by domain with partial normalized value', async () => {
-    const wrapper = mountFeed();
-
-    await wrapper.find('[data-test="filter-mobile"]').trigger('click');
+    vi.advanceTimersByTime(350);
     await nextTick();
 
-    expect(getProjectTitles(wrapper)).toEqual([
-      'Campus Event Aggregator',
-    ]);
+    expect(mocks.feedExperienceStore.fetchFeedExperiences).toHaveBeenCalledWith({
+      search: undefined,
+      source: undefined,
+      sort: 'trending',
+      technology: 'Vue.js',
+      domain: undefined,
+    });
   });
 
-  it('sorts projects by recent date', async () => {
+  it('sorts projects by recent when filter changes', async () => {
     const wrapper = mountFeed();
 
     await wrapper.find('[data-test="sort-recent"]').trigger('click');
     await nextTick();
 
-    expect(getProjectTitles(wrapper)).toEqual([
-      'AI Portfolio Recommendation System',
-      'SmartStudyRoom Platform',
-      'Campus Event Aggregator',
-    ]);
+    const cards = wrapper.findAll('[data-test="project-card"]');
+
+    expect(cards[0].attributes('data-title')).toBe('Cyber Security Dashboard');
+    expect(cards[1].attributes('data-title')).toBe('Vue Portfolio');
+    expect(cards[2].attributes('data-title')).toBe('DevOps Pipeline');
   });
 
-  it('sorts projects by portfolio score', async () => {
+  it('limits visible projects to 20 then loads 10 more', async () => {
+    mocks.feedExperienceStore.items = createProjects(25);
+
     const wrapper = mountFeed();
 
-    await wrapper.find('[data-test="sort-portfolio"]').trigger('click');
-    await nextTick();
+    expect(wrapper.findAll('[data-test="project-card"]')).toHaveLength(20);
+    expect(wrapper.find('.load-more-button').exists()).toBe(true);
 
-    expect(getProjectTitles(wrapper)).toEqual([
-      'AI Portfolio Recommendation System',
-      'SmartStudyRoom Platform',
-      'Campus Event Aggregator',
-    ]);
+    await wrapper.find('.load-more-button').trigger('click');
+
+    expect(wrapper.findAll('[data-test="project-card"]')).toHaveLength(25);
+    expect(wrapper.find('.load-more-button').exists()).toBe(false);
   });
 
-  it('resets filters and search', async () => {
+  it('opens project detail route when clicking a project owned by another student', async () => {
     const wrapper = mountFeed();
 
-    await wrapper.find('[data-test="search-campus"]').trigger('click');
-    await nextTick();
+    await wrapper.find('[data-test="project-card"]').trigger('click');
 
-    expect(getProjectTitles(wrapper)).toEqual(['Campus Event Aggregator']);
-
-    await wrapper.find('[data-test="reset-filters"]').trigger('click');
-    await nextTick();
-
-    expect(getProjectTitles(wrapper)).toEqual([
-      'SmartStudyRoom Platform',
-      'AI Portfolio Recommendation System',
-      'Campus Event Aggregator',
-    ]);
-
-    expect(wrapper.find('[data-test="filters-panel"]').attributes('data-search')).toBe('');
-    expect(wrapper.find('[data-test="filters-panel"]').attributes('data-source')).toBe('all');
-    expect(wrapper.find('[data-test="filters-panel"]').attributes('data-sort')).toBe('trending');
+    expect(mocks.routerPush).toHaveBeenCalledWith({
+      name: 'portfolio-experience',
+      params: {
+        id: 102,
+        experienceId: 2,
+      },
+    });
   });
 
-  it('does not open offer detail when clicking a professor carousel student profile', async () => {
+  it('opens my portfolio experience route when project has no owner id', async () => {
+    mocks.feedExperienceStore.items = [
+      createProject({
+        id: 55,
+        title: 'My Local Project',
+        portfolioUserId: undefined,
+        userId: undefined,
+        utilisateur_id: undefined,
+        etudiant_id: undefined,
+      }),
+    ];
+
     const wrapper = mountFeed();
 
-    await wrapper.findAll('[data-test="carousel-item"]')[0].trigger('click');
-    await nextTick();
+    await wrapper.find('[data-test="project-card"]').trigger('click');
 
-    expect(wrapper.find('[data-test="offer-detail-modal"]').exists()).toBe(false);
-    expect(routerPushMock).not.toHaveBeenCalled();
+    expect(mocks.routerPush).toHaveBeenCalledWith({
+      name: 'my-portfolio-experience',
+      params: {
+        experienceId: 55,
+      },
+    });
   });
 
-  it('opens offer detail, applies, then closes application modal on submit', async () => {
+  it('opens and closes share modal from project card', async () => {
     const wrapper = mountFeed();
 
-    await wrapper.find('[data-test="select-custom-offer"]').trigger('click');
-    await nextTick();
+    await wrapper.find('[data-test="share-project"]').trigger('click');
+
+    expect(wrapper.find('[data-test="share-modal"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="share-modal"]').text()).toContain('Cyber Security Dashboard');
+
+    await wrapper.find('[data-test="close-share-modal"]').trigger('click');
+
+    expect(wrapper.find('[data-test="share-modal"]').exists()).toBe(false);
+  });
+
+  it('opens project owner portfolio from project card', async () => {
+    const wrapper = mountFeed();
+
+    await wrapper.find('[data-test="open-project-owner"]').trigger('click');
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/portfolio/102');
+  });
+
+  it('toggles follow from suggested students sidebar', async () => {
+    const wrapper = mountFeed();
+
+    const followButtons = wrapper.findAll('.follow-mini-button');
+
+    await followButtons[0].trigger('click');
+
+    expect(mocks.feedStudentStore.toggleFollow).toHaveBeenCalledWith(suggestedStudents[0]);
+  });
+
+  it('opens suggested student portfolio from sidebar name', async () => {
+    const wrapper = mountFeed();
+
+    await wrapper.find('.suggested-name-button').trigger('click');
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/portfolio/301');
+  });
+
+  it('opens offer detail, applies, then closes apply modal after successful submit', async () => {
+    const wrapper = mountFeed();
+
+    await wrapper.find('[data-test="carousel-item"]').trigger('click');
 
     expect(wrapper.find('[data-test="offer-detail-modal"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="offer-detail-modal"]').attributes('data-title')).toBe(
-      'Frontend Developer Intern'
-    );
+    expect(wrapper.text()).toContain('Frontend Internship');
 
     await wrapper.find('[data-test="apply-offer"]').trigger('click');
-    await nextTick();
 
     expect(wrapper.find('[data-test="offer-detail-modal"]').exists()).toBe(false);
     expect(wrapper.find('[data-test="apply-offer-modal"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="apply-offer-modal"]').attributes('data-title')).toBe(
-      'Frontend Developer Intern'
-    );
 
-    await wrapper.find('[data-test="submit-apply-offer"]').trigger('click');
+    await wrapper.find('[data-test="submit-application"]').trigger('click');
     await flushPromises();
 
-    expect(console.log).toHaveBeenCalledWith('Offer application payload:', {
-      message: 'I am interested',
+    expect(mocks.feedOfferStore.applyToOffer).toHaveBeenCalledWith(11, {
+      message: 'Interested in this offer.',
     });
 
     expect(wrapper.find('[data-test="apply-offer-modal"]').exists()).toBe(false);
   });
 
-  it('closes offer detail modal', async () => {
+  it('renders recruiter version with top students and add offer button', () => {
+    mocks.authStore.user.role = 'professionnel';
+
     const wrapper = mountFeed();
 
-    await wrapper.find('[data-test="select-custom-offer"]').trigger('click');
-    await nextTick();
+    expect(wrapper.find('[data-test="carousel-title"]').text()).toBe('Top students');
+    expect(wrapper.text()).toContain('Featured candidates');
+    expect(wrapper.text()).toContain('Add offer');
 
-    expect(wrapper.find('[data-test="offer-detail-modal"]').exists()).toBe(true);
+    const carouselItems = wrapper.findAll('[data-test="carousel-item"]');
 
-    await wrapper.find('[data-test="close-offer-detail"]').trigger('click');
-    await nextTick();
-
-    expect(wrapper.find('[data-test="offer-detail-modal"]').exists()).toBe(false);
+    expect(carouselItems[0].text()).toBe('Youssef Amrani');
+    expect(carouselItems[0].attributes('data-carousel-type')).toBe('student-profile');
   });
 
-  it('closes apply offer modal', async () => {
+  it('renders professor version with students from school', () => {
+    mocks.authStore.user.role = 'professeur';
+
     const wrapper = mountFeed();
 
-    await wrapper.find('[data-test="select-custom-offer"]').trigger('click');
-    await nextTick();
-
-    await wrapper.find('[data-test="apply-offer"]').trigger('click');
-    await nextTick();
-
-    expect(wrapper.find('[data-test="apply-offer-modal"]').exists()).toBe(true);
-
-    await wrapper.find('[data-test="close-apply-offer"]').trigger('click');
-    await nextTick();
-
-    expect(wrapper.find('[data-test="apply-offer-modal"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="carousel-title"]').text()).toBe('Top students');
+    expect(wrapper.text()).toContain('Students from your school');
+    expect(wrapper.text()).toContain('Sara Alaoui');
+    expect(wrapper.text()).not.toContain('Add offer');
   });
 
-  it('passes technologies and domains to filters panel', () => {
+  it('resets filters and search when reset is emitted', async () => {
     const wrapper = mountFeed();
 
-    expect(wrapper.find('[data-test="technologies-list"]').text()).toContain('Vue 3');
-    expect(wrapper.find('[data-test="technologies-list"]').text()).toContain('FastAPI');
-    expect(wrapper.find('[data-test="technologies-list"]').text()).toContain('Flutter');
+    await wrapper.find('[data-test="filters-search"]').setValue('cyber');
+    await nextTick();
 
-    expect(wrapper.find('[data-test="domains-list"]').text()).toContain('Mobile Development');
-    expect(wrapper.find('[data-test="domains-list"]').text()).toContain('Web Frontend');
-    expect(wrapper.find('[data-test="domains-list"]').text()).toContain('Cybersecurity');
+    expect(wrapper.findAll('[data-test="project-card"]')).toHaveLength(1);
+
+    await wrapper.find('[data-test="reset-filters"]').trigger('click');
+    await nextTick();
+
+    expect(wrapper.findAll('[data-test="project-card"]')).toHaveLength(3);
   });
 });

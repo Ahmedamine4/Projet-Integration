@@ -4,9 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ExperienceModal from './ExperienceModal.vue';
 import { analyzeExperienceDescription } from '@/services/aiApi';
+import api from '@/services/api';
 
 vi.mock('@/services/aiApi', () => ({
   analyzeExperienceDescription: vi.fn(),
+}));
+
+vi.mock('@/services/api', () => ({
+  default: {
+    get: vi.fn(),
+  },
 }));
 
 vi.mock('@/composables/useBodyScrollLock', () => ({
@@ -430,6 +437,17 @@ const ModificationRequestStub = defineComponent({
 const schoolOptions = ['EMSI', 'ENSIAS'];
 const professorEmails = ['teacher@school.com', 'professor@school.com'];
 
+const academicInstitutions = [
+  {
+    institution_id: 1,
+    nom: 'EMSI',
+  },
+  {
+    institution_id: 2,
+    nom: 'ENSIAS',
+  },
+];
+
 const initialProject = {
   id: 1,
   title: 'Existing Project',
@@ -457,6 +475,7 @@ function mountModal(props = {}) {
       type: 'project',
       initialValue: null,
       schoolOptions,
+      academicInstitutions,
       professorEmails,
       message: {
         teacherName: '',
@@ -581,6 +600,25 @@ describe('ExperienceModal', () => {
     analyzeExperienceDescription.mockResolvedValue({
       technologies: ['Vue.js', 'Express.js'],
       domains: ['Web Development'],
+    });
+
+    api.get.mockResolvedValue({
+      data: {
+        data: {
+          professeurs: [
+            {
+              utilisateur: {
+                email: 'teacher@school.com',
+              },
+            },
+            {
+              utilisateur: {
+                email: 'professor@school.com',
+              },
+            },
+          ],
+        },
+      },
     });
   });
 
@@ -725,12 +763,17 @@ describe('ExperienceModal', () => {
     expect(wrapper.emitted('submit')).toBeFalsy();
   });
 
-  it('validates teacher email against professorEmails', async () => {
+  it('validates teacher email against fetched professor emails', async () => {
     const wrapper = mountModal();
 
     await fillValidProject(wrapper);
     await findToggleByLabel(wrapper, 'Academic project').setValue(true);
     await findSelectByLabel(wrapper, 'Institution').setValue('EMSI');
+
+    await flushPromises();
+
+    expect(api.get).toHaveBeenCalledWith('/getInstitutions/1/professeurs');
+
     await findDropdownByLabel(wrapper, 'Teacher email').setValue('wrong@school.com');
 
     await wrapper.find('form').trigger('submit');
@@ -745,9 +788,16 @@ describe('ExperienceModal', () => {
     await fillValidProject(wrapper);
     await findToggleByLabel(wrapper, 'Academic project').setValue(true);
     await findSelectByLabel(wrapper, 'Institution').setValue('EMSI');
+
+    await flushPromises();
+
+    expect(api.get).toHaveBeenCalledWith('/getInstitutions/1/professeurs');
+
     await findDropdownByLabel(wrapper, 'Teacher email').setValue('teacher@school.com');
 
     await wrapper.find('form').trigger('submit');
+
+    expect(wrapper.emitted('submit')).toBeTruthy();
 
     const payload = wrapper.emitted('submit')[0][0];
 

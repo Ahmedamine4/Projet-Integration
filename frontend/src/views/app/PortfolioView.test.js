@@ -30,8 +30,16 @@ const mocks = vi.hoisted(() => ({
     error: '',
     fetchPortfolio: vi.fn(),
   },
+  recommendationStore: {
+    recommendations: [],
+    fetchMyRecommendations: vi.fn(),
+    fetchPortfolioRecommendations: vi.fn(),
+    createRecommendation: vi.fn(),
+    toggleRecommendationVisibility: vi.fn(),
+  },
   institutionStore: {
     institutions: [],
+    selectedInstitutions: [],
     fetchInstitutions: vi.fn(),
     setSchoolPath: vi.fn(),
   },
@@ -60,7 +68,9 @@ const mocks = vi.hoisted(() => ({
     deleteInternship: vi.fn(),
   },
   api: {
+    get: vi.fn(),
     post: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -75,6 +85,10 @@ vi.mock('@/stores/auth', () => ({
 
 vi.mock('@/stores/portfolio', () => ({
   usePortfolioStore: () => mocks.portfolioStore,
+}));
+
+vi.mock('@/stores/recommandation', () => ({
+  useRecommendationStore: () => mocks.recommendationStore,
 }));
 
 vi.mock('@/stores/institution', () => ({
@@ -99,6 +113,21 @@ vi.mock('@/stores/internship', () => ({
 
 vi.mock('@/services/api', () => ({
   default: mocks.api,
+}));
+
+vi.mock('lucide-vue-next', () => ({
+  Camera: {
+    name: 'Camera',
+    template: '<span data-test="icon-camera" />',
+  },
+  QrCode: {
+    name: 'QrCode',
+    template: '<span data-test="icon-qr" />',
+  },
+  UserRound: {
+    name: 'UserRound',
+    template: '<span data-test="icon-user" />',
+  },
 }));
 
 const AboutMeStub = defineComponent({
@@ -135,7 +164,12 @@ const ProjectsSectionStub = defineComponent({
   emits: ['add-project', 'edit-project'],
   template: `
     <section data-test="projects-section">
-      <button data-test="add-project" @click="$emit('add-project')">
+      <button
+        v-if="canAdd"
+        data-test="add-project"
+        type="button"
+        @click="$emit('add-project')"
+      >
         Add project
       </button>
     </section>
@@ -175,6 +209,7 @@ const RecommendationsSectionStub = defineComponent({
       default: false,
     },
   },
+  emits: ['toggle-visibility'],
   template: `
     <section data-test="recommendations-section">
       <p
@@ -203,12 +238,19 @@ const QRcodeModalStub = defineComponent({
 
 const PortfolioRecommendationModalStub = defineComponent({
   name: 'PortfolioRecommendationModal',
-  props: ['open', 'portfolioOwnerName', 'recommenderName', 'recommenderRole'],
+  props: [
+    'open',
+    'portfolioOwnerName',
+    'recommenderName',
+    'recommenderRole',
+    'loading',
+  ],
   emits: ['close', 'submit'],
   template: `
     <div data-test="recommendation-modal" v-if="open">
       <button
         data-test="submit-recommendation"
+        type="button"
         @click="$emit('submit', { content: 'Excellent portfolio.' })"
       >
         Submit recommendation
@@ -219,8 +261,16 @@ const PortfolioRecommendationModalStub = defineComponent({
 
 const ExperienceModalStub = defineComponent({
   name: 'ExperienceModal',
-  props: ['open', 'mode', 'type', 'initialValue', 'loading', 'schoolOptions', 'professorEmails'],
-  emits: ['close', 'submit', 'delete'],
+  props: [
+    'open',
+    'mode',
+    'type',
+    'initialValue',
+    'loading',
+    'schoolOptions',
+    'academicInstitutions',
+  ],
+  emits: ['close', 'submit', 'delete', 'open-school-path'],
   template: '<div data-test="experience-modal" v-if="open">Experience modal</div>',
 });
 
@@ -261,6 +311,31 @@ const AiOrbStub = defineComponent({
   name: 'AiOrb',
   emits: ['filters-detected'],
   template: '<div data-test="ai-orb">AI</div>',
+});
+
+const FollowButtonStub = defineComponent({
+  name: 'FollowButton',
+  props: {
+    following: {
+      type: Boolean,
+      default: false,
+    },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  emits: ['toggle'],
+  template: `
+    <button
+      type="button"
+      class="follow-button"
+      :disabled="loading"
+      @click="$emit('toggle')"
+    >
+      {{ following ? 'Following' : 'Follow' }}
+    </button>
+  `,
 });
 
 function createPortfolio(overrides = {}) {
@@ -352,6 +427,7 @@ function mountPortfolioView() {
         BaseNotification: BaseNotificationStub,
         BaseError: BaseErrorStub,
         AiOrb: AiOrbStub,
+        FollowButton: FollowButtonStub,
       },
     },
   });
@@ -380,8 +456,63 @@ describe('PortfolioView', () => {
     mocks.portfolioStore.error = '';
     mocks.portfolioStore.fetchPortfolio.mockResolvedValue();
 
+    mocks.recommendationStore.recommendations = [];
+    mocks.recommendationStore.fetchMyRecommendations.mockResolvedValue();
+    mocks.recommendationStore.fetchPortfolioRecommendations.mockResolvedValue();
+    mocks.recommendationStore.createRecommendation.mockResolvedValue({
+      id: 'new-rec',
+      content: 'Excellent portfolio.',
+      status: 'en_attente',
+    });
+    mocks.recommendationStore.toggleRecommendationVisibility.mockResolvedValue();
+
     mocks.institutionStore.institutions = [];
+    mocks.institutionStore.selectedInstitutions = [];
     mocks.institutionStore.fetchInstitutions.mockResolvedValue();
+
+    mocks.projectStore.loading = false;
+    mocks.activityStore.loading = false;
+    mocks.certificationStore.loading = false;
+    mocks.internshipStore.loading = false;
+
+    mocks.api.get.mockImplementation((url) => {
+      if (url.includes('/followers')) {
+        return Promise.resolve({
+          data: {
+            data: [
+              { utilisateur_id: 10 },
+              { utilisateur_id: 11 },
+            ],
+          },
+        });
+      }
+
+      if (url.includes('/following')) {
+        return Promise.resolve({
+          data: {
+            data: [],
+          },
+        });
+      }
+
+      return Promise.resolve({
+        data: {
+          data: [],
+        },
+      });
+    });
+
+    mocks.api.post.mockResolvedValue({
+      data: {
+        success: true,
+      },
+    });
+
+    mocks.api.delete.mockResolvedValue({
+      data: {
+        success: true,
+      },
+    });
 
     mocks.router.replace.mockClear();
   });
@@ -393,6 +524,7 @@ describe('PortfolioView', () => {
 
     expect(mocks.institutionStore.fetchInstitutions).toHaveBeenCalledTimes(1);
     expect(mocks.portfolioStore.fetchPortfolio).toHaveBeenCalledWith('1');
+    expect(mocks.recommendationStore.fetchMyRecommendations).toHaveBeenCalledTimes(1);
 
     expect(wrapper.text()).toContain('Nour Bakkali');
     expect(wrapper.text()).toContain('Full Stack Developer at ENSA Tanger');
@@ -430,6 +562,8 @@ describe('PortfolioView', () => {
 
     await flushPromises();
 
+    expect(mocks.recommendationStore.fetchPortfolioRecommendations).toHaveBeenCalledWith('99');
+
     const projectsSection = wrapper.findComponent(ProjectsSectionStub);
 
     expect(projectsSection.exists()).toBe(true);
@@ -441,7 +575,7 @@ describe('PortfolioView', () => {
 
     expect(wrapper.text()).toContain('Follow');
     expect(wrapper.text()).toContain('Recommend');
-    expect(wrapper.findComponent(ExperienceModalStub).exists()).toBe(false);
+    expect(wrapper.find('[data-test="experience-modal"]').exists()).toBe(false);
   });
 
   it('keeps private experiences for the owner and opens the create project modal', async () => {
@@ -453,13 +587,13 @@ describe('PortfolioView', () => {
 
     expect(projectsSection.props('canAdd')).toBe(true);
     expect(projectsSection.props('projects').map((project) => project.id)).toEqual([
-  'highlighted-project',
-  'recent-project',
-  'hidden-project',
-]);
+      'highlighted-project',
+      'recent-project',
+      'hidden-project',
+    ]);
 
-   expect(wrapper.find('.follow-button').exists()).toBe(false);
-expect(wrapper.find('.recommend-button').exists()).toBe(false);
+    expect(wrapper.find('.follow-button').exists()).toBe(false);
+    expect(wrapper.find('.recommend-button').exists()).toBe(false);
 
     await wrapper.find('[data-test="add-project"]').trigger('click');
     await nextTick();
@@ -472,7 +606,7 @@ expect(wrapper.find('.recommend-button').exists()).toBe(false);
     expect(experienceModal.props('mode')).toBe('create');
   });
 
-  it('allows a visitor to submit a local recommendation', async () => {
+  it('allows a visitor to submit a recommendation', async () => {
     mocks.route.params = {
       id: '99',
     };
@@ -505,20 +639,17 @@ expect(wrapper.find('.recommend-button').exists()).toBe(false);
     expect(wrapper.find('[data-test="recommendation-modal"]').exists()).toBe(true);
 
     await wrapper.find('[data-test="submit-recommendation"]').trigger('click');
-    await nextTick();
+    await flushPromises();
 
-    const recommendationsSection = wrapper.findComponent(RecommendationsSectionStub);
-    const recommendations = recommendationsSection.props('recommendations');
-
-    expect(recommendations[0]).toMatchObject({
-      authorName: 'Visitor User',
-      authorRole: 'Student',
-      content: 'Excellent portfolio.',
-      status: 'valide',
-      portfolioOwnerId: '99',
-    });
+    expect(mocks.recommendationStore.createRecommendation).toHaveBeenCalledWith(
+      '99',
+      'Excellent portfolio.'
+    );
 
     expect(wrapper.find('[data-test="recommendation-modal"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="notification"]').text()).toContain(
+      'Recommendation submitted successfully!'
+    );
   });
 
   it('redirects to not-found when the portfolio does not exist', async () => {
