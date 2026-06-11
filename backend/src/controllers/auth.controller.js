@@ -217,6 +217,12 @@ export async function refreshAccessToken(req, res) {
     return res.status(500).json({ success: false, error: error.message || 'Erreur serveur' });
   }
 }
+    if (user.bloque) {
+      return res.status(403).json({
+        success: false,
+        message: 'Votre compte est bloqué. Veuillez contacter un administrateur',
+      });
+    }
 
 //profil utilisateur connecté
 export async function getProfile(req, res) {

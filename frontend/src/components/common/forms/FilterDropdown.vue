@@ -154,8 +154,12 @@ onBeforeUnmount(() => {
 :deep(input[readonly]) {
   cursor: pointer !important;
   padding-left: 2.2rem !important;
-  padding-right: 2.5rem; 
+  padding-right: 2.2rem !important; /* Balanced for perfect centering */
   pointer-events: none !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .dropdown__list {
@@ -183,7 +187,7 @@ onBeforeUnmount(() => {
   color: var(--color-primary);
   font: inherit;
   font-size: var(--font-size-sm);
-  text-align: left;
+  text-align: center; /* Center the options too */
   cursor: pointer;
   transition: background var(--transition-fast);
 }

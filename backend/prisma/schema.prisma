@@ -259,6 +259,8 @@ model Connexion {
   pays            String?
   is_current      Boolean     @default(false)
   date_connexion  DateTime    @default(now())
+  // Kept for the admin history tab so logout events remain auditable instead of deleting the row.
+  date_deconnexion DateTime?
   last_active     DateTime    @default(now())
   expires_at      DateTime
 

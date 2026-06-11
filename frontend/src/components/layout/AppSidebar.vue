@@ -12,6 +12,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  Shield,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter, useRoute } from 'vue-router';
