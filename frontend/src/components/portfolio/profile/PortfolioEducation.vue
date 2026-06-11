@@ -2,6 +2,12 @@
 import { GraduationCap, Plus } from 'lucide-vue-next';
 import PortfolioEmptyState from '@/components/portfolio/shared/PortfolioEmptyState.vue';
 
+const levelLabels = {
+  bachelor: 'Bachelor / Licence',
+  master: 'Master',
+  doctorat: 'PhD / Doctorate',
+};
+
 defineProps({
   userId: { type: String, required: true },
   canAdd: {
@@ -15,6 +21,10 @@ defineProps({
 });
 
 defineEmits(['add-education']);
+
+function formatLevel(level) {
+  return levelLabels[level?.toLowerCase()] || level || 'Education';
+}
 </script>
 
 <template>
@@ -39,11 +49,17 @@ defineEmits(['add-education']);
         </div>
         <div class="education__content">
           <div class="education__heading">
-            <h3>{{ item.school }}</h3>
-            <span>{{ item.period }}</span>
+            <div class="education__title-group">
+              <h3>{{ item.school }}</h3>
+              <p class="education__degree">{{ formatLevel(item.level) }}</p>
+            </div>
+            <span class="education__period">{{ item.period }}</span>
           </div>
-          <p class="education__degree">
-            {{ item.level }}
+          <p
+            v-if="item.description"
+            class="education__description"
+          >
+            {{ item.description }}
           </p>
           <span
             v-if="item.status === 'en_attente'"
@@ -51,9 +67,6 @@ defineEmits(['add-education']);
           >
             Pending validation
           </span>
-          <p class="education__description">
-            {{ item.description }}
-          </p>
         </div>
       </article>
       <div
@@ -134,9 +147,17 @@ defineEmits(['add-education']);
 
 .education__heading {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-md);
+}
+
+.education__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .education__heading h3,
@@ -149,19 +170,22 @@ defineEmits(['add-education']);
   font-size: var(--font-size-sm);
   font-weight: var(--font-bold);
   line-height: 1.2;
+  word-break: break-word;
 }
 
-.education__heading span {
+.education__period {
   flex: 0 0 auto;
   color: rgba(var(--color-primary-rgb), 0.52);
   font-size: var(--font-size-xs);
   font-weight: var(--font-bold);
+  white-space: nowrap;
 }
 
 .education__degree {
   color: rgba(var(--color-primary-rgb), 0.76);
   font-size: var(--font-size-xs);
   font-weight: var(--font-regular);
+  line-height: 1.2;
 }
 
 .education__status {

@@ -1,11 +1,10 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+import api from '@/services/api';
 
 export const useGithubStore = defineStore('github', {
   state: () => ({
     repositories: [],
+    contributions: null,
     loading: false,
     error: null,
   }),
@@ -16,10 +15,7 @@ export const useGithubStore = defineStore('github', {
       this.error = null;
 
       try {
-        const response = await axios.get(`${API_URL}/github/login`, {
-          withCredentials: true,
-        });
-
+        const response = await api.get('/github/login');
         window.location.href = response.data.url;
       } catch (error) {
         this.error = error.response?.data?.message || 'Failed to connect GitHub';
@@ -34,10 +30,7 @@ export const useGithubStore = defineStore('github', {
       this.error = null;
 
       try {
-        const response = await axios.get(`${API_URL}/github/repositories`, {
-          withCredentials: true,
-        });
-
+        const response = await api.get('/github/repositories');
         this.repositories = response.data.data || [];
         return this.repositories;
       } catch (error) {
@@ -53,14 +46,27 @@ export const useGithubStore = defineStore('github', {
       this.error = null;
 
       try {
-        const response = await axios.post(`${API_URL}/github/sync`, {}, {
-          withCredentials: true,
-        });
-
+        const response = await api.post('/github/sync', {});
         this.repositories = response.data.data || [];
         return this.repositories;
       } catch (error) {
         this.error = error.response?.data?.message || 'Failed to sync repositories';
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchContributions() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const response = await api.get('/github/contributions');
+        this.contributions = response.data.data || null;
+        return this.contributions;
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Failed to fetch contributions';
         throw error;
       } finally {
         this.loading = false;
