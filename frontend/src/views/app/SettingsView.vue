@@ -230,11 +230,6 @@ function logoutAllSessions() {
   sessions.value = sessions.value.filter(s => s.current);
 }
 
-function handleDeleteAccount() {
-  if (confirm('Are you sure? This action cannot be undone.')) {
-    alert('Account deletion requested (mock).');
-  }
-}
 
 
 async function linkGithubAccount() {
@@ -243,6 +238,48 @@ async function linkGithubAccount() {
   } catch (error) {
     console.error(error);
     alert('Impossible de se connecter à GitHub. Veuillez réessayer.');
+  }
+}
+
+const showProForm = ref(false);
+const proData = ref({ entreprise: '', poste: '', email_professionnel: '' });
+const proLoading = ref(false);
+
+async function submitProRequest() {
+  proLoading.value = true;
+  try {
+    await userStore.requestProfessionnelStatus(proData.value);
+    alert('Demande envoyée avec succès !');
+    showProForm.value = false;
+    proData.value = { entreprise: '', poste: '', email_professionnel: '' };
+  } catch (err) {
+    alert(err.response?.data?.error || 'Erreur lors de la demande');
+  } finally {
+    proLoading.value = false;
+  }
+}
+
+const showDeleteConfirm = ref(false);
+const deletePassword = ref('');
+const deletingAccount = ref(false);
+
+async function handleDeleteAccount() {
+  if (!deletePassword.value) {
+    alert('Please enter your password to confirm.');
+    return;
+  }
+
+  if (confirm('Are you absolutely sure? All your data will be permanently lost.')) {
+    deletingAccount.value = true;
+    try {
+      await userStore.deleteAccount(deletePassword.value);
+      alert('Your account has been deleted.');
+      window.location.href = '/login'; // Redirect to login
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete account.');
+    } finally {
+      deletingAccount.value = false;
+    }
   }
 }
 
@@ -626,6 +663,53 @@ async function linkGithubAccount() {
           </div>
         </div>
       </section>
+      <section class="card" v-if="authStore.user?.role === 'etudiant'">
+  <div class="card-header">
+    <div class="card-header-left">
+      <svg
+        class="card-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </svg>
+      <span class="card-label">Upgrade Account</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row-item" v-if="!showProForm">
+      <div class="row-info">
+        <span class="row-label">Become a Professional</span>
+        <span class="row-sub">Access professional features and networking</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" @click="showProForm = true">
+        Apply Now
+      </button>
+    </div>
+
+    <div v-else class="pw-form">
+      <div class="pw-fields" style="grid-template-columns: 1fr 1fr 1fr;">
+        <Input v-model="proData.entreprise" label="Company Name" placeholder="e.g. Google" />
+        <Input v-model="proData.poste" label="Job Title" placeholder="e.g. Developer" />
+        <Input v-model="proData.email_professionnel" label="Work Email" placeholder="you@company.com" />
+      </div>
+      <div class="pw-actions">
+        <button class="btn btn-ghost btn-sm" @click="showProForm = false">Cancel</button>
+        <button class="btn btn-primary btn-sm" :disabled="proLoading" @click="submitProRequest">
+          {{ proLoading ? 'Sending...' : 'Send Request' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
       <!-- Notifications -->
       <section class="card">
@@ -824,57 +908,45 @@ async function linkGithubAccount() {
       <section class="card card-danger">
         <div class="card-header">
           <div class="card-header-left">
-            <svg
-              class="card-icon"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.6"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            ><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94A2 2 0 0 0 22.18 18L13.71 3.86a2 2 0 0 0-3.42 0z" /><line
-              x1="12"
-              y1="9"
-              x2="12"
-              y2="13"
-            /><line
-              x1="12"
-              y1="17"
-              x2="12.01"
-              y2="17"
-            /></svg>
+            <svg class="card-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94A2 2 0 0 0 22.18 18L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
             <span class="card-label card-label-danger">Danger Zone</span>
           </div>
         </div>
+        
         <div class="card-body">
-          <div class="row-item">
+          <div class="row-item" v-if="!showDeleteConfirm">
             <div class="row-info">
               <span class="row-label danger-title">Delete my account</span>
               <span class="row-sub">Permanently remove your account and all associated data. This action cannot be undone.</span>
             </div>
-            <button
-              class="btn btn-danger btn-sm"
-              @click="handleDeleteAccount"
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-              </svg>
+            <button class="btn btn-danger btn-sm" @click="showDeleteConfirm = true">
               Delete Account
             </button>
           </div>
+
+          <transition name="expand">
+            <div v-if="showDeleteConfirm" class="pw-form" style="margin-top: 0; border-top: none; padding-top: 0;">
+              <div class="row-info" style="margin-bottom: 1rem;">
+                <span class="row-label danger-title">Confirm Account Deletion</span>
+                <span class="row-sub">Please enter your password to verify your identity.</span>
+              </div>
+              <div class="pw-fields" style="grid-template-columns: 1fr;">
+                <Input 
+                  v-model="deletePassword" 
+                  label="Password" 
+                  type="password" 
+                  placeholder="Enter your current password" 
+                  :disabled="deletingAccount"
+                />
+              </div>
+              <div class="pw-actions">
+                <button class="btn btn-ghost btn-sm" @click="showDeleteConfirm = false">Cancel</button>
+                <button class="btn btn-danger btn-sm" :disabled="deletingAccount" @click="handleDeleteAccount">
+                  {{ deletingAccount ? 'Deleting...' : 'Permanently Delete' }}
+                </button>
+              </div>
+            </div>
+          </transition>
         </div>
       </section>
     </main>

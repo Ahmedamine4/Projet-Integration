@@ -64,6 +64,8 @@ const portfolioUserId = computed(() =>
   null
 );
 
+const portfolioId = computed(() => portfolio.value?.portfolio?.portfolio_id ?? null);
+
 const isOwnPortfolio = computed(() => {
   if (!portfolioUserId.value || !userId.value) return false;
 
@@ -624,7 +626,7 @@ async function toggleFollow() {
 }
 
 function handlePortfolioRecommendationSubmit(recommendation) {
-  if (!portfolioUserId.value) return;
+  if (!portfolioId.value) return;
 
   submitRecommendation(recommendation);
 }
@@ -635,7 +637,7 @@ async function submitRecommendation(recommendation) {
 
   try {
     await recommendationStore.createRecommendation(
-      portfolioUserId.value,
+      portfolioId.value,
       recommendation.content
     );
 
