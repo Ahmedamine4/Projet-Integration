@@ -39,6 +39,7 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
             date_debut: dateDebut,
             date_fin: dateFin,
             niveau: inst.niveau,
+            description: inst.description ?? null,
             statut: 'en_attente' // Statut défini dans ton Enum Prisma
         };
     });
@@ -77,6 +78,7 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
                     date_debut: data.date_debut,
                     date_fin: data.date_fin,
                     niveau: data.niveau,
+                    description: data.description,
                     statut: data.statut
                 },
                 create: {
@@ -85,6 +87,7 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
                     date_debut: data.date_debut,
                     date_fin: data.date_fin,
                     niveau: data.niveau,
+                    description: data.description,
                     statut: data.statut
                 }
             })
@@ -94,4 +97,34 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
     });
 
     return resultats;
+};
+
+export const updateValidEtudiantDescriptionService = async (etudiantId, description) => {
+  const record = await prisma.valideEtudiant.findFirst({
+    where: {
+      utilisateur_id: etudiantId,
+    },
+    orderBy: {
+      date_debut: 'desc',
+    },
+    select: {
+      institution_id: true,
+    },
+  });
+
+  if (!record) {
+    throw new Error('Aucune demande trouvée pour cet étudiant.');
+  }
+
+  return prisma.valideEtudiant.update({
+    where: {
+      utilisateur_id_institution_id: {
+        utilisateur_id: etudiantId,
+        institution_id: record.institution_id,
+      },
+    },
+    data: {
+      description,
+    },
+  });
 };
