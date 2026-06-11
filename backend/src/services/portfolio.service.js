@@ -349,7 +349,7 @@ export async function getExperienceById(experienceId) {
         },
       },
       certification: {
-        include: { validation: { include: { institution: true } } },
+        include: { institution: true },
       },
     },
   });
