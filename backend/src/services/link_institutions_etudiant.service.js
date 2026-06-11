@@ -63,9 +63,6 @@ export const LinkInstitutionsToEtudiantService = async (etudiantId, etudieInput,
             data: { etudie: isEtudiantActif }
         });
 
-        // B. Ajouter les institutions dans ValideEtudiant
-        // On crée un enregistrement pour chaque institution, même si le même
-        // étudiant et la même institution apparaissent plusieurs fois.
         const createPromises = validesEtudiantsData.map((data) =>
             tx.valideEtudiant.create({
                 data

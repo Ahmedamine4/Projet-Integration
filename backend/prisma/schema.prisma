@@ -50,6 +50,23 @@ enum StatutValidation {
   refuse
 }
 
+enum TypeOffre {
+  CDI
+  CDD
+  Stage
+  Alternance
+  Freelance
+  Interim
+  Temps_partiel
+  Temps_plein
+  Apprentissage
+  Contrat_professionnel
+  VIE
+  Benevolat
+  Consultant
+  Projet_Mission_courte
+}
+
 // UTILISATEURS ET HERITAGES
 
 model Utilisateur {
@@ -83,6 +100,8 @@ model Utilisateur {
   notifications_envoyees Notification[] @relation("NotificationSource")
   connexions    Connexion[]
   interactions  Interaction[]
+  offres        Offre[]
+  demandes      Demande[]
   following  Follow[] @relation("UserFollowing")
   followers  Follow[] @relation("UserFollowers")
 
@@ -219,6 +238,32 @@ model Portfolio {
   history           PortfolioScoreHistory[]
 
   @@map("portfolio")
+}
+
+model Offre {
+  offre_id       String   @id @default(cuid())
+  entreprise     String?   @db.VarChar(100)
+  localisation   String?   @db.VarChar(150)
+  technologies   Json?
+  description    String?
+  type           TypeOffre?
+  date           DateTime? @default(now())
+  utilisateur_id String
+  utilisateur    Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  demandes       Demande[]
+
+  @@map("offres")
+}
+
+model Demande {
+  message        String?
+  offre_id       String
+  utilisateur_id String
+  offre          Offre      @relation(fields: [offre_id], references: [offre_id], onDelete: Cascade)
+  utilisateur    Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  
+  @@id([offre_id, utilisateur_id])
+  @@map("demandes")
 }
 
 model PortfolioScoreHistory {
@@ -489,3 +534,4 @@ model Repository {
 
   @@map("repositories")
 }
+
