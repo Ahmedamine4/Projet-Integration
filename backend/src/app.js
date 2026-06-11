@@ -4,7 +4,6 @@ import authRoutes from './routes/auth.routes.js';
 import projetRoutes from './routes/projet.routes.js';
 import LinkInstitutionsToEtudiantRoutes from './routes/link_institutions_etudiant.routes.js';
 import getInstitutionRoutes from './routes/institution.routes.js';
-import ValidationEtudiantRoutes from './routes/validation_etudiant.routes.js';
 import cookieParser from 'cookie-parser';
 import aiRoutes from './routes/ai.route.js';
 import stageRoutes from './routes/stage.routes.js';
@@ -50,9 +49,6 @@ app.use('/api/getInstitutions', getInstitutionRoutes);
 
 //Linking institutions to students
 app.use('/api/select-institutions', LinkInstitutionsToEtudiantRoutes);
-
-//Validation Directeur - Etudiant
-app.use('/api/validation', ValidationEtudiantRoutes);
 
 app.use('/api/notifications', notificationRoutes);
 

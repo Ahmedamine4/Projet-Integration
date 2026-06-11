@@ -10,23 +10,23 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
   async function fetchPortfolio(userId, filters = {}) {
     if (!userId) return null;
-  
+
     loading.value = true;
     error.value = '';
-  
+
     try {
       const params = {};
-  
+
       if (filters.technologies?.length) {
         params.technologies = filters.technologies.join(',');
       }
-  
+
       if (filters.domaines?.length) {
         params.domaines = filters.domaines.join(',');
       }
-  
+
       const response = await api.get(`/users/portfolio/${userId}`, { params });
-  
+
       portfolio.value = normalizePortfolio(response.data.data);
       return portfolio.value;
     } catch (err) {
