@@ -103,6 +103,12 @@ export const useProfesseurStore = defineStore('professeur', () => {
     total: 0,
     pageSize: 10
   });
+
+  const stats = ref({
+    stagePending: 0,
+    projetPending: 0,
+    recommandationPending: 0
+  });
   
   const filters = ref({
     type: '',   // 'stage', 'projet', 'recommandation'
@@ -126,6 +132,9 @@ export const useProfesseurStore = defineStore('professeur', () => {
       
       demandes.value = (response.data.data || []).map(normalizeListItem);
       pagination.value = response.data.pagination || pagination.value;
+      if (response.data?.stats) {
+           stats.value = response.data.stats;
+    }
     } catch (err) {
       error.value = err.response?.data?.message || 'Erreur lors de la récupération des demandes';
       throw err;
@@ -189,6 +198,7 @@ export const useProfesseurStore = defineStore('professeur', () => {
   return {
     demandes,
     pagination,
+    stats,
     filters,
     loading,
     error,
