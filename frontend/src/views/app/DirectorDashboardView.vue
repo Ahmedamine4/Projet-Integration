@@ -117,6 +117,12 @@ async function addProfessor() {
     return;
   }
 
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(professorForm.email.trim())) {
+    error.value = 'Format d\'email invalide.';
+    return;
+  }
+
   savingProfessor.value = true;
   error.value = '';
 

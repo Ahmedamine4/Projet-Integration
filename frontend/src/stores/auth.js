@@ -11,6 +11,7 @@ function normalizeAuthUser(user) {
     firstName: user.prenom ?? '',
     lastName: user.nom ?? '',
     phone: user.telephone ?? '',
+    photo: user.photo ?? '',
   };
 }
 
@@ -48,6 +49,32 @@ export const useAuthStore = defineStore('auth', () => {
     await fetchProfile();
 
     return data;
+  }
+
+  async function uploadProfilePhoto(file) {
+    if (!user.value?.utilisateur_id) {
+      throw new Error('User not loaded');
+    }
+
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const { data } = await api.post(
+      `/users/${user.value.utilisateur_id}/photo`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+
+    user.value = normalizeAuthUser({
+      ...user.value,
+      photo: data.photo ?? '',
+    });
+
+    return data.photo ?? '';
   }
 
   async function login(email, password) {
@@ -119,6 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     fetchProfile,
     updateProfile,
+    uploadProfilePhoto,
     login,
     register,
     startGoogleAuth,

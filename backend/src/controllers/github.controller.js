@@ -78,27 +78,68 @@ export const getMyRepositories = async (req, res) => {
   });
 };
 
-export const getMyContributions = async (req, res) => {
-  const etudiantId = req.user.utilisateur_id;
-
+async function getContributionsForEtudiant(etudiantId) {
   const repoWithToken = await prisma.repository.findFirst({
     where: { etudiant_id: etudiantId },
+    orderBy: { last_synced: 'desc' },
     select: { github_access_token: true }
   });
 
   if (!repoWithToken?.github_access_token) {
-    return res.status(400).json({
-      success: false,
-      message: 'Aucun token GitHub disponible. Connectez et synchronisez votre compte GitHub.'
-    });
+    return null;
   }
 
-  const contributions = await githubService.getUserContributions(repoWithToken.github_access_token);
+  return githubService.getUserContributions(repoWithToken.github_access_token);
+}
 
-  res.json({
-    success: true,
-    data: contributions
-  });
+export const getMyContributions = async (req, res) => {
+  const etudiantId = req.user.utilisateur_id;
+
+  try {
+    const contributions = await getContributionsForEtudiant(etudiantId);
+
+    if (!contributions) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucun token GitHub disponible. Connectez et synchronisez votre compte GitHub.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: contributions
+    });
+  } catch (error) {
+    return res.status(502).json({
+      success: false,
+      message: error.message || 'Impossible de récupérer les contributions GitHub.'
+    });
+  }
+};
+
+export const getUserContributions = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const contributions = await getContributionsForEtudiant(userId);
+
+    if (!contributions) {
+      return res.status(404).json({
+        success: false,
+        message: 'Aucun token GitHub disponible. Connectez et synchronisez votre compte GitHub.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: contributions
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Impossible de récupérer les contributions GitHub.'
+    });
+  }
 };
 
 export const syncRepositories = async (req, res) => {

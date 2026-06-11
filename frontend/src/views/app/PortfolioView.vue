@@ -79,6 +79,8 @@ const profileName = computed(() => {
   const fullName = `${firstName} ${lastName}`.trim();
   return fullName || 'Name not provided';
 });
+const profileRole = computed(() => profile.value?.role ?? portfolio.value?.role ?? '');
+const isProfessionalPortfolio = computed(() => profileRole.value === 'professionnel');
 const recommenderName = computed(() => {
   const user = authStore.user ?? {};
   const firstName = user.firstName ?? user.prenom ?? '';
@@ -108,7 +110,11 @@ const profileHeadline = computed(() => {
 
   return `Student at ${school}`;
 });
-const profilePhoto = computed(() => profile.value?.photo || '');
+const profilePhoto = computed(() =>
+  isOwnPortfolio.value
+    ? authStore.user?.photo || profile.value?.photo || ''
+    : profile.value?.photo || ''
+);
 const localProfilePhoto = ref('');
 const profilePhotoInput = ref(null);
 const selectedProfilePhotoFile = ref(null);
@@ -726,6 +732,17 @@ async function completeSchoolPath(schoolData) {
   }
 }
 
+function handleEducationDescriptionUpdated() {
+  showNotification('success', 'Education description saved successfully.');
+}
+
+function handleEducationDescriptionError(error) {
+  showNotification('error', error.response?.data?.message ||
+    error.response?.data?.error ||
+    error.message ||
+    'Failed to save education description');
+}
+
 const links = computed(() => [
   {
     platform: 'github',
@@ -775,13 +792,37 @@ function handleProfilePhotoChange(event) {
   selectedProfilePhotoFile.value = file;
 }
 
-function handleProfilePhotoCropped(file) {
+async function handleProfilePhotoCropped(file) {
   if (localProfilePhoto.value) {
     URL.revokeObjectURL(localProfilePhoto.value);
   }
 
   localProfilePhoto.value = URL.createObjectURL(file);
   selectedProfilePhotoFile.value = null;
+
+  try {
+    const photo = await authStore.uploadProfilePhoto(file);
+
+    if (localProfilePhoto.value) {
+      URL.revokeObjectURL(localProfilePhoto.value);
+      localProfilePhoto.value = '';
+    }
+
+    if (portfolio.value?.user && isOwnPortfolio.value) {
+      portfolio.value.user.photo = photo;
+    }
+
+    showNotification('success', 'Profile photo updated successfully.');
+  } catch (error) {
+    if (localProfilePhoto.value) {
+      URL.revokeObjectURL(localProfilePhoto.value);
+      localProfilePhoto.value = '';
+    }
+
+    showNotification('error', error.response?.data?.message ||
+      error.message ||
+      'Failed to update profile photo.');
+  }
 }
 
 function closeProfilePhotoCropper() {
@@ -938,6 +979,12 @@ async function handleAiFiltersDetected(filters) {
               :stroke-width="1.55"
             />
           </div>
+          <span
+            v-if="isProfessionalPortfolio"
+            class="profile-role-badge"
+          >
+            Pro
+          </span>
           <div
             v-if="isOwnPortfolio"
             class="profile__photo-overlay"
@@ -1022,6 +1069,8 @@ async function handleAiFiltersDetected(filters) {
             :items="educationItems"
             :can-add="isOwnPortfolio"
             @add-education="openSchoolModal"
+            @description-updated="handleEducationDescriptionUpdated"
+            @description-error="handleEducationDescriptionError"
           />
           <PortfolioSkills
             v-if="shouldShowSkills"
@@ -1328,6 +1377,26 @@ async function handleAiFiltersDetected(filters) {
 	font-size: calc(var(--font-size-lg));
 	font-weight: var(--font-bold);
 	color: var(--color-primary);
+	line-height: 1;
+}
+
+.profile-role-badge {
+	position: absolute;
+	top: 0.18rem;
+	right: 0.18rem;
+	z-index: 3;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.45rem;
+	height: 2.45rem;
+	border: 2px solid var(--color-background);
+	border-radius: 50%;
+	background: var(--color-success);
+	box-shadow: 0 10px 22px rgba(var(--color-primary-rgb), 0.16);
+	color: var(--color-background);
+	font-size: var(--font-size-xxs);
+	font-weight: var(--font-bold);
 	line-height: 1;
 }
 

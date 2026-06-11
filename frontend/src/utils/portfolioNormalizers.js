@@ -184,15 +184,23 @@ export function normalizeCreatedInternship(data) {
 }
 
 export function normalizeEducation(institutions = []) {
-  return institutions.map((entry) => {
+  return [...institutions].sort((firstEntry, secondEntry) => {
+    const firstDate = new Date(firstEntry.date_debut ?? firstEntry.date_fin ?? 0).getTime();
+    const secondDate = new Date(secondEntry.date_debut ?? secondEntry.date_fin ?? 0).getTime();
+
+    return secondDate - firstDate;
+  }).map((entry) => {
     const startYear = entry.date_debut ? new Date(entry.date_debut).getFullYear() : '';
     const endDate = entry.date_fin ? new Date(entry.date_fin) : null;
     const endYear = endDate ? endDate.getFullYear() : '';
     const isPresent = endDate && endDate > new Date();
+    const hasOpenEndDate = startYear && !endDate;
 
     let period = '';
     if (startYear && endYear) {
       period = isPresent ? `${startYear} - Present` : `${startYear} - ${endYear}`;
+    } else if (hasOpenEndDate) {
+      period = `${startYear} - Present`;
     } else if (startYear) {
       period = `${startYear}`;
     }
@@ -202,7 +210,7 @@ export function normalizeEducation(institutions = []) {
       school: entry.institution?.nom ?? 'Institution',
       level: entry.niveau ?? entry.statut ?? '',
       status: entry.statut ?? '',
-      description: entry.institution?.description ?? '',
+      description: entry.description ?? '',
       period,
     };
   });
@@ -247,6 +255,7 @@ export function normalizePortfolio(data) {
   const activities = (data?.activites ?? []).map(normalizeActivity);
   const certifications = (data?.certifications ?? []).map(normalizeCertification);
   const internships = (data?.stages ?? []).map(normalizeInternship);
+  const education = normalizeEducation(data?.institutions ?? []);
   const experiences = [...projects, ...activities, ...certifications, ...internships];
   const visibleSkillSources = experiences.filter((item) =>
     item.effectiveVisibleToEveryone ?? item.visibleToEveryone
@@ -260,6 +269,7 @@ export function normalizePortfolio(data) {
       email: user.email ?? '',
       phone: user.phone ?? '',
       photo: user.photo ?? '',
+      role: user.role ?? '',
       github: user.github ?? '',
       linkedin: user.linkedin ?? '',
       x: user.x ?? '',
@@ -268,10 +278,10 @@ export function normalizePortfolio(data) {
     headline: data?.niveau
       ? `${data.niveau} Student`
       : '',
-    school: data?.institutions?.[0]?.institution?.nom ?? '',
+    school: education[0]?.school ?? '',
     portfolio: data?.portfolio ?? null,
     badges: data?.badges ?? [],
-    education: normalizeEducation(data?.institutions ?? []),
+    education,
     projects,
     internships,
     activities,
