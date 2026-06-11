@@ -2,9 +2,6 @@ import prisma from '../config/prisma.js';
 
 const PAGE_SIZE = 10;
 
-// ============================================================
-// FEED
-// ============================================================
 
 const FEED_OFFRES_COUNT = 5;
 const FEED_USERS_COUNT = 5;
@@ -273,4 +270,21 @@ export const getFeedEtudiant = async (etudiantId) => {
     utilisateurs_suggeres: utilisateursSuggeres,
     experiences,
   };
+};
+
+export const getFeedTechnologiesDomaines = async () => {
+  const [technologies, domaines] = await Promise.all([
+    prisma.competence.findMany({
+      where: { type: 'technologie' },
+      orderBy: { nom: 'asc' },
+      select: { competence_id: true, nom: true },
+    }),
+    prisma.competence.findMany({
+      where: { type: 'domaine' },
+      orderBy: { nom: 'asc' },
+      select: { competence_id: true, nom: true },
+    }),
+  ]);
+
+  return { technologies, domaines };
 };
