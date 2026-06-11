@@ -1,0 +1,114 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install security and required packages
+  apt:
+    name:
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - docker.io
+      - docker-compose
+    state: present
+
+- name: Enable Docker
+  service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Disable SSH root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+    backup: true
+  register: ssh_config
+
+- name: Reload SSH
+  service:
+    name: ssh
+    state: reloaded
+  when: ssh_config.changed
+
+- name: Enable unattended security upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+- name: Enable and start fail2ban
+  service:
+    name: fail2ban
+    enabled: true
+    state: started
+
+- name: Create monitoring directory
+  file:
+    path: /opt/monitoring
+    state: directory
+    mode: "0755"
+
+- name: Deploy Prometheus config
+  template:
+    src: "{{ role_path }}/files/prometheus.yml.j2"
+    dest: /opt/monitoring/prometheus.yml
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy docker-compose file
+  copy:
+    src: docker-compose.yml
+    dest: /opt/monitoring/docker-compose.yml
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Pull latest monitoring images
+  command: docker-compose pull
+  args:
+    chdir: /opt/monitoring
+
+- name: Ensure monitoring stack is running
+  command: docker-compose up -d --remove-orphans
+  args:
+    chdir: /opt/monitoring
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow Grafana from private lab network
+  ufw:
+    rule: allow
+    src: "192.168.56.0/24"
+    port: "3000"
+    proto: tcp
+
+- name: Allow Prometheus from private lab network
+  ufw:
+    rule: allow
+    src: "192.168.56.0/24"
+    port: "9090"
+    proto: tcp
+
+- name: Enable firewall
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming

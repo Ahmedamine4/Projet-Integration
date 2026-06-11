@@ -1,0 +1,131 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install required packages
+  apt:
+    name:
+      - curl
+      - git
+      - net-tools
+      - ufw
+      - docker.io
+      - docker-compose
+    state: present
+
+- name: Enable and start Docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Add vagrant user to docker group
+  user:
+    name: vagrant
+    groups: docker
+    append: true
+
+- name: Create db directory
+  file:
+    path: /opt/db
+    state: directory
+    mode: "0755"
+
+- name: Copy docker-compose file
+  copy:
+    src: docker-compose.yml
+    dest: /opt/db/docker-compose.yml
+    mode: "0644"
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow PostgreSQL only from VM2
+  ufw:
+    rule: allow
+    src: "192.168.56.11"
+    port: "5432"
+    proto: tcp
+
+- name: Enable firewall
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Allow Node Exporter (Prometheus)
+  ufw:
+    rule: allow
+    port: "9100"
+    proto: tcp    
+
+- name: Copy .env to VM
+  copy:
+    src: /vagrant/.env
+    dest: /opt/db/.env
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Pull latest database images
+  command: docker-compose pull
+  args:
+    chdir: /opt/db
+
+- name: Ensure database stack is running
+  command: docker-compose up -d --remove-orphans
+  args:
+    chdir: /opt/db
+
+- name: Install Node Exporter
+  apt:
+    name: prometheus-node-exporter
+    state: present
+
+- name: Start Node Exporter
+  service:
+    name: prometheus-node-exporter
+    enabled: yes
+    state: started
+
+- name: Run cAdvisor container
+  community.docker.docker_container:
+    name: cadvisor
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "8081:8080"
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro    
+
+- name: Read .env file
+  slurp:
+    src: /opt/db/.env
+  register: env_file
+
+- name: Set DB variables
+  set_fact:
+    db_user: "{{ (env_file.content | b64decode | regex_findall('^DB_USER=(.*)$', multiline=True) | first) }}"
+    db_password: "{{ (env_file.content | b64decode | regex_findall('^DB_PASSWORD=(.*)$', multiline=True) | first) }}"
+    db_name: "{{ (env_file.content | b64decode | regex_findall('^DB_NAME=(.*)$', multiline=True) | first) }}"
+
+- name: Run postgres exporter
+  community.docker.docker_container:
+    name: postgres-exporter
+    image: prometheuscommunity/postgres-exporter
+    restart_policy: unless-stopped
+    ports:
+      - "9187:9187"
+    env:
+      DATA_SOURCE_NAME: "postgresql://{{ db_user }}:{{ db_password }}@{{ vm3_ip }}:5432/{{ db_name }}?sslmode=disable"
