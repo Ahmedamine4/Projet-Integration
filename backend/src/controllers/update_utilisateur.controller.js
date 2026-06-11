@@ -29,3 +29,24 @@ export const updatePersonalInformationsController = async(req,res) => {
         res.status(500).json({error: error.message});
     }
 };
+
+export const requestProfessionnelStatusController = async (req, res) => {
+  try {
+    const userId = req.user.utilisateur_id; 
+    const { entreprise, poste, email_professionnel } = req.body;
+
+    if (!entreprise || !poste || !email_professionnel) {
+      return res.status(400).json({ error: "Tous les champs sont requis." });
+    }
+
+    const result = await UserService.createProfessionnelProfile(userId, {
+      entreprise,
+      poste,
+      email_professionnel
+    });
+
+    res.status(201).json({ message: "Demande de statut professionnel envoyée.", data: result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

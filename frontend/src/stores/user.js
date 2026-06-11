@@ -42,9 +42,14 @@ export const useUserStore = defineStore('user', () => {
     return response.data.data;
   }
 
+  async function requestProfessionnelStatus(data) {
+  return await api.post('/users/request-professionnel', data);
+}
+
   return {
     updateProfile,
     changePassword,
     fetchSessions,
+    requestProfessionnelStatus,
   };
 });

@@ -246,6 +246,24 @@ async function linkGithubAccount() {
   }
 }
 
+const showProForm = ref(false);
+const proData = ref({ entreprise: '', poste: '', email_professionnel: '' });
+const proLoading = ref(false);
+
+async function submitProRequest() {
+  proLoading.value = true;
+  try {
+    await userStore.requestProfessionnelStatus(proData.value);
+    alert('Demande envoyée avec succès !');
+    showProForm.value = false;
+    proData.value = { entreprise: '', poste: '', email_professionnel: '' };
+  } catch (err) {
+    alert(err.response?.data?.error || 'Erreur lors de la demande');
+  } finally {
+    proLoading.value = false;
+  }
+}
+
 </script>
 
 <template>
@@ -626,6 +644,53 @@ async function linkGithubAccount() {
           </div>
         </div>
       </section>
+      <section class="card" v-if="authStore.user?.role === 'etudiant'">
+  <div class="card-header">
+    <div class="card-header-left">
+      <svg
+        class="card-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </svg>
+      <span class="card-label">Upgrade Account</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row-item" v-if="!showProForm">
+      <div class="row-info">
+        <span class="row-label">Become a Professional</span>
+        <span class="row-sub">Access professional features and networking</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" @click="showProForm = true">
+        Apply Now
+      </button>
+    </div>
+
+    <div v-else class="pw-form">
+      <div class="pw-fields" style="grid-template-columns: 1fr 1fr 1fr;">
+        <Input v-model="proData.entreprise" label="Company Name" placeholder="e.g. Google" />
+        <Input v-model="proData.poste" label="Job Title" placeholder="e.g. Developer" />
+        <Input v-model="proData.email_professionnel" label="Work Email" placeholder="you@company.com" />
+      </div>
+      <div class="pw-actions">
+        <button class="btn btn-ghost btn-sm" @click="showProForm = false">Cancel</button>
+        <button class="btn btn-primary btn-sm" :disabled="proLoading" @click="submitProRequest">
+          {{ proLoading ? 'Sending...' : 'Send Request' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
       <!-- Notifications -->
       <section class="card">

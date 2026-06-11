@@ -68,3 +68,28 @@ export const updateEmail = async (userid, new_email) => {
     select: { utilisateur_id: true, email: true },
   });
 };
+
+
+export const createProfessionnelProfile = async (userid, { entreprise, poste, email_professionnel }) => {
+  // 1. Get a random admin ID
+  const admins = await prisma.administrateur.findMany({
+    select: { admin_utilisateur_id: true }
+  });
+
+  if (admins.length === 0) {
+    throw new Error("Aucun administrateur disponible pour la validation.");
+  }
+
+  const randomAdmin = admins[Math.floor(Math.random() * admins.length)];
+
+  return await prisma.professionnel.create({
+    data: {
+      professionnel_utilisateur_id: userid,
+      entreprise,
+      poste,
+      email_professionnel,
+      statut: "en_attente",
+      admin_id: randomAdmin.admin_utilisateur_id
+    }
+  });
+};
