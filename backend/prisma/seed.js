@@ -6,6 +6,20 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Début du remplissage massif de la base de données...');
 
+  // =========================================================================
+  // 0. SÉCURITÉ ANTI-DOUBLONS (P2002)
+  // =========================================================================
+  // Si le directeur existe déjà, c'est que le seed a déjà été exécuté.
+  // On arrête proprement le script pour éviter de faire planter Docker.
+  const seedDejaApplique = await prisma.utilisateur.findUnique({
+    where: { email: 'directeur@ensat.ac.ma' }
+  });
+
+  if (seedDejaApplique) {
+    console.log('✅ Le seed a déjà été appliqué ! Les données sont intactes. (Script ignoré)');
+    return;
+  }
+
   const hash = await bcrypt.hash('password123', 10);
 
   // =========================================================================
@@ -231,7 +245,7 @@ async function main() {
   // =========================================================================
   console.log('📦 Ajout des données pour le test du Portfolio...');
 
-  // 7.1 Mettre à jour le profil pour booster le "score de complétion" (computeProfileCompleteness)
+  // 7.1 Mettre à jour le profil pour booster le "score de complétion"
   await prisma.utilisateur.update({
     where: { utilisateur_id: userYahya.utilisateur_id },
     data: {
@@ -258,7 +272,7 @@ async function main() {
   const techPrisma = await prisma.competence.create({ data: { type: 'technologie', nom: 'Prisma' } });
   const domaineWeb = await prisma.competence.create({ data: { type: 'domaine', nom: 'Développement Web' } });
 
-  // 7.4 Associer les compétences au projet existant ("API de Gestion de Portfolio") et le rendre visible
+  // 7.4 Associer les compétences au projet existant ("API de Gestion de Portfolio")
   const projetApi = await prisma.experience.findFirst({
     where: { utilisateur_id: userYahya.utilisateur_id, titre: 'API de Gestion de Portfolio' }
   });
@@ -271,7 +285,6 @@ async function main() {
         { experience_id: projetApi.experience_id, competence_id: domaineWeb.competence_id }
       ]
     });
-    // Rendre le projet visible pour tester l'affichage public
     await prisma.experience.update({
       where: { experience_id: projetApi.experience_id },
       data: { visibilite: true }

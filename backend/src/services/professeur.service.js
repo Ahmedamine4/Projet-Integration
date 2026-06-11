@@ -115,11 +115,7 @@ export const getDemandes = async (profId, { type, statut, page }) => {
   const lettres = rawLettres.map((item) => ({
     type: 'recommandation',
     experience_id: null,
-<<<<<<< Updated upstream
-    etudiant_id: item.utilisateur_id,
-=======
     utilisateur_id: item.utilisateur_id,
->>>>>>> Stashed changes
     titre: item.objet ?? null,
     statut: item.statut,
     commentaire: item.commentaire ?? null,
@@ -148,7 +144,6 @@ export const getStageById = async (profId, experienceId) => {
   const validation = await prisma.valideStage.findUnique({
     where: { experience_id: experienceId },
     include: {
-      // ✅ On passe d'abord par 'stage'
       stage: {
         include: {
           experience: {
@@ -172,7 +167,6 @@ export const getProjetById = async (profId, experienceId) => {
   const validation = await prisma.valideProjet.findUnique({
     where: { experience_id: experienceId },
     include: {
-      // ✅ On passe d'abord par 'projet'
       projet: {
         include: {
           experience: {
@@ -196,7 +190,6 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
   const validation = await prisma.valideProjet.findUnique({
     where: { experience_id: experienceId },
     include: { 
-      // ✅ Correction du chemin d'inclusion pour éviter l'erreur 500
       projet: {
         include: {
           experience: {
@@ -227,7 +220,7 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
       },
     });
 
-    // ✅ Un seul appel de notification
+
     await creerNotification(
       validation.projet.experience.etudiant.utilisateur.utilisateur_id,
       `Votre professeur a laissé un commentaire sur votre projet "${validation.projet.experience.titre}".`,
@@ -249,7 +242,7 @@ export const traiterValidationProjet = async (profId, experienceId, statut, comm
     ? `Votre projet "${validation.projet.experience.titre}" a été validé par votre professeur.`
     : `Votre projet "${validation.projet.experience.titre}" a été refusé. Motif : ${commentaire}`;
 
-  // ✅ Un seul appel de notification
+
   await creerNotification(
     validation.projet.experience.etudiant.utilisateur.utilisateur_id,
     msg,
@@ -265,7 +258,6 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
   const validation = await prisma.valideStage.findUnique({
     where: { experience_id: experienceId },
     include: { 
-      // ✅ Correction du chemin d'inclusion pour éviter l'erreur 500
       stage: {
         include: {
           experience: {
@@ -293,7 +285,7 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
       data: { commentaire, date_d_action: new Date() },
     });
 
-    // ✅ Un seul appel de notification
+
     await creerNotification(
       validation.stage.experience.etudiant.utilisateur.utilisateur_id,
       `Votre professeur a laissé un commentaire sur votre stage "${validation.stage.experience.titre}".`,
@@ -315,7 +307,6 @@ export const traiterValidationStageProf = async (profId, experienceId, statut, c
     ? `Votre stage "${validation.stage.experience.titre}" a été validé par votre professeur.`
     : `Votre stage "${validation.stage.experience.titre}" a été refusé. Motif : ${commentaire}`;
   
-  // ✅ Un seul appel de notification
   await creerNotification(
     validation.stage.experience.etudiant.utilisateur.utilisateur_id,
     msg,
@@ -366,7 +357,7 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
       data: { commentaire },
     });
  
-    // ✅ Un seul appel de notification
+
     await creerNotification(
       etudiantId,
       `Votre professeur a laissé un commentaire sur votre demande de lettre : "${lettre.objet}".`,
@@ -385,7 +376,7 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
       data: { statut: 'refuse', commentaire },
     });
  
-    // ✅ Un seul appel de notification
+
     await creerNotification(
       etudiantId,
       `Votre demande de lettre de recommandation "${lettre.objet}" a été refusée. Motif : ${commentaire}`,
@@ -404,7 +395,7 @@ export const traiterLettre = async (profId, etudiantId, { statut, commentaire },
       data: { statut: 'valide', fichier: `data:application/pdf;base64,${file.buffer.toString("base64")}`, commentaire: commentaire ?? null },
     });
  
-    // ✅ Un seul appel de notification
+
     await creerNotification(
       etudiantId,
       `Votre lettre de recommandation "${lettre.objet}" a été validée et est disponible.`,
