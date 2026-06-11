@@ -1,11 +1,40 @@
 import prisma from '../config/prisma.js';
-import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+//import {envouyerMail} from './utils/sendMail.js'
+
+import crypto from "crypto";
+
+function genererMotDePasse(longueur = 12) {
+  const minuscules = "abcdefghijklmnopqrstuvwxyz";
+  const majuscules = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const chiffres = "0123456789";
+  const symboles = "!@#$%^&*";
+
+  const caracteres =
+    minuscules + majuscules + chiffres + symboles;
+
+  let motDePasse = "";
+
+  // garantir au moins un caractère de chaque type
+  motDePasse += minuscules[crypto.randomInt(minuscules.length)];
+  motDePasse += majuscules[crypto.randomInt(majuscules.length)];
+  motDePasse += chiffres[crypto.randomInt(chiffres.length)];
+  motDePasse += symboles[crypto.randomInt(symboles.length)];
+
+  for (let i = 4; i < longueur; i++) {
+    motDePasse += caracteres[crypto.randomInt(caracteres.length)];
+  }
+
+  // mélanger
+  return motDePasse
+    .split("")
+    .sort(() => crypto.randomInt(3) - 1)
+    .join("");
+}
+
 export async function assignerDirecteur({
   utilisateur_id,
   institution_id,
-  poste,
-  bureau,
 }) {
   const motDePasse = genererMotDePasse();
   const hash = await bcrypt.hash(motDePasse, 10);

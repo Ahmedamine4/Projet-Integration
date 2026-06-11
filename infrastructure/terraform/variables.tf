@@ -1,84 +1,80 @@
 variable "aws_region" {
-  description = "AWS region"
+  description = "Région AWS"
   type        = string
   default     = "eu-west-3"
 }
 
-variable "project_name" {
-  description = "Project name"
-  type        = string
-  default     = "portfolio-prod"
+variable "db_password"{
+  description ="mdp database pour prisma"
+  type=string
+  sensitive=true
 }
 
 variable "environment" {
-  description = "Environment name"
+  description = "Environnement"
   type        = string
   default     = "prod"
 }
 
+variable "project_name" {
+  description = "Nom du projet"
+  type        = string
+  default     = "portfolio"
+}
+
 variable "vpc_cidr" {
-  description = "VPC CIDR block"
+  description = "CIDR block de la VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
 
 variable "public_subnet_cidrs" {
-  description = "Public subnet CIDR blocks"
+  description = "CIDR blocks des subnets publiques"
   type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.5.0/24"]
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
 variable "private_subnet_cidrs" {
-  description = "Private subnet CIDR blocks (compute)"
+  description = "CIDR blocks des subnets privées"
   type        = list(string)
-  default     = ["10.0.2.0/24", "10.0.4.0/24"]
+  default     = ["10.0.10.0/24", "10.0.11.0/24"]
 }
 
-variable "private_db_subnet_cidrs" {
-  description = "Private subnet CIDR blocks (database)"
+variable "availability_zones" {
+  description = "Zones de disponibilité"
   type        = list(string)
-  default     = ["10.0.3.0/24", "10.0.6.0/24"]
+  default     = ["eu-west-3a", "eu-west-3b"]
 }
 
-variable "db_name" {
-  description = "Database name"
+variable "ssh_public_key_path" {
+  description = "Chemin vers ta clé publique SSH"
   type        = string
-  default     = "portfolio_db"
+  default     = "~/.ssh/id_rsa.pub"
 }
 
-variable "db_username" {
-  description = "Database username"
+variable "your_ip" {
+  description = "Ton adresse IP publique (pour SSH et debug RDS)"
   type        = string
-  default     = "portfolio_user"
-  sensitive   = true
+  default     = "160.177.124.101"
 }
 
-variable "db_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
-}
 
 variable "supabase_service_role_key" {
-  description = "Supabase service role key"
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
 
 variable "jwt_secret" {
-  description = "JWT secret key"
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
 
 variable "jwt_refresh_secret" {
-  description = "JWT refresh secret key"
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
 
 variable "github_client_secret" {
-  description = "GitHub OAuth client secret"
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }

@@ -55,6 +55,8 @@ function getStatColor(label ,value) {
         </div>
       </div>
     </div>
+
+
   </div>
 </template>
 

@@ -1,118 +1,109 @@
 <script setup>
 import RoundChart from '@/components/dashboard/RoundChart.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import StudentHeader from '@/components/dashboard/StudentHeader.vue'
 import BarreStats from '@/components/dashboard/BarreStats.vue'
 import ScoreChart from '@/components/dashboard/ScoreChart.vue'
 import Filtre from '@/components/common/forms/FilterDropdown.vue'
+import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 
-const student = ref({
-    firstName: 'Mohamed Reda',
-    lastName: 'EL GHAZOUANI',
-    major: 'Génie Informatique',
-    avatar: 'https://cdn-icons-png.flaticon.com/512/1250/1250689.png'
+const authStore = useAuthStore()
+
+const student = computed(() => ({
+    firstName: authStore.user?.firstName ?? authStore.user?.prenom ?? '',
+    lastName: authStore.user?.lastName ?? authStore.user?.nom ?? '',
+    major: authStore.user?.filiere ?? 'Génie Informatique',
+    avatar: authStore.user?.photo ?? 'https://cdn-icons-png.flaticon.com/512/1250/1250689.png'
+}))
+
+const stats = ref({
+    followers: 0,
+    projets: 0,
+    stages: 0,
+    lettres_recommandation: 0,
+    certifications: 0
 })
 
-const requests = ref([
-    {
-        id: 1,
-        title: 'Demande Lettre de Recomendation',
-        professor: 'Pr. Ghailani',
-        status: 'accepted',
-        date: '2026-06-01'
-    },
-    {
-        id: 2,
-        title: 'Demande Stage',
-        professor: 'Pr. El Haddad',
-        status: 'pending',
-        date: '2026-06-02'
-    },
-    {
-        id: 3,
-        title: 'Demande Stage',
-        professor: 'Pr. Fissoune',
-        status: 'rejected',
-        date: '2026-05-31'
-    }
-])
-const personalProjects = ref([
-    {
-        id: 1,
-        title: 'Projet Integration',
-        description: 'Plateforme de gestion universitaire.',
-        technologies: ['Vue.js', 'Laravel', 'MySQL'] // ← Ajoute les techs utilisées
-    },
-    {
-        id: 2,
-        title: 'Projet Integration',
-        description: 'Plateforme de gestion universitaire.',
-        technologies: ['Vue.js', 'CSS', 'Laravel', 'Docker'] // ← Ajoute les techs
-    },
-    {
-        id: 3,
-        title: 'Dashboard Admin',
-        description: 'Système de statistiques.',
-        technologies: ['Vue.js', 'MySQL', 'Docker', 'C++', 'Java'] // ← Ajoute d'autres projets si besoin
-    }
-])
+const requests = ref([])
+const technologies = ref([])
+const domaines = ref([])
+const scoreHistory = ref([])
+const isLoading = ref(true)
+const selectedStatus = ref('')
+const selectedType = ref('')
 
-const selectedStatus=ref ('');
+onMounted(async () => {
+    try {
+        const [dashboardResult, validationsResult] = await Promise.allSettled([
+            api.get('/etudiant/dashboard'),
+            api.get('/etudiant/validations')
+        ])
 
+        if (dashboardResult.status === 'fulfilled') {
+            const dashboardData = dashboardResult.value.data.data
+            stats.value = dashboardData.stats
+            technologies.value = dashboardData.technologies.map(t => ({
+                name: t.nom,
+                nivel: t.niveau
+            }))
+            const totalNiveau = dashboardData.domaines.reduce((sum, d) => sum + d.niveau, 0)
+            domaines.value = dashboardData.domaines.map(d => ({
+                label: d.nom,
+                value: totalNiveau > 0 ? Math.round((d.niveau / totalNiveau) * 100) : 0
+            }))
+            scoreHistory.value = dashboardData.score_history.map(s => ({
+                month: new Date(s.date).toLocaleString('fr-FR', { month: 'short' }),
+                score: s.score
+            }))
+        } else {
+            console.error('Erreur dashboard:', dashboardResult.reason)
+        }
+
+        if (validationsResult.status === 'fulfilled') {
+            const validations = validationsResult.value.data.data
+            requests.value = validations.map(v => ({
+                id: v.experience_id ?? Date.now(),
+                type: v.type,
+                title: v.titre ?? `Demande ${v.type}`,
+                professor: v.traite_par?.nom ? `${v.traite_par.prenom ?? ''} ${v.traite_par.nom}`.trim() : 'N/A',
+                status: v.statut === 'valide' ? 'accepted' : v.statut === 'refuse' ? 'rejected' : 'pending',
+                date: v.date
+            }))
+        } else {
+            console.error('Erreur validations:', validationsResult.reason)
+        }
+    } catch (err) {
+        console.error('Erreur chargement dashboard:', err)
+    } finally {
+        isLoading.value = false
+    }
+})
 
 const sortedRequests = computed(() => {
-  let data = [...requests.value];
-
-  // Filtrer si un statut est choisi
-  if (selectedStatus.value !== ''  && selectedStatus.value!=='all') {
-    data = data.filter(
-      requests => requests.status === selectedStatus.value
-    );
-  }
-
-  // Trier par date (plus récent → plus ancien)
-  data.sort(
-    (a, b) => new Date(b.date) - new Date(a.date)
-  );
-
-  return data;
-});
+    let data = [...requests.value]
+    if (selectedStatus.value !== '' && selectedStatus.value !== 'all') {
+        data = data.filter(r => r.status === selectedStatus.value)
+    }
+    if (selectedType.value !== '' && selectedType.value !== 'all') {
+        data = data.filter(r => r.type === selectedType.value)
+    }
+    data.sort((a, b) => new Date(b.date) - new Date(a.date))
+    return data
+})
 
 function statusLabel(status) {
     return { accepted: 'Acceptée', pending: 'En attente', rejected: 'Refusée' }[status]
 }
 
-/*const techStack = ref([
-    { name: 'Vue.js', percent: 40, color: '#42b883' },
-    { name: 'Laravel', percent: 25, color: '#ff2d20' },
-    { name: 'TailwindCSS', percent: 20, color: '#38bdf8' },
-    { name: 'MySQL', percent: 10, color: '#f59e0b' },
-    { name: 'Docker', percent: 5, color: '#2496ed' },
-])
-*/
-
 const techStack = computed(() => {
-    // Compter les occurrences de chaque tech
-    const techCount = {}
-
-    personalProjects.value.forEach(project => {
-        project.technologies.forEach(tech => {
-            techCount[tech] = (techCount[tech] || 0) + 1
-        })
-    })
-
-    // Calculer le total
-    const totalTechs = Object.values(techCount).reduce((a, b) => a + b, 0)
-
-    // Créer le tableau avec pourcentages
-    return Object.entries(techCount)
-        .map(([name, count]) => ({
-            name,
-            percent: Math.round((count / totalTechs) * 100),
-            count,
-            color: getTechColor(name)
-        }))
-        .sort((a, b) => b.count - a.count) // Trier par fréquence
+    const total = technologies.value.reduce((sum, t) => sum + t.nivel, 0)
+    return technologies.value.map(t => ({
+        name: t.name,
+        percent: total > 0 ? Math.round((t.nivel / total) * 100) : 0,
+        count: t.nivel,
+        color: getTechColor(t.name)
+    })).sort((a, b) => b.count - a.count)
 })
 
 function getTechColor(techName) {
@@ -126,39 +117,15 @@ function getTechColor(techName) {
         'Node.js': '#68a063',
         'PostgreSQL': '#336791'
     }
-
-    // Si la tech est dans le dictionnaire, retourne sa couleur
-    if (colors[techName]) {
-        return colors[techName]
-    }
-
-    // Sinon, génère une couleur aléatoire STABLE (même tech = même couleur)
+    if (colors[techName]) return colors[techName]
     let hash = 0
     for (let i = 0; i < techName.length; i++) {
         hash = techName.charCodeAt(i) + ((hash << 5) - hash)
     }
-
     const hue = Math.abs(hash) % 360
     const saturation = 70 + Math.abs(hash % 30)
-    const lightness = 50
-
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+    return `hsl(${hue}, ${saturation}%, 50%)`
 }
-const categories = [
-    { label: 'Domain 1', value: 45 },
-    { label: 'Domain 2', value: 20 },
-    { label: 'Domain 3', value: 10 },
-    { label: 'Domain 6', value: 5 },
-    { label: 'Autres', value: 35 }
-]
-const scoreHistory = [
-    { month: 'Jan', score: 0 },
-    { month: 'Fév', score: 25 },
-    { month: 'Mar', score: 12 },
-    { month: 'Avr', score: 50 },
-    { month: 'Mai', score: 82 },
-    { month: 'Jun', score: 65 }
-]
 </script>
 
 <template>
@@ -166,12 +133,11 @@ const scoreHistory = [
     <StudentHeader
       :student="student"
       :stats="[
-        { label: 'Followers', value: 210 },
-        { label: 'Projects', value: personalProjects.length },
-        { label: 'Internships', value: 1 },
-        { label: 'Letter of \n recommendation', value: 1 },
-        { label: 'Certifications', value: 0 }
-            
+        { label: 'Followers', value: stats.followers },
+        { label: 'Projects', value: stats.projets },
+        { label: 'Internships', value: stats.stages },
+        { label: 'Letter of \n recommendation', value: stats.lettres_recommandation },
+        { label: 'Certifications', value: stats.certifications }
       ]"
     />
     <section class="section">
@@ -185,10 +151,10 @@ const scoreHistory = [
     <section class="section">
       <div class="section-header">
         <h2>Domains</h2>
-        <span>{{ techStack.length }}</span>
+        <span>{{ domaines.length }}</span>
       </div>
 
-      <BarreStats :categories="categories" />
+      <BarreStats :categories="domaines" />
     </section>
     <section class="section">
       <div class="section-header">
@@ -204,6 +170,23 @@ const scoreHistory = [
         <h2>Demandes envoyées</h2>
 
         <div class="right-side">
+          <div class="filter-container">
+            <label>Filtrer par type :</label>
+
+            <Filtre
+              v-model="selectedType"
+              class="status-filter"
+              placeholder
+              style="padding-left: 28px;"
+              :options="[
+                'all',
+                'stage',
+                'projet',
+                'activite',
+                'recommandation'
+              ]"
+            />
+          </div>
           <div class="filter-container">
             <label>Filtrer par statut :</label>
 
@@ -284,6 +267,7 @@ const scoreHistory = [
     border: 1px solid rgba(var(--color-primary-rgb), 0.08);
     border-radius: 28px;
     overflow: visible;
+
 }
 
 .section-header {
@@ -295,6 +279,8 @@ const scoreHistory = [
     padding-top:1rem;
     padding-bottom:1rem;
     border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
 }
 
 .right-side {
@@ -322,6 +308,7 @@ const scoreHistory = [
 
 .section-header span {
     opacity: .6;
+    
 }
 
 
