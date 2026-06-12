@@ -175,9 +175,13 @@ const selectedAcademicInstitutions = computed(() => {
 const schoolOptions = computed(() =>
   selectedAcademicInstitutions.value.map((institution) => institution.nom).filter(Boolean)
 );
+const certificationInstitutionOptions = computed(() =>
+  institutionStore.certificationInstitutions.map((institution) => institution.nom).filter(Boolean)
+);
 
 onMounted(() => {
   institutionStore.fetchInstitutions();
+  institutionStore.fetchCertificationInstitutions();
   if (portfolioUserId.value) {
     portfolioStore.fetchPortfolio(portfolioUserId.value);
   }
@@ -275,6 +279,15 @@ function sortVisibleHighlightedExperiences(list, isVisible = (experience) => exp
   });
 }
 
+function sortExperiencesByDate(list) {
+  return [...list].sort((firstExperience, secondExperience) => {
+    const firstDate = new Date(firstExperience.startDate || firstExperience.date || 0).getTime();
+    const secondDate = new Date(secondExperience.startDate || secondExperience.date || 0).getTime();
+
+    return secondDate - firstDate;
+  });
+}
+
 const visibleProjects = computed(() => {
 	if (isOwnPortfolio.value) return sortVisibleHighlightedExperiences(projects.value);
 
@@ -306,9 +319,11 @@ const visibleCertifications = computed(() => {
 });
 
 const visibleInternships = computed(() => {
-  if (isOwnPortfolio.value) return internships.value;
+  if (isOwnPortfolio.value) return sortExperiencesByDate(internships.value);
 
-  return internships.value.filter(internship => internship.effectiveVisibleToEveryone);
+  return sortExperiencesByDate(
+    internships.value.filter(internship => internship.effectiveVisibleToEveryone)
+  );
 });
 
 const shouldShowProjectSection = computed(() => {
@@ -1186,6 +1201,7 @@ async function handleAiFiltersDetected(filters) {
       :loading="experienceModalLoading"
       :school-options="schoolOptions"
       :academic-institutions="selectedAcademicInstitutions"
+      :certification-institution-options="certificationInstitutionOptions"
       @close="closeExperienceModal"
       @open-school-path="openSchoolModal"
       @submit="handleExperienceSubmit"

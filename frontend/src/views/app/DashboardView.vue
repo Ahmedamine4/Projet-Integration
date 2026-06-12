@@ -153,6 +153,7 @@ function getTechColor(techName) {
     const saturation = 70 + Math.abs(hash % 30)
     return `hsl(${hue}, ${saturation}%, 50%)`
 }
+
 </script>
 
 <template>

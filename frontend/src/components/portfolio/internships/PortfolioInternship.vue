@@ -23,6 +23,10 @@ const canEditExperience = computed(() => {
   return props.canEdit && props.internship.validationStatus !== 'refuse';
 });
 
+const isVisibleHighlight = computed(() => {
+  return Boolean(props.internship.highlighted && props.internship.effectiveVisibleToEveryone);
+});
+
 function formatDate(date) {
   if (!date) return '';
 
@@ -78,6 +82,7 @@ function getExperienceRoute(experienceId) {
     :class="{
       'internship-card--editable': canEditExperience,
       'internship-card--hidden': !internship.effectiveVisibleToEveryone,
+      'internship-card--highlighted': isVisibleHighlight,
     }"
     @dblclick="canEditExperience && emit('edit', internship)"
     @click="handleDoubleTap"
@@ -218,6 +223,21 @@ function getExperienceRoute(experienceId) {
 
 .internship-card--hidden::after {
   filter: grayscale(1) saturate(0);
+}
+
+.internship-card--highlighted::before {
+  background: var(--color-secondary);
+  box-shadow:
+    0 0 0 5px var(--color-background),
+    0 0 0.85rem rgba(var(--color-secondary-rgb), 0.95),
+    0 0 1.8rem rgba(var(--color-secondary-rgb), 0.52);
+}
+
+.internship-card--highlighted .internship-card__year {
+  color: var(--color-secondary);
+  text-shadow:
+    0 0 0.65rem rgba(var(--color-secondary-rgb), 0.72),
+    0 0 1.35rem rgba(var(--color-secondary-rgb), 0.28);
 }
 
 .internship-card--hidden .internship-card__year,
