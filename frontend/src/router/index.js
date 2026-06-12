@@ -7,14 +7,13 @@ import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
 import PortfolioView from '@/views/app/PortfolioView.vue';
 
-
 const routes = [
-{
-  path: '/feed',
-  name: 'feed',
-  component: () => import('@/views/app/FeedPage.vue'),
-  meta: { requiresAuth: true },
-},
+  {
+    path: '/feed',
+    name: 'feed',
+    component: () => import('@/views/app/FeedPage.vue'),
+    meta: { requiresAuth: true },
+  },
   {
     path: '/',
     name: 'home',
@@ -74,7 +73,7 @@ const routes = [
     component: () => import('@/views/app/ExperienceView.vue'),
     meta: {
       requiresAuth: true,
-      role: 'etudiant',
+      role: ['etudiant', 'professionnel'],
       layout: 'app',
     },
   },
@@ -84,7 +83,7 @@ const routes = [
     component: () => import('@/views/app/ExperienceView.vue'),
     meta: {
       requiresAuth: true,
-      role: 'etudiant',
+      role: ['etudiant', 'professionnel'],
       layout: 'app',
     },
   },
@@ -94,7 +93,7 @@ const routes = [
     component: PortfolioView,
     meta: {
       requiresAuth: true,
-      role: 'etudiant',
+      role: ['etudiant', 'professionnel'],
       layout: 'app',
     },
   },
@@ -118,42 +117,41 @@ const routes = [
     },
   },
   {
-  path: '/recruiter-dashboard',
-  name: 'recruiter-dashboard',
-  component: () => import('@/views/app/dashboard/RecruteurDashboard.vue'),
-  meta: {
-    requiresAuth: true,
-    role: 'professionnel',
-    layout: 'app',
+    path: '/recruiter-dashboard',
+    name: 'recruiter-dashboard',
+    component: () => import('@/views/app/dashboard/RecruteurDashboard.vue'),
+    meta: {
+      requiresAuth: true,
+      role: 'professionnel',
+      layout: 'app',
+    },
   },
-},
+  {
+    path: '/admin-dashboard',
+    name: 'admin-dashboard',
+    component: () => import('@/views/app/AdminDashboardView.vue'),
+    meta: {
+      requiresAuth: true,
+      role: 'administrateur',
+      layout: 'app',
+    },
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: NotFoundView,
   },
-  {
-  path: '/admin-dashboard',
-  name: 'admin-dashboard',
-  component: () => import('@/views/app/AdminDashboardView.vue'),
-  meta: {
-    requiresAuth: true,
-    role: 'administrateur',
-    layout: 'app',
-  },
-},
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
+
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
 
-  const requiresAuth = to.matched.some((record) => {
-    return record.meta.requiresAuth;
-  });
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
   if (requiresAuth && !authStore.profileChecked) {
     await authStore.fetchProfile();
@@ -168,6 +166,7 @@ router.beforeEach(async (to) => {
 
   const requiredRole = to.meta.role;
   const userRole = authStore.user?.role;
+
   const hasRequiredRole = Array.isArray(requiredRole)
     ? requiredRole.includes(userRole)
     : userRole === requiredRole;
