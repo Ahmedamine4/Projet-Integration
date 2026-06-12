@@ -7,7 +7,7 @@ import ScoreChart from '@/components/dashboard/ScoreChart.vue'
 import Filtre from '@/components/common/forms/FilterDropdown.vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
-import RecommendationRequest from '@/views/TestRecommandationRequestView.vue'
+import RecommandationRequestModal from '@/components/StudentDashboard/RecommandationRequestModal.vue'
 import { useInstitutionStore } from '@/stores/institution'
 
 const authStore = useAuthStore()
@@ -66,7 +66,7 @@ onMounted(async () => {
         }
 
         if (validationsResult.status === 'fulfilled') {
-            console.log('Validations raw:', validationsResult.value.data) // ← debug
+            console.log('Validations raw:', validationsResult.value.data)
             const validations = validationsResult.value.data.data
             requests.value = validations.map(v => ({
                 id: v.experience_id ?? Date.now(),
@@ -91,12 +91,20 @@ const schoolOptions = computed(() =>
     institutionStore.institutions.map((i) => i.nom)
 )
 
-function handleSubmit(data) {
+async function handleSubmit(data) {
     isRecommendationLoading.value = true
-    setTimeout(() => {
-        isRecommendationLoading.value = false
+    try {
+        await api.post('/lettre-recommandation', {
+            objet: data.title,
+            description: data.description,
+            email_professeur: data.teacherEmail,
+        })
         isModalOpen.value = false
-    }, 800)
+    } catch (err) {
+        console.error('Failed to submit recommendation request:', err)
+    } finally {
+        isRecommendationLoading.value = false
+    }
 }
 
 const sortedRequests = computed(() => {
@@ -158,11 +166,17 @@ function getTechColor(techName) {
         { label: 'Letter of \n recommendation', value: stats.lettres_recommandation },
         { label: 'Certifications', value: stats.certifications }
       ]"
+      @request-recommendation="isModalOpen = true"
     />
 
-    <div class="recommendation-bar">
-      <RecommendationRequest />
-    </div>
+    <RecommandationRequestModal
+      :open="isModalOpen"
+      :loading="isRecommendationLoading"
+      :school-options="schoolOptions"
+      :academic-institutions="institutionStore.institutions"
+      @close="isModalOpen = false"
+      @submit="handleSubmit"
+    />
 
     <section class="section">
       <div class="section-header">
@@ -191,43 +205,60 @@ function getTechColor(techName) {
     <section class="section">
       <div class="section-header">
         <h2>Submitted Requests</h2>
-
         <div class="right-side">
           <div class="filter-container">
-            <label>Filter by type:</label>
+            <label>Type:</label>
             <Filtre
               v-model="selectedType"
               class="status-filter"
               placeholder
               style="padding-left: 28px;"
-              :options="[
-                'all',
-                'stage',
-                'projet',
-                'activite',
-                'recommandation'
-              ]"
+              :options="['all','stage','projet','activite','recommandation']"
             />
           </div>
           <div class="filter-container">
-            <label>Filter by status:</label>
+            <label>Status:</label>
             <Filtre
               v-model="selectedStatus"
               class="status-filter"
               placeholder
               style="padding-left: 28px;"
-              :options="[
-                'all',
-                'accepted',
-                'pending',
-                'rejected'
-              ]"
+              :options="['all','accepted','pending','rejected']"
             />
           </div>
-          <span>{{ sortedRequests.length }}</span>
+          <span class="count-badge">{{ sortedRequests.length }}</span>
         </div>
       </div>
 
+      <!-- Mobile card list (≤ 640px) -->
+      <ul class="card-list">
+        <li
+          v-for="request in sortedRequests"
+          :key="request.id"
+          class="request-card"
+        >
+          <div class="request-card__top">
+            <span class="cell-title">{{ request.title }}</span>
+            <span
+              class="status-badge"
+              :class="{
+                'status-badge--validated': request.status === 'accepted',
+                'status-badge--pending': request.status === 'pending',
+                'status-badge--refused': request.status === 'rejected'
+              }"
+            >{{ statusLabel(request.status) }}</span>
+          </div>
+          <div class="request-card__bottom">
+            <span class="student-name">{{ request.professor }}</span>
+            <span class="cell-date">{{ request.date }}</span>
+          </div>
+        </li>
+        <li v-if="sortedRequests.length === 0" class="empty-state">
+          No requests found.
+        </li>
+      </ul>
+
+      <!-- Desktop / tablet table (> 640px) -->
       <div class="table-responsive">
         <table class="data-table">
           <thead>
@@ -273,6 +304,9 @@ function getTechColor(techName) {
 </template>
 
 <style scoped>
+/* ============================================================
+   BASE (desktop-first)
+   ============================================================ */
 .dashboard {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -280,37 +314,8 @@ function getTechColor(techName) {
     padding: var(--space-xl);
 }
 
-/* StudentHeader spans full width (child 1) */
-.dashboard > *:nth-child(1) {
-    grid-column: 1 / -1;
-}
-
-/* recommendation-bar spans full width (child 2) */
-.dashboard > *:nth-child(2) {
-    grid-column: 1 / -1;
-}
-
-/* Last section (Submitted Requests) spans full width (child 6) */
-.dashboard > .section:last-child {
-    grid-column: 1 / -1;
-}
-
-.recommendation-bar {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.recommendation-bar :deep(main) {
-    min-height: unset;
-    display: flex;
-    justify-content: flex-end;
-    padding: 0;
-    gap: 0;
-}
-
-.recommendation-bar :deep(h1) {
-    display: none;
-}
+.dashboard > *:nth-child(1) { grid-column: 1 / -1; }
+.dashboard > .section:last-child { grid-column: 1 / -1; }
 
 /* --- Sections --- */
 .section {
@@ -326,38 +331,90 @@ function getTechColor(techName) {
     justify-content: space-between;
     padding: 1rem 2rem;
     border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+    gap: 0.75rem;
 }
 
 .section-header h2 {
     margin: 0;
     font-size: var(--font-size-lg);
+    white-space: nowrap;
 }
 
-.section-header span {
-    opacity: .6;
-}
+.section-header > span { opacity: .6; }
 
 .right-side {
     margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .filter-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
+
+.filter-container label {
+    font-size: var(--font-size-xs, 0.75rem);
+    white-space: nowrap;
+    opacity: 0.7;
+}
+
+.count-badge { opacity: .6; }
 
 .status-filter select {
     text-align: center;
     text-align-last: center;
 }
 
-/* ==========================================================================
-   TABLE
-   ========================================================================== */
+/* ============================================================
+   Mobile card list — hidden on desktop
+   ============================================================ */
+.card-list {
+    display: none;
+    list-style: none;
+    margin: 0;
+    padding: 0.75rem;
+    gap: 0.625rem;
+    flex-direction: column;
+}
+
+.request-card {
+    background: rgba(var(--color-primary-rgb), 0.025);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+    border-radius: 14px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.request-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.request-card__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    opacity: 0.5;
+    padding: 2rem;
+    font-size: var(--font-size-sm, 0.875rem);
+}
+
+/* ============================================================
+   TABLE (shared styles)
+   ============================================================ */
 .table-responsive {
     width: 100%;
     overflow-x: auto;
@@ -391,36 +448,23 @@ function getTechColor(techName) {
     transition: background var(--transition-fast);
 }
 
-.table-row {
-    cursor: pointer;
-    transition: background var(--transition-fast);
-}
+.table-row { cursor: pointer; transition: background var(--transition-fast); }
+.table-row:hover td { background: rgba(var(--color-secondary-rgb), 0.03); }
+.table-row:last-child td { border-bottom: none; }
 
-.table-row:hover td {
-    background: rgba(var(--color-secondary-rgb), 0.03);
-}
-
-.table-row:last-child td {
-    border-bottom: none;
-}
-
-.student-name {
-    font-size: var(--font-size-md);
-    font-weight: var(--font-medium);
-}
+.student-name { font-size: var(--font-size-md); font-weight: var(--font-medium); }
 
 .cell-title {
+    display: block;
     max-width: 250px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: var(--font-size-md);
     color: rgba(var(--color-primary-rgb), 0.8);
 }
 
-.cell-date {
-    font-size: var(--font-size-md);
-    color: var(--color-primary-hover);
-}
+.cell-date { font-size: var(--font-size-md); color: var(--color-primary-hover); }
 
 .status-badge {
     display: inline-flex;
@@ -431,27 +475,140 @@ function getTechColor(techName) {
     letter-spacing: 0.04em;
     padding: 4px 10px;
     border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.status-badge--pending {
-    background: rgba(var(--color-secondary-rgb), 0.13);
-    color: #7a4700;
+.status-badge--pending   { background: rgba(var(--color-secondary-rgb), 0.13); color: #7a4700; }
+.status-badge--validated { background: rgba(var(--color-success-rgb), 0.12);   color: var(--color-success); }
+.status-badge--refused   { background: rgba(var(--color-error-rgb), 0.1);      color: var(--color-error); }
+
+/* ============================================================
+   TABLET (≤ 1024px)
+   ============================================================ */
+@media (max-width: 1024px) {
+    .dashboard {
+        grid-template-columns: repeat(2, 1fr);
+        padding: var(--space-lg);
+    }
 }
 
-.status-badge--validated {
-    background: rgba(var(--color-success-rgb), 0.12);
-    color: var(--color-success);
-}
-
-.status-badge--refused {
-    background: rgba(var(--color-error-rgb), 0.1);
-    color: var(--color-error);
-}
-
-/* --- Responsive --- */
-@media (max-width: 1000px) {
+/* ============================================================
+   MOBILE (≤ 640px)
+   ============================================================ */
+@media (max-width: 640px) {
+    /* Grid: single column, tighter padding */
     .dashboard {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        padding-top : 3rem;
+    }
+
+    /* All sections span full width */
+    .dashboard > *:nth-child(1),
+    .dashboard > .section:last-child,
+    .dashboard > .section {
+        grid-column: 1 / -1;
+    }
+
+    /* Tighter, mobile-friendly sections */
+    .section {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    /* Section header: responsive on mobile */
+    .section-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
+        gap: 0.5rem;
+    }
+
+    .section-header h2 {
+        font-size: var(--font-size-sm, 0.875rem);
+        font-weight: var(--font-bold);
+        margin: 0;
+        line-height: 1.2;
+        flex: 0 1 auto;
+    }
+
+    .section-header > span {
+        opacity: 0.5;
+        font-size: var(--font-size-xs, 0.75rem);
+    }
+
+    /* Filters: full width, stacked */
+    .right-side {
+        width: 100%;
+        margin-left: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+
+    .filter-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .filter-container label {
+        font-size: var(--font-size-xs, 0.75rem);
+        white-space: nowrap;
+        opacity: 0.7;
+        min-width: fit-content;
+    }
+
+    .filter-container select {
+        flex: 1;
+        font-size: var(--font-size-xs, 0.75rem);
+        padding: 0.4rem 0.5rem !important;
+    }
+
+    .count-badge {
+        display: none;
+    }
+
+    /* Switch to card layout, hide table */
+    .card-list        { display: flex; }
+    .table-responsive { display: none; }
+
+    /* Card internals */
+    .request-card .cell-title {
+        max-width: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--font-size-sm, 0.875rem);
+        font-weight: var(--font-medium);
+        flex: 1;
+    }
+
+    .request-card .student-name {
+        font-size: var(--font-size-xs, 0.75rem);
+        opacity: 0.6;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .request-card .cell-date {
+        font-size: var(--font-size-xs, 0.75rem);
+        opacity: 0.6;
+        white-space: nowrap;
+    }
+
+    .status-badge {
+        padding: 3px 8px;
+        font-size: var(--font-size-xxxs, 0.7rem);
     }
 }
 </style>
