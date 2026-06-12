@@ -12,7 +12,7 @@ import { upload } from '../middlewares/upload.middleware.js';
 const router = express.Router();
 
 router.use(authMiddleware);
-router.use(authorizeRoles(ROLES.ETUDIANT));
+router.use(authorizeRoles(ROLES.ETUDIANT,ROLES.PROFESSIONNEL));
 
 router.post('/', upload.single('photo'), addCertification);
 router.get('/me', getMesCertifications);

@@ -131,12 +131,20 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = normalizeAuthUser(response.data.user);
   }
 
-  async function logout() {
-    const { error } = await supabase.auth.signOut();
+async function logout() {
+    try {
+      await api.post('/auth/logout');
+    } catch (backendError) {
+      console.error('Failed to logout:', backendError);
+    }
 
-    if (error) console.warn(error);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.warn('Supabase logout warning:', error);
+    }
 
     user.value = null;
+  
   }
 
   return {
