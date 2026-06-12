@@ -9,6 +9,7 @@ import {
   MoveHorizontal,
   Repeat2,
   Users,
+  Ban,
 } from 'lucide-vue-next'
 
 import { useAuthStore } from '@/stores/auth'
@@ -33,13 +34,14 @@ const canScrollLeft = ref(false)
 const canScrollRight = ref(false)
 
 const selectedOfferId = ref(null)
-const selectedOffer = computed(() =>
-  offers.value.find(o => getOfferId(o) === selectedOfferId.value) || null
-)
-
 const demandes = ref([])
 const loadingDemandes = ref(false)
 const demandesError = ref('')
+const terminatingOfferId = ref(null)
+
+const selectedOffer = computed(() =>
+  offers.value.find(o => getOfferId(o) === selectedOfferId.value) || null
+)
 
 const typesOffres = computed(() =>
   Array.isArray(recruteurStore.typesOffres) ? recruteurStore.typesOffres : []
@@ -85,10 +87,6 @@ onMounted(async () => {
     fetchTypesOffres(),
   ])
 
-  if (offers.value.length && !selectedOfferId.value) {
-    await selectOffer(offers.value[0])
-  }
-
   nextTick(updateScrollFades)
 })
 
@@ -104,6 +102,10 @@ async function fetchTypesOffres() {
 
 function getOfferId(offer) {
   return offer?.offre_id || offer?.id
+}
+
+function isOfferTerminated(offer) {
+  return String(offer?.statut || '').toUpperCase() === 'TERMINEE'
 }
 
 function openOfferModal() {
@@ -126,10 +128,6 @@ async function handleSubmitOffer(payload) {
 
     closeOfferModal()
     await fetchOffers()
-
-    if (offers.value.length) {
-      await selectOffer(offers.value[0])
-    }
   } catch (err) {
     console.error('Erreur création offre:', err)
   }
@@ -138,6 +136,13 @@ async function handleSubmitOffer(payload) {
 async function selectOffer(offer) {
   const offreId = getOfferId(offer)
   if (!offreId) return
+
+  if (selectedOfferId.value === offreId) {
+    selectedOfferId.value = null
+    demandes.value = []
+    demandesError.value = ''
+    return
+  }
 
   selectedOfferId.value = offreId
   await fetchDemandesByOffer(offreId)
@@ -149,11 +154,6 @@ async function fetchDemandesByOffer(offreId) {
   demandes.value = []
 
   try {
-    if (typeof recruteurStore.fetchDemandesParOffre !== 'function') {
-      demandesError.value = 'La méthode fetchDemandesParOffre manque dans le store recruteur.'
-      return
-    }
-
     const result = await recruteurStore.fetchDemandesParOffre(offreId, 1)
 
     const source =
@@ -169,6 +169,32 @@ async function fetchDemandesByOffer(offreId) {
     demandesError.value = err.response?.data?.message || 'Impossible de charger les demandes.'
   } finally {
     loadingDemandes.value = false
+  }
+}
+
+async function handleTerminateOffer(offer) {
+  const offreId = getOfferId(offer)
+  if (!offreId || isOfferTerminated(offer)) return
+
+  const confirmed = window.confirm(`Terminer l'offre chez ${offer.entreprise} ?`)
+  if (!confirmed) return
+
+  terminatingOfferId.value = offreId
+
+  try {
+    await recruteurStore.terminerOffre(offreId)
+    await fetchOffers()
+
+    if (selectedOfferId.value === offreId) {
+      selectedOfferId.value = null
+      demandes.value = []
+      demandesError.value = ''
+    }
+  } catch (err) {
+    console.error('Erreur terminaison offre:', err)
+    alert(err.response?.data?.message || 'Impossible de terminer cette offre.')
+  } finally {
+    terminatingOfferId.value = null
   }
 }
 
@@ -189,6 +215,13 @@ function getStudentName(demande) {
 
 function getStudentEmail(demande) {
   return demande?.utilisateur?.email || '—'
+}
+
+function getInitials(demande) {
+  const u = demande?.utilisateur
+  const first = u?.prenom?.charAt(0) || ''
+  const last = u?.nom?.charAt(0) || ''
+  return `${first}${last}` || 'ET'
 }
 
 function updateScrollFades() {
@@ -341,7 +374,10 @@ watch(isScrollMode, (scrollMode) => {
                     v-for="offer in offers"
                     :key="`${getOfferId(offer)}-${copy}`"
                     class="offer-card"
-                    :class="{ 'offer-card--selected': selectedOfferId === getOfferId(offer) }"
+                    :class="{
+                      'offer-card--selected': selectedOfferId === getOfferId(offer),
+                      'offer-card--terminated': isOfferTerminated(offer),
+                    }"
                     @click="selectOffer(offer)"
                   >
                     <div class="offer-card__top">
@@ -349,7 +385,15 @@ watch(isScrollMode, (scrollMode) => {
                         <Briefcase :size="18" />
                       </div>
 
-                      <span class="badge">{{ offer.type }}</span>
+                      <div class="offer-card__badges">
+                        <span class="badge">{{ offer.type }}</span>
+                        <span
+                          v-if="isOfferTerminated(offer)"
+                          class="badge badge--terminated"
+                        >
+                          Terminée
+                        </span>
+                      </div>
                     </div>
 
                     <h3 class="offer-card__title">{{ offer.entreprise }}</h3>
@@ -380,13 +424,25 @@ watch(isScrollMode, (scrollMode) => {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      class="select-btn"
-                      @click.stop="selectOffer(offer)"
-                    >
-                      Voir les demandes
-                    </button>
+                    <div class="offer-actions">
+                      <button
+                        type="button"
+                        class="select-btn"
+                        @click.stop="selectOffer(offer)"
+                      >
+                        {{ selectedOfferId === getOfferId(offer) ? 'Masquer' : 'Voir les demandes' }}
+                      </button>
+
+                      <button
+                        type="button"
+                        class="terminate-btn"
+                        :disabled="isOfferTerminated(offer) || terminatingOfferId === getOfferId(offer)"
+                        @click.stop="handleTerminateOffer(offer)"
+                      >
+                        <Ban :size="13" />
+                        {{ isOfferTerminated(offer) ? 'Terminée' : 'Terminer' }}
+                      </button>
+                    </div>
                   </article>
                 </div>
               </template>
@@ -396,7 +452,10 @@ watch(isScrollMode, (scrollMode) => {
                   v-for="offer in offers"
                   :key="getOfferId(offer)"
                   class="offer-card"
-                  :class="{ 'offer-card--selected': selectedOfferId === getOfferId(offer) }"
+                  :class="{
+                    'offer-card--selected': selectedOfferId === getOfferId(offer),
+                    'offer-card--terminated': isOfferTerminated(offer),
+                  }"
                   @click="selectOffer(offer)"
                 >
                   <div class="offer-card__top">
@@ -404,7 +463,15 @@ watch(isScrollMode, (scrollMode) => {
                       <Briefcase :size="18" />
                     </div>
 
-                    <span class="badge">{{ offer.type }}</span>
+                    <div class="offer-card__badges">
+                      <span class="badge">{{ offer.type }}</span>
+                      <span
+                        v-if="isOfferTerminated(offer)"
+                        class="badge badge--terminated"
+                      >
+                        Terminée
+                      </span>
+                    </div>
                   </div>
 
                   <h3 class="offer-card__title">{{ offer.entreprise }}</h3>
@@ -435,13 +502,25 @@ watch(isScrollMode, (scrollMode) => {
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    class="select-btn"
-                    @click.stop="selectOffer(offer)"
-                  >
-                    Voir les demandes
-                  </button>
+                  <div class="offer-actions">
+                    <button
+                      type="button"
+                      class="select-btn"
+                      @click.stop="selectOffer(offer)"
+                    >
+                      {{ selectedOfferId === getOfferId(offer) ? 'Masquer' : 'Voir les demandes' }}
+                    </button>
+
+                    <button
+                      type="button"
+                      class="terminate-btn"
+                      :disabled="isOfferTerminated(offer) || terminatingOfferId === getOfferId(offer)"
+                      @click.stop="handleTerminateOffer(offer)"
+                    >
+                      <Ban :size="13" />
+                      {{ isOfferTerminated(offer) ? 'Terminée' : 'Terminer' }}
+                    </button>
+                  </div>
                 </article>
               </template>
             </div>
@@ -455,38 +534,48 @@ watch(isScrollMode, (scrollMode) => {
       </Transition>
     </section>
 
-    <section class="requests-section">
-      <div class="requests-header">
-        <div>
-          <p class="section-eyebrow">Demandes reçues</p>
-          <h2>
-            {{ selectedOffer ? selectedOffer.entreprise : 'Sélectionnez une offre' }}
-          </h2>
-          <p v-if="selectedOffer" class="requests-subtitle">
-            {{ selectedOffer.localisation }} · {{ selectedOffer.type }}
-          </p>
-        </div>
+    <section class="requests-section users-tab">
+      <div class="tab-header">
+        <div class="tab-header__title-row">
+          <Users class="tab-header__icon" :size="18" />
 
-        <div class="requests-count">
-          <Users :size="16" />
+          <div>
+            <h2 class="tab-header__title">Demandes reçues</h2>
+            <p class="tab-header__desc">
+              {{
+                selectedOffer
+                  ? `${selectedOffer.entreprise} · ${selectedOffer.localisation} · ${selectedOffer.type}`
+                  : 'Sélectionnez une offre pour afficher les candidatures associées.'
+              }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div></div>
+
+        <span class="toolbar__count">
           {{ demandes.length }} demande(s)
-        </div>
+        </span>
       </div>
 
-      <div v-if="!selectedOffer" class="state-msg">
-        Sélectionnez une offre en haut pour afficher ses demandes.
+      <div v-if="!selectedOffer" class="state-empty">
+        <Users class="state-empty__icon" :size="34" />
+        <p>Sélectionnez une offre en haut pour afficher ses demandes.</p>
       </div>
 
-      <div v-else-if="loadingDemandes" class="state-msg">
+      <div v-else-if="loadingDemandes" class="state-center">
         Chargement des demandes...
       </div>
 
-      <div v-else-if="demandesError" class="state-msg error">
+      <div v-else-if="demandesError" class="state-center error">
         {{ demandesError }}
       </div>
 
-      <div v-else-if="!demandes.length" class="state-msg">
-        Aucune demande pour cette offre.
+      <div v-else-if="!demandes.length" class="state-empty">
+        <Users class="state-empty__icon" :size="34" />
+        <p>Aucune demande pour cette offre.</p>
       </div>
 
       <div v-else class="table-wrap">
@@ -496,16 +585,30 @@ watch(isScrollMode, (scrollMode) => {
               <th>Étudiant</th>
               <th>Email</th>
               <th>Message</th>
-              <th>Date</th>
+              <th class="th-center">Date</th>
             </tr>
           </thead>
 
           <tbody>
             <tr v-for="demande in demandes" :key="getDemandeId(demande)">
-              <td>{{ getStudentName(demande) }}</td>
-              <td class="email-cell">{{ getStudentEmail(demande) }}</td>
-              <td class="message-cell">{{ demande.message || '—' }}</td>
-              <td>{{ formatDate(demande.date || demande.createdAt || demande.date_demande) }}</td>
+              <td>
+                <div class="user-cell">
+                  <span class="avatar">{{ getInitials(demande) }}</span>
+                  <span>{{ getStudentName(demande) }}</span>
+                </div>
+              </td>
+
+              <td class="td-muted">
+                {{ getStudentEmail(demande) }}
+              </td>
+
+              <td class="message-cell">
+                {{ demande.message || '—' }}
+              </td>
+
+              <td class="td-center td-muted">
+                {{ formatDate(demande.date || demande.createdAt || demande.date_demande) }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -544,8 +647,7 @@ watch(isScrollMode, (scrollMode) => {
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }
 
-.page-header__eyebrow,
-.section-eyebrow {
+.page-header__eyebrow {
   font-size: var(--font-size-xxs);
   font-weight: var(--font-medium);
   letter-spacing: 0.14em;
@@ -763,7 +865,7 @@ watch(isScrollMode, (scrollMode) => {
 
 .offer-card {
   width: clamp(18rem, 28vw, 22rem);
-  min-height: 16rem;
+  min-height: 17rem;
   flex: 0 0 auto;
   padding: var(--space-md);
   border-radius: var(--radius-md);
@@ -784,10 +886,14 @@ watch(isScrollMode, (scrollMode) => {
   background: rgba(var(--color-secondary-rgb), 0.04);
 }
 
+.offer-card--terminated {
+  opacity: 0.68;
+}
+
 .offer-card__top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-sm);
   margin-bottom: var(--space-sm);
 }
@@ -801,6 +907,14 @@ watch(isScrollMode, (scrollMode) => {
   justify-content: center;
   background: rgba(var(--color-secondary-rgb), 0.14);
   color: var(--color-secondary);
+  flex-shrink: 0;
+}
+
+.offer-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
 }
 
 .offer-card__title {
@@ -865,16 +979,57 @@ watch(isScrollMode, (scrollMode) => {
   text-transform: capitalize;
 }
 
-.select-btn {
+.badge--terminated {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.offer-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
   margin-top: var(--space-sm);
+}
+
+.select-btn,
+.terminate-btn {
   border: none;
   border-radius: var(--radius-sm);
   padding: 7px 10px;
-  background: var(--color-primary);
-  color: var(--color-background);
   font-size: var(--font-size-xxs);
   font-weight: var(--font-medium);
   cursor: pointer;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.select-btn {
+  background: var(--color-primary);
+  color: var(--color-background);
+}
+
+.terminate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.terminate-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.select-btn:hover,
+.terminate-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+/* TABLE STYLE */
+
+.users-tab {
+  font-family: var(--font-ui);
 }
 
 .requests-section {
@@ -887,85 +1042,150 @@ watch(isScrollMode, (scrollMode) => {
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }
 
-.requests-header {
+.tab-header {
+  margin-bottom: var(--space-sm);
+}
+
+.tab-header__title-row {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: var(--space-md);
-  flex-wrap: wrap;
+  gap: var(--space-sm);
 }
 
-.requests-header h2 {
+.tab-header__icon {
+  color: var(--color-secondary);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.tab-header__title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-bold);
+  color: var(--color-primary);
+  margin: 0 0 2px;
+}
+
+.tab-header__desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-hover);
   margin: 0;
-  font-size: 1.25rem;
 }
 
-.requests-subtitle {
-  margin: 0.3rem 0 0;
-  color: var(--color-primary-hover);
-  font-size: var(--font-size-xs);
-}
-
-.requests-count {
-  display: inline-flex;
+.toolbar {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(var(--color-primary-rgb), 0.05);
-  color: var(--color-primary-hover);
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.toolbar__count {
   font-size: var(--font-size-xs);
+  color: var(--color-primary-hover);
+  white-space: nowrap;
 }
 
-.state-msg {
-  text-align: center;
-  padding: 2rem;
-  color: rgba(var(--color-primary-rgb), 0.45);
+.state-center,
+.state-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl) 0;
+  color: var(--color-primary-hover);
   font-size: var(--font-size-sm);
+  text-align: center;
 }
 
-.state-msg.error {
+.state-center.error {
   color: #991b1b;
+}
+
+.state-empty__icon {
+  opacity: 0.25;
 }
 
 .table-wrap {
   overflow-x: auto;
+  border: 1px solid var(--color-surface);
+  border-radius: var(--radius-md);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
+}
+
+thead tr {
+  background: var(--color-background);
 }
 
 th {
-  padding: 10px 12px;
+  padding: 10px var(--space-md);
   text-align: left;
-  font-weight: 500;
-  color: #374151;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary-hover);
+  border-bottom: 1.5px solid var(--color-surface);
+  white-space: nowrap;
+}
+
+.th-center {
+  text-align: center;
 }
 
 td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: top;
+  padding: 12px var(--space-md);
+  border-bottom: 1px solid var(--color-surface);
+  color: var(--color-primary);
+  vertical-align: middle;
 }
 
-.email-cell {
-  color: #6b7280;
-  font-size: 0.8rem;
+.td-center {
+  text-align: center;
+}
+
+.td-muted {
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-xs);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover td {
+  background: rgba(var(--color-secondary-rgb), 0.03);
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-background);
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-transform: uppercase;
 }
 
 .message-cell {
   max-width: 420px;
   color: rgba(var(--color-primary-rgb), 0.75);
   line-height: 1.5;
-}
-
-tr:hover td {
-  background: #fafafa;
 }
 
 .empty-state {
