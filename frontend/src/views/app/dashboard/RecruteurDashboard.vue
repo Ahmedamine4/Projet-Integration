@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
-import { storeToRefs } from 'pinia';
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import {
   Plus,
   Briefcase,
@@ -8,29 +8,50 @@ import {
   Building2,
   MoveHorizontal,
   Repeat2,
-} from 'lucide-vue-next';
-import { useAuthStore } from '@/stores/auth';
-import { useRecruteurStore } from '@/stores/recruteur';
-import OfferModal from '@/components/dashboard/recruteur/OfferModal.vue';
-import BaseButton from '@/components/common/actions/BaseButton.vue';
-import { useHorizontalDragScroll } from '@/composables/useHorizontalDragScroll';
+  Users,
+} from 'lucide-vue-next'
 
-const authStore = useAuthStore();
-const recruteurStore = useRecruteurStore();
+import { useAuthStore } from '@/stores/auth'
+import { useRecruteurStore } from '@/stores/recruteur'
+import OfferModal from '@/components/dashboard/recruteur/OfferModal.vue'
+import BaseButton from '@/components/common/actions/BaseButton.vue'
+import { useHorizontalDragScroll } from '@/composables/useHorizontalDragScroll'
 
-const { user } = storeToRefs(authStore);
-const { offres, loadingOffres } = storeToRefs(recruteurStore);
+const authStore = useAuthStore()
+const recruteurStore = useRecruteurStore()
 
-const offers = offres;
-const loading = loadingOffres;
+const { user } = storeToRefs(authStore)
+const { offres, loadingOffres } = storeToRefs(recruteurStore)
 
-const offerModalOpen = ref(false);
-const viewMode = ref('loop');
-const scrollerRef = ref(null);
-const canScrollLeft = ref(false);
-const canScrollRight = ref(false);
+const offers = offres
+const loading = loadingOffres
 
-const recruiterLastName = computed(() => user.value?.lastName || 'recruteur');
+const offerModalOpen = ref(false)
+const viewMode = ref('loop')
+const scrollerRef = ref(null)
+const canScrollLeft = ref(false)
+const canScrollRight = ref(false)
+
+const selectedOfferId = ref(null)
+const selectedOffer = computed(() =>
+  offers.value.find(o => getOfferId(o) === selectedOfferId.value) || null
+)
+
+const demandes = ref([])
+const loadingDemandes = ref(false)
+const demandesError = ref('')
+
+const typesOffres = computed(() =>
+  Array.isArray(recruteurStore.typesOffres) ? recruteurStore.typesOffres : []
+)
+
+const loadingTypesOffres = computed(() => Boolean(recruteurStore.loadingTypesOffres))
+
+const recruiterLastName = computed(() =>
+  user.value?.lastName ||
+  user.value?.nom ||
+  'recruteur'
+)
 
 const todayLabel = computed(() =>
   new Date().toLocaleDateString('fr-FR', {
@@ -39,40 +60,58 @@ const todayLabel = computed(() =>
     month: 'long',
     year: 'numeric',
   })
-);
+)
 
 const stats = computed(() => ({
   total: offers.value.length,
-  stage: offers.value.filter(o => o.type === 'stage').length,
-  emploi: offers.value.filter(o => o.type === 'emploi').length,
-}));
+  stage: offers.value.filter(o => String(o.type).toLowerCase() === 'stage').length,
+  emploi: offers.value.filter(o => String(o.type).toLowerCase() === 'emploi').length,
+}))
 
-const canLoop = computed(() => offers.value.length >= 4);
-const hasFewOffers = computed(() => offers.value.length > 0 && offers.value.length < 4);
+const canLoop = computed(() => offers.value.length >= 4)
+const hasFewOffers = computed(() => offers.value.length > 0 && offers.value.length < 4)
 
-const isLoopMode = computed(() => viewMode.value === 'loop');
-const isScrollMode = computed(() => viewMode.value === 'scroll');
-const shouldLoop = computed(() => isLoopMode.value && canLoop.value);
+const isLoopMode = computed(() => viewMode.value === 'loop')
+const isScrollMode = computed(() => viewMode.value === 'scroll')
+const shouldLoop = computed(() => isLoopMode.value && canLoop.value)
 
 const modeButtonLabel = computed(() =>
   isLoopMode.value ? 'Scroll' : 'Loop'
-);
+)
 
 onMounted(async () => {
-  await fetchOffers();
-  nextTick(updateScrollFades);
-});
+  await Promise.all([
+    fetchOffers(),
+    fetchTypesOffres(),
+  ])
+
+  if (offers.value.length && !selectedOfferId.value) {
+    await selectOffer(offers.value[0])
+  }
+
+  nextTick(updateScrollFades)
+})
 
 async function fetchOffers() {
-  await recruteurStore.fetchMesOffres(1);
+  await recruteurStore.fetchMesOffres(1)
+}
+
+async function fetchTypesOffres() {
+  if (typeof recruteurStore.fetchTypesOffres === 'function') {
+    await recruteurStore.fetchTypesOffres()
+  }
+}
+
+function getOfferId(offer) {
+  return offer?.offre_id || offer?.id
 }
 
 function openOfferModal() {
-  offerModalOpen.value = true;
+  offerModalOpen.value = true
 }
 
 function closeOfferModal() {
-  offerModalOpen.value = false;
+  offerModalOpen.value = false
 }
 
 async function handleSubmitOffer(payload) {
@@ -83,45 +122,106 @@ async function handleSubmitOffer(payload) {
       technologies: payload.technologies,
       description: payload.description,
       type: payload.type,
-    });
+    })
 
-    closeOfferModal();
+    closeOfferModal()
+    await fetchOffers()
+
+    if (offers.value.length) {
+      await selectOffer(offers.value[0])
+    }
   } catch (err) {
-    console.error('Erreur création offre:', err);
+    console.error('Erreur création offre:', err)
   }
+}
+
+async function selectOffer(offer) {
+  const offreId = getOfferId(offer)
+  if (!offreId) return
+
+  selectedOfferId.value = offreId
+  await fetchDemandesByOffer(offreId)
+}
+
+async function fetchDemandesByOffer(offreId) {
+  loadingDemandes.value = true
+  demandesError.value = ''
+  demandes.value = []
+
+  try {
+    if (typeof recruteurStore.fetchDemandesParOffre !== 'function') {
+      demandesError.value = 'La méthode fetchDemandesParOffre manque dans le store recruteur.'
+      return
+    }
+
+    const result = await recruteurStore.fetchDemandesParOffre(offreId, 1)
+
+    const source =
+      result?.data?.data ||
+      result?.data ||
+      recruteurStore.demandesParOffre?.data ||
+      recruteurStore.demandesParOffre ||
+      []
+
+    demandes.value = Array.isArray(source) ? source : []
+  } catch (err) {
+    console.error('Erreur chargement demandes:', err)
+    demandesError.value = err.response?.data?.message || 'Impossible de charger les demandes.'
+  } finally {
+    loadingDemandes.value = false
+  }
+}
+
+function formatDate(date) {
+  if (!date) return '—'
+  return new Date(date).toLocaleDateString('fr-FR')
+}
+
+function getDemandeId(demande) {
+  return demande?.demande_id || demande?.id || `${demande?.utilisateur_id}-${demande?.offre_id}`
+}
+
+function getStudentName(demande) {
+  const u = demande?.utilisateur
+  if (!u) return '—'
+  return `${u.prenom || ''} ${u.nom || ''}`.trim() || '—'
+}
+
+function getStudentEmail(demande) {
+  return demande?.utilisateur?.email || '—'
 }
 
 function updateScrollFades() {
-  const scroller = scrollerRef.value;
+  const scroller = scrollerRef.value
 
   if (!scroller || !isScrollMode.value || hasFewOffers.value) {
-    canScrollLeft.value = false;
-    canScrollRight.value = false;
-    return;
+    canScrollLeft.value = false
+    canScrollRight.value = false
+    return
   }
 
-  const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
-  canScrollLeft.value = scroller.scrollLeft > 1;
-  canScrollRight.value = scroller.scrollLeft < maxScrollLeft - 1;
+  const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth
+  canScrollLeft.value = scroller.scrollLeft > 1
+  canScrollRight.value = scroller.scrollLeft < maxScrollLeft - 1
 }
 
 function prepareScrollMode() {
-  const scroller = scrollerRef.value;
-  if (!scroller) return;
+  const scroller = scrollerRef.value
+  if (!scroller) return
 
-  scroller.scrollLeft = 0;
-  updateScrollFades();
+  scroller.scrollLeft = 0
+  updateScrollFades()
 }
 
 function toggleViewMode() {
   if (isLoopMode.value) {
-    viewMode.value = 'scroll';
-    nextTick(prepareScrollMode);
-    return;
+    viewMode.value = 'scroll'
+    nextTick(prepareScrollMode)
+    return
   }
 
-  viewMode.value = 'loop';
-  updateScrollFades();
+  viewMode.value = 'loop'
+  updateScrollFades()
 }
 
 const {
@@ -132,21 +232,21 @@ const {
 } = useHorizontalDragScroll(scrollerRef, {
   enabled: isScrollMode,
   onScroll: updateScrollFades,
-});
+})
 
 watch(
   () => offers.value.length,
   () => nextTick(updateScrollFades)
-);
+)
 
 watch(isScrollMode, (scrollMode) => {
   if (!scrollMode) {
-    updateScrollFades();
-    return;
+    updateScrollFades()
+    return
   }
 
-  nextTick(prepareScrollMode);
-});
+  nextTick(prepareScrollMode)
+})
 </script>
 
 <template>
@@ -239,22 +339,20 @@ watch(isScrollMode, (scrollMode) => {
                 >
                   <article
                     v-for="offer in offers"
-                    :key="`${offer.id || offer.offre_id}-${copy}`"
+                    :key="`${getOfferId(offer)}-${copy}`"
                     class="offer-card"
+                    :class="{ 'offer-card--selected': selectedOfferId === getOfferId(offer) }"
+                    @click="selectOffer(offer)"
                   >
                     <div class="offer-card__top">
                       <div class="offer-card__icon">
                         <Briefcase :size="18" />
                       </div>
 
-                      <span class="badge">
-                        {{ offer.type }}
-                      </span>
+                      <span class="badge">{{ offer.type }}</span>
                     </div>
 
-                    <h3 class="offer-card__title">
-                      {{ offer.entreprise }}
-                    </h3>
+                    <h3 class="offer-card__title">{{ offer.entreprise }}</h3>
 
                     <div class="offer-card__meta">
                       <span>
@@ -281,6 +379,14 @@ watch(isScrollMode, (scrollMode) => {
                         {{ tech }}
                       </span>
                     </div>
+
+                    <button
+                      type="button"
+                      class="select-btn"
+                      @click.stop="selectOffer(offer)"
+                    >
+                      Voir les demandes
+                    </button>
                   </article>
                 </div>
               </template>
@@ -288,22 +394,20 @@ watch(isScrollMode, (scrollMode) => {
               <template v-else>
                 <article
                   v-for="offer in offers"
-                  :key="offer.id || offer.offre_id"
+                  :key="getOfferId(offer)"
                   class="offer-card"
+                  :class="{ 'offer-card--selected': selectedOfferId === getOfferId(offer) }"
+                  @click="selectOffer(offer)"
                 >
                   <div class="offer-card__top">
                     <div class="offer-card__icon">
                       <Briefcase :size="18" />
                     </div>
 
-                    <span class="badge">
-                      {{ offer.type }}
-                    </span>
+                    <span class="badge">{{ offer.type }}</span>
                   </div>
 
-                  <h3 class="offer-card__title">
-                    {{ offer.entreprise }}
-                  </h3>
+                  <h3 class="offer-card__title">{{ offer.entreprise }}</h3>
 
                   <div class="offer-card__meta">
                     <span>
@@ -330,6 +434,14 @@ watch(isScrollMode, (scrollMode) => {
                       {{ tech }}
                     </span>
                   </div>
+
+                  <button
+                    type="button"
+                    class="select-btn"
+                    @click.stop="selectOffer(offer)"
+                  >
+                    Voir les demandes
+                  </button>
                 </article>
               </template>
             </div>
@@ -343,8 +455,67 @@ watch(isScrollMode, (scrollMode) => {
       </Transition>
     </section>
 
+    <section class="requests-section">
+      <div class="requests-header">
+        <div>
+          <p class="section-eyebrow">Demandes reçues</p>
+          <h2>
+            {{ selectedOffer ? selectedOffer.entreprise : 'Sélectionnez une offre' }}
+          </h2>
+          <p v-if="selectedOffer" class="requests-subtitle">
+            {{ selectedOffer.localisation }} · {{ selectedOffer.type }}
+          </p>
+        </div>
+
+        <div class="requests-count">
+          <Users :size="16" />
+          {{ demandes.length }} demande(s)
+        </div>
+      </div>
+
+      <div v-if="!selectedOffer" class="state-msg">
+        Sélectionnez une offre en haut pour afficher ses demandes.
+      </div>
+
+      <div v-else-if="loadingDemandes" class="state-msg">
+        Chargement des demandes...
+      </div>
+
+      <div v-else-if="demandesError" class="state-msg error">
+        {{ demandesError }}
+      </div>
+
+      <div v-else-if="!demandes.length" class="state-msg">
+        Aucune demande pour cette offre.
+      </div>
+
+      <div v-else class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Étudiant</th>
+              <th>Email</th>
+              <th>Message</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="demande in demandes" :key="getDemandeId(demande)">
+              <td>{{ getStudentName(demande) }}</td>
+              <td class="email-cell">{{ getStudentEmail(demande) }}</td>
+              <td class="message-cell">{{ demande.message || '—' }}</td>
+              <td>{{ formatDate(demande.date || demande.createdAt || demande.date_demande) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <OfferModal
       :open="offerModalOpen"
+      :loading="loadingTypesOffres"
+      :type-options="typesOffres"
       @close="closeOfferModal"
       @submit="handleSubmitOffer"
     />
@@ -373,7 +544,8 @@ watch(isScrollMode, (scrollMode) => {
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }
 
-.page-header__eyebrow {
+.page-header__eyebrow,
+.section-eyebrow {
   font-size: var(--font-size-xxs);
   font-weight: var(--font-medium);
   letter-spacing: 0.14em;
@@ -591,19 +763,25 @@ watch(isScrollMode, (scrollMode) => {
 
 .offer-card {
   width: clamp(18rem, 28vw, 22rem);
-  min-height: 15rem;
+  min-height: 16rem;
   flex: 0 0 auto;
   padding: var(--space-md);
   border-radius: var(--radius-md);
   background: var(--color-background);
   border: 1px solid rgba(var(--color-primary-rgb), 0.09);
   transition: var(--transition-fast);
+  cursor: pointer;
 }
 
-.offer-card:hover {
-  border-color: rgba(var(--color-secondary-rgb), 0.35);
+.offer-card:hover,
+.offer-card--selected {
+  border-color: rgba(var(--color-secondary-rgb), 0.55);
   box-shadow: 0 6px 22px rgba(var(--color-primary-rgb), 0.08);
   transform: translateY(-2px);
+}
+
+.offer-card--selected {
+  background: rgba(var(--color-secondary-rgb), 0.04);
 }
 
 .offer-card__top {
@@ -687,6 +865,109 @@ watch(isScrollMode, (scrollMode) => {
   text-transform: capitalize;
 }
 
+.select-btn {
+  margin-top: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  background: var(--color-primary);
+  color: var(--color-background);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+}
+
+.requests-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+}
+
+.requests-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.requests-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.requests-subtitle {
+  margin: 0.3rem 0 0;
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-xs);
+}
+
+.requests-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(var(--color-primary-rgb), 0.05);
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-xs);
+}
+
+.state-msg {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(var(--color-primary-rgb), 0.45);
+  font-size: var(--font-size-sm);
+}
+
+.state-msg.error {
+  color: #991b1b;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 500;
+  color: #374151;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: top;
+}
+
+.email-cell {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.message-cell {
+  max-width: 420px;
+  color: rgba(var(--color-primary-rgb), 0.75);
+  line-height: 1.5;
+}
+
+tr:hover td {
+  background: #fafafa;
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -752,6 +1033,10 @@ watch(isScrollMode, (scrollMode) => {
 
   .offer-card {
     width: min(85vw, 21rem);
+  }
+
+  .requests-section {
+    padding: var(--space-md);
   }
 }
 </style>

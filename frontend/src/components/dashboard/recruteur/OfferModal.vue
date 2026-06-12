@@ -16,6 +16,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  typeOptions: {
+  type: Array,
+  default: () => [],
+},
 });
 
 const emit = defineEmits(['close', 'submit']);
@@ -38,7 +42,11 @@ const errors = reactive({
   type: '',
 });
 
-const typeOptions = ['stage', 'emploi', 'freelance', 'alternance'];
+const typeOptions = computed(() =>
+  props.typeOptions?.length
+    ? props.typeOptions
+    : ['stage', 'emploi', 'freelance', 'alternance']
+);
 
 const textareaElem = ref(null);
 const formBodyRef = ref(null);
