@@ -1,8 +1,10 @@
 import prisma from "../config/prisma.js";
 import { creerNotification , TYPES_NOTIFICATION} from './notification.service.js';
+import { TypeOffre } from "@prisma/client";
 
 export const creerOffre = async (utilisateurId, data) => {
-  return prisma.offre.create({
+
+  const offre = await prisma.offre.create({
     data: {
       entreprise: data.entreprise,
       localisation: data.localisation,
@@ -18,6 +20,8 @@ export const creerOffre = async (utilisateurId, data) => {
     `Votre offre chez ${data.entreprise} a été créée avec succès!`,
     TYPES_NOTIFICATION.OFFRE_CREEE,
   );
+
+  return offre;
 };
 
 export const getMesOffres = async (utilisateurId) => {
@@ -184,4 +188,8 @@ export const getDemandesPagination = async (page = 1, limit = 10, offreId) => {
     page,
     totalPages: Math.ceil(total / limit),
   };
+};
+
+export const getTypesOffres = async () => {
+  return Object.values(TypeOffre);
 };
