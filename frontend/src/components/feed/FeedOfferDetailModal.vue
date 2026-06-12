@@ -99,9 +99,10 @@
           <button
             type="button"
             class="offer-detail-primary-button"
+            :disabled="offer.isApplied"
             @click="emit('apply', offer)"
           >
-            Apply
+            {{ offer.isApplied ? 'Applied' : 'Apply' }}
           </button>
         </footer>
       </section>
@@ -345,6 +346,13 @@ const offerTechnologies = computed(() => {
 .offer-detail-primary-button:hover {
   background: rgba(var(--color-primary-rgb), 0.92);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
+}
+
+.offer-detail-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  box-shadow: none;
 }
 
 @media (max-width: 700px) {

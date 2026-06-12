@@ -13,9 +13,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
 });
 
-const emit = defineEmits(['close', 'submit']);
+const emit = defineEmits(['close', 'submit', 'clear-error']);
 
 const message = ref('');
 const error = ref('');
@@ -33,6 +37,8 @@ const modalDescription = computed(() => {
 const isSubmitDisabled = computed(() => {
   return props.loading || !message.value.trim();
 });
+
+const visibleError = computed(() => props.errorMessage || error.value);
 
 watch(
   () => props.offer,
@@ -66,7 +72,6 @@ function handleSubmit() {
     message: trimmedMessage,
   });
 
-  message.value = '';
   error.value = '';
 }
 </script>
@@ -91,9 +96,8 @@ function handleSubmit() {
           v-model="message"
           rows="7"
           minlength="20"
-          placeholder="Introduce yourself and explain why you are interested."
           :disabled="loading"
-          @input="error = ''"
+          @input="error = ''; emit('clear-error')"
         />
       </label>
 
@@ -102,10 +106,10 @@ function handleSubmit() {
       </p>
 
       <BaseError
-        v-if="error"
+        v-if="visibleError"
         variant="field"
       >
-        {{ error }}
+        {{ visibleError }}
       </BaseError>
     </div>
 

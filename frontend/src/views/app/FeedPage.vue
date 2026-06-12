@@ -109,18 +109,18 @@
       @open-student="openProjectOwnerPortfolio"
     />
 
-    <!--<div
-      v-if="feedExperienceStore.hasMore && !feedExperienceStore.loadingMore"
+    <div
+      v-if="feedStore.hasMoreExperiences && !feedStore.isLoadingMore"
       ref="loadMoreTrigger"
       class="load-more-trigger"
-    ></div>
+    />
 
     <div
-      v-if="feedExperienceStore.loadingMore"
+      v-if="feedStore.isLoadingMore"
       class="feed-loading-more"
     >
       Chargement du feed...
-    </div>-->
+    </div>
   </template>
 
   <div
@@ -160,8 +160,17 @@
 
     <ApplyOfferModal
       :offer="applyingOffer"
+      :loading="isApplyingOffer"
+      :error-message="applyOfferError"
       @close="closeApplyOffer"
       @submit="handleApplyOfferSubmit"
+      @clear-error="applyOfferError = ''"
+    />
+
+    <BaseNotification
+      :message="notification.message"
+      :type="notification.type"
+      @close="notification.message = ''"
     />
   </div>
 </template>
@@ -179,13 +188,18 @@ import ShareProjectModal from '@/components/feed/ShareProjectModal.vue';
 import FeedOffersCarousel from '@/components/feed/FeedOffersCarousel.vue';
 import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
 import ApplyOfferModal from '@/components/feed/ApplyOfferModal.vue';
+import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
 import { useFeedStore } from '@/stores/feed';
 import api from '@/services/api';
 
 const feedStore = useFeedStore();
+const FEED_EXPERIENCE_LIMIT = 4;
 
 onMounted(() => {
-  feedStore.fetchInitialFeed();
+  feedStore.fetchInitialFeed({
+    page: 1,
+    limit: FEED_EXPERIENCE_LIMIT,
+  });
 });
 const router = useRouter();
 const authStore = useAuthStore();
@@ -258,6 +272,7 @@ const feedItems = computed(() => {
 
 const offers = computed(() => {
   return (feedStore.offres || []).map((offer) => {
+    const offerId = offer.offre_id || offer.id;
     const company =
       offer.entreprise ||
       offer.company ||
@@ -266,7 +281,7 @@ const offers = computed(() => {
 
     return {
       ...offer,
-      id: offer.offre_id || offer.id,
+      id: offerId,
       title: offer.title || offer.titre || offer.type || 'Offer',
       company: company || '',
       location: offer.localisation || offer.location || '',
@@ -274,6 +289,9 @@ const offers = computed(() => {
       level: offer.level || offer.niveau || offer.type || '',
       technologies: offer.technologies || [],
       description: offer.description || '',
+      isApplied:
+        Boolean(offer.isApplied || offer.applied || offer.hasApplied) ||
+        appliedOfferIds.value.has(offerId),
     };
   });
 });
@@ -349,7 +367,19 @@ const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
 const applyingOffer = ref(null);
+const isApplyingOffer = ref(false);
+const applyOfferError = ref('');
+const appliedOfferIds = ref(new Set());
+const notification = ref({
+  message: '',
+  type: 'success',
+});
 const followedSuggestionIds = ref(new Set());
+const loadMoreTrigger = ref(null);
+let loadMoreObserver = null;
+let filtersTimer = null;
+let skipNextFiltersWatch = false;
+let notificationTimer = null;
 
 
 const defaultFilters = () => ({
@@ -374,11 +404,10 @@ const sidebarStudents = computed(() => {
   return suggestedStudents.value;
 });
 
-let filtersTimer = null;
-
-
 function buildExperienceParams() {
   return {
+    page: 1,
+    limit: FEED_EXPERIENCE_LIMIT,
     source: filters.value.source !== 'all' ? filters.value.source : undefined,
     sort: filters.value.sort || 'trending',
     technology: filters.value.technology || undefined,
@@ -389,20 +418,18 @@ async function handleFiltersUpdate(nextFilters) {
   console.log('FILTERS UPDATED:', nextFilters);
 
   filters.value = nextFilters;
-
-  await feedStore.fetchFeedExperiences({
-    source: nextFilters.source !== 'all' ? nextFilters.source : undefined,
-    sort: nextFilters.sort || 'trending',
-    technology: nextFilters.technology || undefined,
-    domain: nextFilters.domain || undefined,
-  });
 }
 async function fetchFeedExperiences() {
-  await feedStore.fetchFeedExperiences(buildExperienceParams());
+  await feedStore.updateExperienceFilters(buildExperienceParams());
 }
 watch(
   filters,
   () => {
+    if (skipNextFiltersWatch) {
+      skipNextFiltersWatch = false;
+      return;
+    }
+
     if (filtersTimer) {
       clearTimeout(filtersTimer);
     }
@@ -414,9 +441,60 @@ watch(
   { deep: true }
 );
 
+function canLoadMoreExperiences() {
+  return (
+    feedStore.hasMoreExperiences &&
+    !feedStore.isLoadingMore &&
+    !feedStore.loadingExperiences &&
+    !feedStore.loading
+  );
+}
+
+async function loadMoreExperiences() {
+  if (!canLoadMoreExperiences()) return;
+
+  await feedStore.fetchFeedExperiences({
+    ...buildExperienceParams(),
+    page: feedStore.filters.page + 1,
+    limit: FEED_EXPERIENCE_LIMIT,
+    append: true,
+  });
+}
+
+function observeLoadMoreTrigger(element) {
+  if (loadMoreObserver) {
+    loadMoreObserver.disconnect();
+    loadMoreObserver = null;
+  }
+
+  if (!element) return;
+
+  loadMoreObserver = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      loadMoreExperiences();
+    }
+  }, {
+    root: document.querySelector('.feed-page'),
+    rootMargin: '160px 0px',
+    threshold: 0.1,
+  });
+
+  loadMoreObserver.observe(element);
+}
+
+watch(loadMoreTrigger, observeLoadMoreTrigger);
+
 onUnmounted(() => {
   if (filtersTimer) {
     clearTimeout(filtersTimer);
+  }
+
+  if (loadMoreObserver) {
+    loadMoreObserver.disconnect();
+  }
+
+  if (notificationTimer) {
+    clearTimeout(notificationTimer);
   }
 });
 const topCarouselItems = computed(() => {
@@ -488,6 +566,12 @@ function buildStudentCarouselDescription(student) {
 }
 
 function resetFilters() {
+  if (filtersTimer) {
+    clearTimeout(filtersTimer);
+    filtersTimer = null;
+  }
+
+  skipNextFiltersWatch = true;
   filters.value = defaultFilters();
   search.value = '';
   feedStore.resetFilters();
@@ -540,22 +624,59 @@ function closeOfferDetail() {
 
 function openApplyOffer(offer) {
   selectedOffer.value = null;
+  applyOfferError.value = '';
   applyingOffer.value = offer;
 }
 
 function closeApplyOffer() {
+  if (isApplyingOffer.value) return;
+
   applyingOffer.value = null;
+  applyOfferError.value = '';
 }
 
 async function handleApplyOfferSubmit(payload) {
-  if (!applyingOffer.value?.id) return;
+  const offerId =
+    payload?.offerId ||
+    applyingOffer.value?.id ||
+    applyingOffer.value?.offre_id;
 
-  console.log('Apply offer payload:', {
-    offer: applyingOffer.value,
-    payload,
-  });
+  if (!offerId || isApplyingOffer.value) return;
 
-  closeApplyOffer();
+  isApplyingOffer.value = true;
+  applyOfferError.value = '';
+
+  try {
+    await api.post(`/offres/${offerId}/demandes`, {
+      message: payload.message,
+    });
+
+    const nextAppliedOfferIds = new Set(appliedOfferIds.value);
+    nextAppliedOfferIds.add(offerId);
+    appliedOfferIds.value = nextAppliedOfferIds;
+
+    showNotification('Application sent successfully.', 'success');
+    applyingOffer.value = null;
+  } catch (error) {
+    applyOfferError.value =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      'Unable to send your application. Please try again.';
+  } finally {
+    isApplyingOffer.value = false;
+  }
+}
+
+function showNotification(message, type = 'success') {
+  if (notificationTimer) {
+    clearTimeout(notificationTimer);
+  }
+
+  notification.value = { message, type };
+  notificationTimer = setTimeout(() => {
+    notification.value.message = '';
+    notificationTimer = null;
+  }, 3500);
 }
 
 function openAddOfferModal() {

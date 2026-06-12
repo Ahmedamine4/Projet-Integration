@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import api from '@/services/api';
 
+const EXPERIENCE_PAGE_SIZE = 4;
+
 function cleanParams(params = {}) {
   return Object.fromEntries(
     Object.entries(params).filter(([, value]) => {
@@ -59,7 +61,7 @@ function mapExperienceParams(params = {}) {
 
   return cleanParams({
     page: params.page || 1,
-    limit: params.limit || 10,
+    limit: params.limit || EXPERIENCE_PAGE_SIZE,
 
     technologie: params.technologie || params.technology,
     domaine: params.domaine || params.domain,
@@ -104,7 +106,7 @@ export const useFeedStore = defineStore('feed', {
 
     filters: {
       page: 1,
-      limit: 10,
+      limit: EXPERIENCE_PAGE_SIZE,
       source: 'all',
       sort: 'trending',
       technology: null,
@@ -116,6 +118,8 @@ export const useFeedStore = defineStore('feed', {
     loadingOffres: false,
     loadingSuggestions: false,
     loadingExperiences: false,
+    isLoadingMore: false,
+    hasMoreExperiences: true,
     error: null,
   }),
 
@@ -204,19 +208,57 @@ export const useFeedStore = defineStore('feed', {
     },
 
     async fetchFeedExperiences(params = {}) {
-      this.loadingExperiences = true;
+      const append = Boolean(params.append);
+
+      if (append) {
+        if (this.isLoadingMore || !this.hasMoreExperiences) {
+          return {
+            data: [],
+            pagination: this.paginationExperiences,
+            filters_appliques: this.filtersAppliques,
+          };
+        }
+
+        this.isLoadingMore = true;
+      } else {
+        this.loadingExperiences = true;
+        this.hasMoreExperiences = true;
+      }
+
+      const requestParams = {
+        ...this.filters,
+        ...params,
+        page: params.page || (append ? this.filters.page + 1 : 1),
+        limit: EXPERIENCE_PAGE_SIZE,
+      };
+
+      delete requestParams.append;
 
       try {
         const response = await api.get('/feed/experiences', {
-          params: mapExperienceParams(params),
+          params: mapExperienceParams(requestParams),
         });
 
         const payload = extractListPayload(response.data);
+        const pagination = payload.pagination;
+        const currentPage = Number(pagination?.page || requestParams.page || 1);
+        const totalPages = Number(pagination?.totalPages || pagination?.total_pages || 0);
 
-        this.experiences = payload.data;
-        this.paginationExperiences = payload.pagination;
-        this.experiencesPagination = payload.pagination;
+        this.experiences = append
+          ? [...this.experiences, ...payload.data]
+          : payload.data;
+        this.paginationExperiences = pagination;
+        this.experiencesPagination = pagination;
         this.filtersAppliques = payload.filters_appliques;
+        this.filters = {
+          ...this.filters,
+          ...requestParams,
+          page: currentPage,
+          limit: EXPERIENCE_PAGE_SIZE,
+        };
+        this.hasMoreExperiences = totalPages
+          ? currentPage < totalPages
+          : payload.data.length >= EXPERIENCE_PAGE_SIZE;
 
         return payload;
       } catch (error) {
@@ -224,7 +266,11 @@ export const useFeedStore = defineStore('feed', {
         console.error('Erreur feed expériences:', error.response?.data || error);
         throw error;
       } finally {
-        this.loadingExperiences = false;
+        if (append) {
+          this.isLoadingMore = false;
+        } else {
+          this.loadingExperiences = false;
+        }
       }
     },
 
@@ -236,7 +282,9 @@ export const useFeedStore = defineStore('feed', {
         ...this.filters,
         ...params,
         page: params.page || this.filters.page || 1,
+        limit: EXPERIENCE_PAGE_SIZE,
       };
+      this.hasMoreExperiences = true;
 
       try {
         await Promise.all([
@@ -258,7 +306,9 @@ export const useFeedStore = defineStore('feed', {
         ...this.filters,
         ...filters,
         page: filters.page || 1,
+        limit: EXPERIENCE_PAGE_SIZE,
       };
+      this.hasMoreExperiences = true;
 
       return this.fetchFeedExperiences(this.filters);
     },
@@ -266,12 +316,13 @@ export const useFeedStore = defineStore('feed', {
     async resetFilters() {
       this.filters = {
         page: 1,
-        limit: 10,
+        limit: EXPERIENCE_PAGE_SIZE,
         source: 'all',
         sort: 'trending',
         technology: null,
         domain: null,
       };
+      this.hasMoreExperiences = true;
 
       return this.fetchFeedExperiences(this.filters);
     },

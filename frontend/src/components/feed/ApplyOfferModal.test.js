@@ -231,7 +231,7 @@ describe('ApplyOfferModal', () => {
     ]);
   });
 
-  it('resets the message after a successful submit', async () => {
+  it('keeps the message after submit until the modal closes', async () => {
     const wrapper = mountModal();
 
     await wrapper
@@ -241,8 +241,31 @@ describe('ApplyOfferModal', () => {
     await getSubmitButton(wrapper).trigger('click');
     await nextTick();
 
+    expect(wrapper.find('textarea').element.value).toBe(
+      'I am very interested in this opportunity.'
+    );
+    expect(wrapper.find('[data-test="base-error"]').exists()).toBe(false);
+
+    await wrapper.setProps({
+      offer: null,
+    });
+
+    await wrapper.setProps({
+      offer,
+    });
+    await nextTick();
+
     expect(wrapper.find('textarea').element.value).toBe('');
     expect(wrapper.find('[data-test="base-error"]').exists()).toBe(false);
+  });
+
+  it('renders an API error passed by the parent', () => {
+    const wrapper = mountModal({
+      errorMessage: 'Already applied',
+    });
+
+    expect(wrapper.find('[data-test="base-error"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="base-error"]').text()).toBe('Already applied');
   });
 
   it('resets message and error when offer becomes null', async () => {
