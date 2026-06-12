@@ -44,7 +44,7 @@ const routes = [
     component: () => import('@/views/app/DashboardView.vue'),
     meta: {
       requiresAuth: true,
-      role: 'etudiant',
+      role: ['etudiant', 'professionnel'],
       layout: 'app',
     },
   },
@@ -64,6 +64,7 @@ const routes = [
     component: () => import('@/views/app/GettingStartedView.vue'),
     meta: {
       requiresAuth: true,
+      role: 'etudiant',
       layout: 'app',
     },
   },
@@ -73,6 +74,7 @@ const routes = [
     component: () => import('@/views/app/ExperienceView.vue'),
     meta: {
       requiresAuth: true,
+      role: 'etudiant',
       layout: 'app',
     },
   },
@@ -82,6 +84,7 @@ const routes = [
     component: () => import('@/views/app/ExperienceView.vue'),
     meta: {
       requiresAuth: true,
+      role: 'etudiant',
       layout: 'app',
     },
   },
@@ -91,6 +94,7 @@ const routes = [
     component: PortfolioView,
     meta: {
       requiresAuth: true,
+      role: 'etudiant',
       layout: 'app',
     },
   },
@@ -164,8 +168,18 @@ router.beforeEach(async (to) => {
 
   const requiredRole = to.meta.role;
   const userRole = authStore.user?.role;
+  const hasRequiredRole = Array.isArray(requiredRole)
+    ? requiredRole.includes(userRole)
+    : userRole === requiredRole;
 
-  if (requiredRole && userRole !== requiredRole) {
+  if (requiredRole && !hasRequiredRole) {
+    const isPublicPortfolioView =
+      ['portfolio', 'portfolio-experience'].includes(to.name) && to.params.id;
+
+    if (isPublicPortfolioView) {
+      return true;
+    }
+
     const redirects = {
       professeur: '/prof-dashboard',
       professionnel: '/recruiter-dashboard',
