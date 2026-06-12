@@ -24,6 +24,7 @@ import interactionRoutes from './routes/interaction.routes.js';
 import directeurRoutes from './routes/directeur.routes.js';
 import feedRoutes from './routes/feed.routes.js';
 import recruteurRoutes from './routes/recruteur.routes.js';
+import feedProfRoutes from './routes/feed.prof.routes.js';
 
 const app = express();
 app.use(cors({
@@ -49,6 +50,7 @@ app.use('/api/stages', stageRoutes);
 // Branchement des routes de gestion des activites
 app.use('/api/activites', activiteRoutes);
 app.use('/api', feedRoutes);
+app.use('/api/prof', feedProfRoutes);
 
 //Getting institutions
 app.use('/api/getInstitutions', getInstitutionRoutes);
