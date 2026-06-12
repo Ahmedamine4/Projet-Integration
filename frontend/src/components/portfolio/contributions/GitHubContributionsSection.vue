@@ -10,6 +10,10 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  canManage: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const githubStore = useGithubStore();
@@ -156,13 +160,14 @@ watch(
       <div class="error-container">
         <p>{{ error }}</p>
         <button
+          v-if="canManage || !needsGithubConnection"
           type="button"
           class="action-button secondary"
-          @click="needsGithubConnection ? connectGithub() : syncAndLoad()"
+          @click="canManage ? (needsGithubConnection ? connectGithub() : syncAndLoad()) : loadContributions()"
           :disabled="isLoading"
         >
           <RefreshCw :size="16" />
-          <span>{{ needsGithubConnection ? 'Connect GitHub' : 'Sync' }}</span>
+          <span>{{ canManage ? (needsGithubConnection ? 'Connect GitHub' : 'Sync') : 'Retry' }}</span>
         </button>
       </div>
     </div>
@@ -171,6 +176,7 @@ watch(
       <div class="empty-container">
         <p>No GitHub contributions found.</p>
         <button
+          v-if="canManage"
           type="button"
           class="action-button secondary"
           @click="connectGithub"

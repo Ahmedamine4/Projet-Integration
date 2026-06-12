@@ -1096,10 +1096,13 @@ async function handleAiFiltersDetected(filters) {
         </div>
       </div>
       <div
-        v-if="isOwnPortfolio"
+        v-if="portfolioUserId"
         class="portfolio-section-wrapper"
       >
-        <GitHubContributionsSection :user-id="portfolioUserId" />
+        <GitHubContributionsSection
+          :user-id="portfolioUserId"
+          :can-manage="isOwnPortfolio"
+        />
       </div>
       <div
         v-if="shouldShowProjectSection"

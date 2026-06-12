@@ -79,6 +79,22 @@ export const getMyRepositories = async (req, res) => {
 };
 
 async function getContributionsForEtudiant(etudiantId) {
+  const etudiant = await prisma.etudiant.findUnique({
+    where: { etudiant_utilisateur_id: etudiantId },
+    select: {
+      etudiant_utilisateur_id: true,
+      portfolio: { select: { portfolio_id: true } },
+    },
+  });
+
+  if (!etudiant) {
+    return { status: 'missing-student' };
+  }
+
+  if (!etudiant.portfolio) {
+    return { status: 'missing-portfolio' };
+  }
+
   const repoWithToken = await prisma.repository.findFirst({
     where: { etudiant_id: etudiantId },
     orderBy: { last_synced: 'desc' },
@@ -86,10 +102,13 @@ async function getContributionsForEtudiant(etudiantId) {
   });
 
   if (!repoWithToken?.github_access_token) {
-    return null;
+    return { status: 'missing-token' };
   }
 
-  return githubService.getUserContributions(repoWithToken.github_access_token);
+  return {
+    status: 'ok',
+    data: await githubService.getUserContributions(repoWithToken.github_access_token),
+  };
 }
 
 export const getMyContributions = async (req, res) => {
@@ -98,7 +117,7 @@ export const getMyContributions = async (req, res) => {
   try {
     const contributions = await getContributionsForEtudiant(etudiantId);
 
-    if (!contributions) {
+    if (contributions.status !== 'ok') {
       return res.status(400).json({
         success: false,
         message: 'Aucun token GitHub disponible. Connectez et synchronisez votre compte GitHub.'
@@ -107,7 +126,7 @@ export const getMyContributions = async (req, res) => {
 
     return res.json({
       success: true,
-      data: contributions
+      data: contributions.data
     });
   } catch (error) {
     return res.status(502).json({
@@ -123,16 +142,23 @@ export const getUserContributions = async (req, res) => {
   try {
     const contributions = await getContributionsForEtudiant(userId);
 
-    if (!contributions) {
+    if (contributions.status === 'missing-student' || contributions.status === 'missing-portfolio') {
       return res.status(404).json({
         success: false,
-        message: 'Aucun token GitHub disponible. Connectez et synchronisez votre compte GitHub.'
+        message: 'Portfolio introuvable.'
+      });
+    }
+
+    if (contributions.status === 'missing-token') {
+      return res.status(404).json({
+        success: false,
+        message: 'Aucune contribution GitHub publique disponible pour ce portfolio.'
       });
     }
 
     return res.json({
       success: true,
-      data: contributions
+      data: contributions.data
     });
   } catch (error) {
     return res.status(400).json({
