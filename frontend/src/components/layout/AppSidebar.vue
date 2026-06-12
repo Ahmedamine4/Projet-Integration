@@ -7,12 +7,11 @@ import {
   PanelLeftClose,
   Menu,
   Compass,
-  UserRound,
+  LayoutList,
   FolderOpen,
   Bell,
   Settings,
   LogOut,
-  Shield,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter, useRoute } from 'vue-router';
@@ -48,7 +47,7 @@ const sidebarItems = computed(() => {
   const items = [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Getting started', icon: Compass, path: '/getting-started' },
-   // { label: 'Profile', icon: UserRound },
+    { label: 'Feed', icon: LayoutList, path: '/feed' },
     { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
     { label: 'Settings', icon: Settings, path: '/settings' },
   ];
