@@ -199,9 +199,7 @@ import { useFeedStore } from '@/stores/feed';
 const feedStore = useFeedStore();
 
 onMounted(() => {
-  feedStore.fetchFeed({
-    sort: 'trending',
-  });
+  feedStore.fetchInitialFeed();
 });
 const router = useRouter();
 const authStore = useAuthStore();
@@ -222,36 +220,77 @@ const currentRole = computed(() => sidebarUser.value.role || 'etudiant');
 const isRecruiter = computed(() => currentRole.value === 'professionnel');
 const isProfessor = computed(() => currentRole.value === 'professeur');
 const feedItems = computed(() => {
-  return feedStore.experiences.map((experience) => ({
-    feedKey: experience.experience_id,
-    id: experience.experience_id,
+  const query = search.value.trim().toLowerCase();
+  const items = feedStore.experiences.map((experience) => ({
+    feedKey: experience.experience_id || experience.id,
+    id: experience.experience_id || experience.id,
 
-    title: experience.titre,
-    description: experience.description,
-    image: experience.photo,
+    title: experience.titre || experience.title || '',
+    description: experience.description || '',
+    image: experience.photo || experience.image || '',
+    imagePreview: experience.photo || experience.imagePreview || experience.image || '',
 
     type: experience.type,
-    specificType: experience.type_specifique,
-    date: experience.date,
+    specificType: experience.type_specifique || experience.specificType,
+    date: experience.date || experience.date_experience,
 
-    studentName: `${experience.auteur?.prenom || ''} ${experience.auteur?.nom || ''}`.trim(),
-    schoolName: experience.auteur?.institution || '',
-    portfolioUserId: experience.auteur?.utilisateur_id,
+    studentName:
+      experience.studentName ||
+      `${experience.auteur?.prenom || ''} ${experience.auteur?.nom || ''}`.trim(),
+    schoolName: experience.schoolName || experience.auteur?.institution || '',
+    portfolioUserId:
+      experience.portfolioUserId ||
+      experience.auteur?.utilisateur_id ||
+      experience.utilisateur_id,
 
     technologies: experience.technologies || [],
-    domains: experience.domaines || [],
+    domains: experience.domaines || experience.domains || [],
 
-    likes: experience.stats?.likes || 0,
-    comments: experience.stats?.commentaires || 0,
+    likes: experience.stats?.likes || experience.likes || 0,
+    comments: experience.stats?.commentaires || experience.comments || 0,
 
     score: experience.score || 0,
+    credibilityScore: experience.portfolio_score ?? experience.credibilityScore ?? experience.score ?? 0,
     isFollowingAuthor: experience.is_following_auteur || false,
 
     raw: experience,
   }));
+
+  if (!query) return items;
+
+  return items.filter((project) => {
+    return [
+      project.title,
+      project.description,
+      project.studentName,
+      project.schoolName,
+      ...(project.technologies || []),
+      ...(project.domains || []),
+    ].some((value) => String(value || '').toLowerCase().includes(query));
+  });
 });
 
-const offers = computed(() => feedStore.offres || []);
+const offers = computed(() => {
+  return (feedStore.offres || []).map((offer) => {
+    const company =
+      offer.entreprise ||
+      offer.company ||
+      offer.utilisateur?.professionnel?.entreprise ||
+      [offer.utilisateur?.prenom, offer.utilisateur?.nom].filter(Boolean).join(' ');
+
+    return {
+      ...offer,
+      id: offer.offre_id || offer.id,
+      title: offer.title || offer.titre || offer.type || 'Offer',
+      company: company || '',
+      location: offer.localisation || offer.location || '',
+      duration: offer.duration || offer.duree || '',
+      level: offer.level || offer.niveau || offer.type || '',
+      technologies: offer.technologies || [],
+      description: offer.description || '',
+    };
+  });
+});
 
 const suggestedStudents = computed(() => {
   return feedStore.utilisateursSuggeres.map((user) => {
@@ -351,7 +390,6 @@ let filtersTimer = null;
 
 function buildExperienceParams() {
   return {
-    search: search.value.trim() || undefined,
     source: filters.value.source !== 'all' ? filters.value.source : undefined,
     sort: filters.value.sort || 'trending',
     technology: filters.value.technology || undefined,
@@ -360,10 +398,10 @@ function buildExperienceParams() {
 }
 
 async function fetchFeedExperiences() {
-  await feedStore.fetchFeed(buildExperienceParams());
+  await feedStore.fetchFeedExperiences(buildExperienceParams());
 }
 watch(
-  [search, filters],
+  filters,
   () => {
     if (filtersTimer) {
       clearTimeout(filtersTimer);
@@ -405,24 +443,22 @@ const topCarouselItems = computed(() => {
 });
 
 const allTechnologies = computed(() => {
-  const technologies = feedStore.experiences.flatMap((experience) => {
-    return experience.technologies || [];
-  });
-
-  return [...new Set(technologies)];
+  return feedStore.technologies
+    .map((technology) => {
+      if (typeof technology === 'string') return technology;
+      return technology.nom || technology.name || technology.label || '';
+    })
+    .filter(Boolean);
 });
 
-const allDomains = computed(() => [
-  'Mobile Development',
-  'DevOps & Cloud Infrastructure',
-  'Machine Learning & AI',
-  'High Performance & Quantum Computing',
-  'Data Engineering',
-  'Embedded Systems & IoT',
-  'Web Frontend',
-  'Cybersecurity',
-  'Web Backend',
-]);
+const allDomains = computed(() => {
+  return feedStore.domaines
+    .map((domain) => {
+      if (typeof domain === 'string') return domain;
+      return domain.nom || domain.name || domain.label || '';
+    })
+    .filter(Boolean);
+});
 
 function buildStudentCarouselDescription(student) {
   const score = student.portfolioScore
@@ -439,6 +475,7 @@ function buildStudentCarouselDescription(student) {
 function resetFilters() {
   filters.value = defaultFilters();
   search.value = '';
+  feedStore.resetFilters();
 }
 
 function handleTopCarouselSelect(item) {

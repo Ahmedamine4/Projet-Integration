@@ -14,9 +14,9 @@ import {
 
 const props = defineProps({
   search: {
-  type: String,
-  default: '',
-},
+    type: String,
+    default: '',
+  },
   filters: {
     type: Object,
     required: true,
@@ -33,17 +33,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:filters', 'update:search', 'reset']);
 
-const selectedDomain = computed({
-  get() {
-    return props.filters.domain || '';
-  },
-  set(value) {
-    emit('update:filters', {
-      ...props.filters,
-      domain: value || null,
-    });
-  },
-});
 const searchModel = computed({
   get() {
     return props.search;
@@ -53,16 +42,40 @@ const searchModel = computed({
   },
 });
 
+const selectedDomain = computed({
+  get() {
+    return props.filters.domain || '';
+  },
+  set(value) {
+    updateDomain(value);
+  },
+});
+
 const selectedTechnology = computed({
   get() {
     return props.filters.technology || '';
   },
   set(value) {
-    emit('update:filters', {
-      ...props.filters,
-      technology: value || null,
-    });
+    updateTechnology(value);
   },
+});
+
+const domainOptions = computed(() => {
+  return props.domains
+    .map((domain) => {
+      if (typeof domain === 'string') {
+        return domain;
+      }
+
+      return (
+        domain.name ||
+        domain.label ||
+        domain.title ||
+        domain.nom ||
+        ''
+      );
+    })
+    .filter(Boolean);
 });
 
 const technologyOptions = computed(() => {
@@ -83,6 +96,20 @@ const technologyOptions = computed(() => {
     .filter(Boolean);
 });
 
+function updateDomain(value) {
+  emit('update:filters', {
+    ...props.filters,
+    domain: value || null,
+  });
+}
+
+function updateTechnology(value) {
+  emit('update:filters', {
+    ...props.filters,
+    technology: value || null,
+  });
+}
+
 function updateDirectFilter(key, value) {
   emit('update:filters', {
     ...props.filters,
@@ -94,7 +121,6 @@ function handleReset() {
   emit('reset');
 }
 </script>
-
 <template>
   <aside class="filters-panel">
     <div class="filters-card">
@@ -210,10 +236,10 @@ function handleReset() {
           </div>
 
           <BaseSelect
-            v-model="selectedDomain"
-            :options="domains"
-            placeholder="Select a domain"
-          />
+  v-model="selectedDomain"
+  :options="domainOptions"
+  placeholder="Select a domain"
+/>
         </section>
 
         <section class="filter-group">
