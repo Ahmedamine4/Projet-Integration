@@ -1,8 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import BaseSelect from '@/components/common/forms/BaseSelect.vue';
-import BaseDropdown from '@/components/common/forms/BaseDropdown.vue';
 import BaseInput from '@/components/common/forms/BaseInput.vue';
+import BaseDropdown from '@/components/common/forms/BaseDropdown.vue';
 import {
   ChevronDown,
   Layers,
@@ -47,7 +46,10 @@ const selectedDomain = computed({
     return props.filters.domain || '';
   },
   set(value) {
-    updateDomain(value);
+    emit('update:filters', {
+      ...props.filters,
+      domain: value || null,
+    });
   },
 });
 
@@ -56,22 +58,23 @@ const selectedTechnology = computed({
     return props.filters.technology || '';
   },
   set(value) {
-    updateTechnology(value);
+    emit('update:filters', {
+      ...props.filters,
+      technology: value || null,
+    });
   },
 });
 
 const domainOptions = computed(() => {
   return props.domains
     .map((domain) => {
-      if (typeof domain === 'string') {
-        return domain;
-      }
+      if (typeof domain === 'string') return domain;
 
       return (
+        domain.nom ||
         domain.name ||
         domain.label ||
         domain.title ||
-        domain.nom ||
         ''
       );
     })
@@ -81,34 +84,18 @@ const domainOptions = computed(() => {
 const technologyOptions = computed(() => {
   return props.technologies
     .map((technology) => {
-      if (typeof technology === 'string') {
-        return technology;
-      }
+      if (typeof technology === 'string') return technology;
 
       return (
+        technology.nom ||
         technology.name ||
         technology.label ||
         technology.title ||
-        technology.nom ||
         ''
       );
     })
     .filter(Boolean);
 });
-
-function updateDomain(value) {
-  emit('update:filters', {
-    ...props.filters,
-    domain: value || null,
-  });
-}
-
-function updateTechnology(value) {
-  emit('update:filters', {
-    ...props.filters,
-    technology: value || null,
-  });
-}
 
 function updateDirectFilter(key, value) {
   emit('update:filters', {
@@ -121,6 +108,7 @@ function handleReset() {
   emit('reset');
 }
 </script>
+
 <template>
   <aside class="filters-panel">
     <div class="filters-card">
@@ -148,12 +136,13 @@ function handleReset() {
 
       <div class="filters-body">
         <section class="filter-group">
-  <BaseInput
-    v-model="searchModel"
-    label="Search"
-    placeholder="Search projects, students, technologies..."
-  />
-</section>
+          <BaseInput
+            v-model="searchModel"
+            label="Search"
+            placeholder="Search projects, students, technologies..."
+          />
+        </section>
+
         <section class="filter-group">
           <div class="filter-title">
             <Sparkles
@@ -235,11 +224,12 @@ function handleReset() {
             <h3>Domains</h3>
           </div>
 
-          <BaseSelect
-  v-model="selectedDomain"
-  :options="domainOptions"
-  placeholder="Select a domain"
-/>
+          <BaseDropdown
+            v-model="selectedDomain"
+            :options="domainOptions"
+            placeholder="Search or select a domain"
+            :visible-options="5"
+          />
         </section>
 
         <section class="filter-group">
@@ -283,7 +273,7 @@ function handleReset() {
       rgba(var(--color-background-rgb), 0.84)
     );
   box-shadow: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .panel-header {
@@ -353,6 +343,7 @@ function handleReset() {
   gap: 0.45rem;
   color: rgba(var(--color-primary-rgb), 0.72);
 }
+
 .filter-title h3 {
   margin: 0;
   color: var(--color-primary);
@@ -400,46 +391,8 @@ function handleReset() {
   background: rgba(var(--color-secondary-rgb), 0.1);
   color: rgba(var(--color-secondary-rgb), 0.98);
 }
-.filters-card {
-  overflow: visible;
-}
 
-.filter-group {
-  position: relative;
-}
-
-.filter-group :deep(.select__list) {
-  max-height: 13rem;
-  overflow-y: auto;
-  overflow-x: hidden;
+.filter-group :deep(.dropdown__list) {
   z-index: 9999;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-}
-.filters-card {
-  overflow: visible;
-}
-
-.filter-group {
-  position: relative;
-}
-
-.filter-group :deep(.dropdown__list),
-.filter-group :deep(.select__list) {
-  z-index: 9999;
-}
-.filter-group :deep(.select__control),
-.filter-group :deep(.input__field) {
-  min-height: 2.05rem;
-  padding-block: 0.35rem;
-}
-
-.filter-group :deep(.dropdown__list),
-.filter-group :deep(.select__list) {
-  z-index: 9999;
-}
-
-.filters-card {
-  overflow: visible;
 }
 </style>

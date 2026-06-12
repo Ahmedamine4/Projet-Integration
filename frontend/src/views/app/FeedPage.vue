@@ -71,28 +71,13 @@
                   </div>
 
                   <button
-                    type="button"
-                    class="follow-mini-button"
-                    :class="{ 'is-following': student.isFollowing }"
-                    :aria-label="sidebarActionAria(student)"
-                    @click.stop="handleSidebarStudentAction(student)"
-                  >
-                    <Check
-                      v-if="student.isFollowing"
-                      :size="11"
-                      :stroke-width="2.6"
-                    />
-
-                    <Plus
-                      v-else
-                      :size="12"
-                      :stroke-width="2.8"
-                    />
-
-                    <span v-if="student.isFollowing">
-                      {{ sidebarActionLabel(student) }}
-                    </span>
-                  </button>
+  class="student-action-button"
+  :class="{ 'is-following': student.isFollowing }"
+  @click.stop="handleSidebarStudentAction(student)"
+>
+  <span v-if="student.isFollowing">Following</span>
+  <span v-else>+</span>
+</button>
                 </article>
               </div>
             </section>
@@ -153,7 +138,7 @@
               :search="search"
               :technologies="allTechnologies"
               :domains="allDomains"
-              @update:filters="filters = $event"
+              @update:filters="handleFiltersUpdate"
               @update:search="search = $event"
               @reset="resetFilters"
             />
@@ -195,6 +180,7 @@ import FeedOffersCarousel from '@/components/feed/FeedOffersCarousel.vue';
 import FeedOfferDetailModal from '@/components/feed/FeedOfferDetailModal.vue';
 import ApplyOfferModal from '@/components/feed/ApplyOfferModal.vue';
 import { useFeedStore } from '@/stores/feed';
+import api from '@/services/api';
 
 const feedStore = useFeedStore();
 
@@ -313,7 +299,9 @@ const suggestedStudents = computed(() => {
       technologies: [],
       domains: [],
 
-      isFollowing: false,
+      isFollowing:
+  Boolean(user.is_following || user.isFollowing) ||
+  followedSuggestionIds.value.has(user.utilisateur_id),
       portfolioScore: 0,
       rankScore: 0,
 
@@ -361,6 +349,7 @@ const search = ref('');
 const shareProject = ref(null);
 const selectedOffer = ref(null);
 const applyingOffer = ref(null);
+const followedSuggestionIds = ref(new Set());
 
 
 const defaultFilters = () => ({
@@ -396,7 +385,18 @@ function buildExperienceParams() {
     domain: filters.value.domain || undefined,
   };
 }
+async function handleFiltersUpdate(nextFilters) {
+  console.log('FILTERS UPDATED:', nextFilters);
 
+  filters.value = nextFilters;
+
+  await feedStore.fetchFeedExperiences({
+    source: nextFilters.source !== 'all' ? nextFilters.source : undefined,
+    sort: nextFilters.sort || 'trending',
+    technology: nextFilters.technology || undefined,
+    domain: nextFilters.domain || undefined,
+  });
+}
 async function fetchFeedExperiences() {
   await feedStore.fetchFeedExperiences(buildExperienceParams());
 }
@@ -499,21 +499,20 @@ function openProjectDetail(project) {
     project.utilisateur_id ||
     project.etudiant_id;
 
-  if (ownerId && router.hasRoute?.('feed-project-detail')) {
-    router.push({
-      name: 'feed-project-detail',
-      params: {
-        id: ownerId,
-        experienceId: project.id,
-      },
-    });
+  const experienceId =
+    project.id ||
+    project.experience_id ||
+    project.feedKey;
 
-    return;
-  }
+  if (!ownerId || !experienceId) return;
 
-  if (ownerId) {
-    router.push(`/portfolio/${ownerId}`);
-  }
+  router.push({
+    name: 'portfolio-experience',
+    params: {
+      id: ownerId,
+      experienceId,
+    },
+  });
 }
 
 function openOfferDetail(offer) {
@@ -548,8 +547,37 @@ function openAddOfferModal() {
   console.log('Open add offer modal');
 }
 
-function handleSidebarStudentAction(student) {
-  student.isFollowing = !student.isFollowing;
+async function handleSidebarStudentAction(student) {
+  const targetId =
+    student.userId ||
+    student.portfolioUserId ||
+    student.id ||
+    student.utilisateur_id;
+
+  if (!targetId) return;
+
+  try {
+    if (student.isFollowing) {
+      await api.delete(`/follow/${targetId}`);
+
+      const nextIds = new Set(followedSuggestionIds.value);
+      nextIds.delete(targetId);
+      followedSuggestionIds.value = nextIds;
+    } else {
+      await api.post('/follow', {
+        targetId,
+      });
+
+      const nextIds = new Set(followedSuggestionIds.value);
+      nextIds.add(targetId);
+      followedSuggestionIds.value = nextIds;
+    }
+  } catch (error) {
+    console.error(
+      'Erreur follow/unfollow depuis le feed:',
+      error.response?.data || error
+    );
+  }
 }
 
 function sidebarActionLabel(student) {
@@ -845,7 +873,7 @@ function openProjectOwnerPortfolio(project) {
 
 .suggested-student {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  grid-template-columns: 2rem minmax(0, 1fr) max-content;
   align-items: center;
   gap: 0.55rem;
   padding: 0.58rem;
@@ -880,9 +908,11 @@ function openProjectOwnerPortfolio(project) {
   min-width: 0;
   display: grid;
   gap: 2px;
+  overflow: hidden;
 }
 
 .suggested-name-button {
+  display: block;
   width: fit-content;
   max-width: 100%;
   border: 0;
@@ -895,6 +925,8 @@ function openProjectOwnerPortfolio(project) {
   font-weight: var(--font-bold);
   text-align: left;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
   transition:
     border-color var(--transition-fast),
@@ -912,8 +944,13 @@ function openProjectOwnerPortfolio(project) {
 }
 
 .suggested-info > span {
+  display: block;
+  min-width: 0;
   color: rgba(var(--color-primary-rgb), 0.52);
   font-size: var(--font-size-xxs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .suggested-stack {
@@ -936,45 +973,54 @@ function openProjectOwnerPortfolio(project) {
 
 .follow-mini-button {
   justify-self: end;
+  align-self: center;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.28rem;
-  width: 1.55rem;
-  height: 1.55rem;
-  border: 1.3px solid var(--color-primary);
+  gap: 0.3rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  min-width: 1.7rem;
+  border: 1px solid #111;
   border-radius: 999px;
   padding: 0;
-  background-color: var(--color-primary);
-  color: var(--color-background);
+  background-color: #111;
+  color: #fff;
   font-size: 9px;
   font-weight: var(--font-bold);
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
   transition:
-    width var(--transition-fast),
+    min-width var(--transition-fast),
     background-color var(--transition-fast),
+    border-color var(--transition-fast),
     box-shadow var(--transition-fast),
     transform var(--transition-fast);
 }
 
 .follow-mini-button:hover {
   transform: translateY(-1px);
-  background-color: rgba(var(--color-primary-rgb), 0.92);
-  box-shadow: 0 5px 9px rgba(0, 0, 0, 0.22);
+  background-color: #000;
+  border-color: #000;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
 }
 
 .follow-mini-button.is-following {
   width: auto;
-  min-width: 4.7rem;
-  height: 1.55rem;
-  padding-inline: 0.55rem;
+  min-width: max-content;
+  height: 1.7rem;
+  padding-inline: 0.65rem;
 }
 
 .follow-mini-button:focus-visible {
   outline: none;
-  border-color: var(--color-secondary);
-  box-shadow: 0 0 0 3px rgba(var(--color-secondary-rgb), 0.15);
+  border-color: #000;
+  box-shadow:
+    0 0 0 3px rgba(0, 0, 0, 0.12),
+    0 6px 14px rgba(0, 0, 0, 0.18);
 }
 
 @media (max-width: 1250px) {
@@ -1153,4 +1199,51 @@ function openProjectOwnerPortfolio(project) {
   padding-inline: 0 !important;
   margin-inline: 0 !important;
 }
+.student-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.7rem;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.16);
+  border-radius: 999px;
+  background: rgba(var(--color-primary-rgb), 0.04);
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.student-action-button:hover {
+  transform: translateY(-1px);
+  background: rgba(var(--color-primary-rgb), 0.08);
+  border-color: rgba(var(--color-primary-rgb), 0.24);
+}
+
+.student-action-button:active {
+  transform: translateY(0);
+}
+
+.student-action-button.is-following {
+  min-width: 5.8rem;
+  background: rgba(var(--color-secondary-rgb), 0.12);
+  border-color: rgba(var(--color-secondary-rgb), 0.22);
+  color: rgb(var(--color-secondary-rgb));
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.student-action-button.is-following:hover {
+  background: rgba(var(--color-secondary-rgb), 0.18);
+  border-color: rgba(var(--color-secondary-rgb), 0.3);
+}
+
 </style>
