@@ -81,9 +81,9 @@ const sidebarItems = computed(() => {
     },
     { label: 'Feed', icon: LayoutList, path: '/feed' },
     {
-      label: role === 'professionnel' ? 'Portfolios' : 'Portfolio',
+      label: 'Portfolio',
       icon: FolderOpen,
-      path: role === 'professionnel' ? '/feed' : '/portfolio',
+      path: '/portfolio',
       roles: ['etudiant', 'professionnel'],
     },
     { label: 'Settings', icon: Settings, path: '/settings' },
