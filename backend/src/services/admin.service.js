@@ -67,7 +67,6 @@ export async function getAdminInstitutions() {
 export async function creerInstitutionAvecDirecteur({ nom, email_directeur }) {
   const institutionName = nom?.trim();
   const directeurEmail = normalizeEmail(email_directeur);
-
   if (!institutionName || !directeurEmail) {
     throw new Error("Le nom de l'institution et l'email du directeur sont requis");
   }
@@ -135,27 +134,19 @@ export async function creerInstitutionAvecDirecteur({ nom, email_directeur }) {
       include: ADMIN_INSTITUTION_INCLUDE,
     });
 
-    return { institution, directeur };
+    
+
+    return { institution, directeur};
   });
 
   await creerNotification(
-      directeur.utilisateur_id,
-      `VOTRE MDPS EST ${hash}`,
-      'Test',
+      result.directeur.utilisateur_id,
+      'Votre institution a été créée avec succès. Vos identifiants de connexion sont :\n\n' + `Email : ${result.directeur.email}\nMot de passe temporaire : ${motDePasse}\n\nVeuillez vous connecter et changer votre mot de passe dès que possible.`,
+      'mot_de_pass'
     );
-
-  
-
-  if (!emailEnvoye) {
-    throw new Error(
-      "Institution creee, mais l'email du directeur n'a pas ete envoye. Verifiez PLATFORM_EMAIL, PLATFORM_EMAIL_PASSWORD et utilisez un mot de passe d'application Gmail.",
-    );
-  }
 
   return {
-    message: emailEnvoye
-      ? 'Institution créée et identifiants envoyés au directeur'
-      : 'Institution créée. Email non envoyé car la configuration mail est absente ou invalide',
+    message:'Institution créée et identifiants envoyés au directeur',
     institution: result.institution,
     directeur: result.directeur,
   };
@@ -164,6 +155,8 @@ export async function creerInstitutionAvecDirecteur({ nom, email_directeur }) {
 export async function assignerDirecteur({
   utilisateur_id,
   institution_id,
+  poste = null,
+  bureau = null,
 }) {
   const result = await prisma.$transaction(async (tx) => {
     const institution = await tx.institution.findUnique({

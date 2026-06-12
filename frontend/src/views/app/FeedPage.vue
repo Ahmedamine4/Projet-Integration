@@ -1,7 +1,5 @@
 <template>
   <div class="feed-shell">
-    <Sidebar :user="sidebarUser" />
-
     <main class="feed-page">
       <FeedHeader class="sticky-header" />
 

@@ -13,7 +13,10 @@ const routes = [
   path: '/feed',
   name: 'feed',
   component: FeedPage,
-  meta: { requiresAuth: true },
+  meta: {
+    requiresAuth: true,
+    layout: 'app',
+  },
 },
   {
     path: '/',
@@ -44,7 +47,7 @@ const routes = [
     component: () => import('@/views/app/DashboardView.vue'),
     meta: {
       requiresAuth: true,
-      role: 'etudiant',
+      role: ['etudiant', 'professionnel'],
       layout: 'app',
     },
   },
@@ -64,6 +67,7 @@ const routes = [
     component: () => import('@/views/app/GettingStartedView.vue'),
     meta: {
       requiresAuth: true,
+      role: 'etudiant',
       layout: 'app',
     },
   },
@@ -73,6 +77,7 @@ const routes = [
     component: () => import('@/views/app/ExperienceView.vue'),
     meta: {
       requiresAuth: true,
+      role: ['etudiant', 'professionnel'],
       layout: 'app',
     },
   },
@@ -82,6 +87,7 @@ const routes = [
     component: () => import('@/views/app/ExperienceView.vue'),
     meta: {
       requiresAuth: true,
+      role: ['etudiant', 'professionnel'],
       layout: 'app',
     },
   },
@@ -91,6 +97,7 @@ const routes = [
     component: PortfolioView,
     meta: {
       requiresAuth: true,
+      role: ['etudiant', 'professionnel'],
       layout: 'app',
     },
   },
@@ -114,42 +121,41 @@ const routes = [
     },
   },
   {
-  path: '/recruiter-dashboard',
-  name: 'recruiter-dashboard',
-  component: () => import('@/views/app/dashboard/RecruteurDashboard.vue'),
-  meta: {
-    requiresAuth: true,
-    role: 'professionnel',
-    layout: 'app',
+    path: '/recruiter-dashboard',
+    name: 'recruiter-dashboard',
+    component: () => import('@/views/app/dashboard/RecruteurDashboard.vue'),
+    meta: {
+      requiresAuth: true,
+      role: 'professionnel',
+      layout: 'app',
+    },
   },
-},
+  {
+    path: '/admin-dashboard',
+    name: 'admin-dashboard',
+    component: () => import('@/views/app/AdminDashboardView.vue'),
+    meta: {
+      requiresAuth: true,
+      role: 'administrateur',
+      layout: 'app',
+    },
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: NotFoundView,
   },
-  {
-  path: '/admin-dashboard',
-  name: 'admin-dashboard',
-  component: () => import('@/views/app/AdminDashboardView.vue'),
-  meta: {
-    requiresAuth: true,
-    role: 'administrateur',
-    layout: 'app',
-  },
-},
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
+
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
 
-  const requiresAuth = to.matched.some((record) => {
-    return record.meta.requiresAuth;
-  });
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
   if (requiresAuth && !authStore.profileChecked) {
     await authStore.fetchProfile();
@@ -165,7 +171,18 @@ router.beforeEach(async (to) => {
   const requiredRole = to.meta.role;
   const userRole = authStore.user?.role;
 
-  if (requiredRole && userRole !== requiredRole) {
+  const hasRequiredRole = Array.isArray(requiredRole)
+    ? requiredRole.includes(userRole)
+    : userRole === requiredRole;
+
+  if (requiredRole && !hasRequiredRole) {
+    const isPublicPortfolioView =
+      ['portfolio', 'portfolio-experience'].includes(to.name) && to.params.id;
+
+    if (isPublicPortfolioView) {
+      return true;
+    }
+
     const redirects = {
       professeur: '/prof-dashboard',
       professionnel: '/recruiter-dashboard',

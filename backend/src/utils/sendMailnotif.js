@@ -30,7 +30,6 @@ export async function envoyerNotificationEmail({ email, sujet, message ,imageUrl
     <p style="margin:0 0 8px;font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Notification</p>
     <h2 style="margin:0 0 20px;font-size:20px;font-weight:500;color:#111827;">Bonjour !</h2>
     <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">${message}</p>
-    <a href="#" style="display:inline-block;background:#1a1a2e;color:#fff;text-decoration:none;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:500;">Voir les détails →</a>
   </div>
 
   <!-- Footer haut -->

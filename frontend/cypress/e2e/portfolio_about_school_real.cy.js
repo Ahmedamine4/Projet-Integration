@@ -421,10 +421,7 @@ function createProjectFromModal(project) {
     .type(project.description)
     .should('have.value', project.description);
 
-  cy.wait('@predictTechnologies', { timeout: 30000 }).then(({ response }) => {
-    expect(response, 'real AI prediction response').to.exist;
-    expect(response.statusCode).to.be.oneOf([200, 201]);
-  });cy.wait('@predictTechnologies', { timeout: 30000 }).then(({ request, response }) => {
+  cy.wait('@predictTechnologies', { timeout: 30000 }).then(({ request, response }) => {
   expect(response, 'real AI prediction response').to.exist;
 
   if (![200, 201].includes(response.statusCode)) {
@@ -439,9 +436,29 @@ function createProjectFromModal(project) {
   expect(response.statusCode).to.be.oneOf([200, 201]);
 });
 
-  cy.contains(/Vue\.js|Node\.js|Express\.js|PostgreSQL|Docker/i, {
-    timeout: 30000,
-  }).should('be.visible');
+cy.contains(/detected domains/i, { timeout: 30000 })
+  .should('be.visible');
+
+cy.contains(/detected technologies/i, { timeout: 30000 })
+  .should('be.visible');
+
+cy.contains(/Web Frontend/i, { timeout: 30000 })
+  .should('be.visible');
+
+cy.contains(/Web Backend/i, { timeout: 30000 })
+  .should('be.visible');
+
+cy.contains(/Vue\.js/i, { timeout: 30000 })
+  .should('be.visible');
+
+cy.contains(/Node\.js/i, { timeout: 30000 })
+  .should('be.visible');
+
+cy.contains(/PostgreSQL/i, { timeout: 30000 })
+  .should('be.visible');
+
+cy.contains(/Docker/i, { timeout: 30000 })
+  .should('be.visible');
 
   cy.contains('button', /^Submit project$/)
     .should('be.visible')
