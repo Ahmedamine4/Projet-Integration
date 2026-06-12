@@ -1,5 +1,5 @@
 <script setup>
-import { Users, FolderKanban, GraduationCap , Mail, Award, School, ClipboardClock ,BriefcaseBusiness} from 'lucide-vue-next'
+import { Users, FolderKanban, GraduationCap , Mail, Award, School, ClipboardClock,BookCheck  } from 'lucide-vue-next'
 import Button from '@/components/common/actions/BaseButton.vue'
 
 defineProps({
@@ -21,11 +21,15 @@ const iconMap = {
   'Follower': Users,
   'Projects': FolderKanban,
   'Internships': GraduationCap,
+  'Pending Internships':GraduationCap,
+  'Pending Projects':FolderKanban,
+  'Pending Letters':Mail,
   'Letter of \n recommendation': Mail,
   'Certifications': Award,
   'Etudiants':GraduationCap,
-  'Professeurs':BriefcaseBusiness ,
-  'Demandes en attente':ClipboardClock,
+  'Professeurs':School,
+  'Pending Requests':ClipboardClock,
+  'Published Offers':BookCheck 
 }
 
 function getStatColor(label, value) {
@@ -48,13 +52,12 @@ const colorMap = {
     <!-- LEFT: Student profile -->
     <div class="student-profile">
       <!-- Correction ici : Utilisation de student.avatar comme validé par le validateur de props -->
-      <div class="admin-header__left">
+      <div class="profile-info">
         <div class="admin-header__badge">
-          <School  :size="14" />
-          DIRECTOR WORKSPACE
+          <GraduationCap  :size="14" />
+          RECRUITER WORKSPACE
         </div>
         <h1 class="admin-header__title">Welcome, {{ student.firstName }} {{ student.lastName }}</h1>
-        <p class="admin-header__date">{{ today }}</p>
       </div>
     </div>
 
@@ -184,6 +187,26 @@ const colorMap = {
   font-weight: 600;
   white-space: pre-line; /* Permet de prendre en compte le \n dans le label */
 }
+
+/* === TABLET (1024px) === */
+@media (max-width: 1024px) {
+  .student-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .student-profile {
+    width: 100%;
+  }
+
+  .student-stats-container {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 .admin-header {
   display: flex;
   align-items: center;
@@ -219,24 +242,6 @@ const colorMap = {
   color: var(--color-primary-hover);
   margin: 0;
   text-transform: capitalize;
-}
-/* === TABLET (1024px) === */
-@media (max-width: 1024px) {
-  .student-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.5rem;
-    padding: 1.5rem;
-  }
-
-  .student-profile {
-    width: 100%;
-  }
-
-  .student-stats-container {
-    width: 100%;
-    justify-content: flex-start;
-  }
 }
 
 /* === MOBILE (640px et moins) === */

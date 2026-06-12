@@ -45,9 +45,12 @@ const colorMap = {
     <!-- LEFT: Student profile -->
     <div class="student-profile">
       <!-- Correction ici : Utilisation de student.avatar comme validé par le validateur de props -->
-      <img v-if="student.avatar" :src="student.avatar" class="student-avatar" alt="Avatar">
       <div class="profile-info">
-        <h2>Welcome, {{ student.firstName }} {{ student.lastName }}</h2>
+        <div class="admin-header__badge">
+          <GraduationCap  :size="14" />
+          STUDENT WORKSPACE
+        </div>
+        <h1 class="admin-header__title">Welcome, {{ student.firstName }} {{ student.lastName }}</h1>
         <Button
           class="rec-button"
           type="button"
@@ -185,6 +188,43 @@ const colorMap = {
   letter-spacing: 0.04em;
   font-weight: 600;
   white-space: pre-line; /* Permet de prendre en compte le \n dans le label */
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.admin-header__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 6px;
+}
+
+.admin-header__title {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 800;
+  color: var(--color-primary);
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.admin-header__date {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary-hover);
+  margin: 0;
+  text-transform: capitalize;
 }
 
 /* === TABLET (1024px) === */

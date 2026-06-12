@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useProfesseurStore } from '@/stores/professeur';
 import Dropdown from '@/components/common/forms/FilterDropdown.vue';
 import Pagination from '@/components/dashboard/PaginationComponent.vue';
+import ProfesseurHeader from '@/components/dashboard/ProfesseurHeader.vue';
 
 const profStore = useProfesseurStore();
 const authStore = useAuthStore();
@@ -17,6 +18,28 @@ const professorLastName = computed(() => user.value?.lastName || 'enseignant');
 const todayLabel = computed(() =>
   new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 );
+const professorProfile = computed(() => ({
+  firstName: 'Pr.',
+  lastName: professorLastName.value // assuming this is a ref or prop in your parent
+}))
+const headerStats = computed(() => [
+  { 
+    label: 'Total Requests', 
+    value: pagination.value?.total || 0 
+  },
+  { 
+    label: 'Pending Internships', 
+    value: stats.value?.stagePending ?? 0 
+  },
+  { 
+    label: 'Pending Projects', 
+    value: stats.value?.projetPending ?? 0 
+  },
+  { 
+    label: 'Pending Letters', 
+    value: stats.value?.recommandationPending ?? 0 
+  }
+])
 
 // ─── Tabs Configuration ───────────────────────────────────────────────────────
 const activeTab = ref('stage'); // 'stage', 'projet', 'recommandation'
@@ -151,34 +174,10 @@ function formatDate(iso) {
 <template>
   <div class="prof-page">
 
-    <header class="page-header">
-      <div class="page-header__left">
-        <p class="page-header__eyebrow">Espace Enseignant</p>
-        <h1 class="page-header__title">Bonjour, Pr. {{ professorLastName }}</h1>
-        <p class="page-header__date">{{ todayLabel }}</p>
-      </div>
-      <div class="page-header__stats">
-        <div class="stat-chip">
-          <span class="stat-chip__num">{{ pagination.total }}</span>
-          <span class="stat-chip__label">Éléments correspondants</span>
-        </div>
-        
-        <div class="stat-chip">
-          <span class="stat-chip__num">{{ stats?.stagePending ?? 0 }}</span>
-          <span class="stat-chip__label">Stages en attente</span>
-        </div>
-        
-        <div class="stat-chip">
-          <span class="stat-chip__num">{{ stats?.projetPending ?? 0 }}</span>
-          <span class="stat-chip__label">Projets en attente</span>
-        </div>
-        
-        <div class="stat-chip">
-          <span class="stat-chip__num">{{ stats?.recommandationPending ?? 0 }}</span>
-          <span class="stat-chip__label">Lettres en attente</span>
-        </div>
-      </div>
-    </header>
+    <ProfesseurHeader
+    :student="professorProfile" 
+      :stats="headerStats"
+    />
 
     <div class="filters-bar">
       <Dropdown

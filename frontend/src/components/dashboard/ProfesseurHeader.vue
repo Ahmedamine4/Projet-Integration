@@ -1,16 +1,25 @@
 <script setup>
-import { Users, FolderKanban, GraduationCap , Mail, Award, School, ClipboardClock ,BriefcaseBusiness} from 'lucide-vue-next'
-import Button from '@/components/common/actions/BaseButton.vue'
+import {
+  Users,
+  FolderKanban,
+  GraduationCap,
+  Mail,
+  Award,
+  School,
+  ClipboardClock,
+  BookCheck,
+  BriefcaseBusiness,
+  FileText
+} from 'lucide-vue-next';
 
 defineProps({
   student: {
     type: Object,
-    required: true,
-    validator: (obj) => obj.firstName && obj.lastName && obj.major && obj.avatar
+    required: true
   },
   stats: {
     type: Array,
-    required: true
+    default: () => []
   }
 })
 
@@ -24,8 +33,13 @@ const iconMap = {
   'Letter of \n recommendation': Mail,
   'Certifications': Award,
   'Etudiants':GraduationCap,
-  'Professeurs':BriefcaseBusiness ,
-  'Demandes en attente':ClipboardClock,
+  'Professeurs':School,
+  'Pending Requests':ClipboardClock,
+  'Published Offers':BookCheck ,
+  'Pending Internships': GraduationCap,
+  'Pending Projects': FolderKanban,
+  'Pending Letters': Mail,
+  'Total Requests': FileText
 }
 
 function getStatColor(label, value) {
@@ -48,13 +62,12 @@ const colorMap = {
     <!-- LEFT: Student profile -->
     <div class="student-profile">
       <!-- Correction ici : Utilisation de student.avatar comme validé par le validateur de props -->
-      <div class="admin-header__left">
+      <div class="profile-info">
         <div class="admin-header__badge">
-          <School  :size="14" />
-          DIRECTOR WORKSPACE
+          <BriefcaseBusiness  :size="14" />
+          PROFESSOR WORKSPACE
         </div>
         <h1 class="admin-header__title">Welcome, {{ student.firstName }} {{ student.lastName }}</h1>
-        <p class="admin-header__date">{{ today }}</p>
       </div>
     </div>
 
@@ -184,6 +197,7 @@ const colorMap = {
   font-weight: 600;
   white-space: pre-line; /* Permet de prendre en compte le \n dans le label */
 }
+
 .admin-header {
   display: flex;
   align-items: center;
@@ -220,6 +234,8 @@ const colorMap = {
   margin: 0;
   text-transform: capitalize;
 }
+
+
 /* === TABLET (1024px) === */
 @media (max-width: 1024px) {
   .student-header {

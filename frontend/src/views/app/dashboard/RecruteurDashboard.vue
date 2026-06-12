@@ -18,6 +18,7 @@ import OfferModal from '@/components/dashboard/recruteur/OfferModal.vue'
 import BaseButton from '@/components/common/actions/BaseButton.vue'
 import Pagination from '@/components/dashboard/PaginationComponent.vue'
 import { useHorizontalDragScroll } from '@/composables/useHorizontalDragScroll'
+import ProfessionnelHeader from '@/components/dashboard/ProfessionnelHeader.vue'
 
 const authStore = useAuthStore()
 const recruteurStore = useRecruteurStore()
@@ -60,6 +61,33 @@ const recruiterLastName = computed(() =>
   user.value?.nom ||
   'recruteur'
 )
+const professionalProfile = computed(() => ({
+  firstName:
+    user.value?.firstName ||
+    user.value?.prenom ||
+    '',
+
+  lastName:
+    user.value?.lastName ||
+    user.value?.nom ||
+    '',
+
+  avatar:
+    user.value?.photo ||
+    user.value?.avatar ||
+    null,
+}))
+
+const headerStats = computed(() => [
+  {
+    label: 'Published Offers',
+    value: offers.value.length,
+  },
+  {
+    label: 'Pending Requests',
+    value: demandesTotalItems.value,
+  },
+])
 
 const todayLabel = computed(() =>
   new Date().toLocaleDateString('fr-FR', {
@@ -323,34 +351,19 @@ watch(isScrollMode, (scrollMode) => {
 
 <template>
   <div class="recruiter-page">
-    <header class="page-header">
-      <div class="page-header__left">
-        <p class="page-header__eyebrow">Espace Recruteur</p>
-        <h1 class="page-header__title">Bonjour, {{ recruiterLastName }}</h1>
-        <p class="page-header__date">{{ todayLabel }}</p>
-      </div>
-
-      <div class="page-header__stats">
-        <div class="stat-chip">
-          <span class="stat-chip__num">{{ stats.publiees }}</span>
-          <span class="stat-chip__label">Offres publiées</span>
-        </div>
-
-        <div class="stat-chip">
-          <span class="stat-chip__num">{{ stats.terminees }}</span>
-          <span class="stat-chip__label">Offres terminées</span>
-        </div>
-      </div>
-    </header>
+    <ProfessionnelHeader
+     :student="professionalProfile"
+     :stats="headerStats"
+    />
 
     <div class="section-top">
       <p class="section-lead">
-        Gérez vos offres et facilitez la recherche de profils étudiants adaptés.
+        Manage your offers and easily find suitable student profiles.
       </p>
 
       <BaseButton variant="submit" @click="openOfferModal">
         <Plus :size="16" />
-        Publier une offre
+        Post an offer
       </BaseButton>
     </div>
 
@@ -370,7 +383,7 @@ watch(isScrollMode, (scrollMode) => {
 
       <Transition name="fade" mode="out-in">
         <div v-if="loading" class="empty-state">
-          <p>Chargement des offres...</p>
+          <p>Loading offers...</p>
         </div>
 
         <div
@@ -425,7 +438,7 @@ watch(isScrollMode, (scrollMode) => {
                           v-if="isOfferTerminated(offer)"
                           class="badge badge--terminated"
                         >
-                          Terminée
+                          Closed
                         </span>
                       </div>
                     </div>
@@ -464,7 +477,7 @@ watch(isScrollMode, (scrollMode) => {
                         class="select-btn"
                         @click.stop="selectOffer(offer)"
                       >
-                        {{ selectedOfferId === getOfferId(offer) ? 'Masquer' : 'Voir les demandes' }}
+                        {{ selectedOfferId === getOfferId(offer) ? 'Hide' : 'View applications' }}
                       </button>
 
                       <button
@@ -474,7 +487,7 @@ watch(isScrollMode, (scrollMode) => {
                         @click.stop="handleTerminateOffer(offer)"
                       >
                         <Ban :size="13" />
-                        {{ isOfferTerminated(offer) ? 'Terminée' : 'Terminer' }}
+                        {{ isOfferTerminated(offer) ? 'Closed' : 'Close offer' }}
                       </button>
                     </div>
                   </article>
@@ -503,7 +516,7 @@ watch(isScrollMode, (scrollMode) => {
                         v-if="isOfferTerminated(offer)"
                         class="badge badge--terminated"
                       >
-                        Terminée
+                        Closed
                       </span>
                     </div>
                   </div>
@@ -542,7 +555,7 @@ watch(isScrollMode, (scrollMode) => {
                       class="select-btn"
                       @click.stop="selectOffer(offer)"
                     >
-                      {{ selectedOfferId === getOfferId(offer) ? 'Masquer' : 'Voir les demandes' }}
+                      {{ selectedOfferId === getOfferId(offer) ? 'Hide' : 'View applications' }}
                     </button>
 
                     <button
@@ -552,7 +565,7 @@ watch(isScrollMode, (scrollMode) => {
                       @click.stop="handleTerminateOffer(offer)"
                     >
                       <Ban :size="13" />
-                      {{ isOfferTerminated(offer) ? 'Terminée' : 'Terminer' }}
+                      {{ isOfferTerminated(offer) ? 'Closed' : 'Close offer' }}
                     </button>
                   </div>
                 </article>
@@ -563,7 +576,7 @@ watch(isScrollMode, (scrollMode) => {
 
         <div v-else class="empty-state">
           <Briefcase :size="34" />
-          <p>Aucune offre publiée pour le moment.</p>
+          <p>No offers posted yet.</p>
         </div>
       </Transition>
     </section>
@@ -574,12 +587,12 @@ watch(isScrollMode, (scrollMode) => {
           <Users class="tab-header__icon" :size="18" />
 
           <div>
-            <h2 class="tab-header__title">Demandes reçues</h2>
+            <h2 class="tab-header__title">Applications received</h2>
             <p class="tab-header__desc">
               {{
                 selectedOffer
                   ? `${selectedOffer.entreprise} · ${selectedOffer.localisation} · ${selectedOffer.type}`
-                  : 'Sélectionnez une offre pour afficher les candidatures associées.'
+                  : 'Select an offer to display the associated applications.'
               }}
             </p>
           </div>
@@ -590,17 +603,17 @@ watch(isScrollMode, (scrollMode) => {
         <div></div>
 
         <span class="toolbar__count">
-          {{ demandesTotalItems }} demande(s)
+          {{ demandesTotalItems }} application(s)
         </span>
       </div>
 
       <div v-if="!selectedOffer" class="state-empty">
         <Users class="state-empty__icon" :size="34" />
-        <p>Sélectionnez une offre en haut pour afficher ses demandes.</p>
+        <p>Select an offer above to display its applications.</p>
       </div>
 
       <div v-else-if="loadingDemandes" class="state-center">
-        Chargement des demandes...
+        Loading applications...
       </div>
 
       <div v-else-if="demandesError" class="state-center error">
@@ -609,7 +622,7 @@ watch(isScrollMode, (scrollMode) => {
 
       <div v-else-if="!demandes.length" class="state-empty">
         <Users class="state-empty__icon" :size="34" />
-        <p>Aucune demande pour cette offre.</p>
+        <p>No applications for this offer.</p>
       </div>
 
       <template v-else>
@@ -617,7 +630,7 @@ watch(isScrollMode, (scrollMode) => {
           <table>
             <thead>
               <tr>
-                <th>Étudiant</th>
+                <th>Student</th>
                 <th>Email</th>
                 <th>Message</th>
                 <th class="th-center">Date</th>

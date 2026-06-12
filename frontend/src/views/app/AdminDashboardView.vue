@@ -83,7 +83,7 @@ onMounted(async () => {
           <ShieldCheck :size="14" />
           ADMIN WORKSPACE
         </div>
-        <h1 class="admin-header__title">Hello, {{ adminName }}</h1>
+        <h1 class="admin-header__title">Welcome, {{ adminName }}</h1>
         <p class="admin-header__date">{{ today }}</p>
       </div>
 
