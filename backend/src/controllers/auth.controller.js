@@ -84,6 +84,7 @@ export async function login(req, res) {
       message: 'Connexion réussie',
       provider: 'local',
       user: resultat.user,
+      token: resultat.token,
     });
   }
   catch (error) {
