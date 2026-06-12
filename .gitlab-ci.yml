@@ -1,11 +1,11 @@
 stages:
-  - test
+  - deploy
   - security
   - lint
   - build
   #- dast
   - quality
-  - deploy
+  - test
 
 
 workflow:
