@@ -79,37 +79,6 @@ export const getToutesLesDemandes = async (
   });
 };
 
-export const envoyerDemande = async (offreId, utilisateurId, message) => {
-  const offre = await prisma.offre.findUnique({
-    where: { offre_id: offreId },
-  });
-
-  if (!offre) throw new Error("Offre introuvable");
-
-  if (offre.statut === "TERMINEE") {
-    throw new Error("Cette offre est terminée, vous ne pouvez plus postuler");
-  }
-
-  const existe = await prisma.demande.findUnique({
-    where: {
-      offre_id_utilisateur_id: {
-        offre_id: offreId,
-        utilisateur_id: utilisateurId,
-      },
-    },
-  });
-
-  if (existe) throw new Error("Déjà postulé");
-
-  return prisma.demande.create({
-    data: {
-      offre_id: offreId,
-      utilisateur_id: utilisateurId,
-      message,
-    },
-  });
-};
-
 export const terminerOffre = async (offreId, utilisateurId) => {
   const offre = await prisma.offre.findFirst({
     where: {

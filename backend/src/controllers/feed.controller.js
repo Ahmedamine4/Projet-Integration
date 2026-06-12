@@ -1,4 +1,7 @@
 import {getFeedTechnologiesDomaines, getFeedOffres, getFeedSuggestions, getFeedExperiences} from '../services/feed.service.js';
+import {
+  envoyerDemande,
+} from "../services/recruteur.service.js";
 
 export const getFeedTechnologiesAndDomaines = async (req, res) => {
   try {
@@ -51,5 +54,29 @@ export const getExperiencesFeed = async (req, res) => {
   } catch (error) {
     console.error('Erreur getExperiencesFeed:', error);
     return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+export const envoyerDemandeController = async (req, res) => {
+  try {
+    const utilisateurId = req.user.utilisateur_id;
+    const { offreId } = req.params;
+    const { message } = req.body;
+
+    const demande = await envoyerDemande(
+      offreId,
+      utilisateurId,
+      message
+    );
+
+    res.status(201).json({
+      success: true,
+      data: demande
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

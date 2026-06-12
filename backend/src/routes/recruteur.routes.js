@@ -2,7 +2,6 @@ import express from "express";
 import {
   createOffreController,
   getMesOffresController,
-  envoyerDemandeController,
   terminerOffreController,
   getDemandesParOffreController,
 } from "../controllers/recruteur.controller.js";
@@ -20,12 +19,6 @@ router.get("/offres",getMesOffresController);
 router.patch(
   "/offres/:offreId/terminer",
   terminerOffreController
-);
-
-// Envoyer une demande sur une offre
-router.post(
-  "/offres/:offreId/demandes",
-  envoyerDemandeController
 );
 
 // Récupérer les demandes d'une offre (pagination)
