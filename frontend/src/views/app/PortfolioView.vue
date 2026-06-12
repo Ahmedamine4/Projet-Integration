@@ -262,6 +262,15 @@ function sortVisibleHighlightedExperiences(list, isVisible = (experience) => exp
   });
 }
 
+function sortExperiencesByDate(list) {
+  return [...list].sort((firstExperience, secondExperience) => {
+    const firstDate = new Date(firstExperience.startDate || firstExperience.date || 0).getTime();
+    const secondDate = new Date(secondExperience.startDate || secondExperience.date || 0).getTime();
+
+    return secondDate - firstDate;
+  });
+}
+
 const visibleProjects = computed(() => {
 	if (isOwnPortfolio.value) return sortVisibleHighlightedExperiences(projects.value);
 
@@ -293,9 +302,11 @@ const visibleCertifications = computed(() => {
 });
 
 const visibleInternships = computed(() => {
-  if (isOwnPortfolio.value) return internships.value;
+  if (isOwnPortfolio.value) return sortExperiencesByDate(internships.value);
 
-  return internships.value.filter(internship => internship.effectiveVisibleToEveryone);
+  return sortExperiencesByDate(
+    internships.value.filter(internship => internship.effectiveVisibleToEveryone)
+  );
 });
 
 const shouldShowProjectSection = computed(() => {

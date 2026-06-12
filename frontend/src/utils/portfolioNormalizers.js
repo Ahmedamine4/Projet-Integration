@@ -170,6 +170,7 @@ export function normalizeInternship(item) {
     technologies: getCompetenceNames(experience, 'technologie'),
     domains: getCompetenceNames(experience, 'domaine'),
     imagePreview: '',
+    highlighted: Boolean(item?.highlighted ?? experience.highlighted),
     ...validationState,
   };
 }
