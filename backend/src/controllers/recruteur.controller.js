@@ -61,4 +61,13 @@ export const getDemandesParOffreController = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-    
+
+export const getTypesOffresController = async (req, res) => {
+  try {
+    const typesOffres = await getTypesOffres();
+
+    res.json(typesOffres);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};  

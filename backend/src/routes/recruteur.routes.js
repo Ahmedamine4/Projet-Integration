@@ -4,6 +4,7 @@ import {
   getMesOffresController,
   terminerOffreController,
   getDemandesParOffreController,
+  getTypesOffresController,
 } from "../controllers/recruteur.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 const router = express.Router();
@@ -26,5 +27,7 @@ router.get(
   "/offres/:offreId/demandes",
   getDemandesParOffreController
 );
+
+router.get("/types-offres", getTypesOffresController);
 
 export default router;
