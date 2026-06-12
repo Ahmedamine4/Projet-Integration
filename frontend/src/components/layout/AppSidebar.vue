@@ -3,6 +3,8 @@ import { computed, ref } from 'vue';
 import FolioCraftLogo from '@/assets/icons/FolioCraft.svg';
 import {
   LayoutDashboard,
+  GraduationCap,
+  BriefcaseBusiness,
   PanelLeftOpen,
   PanelLeftClose,
   Menu,
@@ -43,50 +45,51 @@ const emit = defineEmits(['open-notifications', 'update:collapsed']);
 
 const collapsed = ref(true);
 
+const roleDashboardPaths = {
+  etudiant: '/dashboard',
+  professeur: '/prof-dashboard',
+  professionnel: '/recruiter-dashboard',
+  directeur: '/director-dashboard',
+  administrateur: '/admin-dashboard',
+};
+
+const roleDashboardPath = computed(() => {
+  return roleDashboardPaths[authStore.user?.role] || roleDashboardPaths.etudiant;
+});
+
 const sidebarItems = computed(() => {
+  const role = authStore.user?.role || 'etudiant';
+  const dashboardItems = role === 'professionnel'
+    ? [
+        { label: 'Student dashboard', icon: GraduationCap, path: '/dashboard' },
+        {
+          label: 'Recruiter dashboard',
+          icon: BriefcaseBusiness,
+          path: roleDashboardPath.value,
+        },
+      ]
+    : [
+        { label: 'Dashboard', icon: LayoutDashboard, path: roleDashboardPath.value },
+      ];
   const items = [
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { label: 'Getting started', icon: Compass, path: '/getting-started' },
+    ...dashboardItems,
+    {
+      label: 'Getting started',
+      icon: Compass,
+      path: '/getting-started',
+      roles: ['etudiant'],
+    },
     { label: 'Feed', icon: LayoutList, path: '/feed' },
-    { label: 'Portfolio', icon: FolderOpen, path: '/portfolio' },
+    {
+      label: role === 'professionnel' ? 'Portfolios' : 'Portfolio',
+      icon: FolderOpen,
+      path: role === 'professionnel' ? '/feed' : '/portfolio',
+      roles: ['etudiant', 'professionnel'],
+    },
     { label: 'Settings', icon: Settings, path: '/settings' },
   ];
-  
 
-switch (authStore.user?.role) {
-  case 'professeur':
-    items[0] = {
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      path: '/prof-dashboard',
-    };
-    break;
-
-  case 'professionnel':
-    items[0] = {
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      path: '/recruiter-dashboard',
-    };
-    break;
-
-  case 'directeur':
-    items[0] = {
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      path: '/director-dashboard',
-    };
-    break;
-
-  case 'administrateur':
-    items[0] = {
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      path: '/admin-dashboard',
-    };
-    break;
-}
-  return items;
+  return items.filter((item) => !item.roles || item.roles.includes(role));
 });
 
 function isItemActive(item) {
@@ -174,7 +177,7 @@ async function handleLogout() {
         />
         <button
           v-for="item in sidebarItems"
-          :key="item.label"
+          :key="`${item.label}-${item.path || ''}`"
           class="sidebar__item"
           :class="{ selected: isItemActive(item) }"
           @click="selectItem(item)"
@@ -411,9 +414,15 @@ async function handleLogout() {
   );
   top: calc(
     (var(--sidebar-rail-width) - var(--sidebar-thumb-height)) / 2
-    + var(--active-index) * (var(--sidebar-nav-gap) + var(--sidebar-rail-width))
   );
-  transition: top 0.4s var(--ease-overshoot);
+  transform: translateY(
+    calc(
+      var(--active-index)
+      * (var(--sidebar-nav-gap) + var(--sidebar-rail-width))
+    )
+  );
+  transition: transform 0.4s var(--ease-overshoot);
+  will-change: transform;
 }
 
 .sidebar__item {
