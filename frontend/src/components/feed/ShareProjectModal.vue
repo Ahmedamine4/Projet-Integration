@@ -16,22 +16,34 @@ const copied = ref(false);
 const shareLink = computed(() => {
   if (!props.project) return '';
 
-  if (props.project.shareUrl) {
-    return props.project.shareUrl;
-  }
-
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const projectId = props.project.id || props.project.projet_id || props.project.project_id;
 
-  return `${origin}/projects/${projectId}`;
-});
+  const ownerId =
+    props.project.portfolioUserId ||
+    props.project.portfolio_user_id ||
+    props.project.userId ||
+    props.project.user_id ||
+    props.project.utilisateur_id ||
+    props.project.utilisateurId ||
+    props.project.etudiant_id ||
+    props.project.etudiantId ||
+    props.project.student?.utilisateur_id ||
+    props.project.student?.userId ||
+    props.project.etudiant?.utilisateur_id;
 
-watch(
-  () => props.project,
-  () => {
-    copied.value = false;
+  const experienceId =
+    props.project.experienceId ||
+    props.project.experience_id ||
+    props.project.id ||
+    props.project.projet_id ||
+    props.project.project_id;
+
+  if (!ownerId || !experienceId) {
+    return '';
   }
-);
+
+  return `${origin}/portfolio/${ownerId}/experience/${experienceId}`;
+});
 
 async function copyLink() {
   const text = shareLink.value;

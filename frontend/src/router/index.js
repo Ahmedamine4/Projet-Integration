@@ -6,13 +6,13 @@ import RegisterView from '@/views/auth/RegisterView.vue';
 import AuthCallbackView from '@/views/auth/AuthCallbackView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
 import PortfolioView from '@/views/app/PortfolioView.vue';
-
+import FeedPage from '@/views/app/FeedPage.vue';
 
 const routes = [
 {
   path: '/feed',
   name: 'feed',
-  component: () => import('@/views/app/FeedPage.vue'),
+  component: FeedPage,
   meta: { requiresAuth: true },
 },
   {

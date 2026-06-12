@@ -166,6 +166,14 @@
       @submit="handleApplyOfferSubmit"
       @clear-error="applyOfferError = ''"
     />
+    <OfferModal
+  v-if="isOfferModalOpen"
+  :open="true"
+  :loading="isSubmittingOffer || loadingTypesOffres"
+  :type-options="typesOffres"
+  @close="closeOfferModal"
+  @submit="handleSubmitOffer"
+/>
 
     <BaseNotification
       :message="notification.message"
@@ -176,7 +184,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Check, Plus, SearchX } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -191,15 +199,24 @@ import ApplyOfferModal from '@/components/feed/ApplyOfferModal.vue';
 import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
 import { useFeedStore } from '@/stores/feed';
 import api from '@/services/api';
+import { useRecruteurStore } from '@/stores/recruteur';
 
+const OfferModal = defineAsyncComponent(() =>
+  import('@/components/dashboard/recruteur/OfferModal.vue')
+);
 const feedStore = useFeedStore();
+const recruteurStore = useRecruteurStore();
 const FEED_EXPERIENCE_LIMIT = 4;
 
-onMounted(() => {
-  feedStore.fetchInitialFeed({
+onMounted(async () => {
+  await feedStore.fetchInitialFeed({
     page: 1,
     limit: FEED_EXPERIENCE_LIMIT,
   });
+
+  if (isRecruiter.value && typeof recruteurStore.fetchTypesOffres === 'function') {
+    await recruteurStore.fetchTypesOffres();
+  }
 });
 const router = useRouter();
 const authStore = useAuthStore();
@@ -215,7 +232,11 @@ const sidebarUser = computed(() => {
     role: String(user.role || 'etudiant').toLowerCase(),
   };
 });
+const typesOffres = computed(() =>
+  Array.isArray(recruteurStore.typesOffres) ? recruteurStore.typesOffres : []
+);
 
+const loadingTypesOffres = computed(() => Boolean(recruteurStore.loadingTypesOffres));
 const currentRole = computed(() => sidebarUser.value.role || 'etudiant');
 const isRecruiter = computed(() => currentRole.value === 'professionnel');
 const isProfessor = computed(() => currentRole.value === 'professeur');
@@ -368,6 +389,8 @@ const shareProject = ref(null);
 const selectedOffer = ref(null);
 const applyingOffer = ref(null);
 const isApplyingOffer = ref(false);
+const isOfferModalOpen = ref(false);
+const isSubmittingOffer = ref(false);
 const applyOfferError = ref('');
 const appliedOfferIds = ref(new Set());
 const notification = ref({
@@ -680,9 +703,46 @@ function showNotification(message, type = 'success') {
 }
 
 function openAddOfferModal() {
-  console.log('Open add offer modal');
+  console.log('ADD OFFER CLICKED');
+  isOfferModalOpen.value = true;
+  console.log('isOfferModalOpen:', isOfferModalOpen.value);
 }
 
+function closeOfferModal() {
+  if (isSubmittingOffer.value) return;
+  isOfferModalOpen.value = false;
+}
+
+async function handleSubmitOffer(payload) {
+  if (isSubmittingOffer.value) return;
+
+  isSubmittingOffer.value = true;
+
+  try {
+    await recruteurStore.creerOffre({
+      entreprise: payload.entreprise,
+      localisation: payload.localisation,
+      technologies: payload.technologies,
+      description: payload.description,
+      type: payload.type,
+    });
+
+    showNotification('Offer created successfully.', 'success');
+    isOfferModalOpen.value = false;
+  } catch (error) {
+    console.error('Erreur création offre:', error.response?.data || error);
+
+    showNotification(
+      error.response?.data?.message ||
+        error.response?.data?.error ||
+        recruteurStore.errorOffres ||
+        'Unable to create offer.',
+      'error'
+    );
+  } finally {
+    isSubmittingOffer.value = false;
+  }
+}
 async function handleSidebarStudentAction(student) {
   const targetId =
     student.userId ||

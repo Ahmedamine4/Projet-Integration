@@ -7,6 +7,7 @@ import CloseButton from '@/components/common/actions/CloseButton.vue';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 
+
 const props = defineProps({
   open: {
     type: Boolean,
@@ -21,7 +22,34 @@ const props = defineProps({
   default: () => [],
 },
 });
+const isOfferModalOpen = ref(false);
+const isSubmittingOffer = ref(false);
 
+function openOfferModal() {
+  isOfferModalOpen.value = true;
+}
+
+function closeOfferModal() {
+  isOfferModalOpen.value = false;
+}
+
+async function handleSubmitOffer(payload) {
+  isSubmittingOffer.value = true;
+
+  try {
+    // Remplace l’endpoint par le vrai endpoint backend de création d’offre
+    await api.post('/stage', payload);
+
+    closeOfferModal();
+
+    // Si ta page a une fonction pour recharger les offres, appelle-la ici
+    // await fetchOffers();
+  } catch (error) {
+    console.error('Erreur création offre:', error.response?.data || error);
+  } finally {
+    isSubmittingOffer.value = false;
+  }
+}
 const emit = defineEmits(['close', 'submit']);
 
 const MAX_TEXT_LEN = 1200;
