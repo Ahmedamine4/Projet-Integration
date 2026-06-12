@@ -23,6 +23,7 @@ import adminRoutes from './routes/admin.routes.js';
 import interactionRoutes from './routes/interaction.routes.js';
 import directeurRoutes from './routes/directeur.routes.js';
 import feedRoutes from './routes/feed.routes.js';
+import recruteurRoutes from './routes/recruteur.routes.js';
 
 const app = express();
 app.use(cors({
@@ -67,6 +68,7 @@ app.use('/api/users', socialMediaRoutes);
 app.use('/api/etudiant', etudiantRoutes);
 
 app.use('/api/admin', adminRoutes);
+app.use('/api/recruteur', recruteurRoutes);
 // Branchement des routes d'ajout du projet
 app.use('/api', projetRoutes);
 

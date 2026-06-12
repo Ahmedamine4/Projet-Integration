@@ -24,6 +24,7 @@ export const TYPES_NOTIFICATION = {
   EMAIL_UPDATED: "email_updated",
 
   NOUVEAU_FOLLOWER: "nouveau_follower",
+  NOUVELLE_CANDIDATURE: "nouvelle_candidature",
 };
 
 export const getNotifications = async (utilisateurId, types = null) => {

@@ -14,6 +14,11 @@ datasource db {
 
 // ENUMS
 
+enum StatutOffre {
+  ACTIVE
+  TERMINEE
+}
+
 enum TypeCompetence {
   technologie
   domaine
@@ -247,6 +252,7 @@ model Offre {
   technologies   Json?
   description    String?
   type           TypeOffre?
+  statut         StatutOffre? @default(ACTIVE)
   date           DateTime? @default(now())
   utilisateur_id String
   utilisateur    Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)

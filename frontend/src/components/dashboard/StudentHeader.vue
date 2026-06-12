@@ -1,5 +1,5 @@
 <script setup>
-import { Users, FolderKanban, GraduationCap , Mail, Award } from 'lucide-vue-next'
+import { Users, FolderKanban, GraduationCap , Mail, Award, School, ClipboardClock } from 'lucide-vue-next'
 
 defineProps({
   student: {
@@ -20,6 +20,9 @@ const iconMap = {
   'Internships': GraduationCap ,       
   'Letter of \n recommendation': Mail,  
   'Certifications': Award,
+  'Etudiants': GraduationCap,
+  'Professeurs': School,
+  'Demandes en attente': ClipboardClock
 }
 
 function getStatColor(label, value) {
@@ -163,12 +166,69 @@ const colorMap = {
 @media (max-width: 1000px) {
   .student-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .student-stats-container {
     width: 100%;
-    justify-content: space-between;
+  }
+}
+
+@media (max-width: 640px) {
+  .student-header {
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border-radius: 22px;
+    overflow: hidden;
+  }
+
+  .student-profile {
+    width: 100%;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .student-avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .profile-info {
+    min-width: 0;
+  }
+
+  .student-profile h2 {
+    font-size: 1.45rem;
+    line-height: 1.15;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .student-stats-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .stat-card {
+    min-width: 0;
+    padding: 0.8rem 0.65rem;
+    border-radius: 16px;
+  }
+
+  .stat-top {
+    gap: 0.35rem;
+  }
+
+  .stat-value {
+    font-size: 1.55rem;
+  }
+
+  .stat-label {
+    font-size: 0.68rem;
+    line-height: 1.15;
+    letter-spacing: 0.03em;
+    word-break: break-word;
   }
 }
 </style>
