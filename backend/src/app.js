@@ -25,6 +25,7 @@ import directeurRoutes from './routes/directeur.routes.js';
 import feedRoutes from './routes/feed.routes.js';
 import recruteurRoutes from './routes/recruteur.routes.js';
 import feedProfRoutes from './routes/feed.prof.routes.js';
+import feedProfessionnelRoutes from './routes/feed.rec.routes.js';
 
 const app = express();
 app.use(cors({
@@ -51,6 +52,7 @@ app.use('/api/stages', stageRoutes);
 app.use('/api/activites', activiteRoutes);
 app.use('/api', feedRoutes);
 app.use('/api/prof', feedProfRoutes);
+app.use('/api/professionnel', feedProfessionnelRoutes);
 
 //Getting institutions
 app.use('/api/getInstitutions', getInstitutionRoutes);
