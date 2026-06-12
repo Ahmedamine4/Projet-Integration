@@ -1,9 +1,9 @@
 import {
   creerOffre,
-  getToutesLesDemandes,
   getMesOffres,
   getDemandesPagination,
   terminerOffre,
+  getTypesOffres,
 } from "../services/recruteur.service.js";
 
 
