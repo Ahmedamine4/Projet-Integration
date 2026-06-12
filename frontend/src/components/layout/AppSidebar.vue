@@ -54,11 +54,39 @@ const sidebarItems = computed(() => {
   ];
   
 
-  if (authStore.user?.role === 'professeur') {
-    items[0] = { label: 'Dashboard', icon: LayoutDashboard, path: '/prof-dashboard' };
-  }else if(authStore.user?.role === 'directeur') {
-    items[0] = { label: 'Dashboard', icon: LayoutDashboard, path: '/director-dashboard' };
-  }
+switch (authStore.user?.role) {
+  case 'professeur':
+    items[0] = {
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      path: '/prof-dashboard',
+    };
+    break;
+
+  case 'professionnel':
+    items[0] = {
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      path: '/recruiter-dashboard',
+    };
+    break;
+
+  case 'directeur':
+    items[0] = {
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      path: '/director-dashboard',
+    };
+    break;
+
+  case 'administrateur':
+    items[0] = {
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      path: '/admin-dashboard',
+    };
+    break;
+}
   return items;
 });
 
