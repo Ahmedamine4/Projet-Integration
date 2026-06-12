@@ -246,7 +246,7 @@ onUnmounted(() => {
             aria-label="Continue exploring"
             @click="scrollToAi"
           >
-            &nearr;
+            <span>&nearr;</span>
           </button>
           <p>
             FolioCraft connects education, experiences, GitHub, validations,
@@ -472,10 +472,11 @@ onUnmounted(() => {
 }
 
 .round-link {
-  display: inline-grid;
-  place-items: center;
-  width: 4rem;
-  height: 4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.9rem;
+  height: 2.9rem;
   border: 1px solid var(--landing-line);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.44);
@@ -484,6 +485,10 @@ onUnmounted(() => {
   transition:
     transform var(--transition-fast),
     background-color var(--transition-fast);
+}
+
+.round-link span {
+  transform: translateY(-2px);
 }
 
 .round-link:hover {
@@ -1121,7 +1126,7 @@ onUnmounted(() => {
 }
 
 .product-card--score {
-  top: 16%;
+  top: 32%;
   right: 8%;
   width: min(20rem, 42vw);
   padding: 0.95rem 1rem;
