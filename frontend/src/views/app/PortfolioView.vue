@@ -47,6 +47,19 @@ const activities = ref([]);
 const certifications = ref([]);
 const internships = ref([]);
 
+
+const notification = ref({
+  type: 'error',
+  message: '',
+});
+
+function clearNotification() {
+  notification.value.message = '';
+}
+
+function showNotification(type, message) {
+  notification.value = { type, message };
+}
 const userId = computed(() => authStore.user?.utilisateur_id);
 
 const portfolio = computed(() => portfolioStore.portfolio);
@@ -343,19 +356,6 @@ const experienceModalLoading = computed(() =>
   isExperienceSubmitting.value ||
   (experienceLoadingByType.value[experienceModal.value.type] ?? false)
 );
-const notification = ref({
-  type: 'error',
-  message: '',
-});
-
-function clearNotification() {
-  notification.value.message = '';
-}
-
-function showNotification(type, message) {
-  notification.value = { type, message };
-}
-
 function openExperienceModal(type) {
   clearNotification();
   experienceModal.value = {

@@ -75,29 +75,8 @@
       </span>
     </div>
 
-    <!-- Stats -->
-    <div class="card-divider" />
-
-<!-- Commits -->
-<div class="card-stats">
-  <span class="stat">
-    <GitBranch :size="13" />
-    {{ project.commitsCount ?? project.githubReposCount ?? 0 }} commits
-  </span>
-</div>
-
 <!-- Actions -->
 <div class="card-actions">
-  <button
-    v-if="project.githubReposCount > 0"
-    type="button"
-    class="action-btn"
-    aria-label="Open GitHub repository"
-  >
-    <Github :size="14" />
-    <span>GitHub</span>
-  </button>
-
   <button
   
     type="button"
@@ -114,8 +93,6 @@
 <script setup>
 import { computed } from 'vue';
 import {
-  GitBranch,
-  Github,
   Share2,
 } from 'lucide-vue-next';
 

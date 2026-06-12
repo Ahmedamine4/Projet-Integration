@@ -41,24 +41,28 @@ function loginThroughUi(email) {
   cy.get('input[placeholder="name@company.com"]')
     .should('be.visible')
     .clear()
-    .type(email);
+    .type(email)
+    .should('have.value', email);
 
   cy.get('input[placeholder="Enter your password"]')
     .should('be.visible')
     .clear()
-    .type(E2E_PASSWORD, { log: false });
+    .type(E2E_PASSWORD, { log: false })
+    .should('have.value', E2E_PASSWORD);
 
-  cy.contains('button', /^Sign In$/)
-    .should('be.enabled')
+  cy.contains('button', /sign in/i, { timeout: 10000 })
+    .should('be.visible')
+    .and('be.enabled')
     .click();
 
   cy.wait('@loginRequest').then(({ response }) => {
+    expect(response, 'real login response').to.exist;
     expect(response.statusCode).to.eq(200);
     expect(response.body.user.email).to.eq(email);
     expect(response.body.user.role).to.eq('etudiant');
   });
 
-  cy.url({ timeout: 15000 }).should('not.include', '/login');
+  cy.location('pathname', { timeout: 15000 }).should('not.eq', '/login');
   cy.getCookie('accessToken').should('exist');
 
   return apiRequest({
@@ -94,6 +98,10 @@ function aboutSection() {
   return cy.contains('h2', /^About me$/).closest('section');
 }
 
+function projectsSection() {
+  return cy.contains('.portfolio-section-title', /^Projects$/).closest('section');
+}
+
 function updateAboutMe(aboutText) {
   cy.intercept('PUT', '**/api/users/*/about').as('saveAbout');
 
@@ -110,7 +118,7 @@ function updateAboutMe(aboutText) {
     .clear()
     .type(aboutText);
 
-  cy.contains('button', /^Save changes$/)
+  cy.contains('button', /save changes/i)
     .should('be.enabled')
     .click();
 
@@ -153,7 +161,7 @@ function openSchoolModal() {
   cy.contains('h2', /^Education$/)
     .closest('.education')
     .within(() => {
-      cy.contains('button', /^Add academic path$/)
+      cy.contains('button', /add academic path/i)
         .should('be.visible')
         .click();
     });
@@ -167,17 +175,17 @@ function fillSchoolPath(schoolName) {
 
   openSchoolModal();
 
-  cy.contains('button.option', /^I am not currently studying/)
-    .should('be.visible')
-    .click();
+  cy.contains('button, [role="button"]', /not currently studying|not studying/i)
+  .should('be.visible')
+  .click();
 
-  cy.contains('button', /^Next$/).should('be.enabled').click();
+  cy.contains('button', /^Next$/).should('be.visible').and('be.enabled').click();
 
   cy.contains('button.option', /^Bachelor \/ Licence/)
     .should('be.visible')
     .click();
 
-  cy.contains('button', /^Next$/).should('be.enabled').click();
+  cy.contains('button', /^Next$/).should('be.visible').and('be.enabled').click();
 
   chooseDropdownOption('Search Bachelor / Licence school', schoolName);
 
@@ -196,12 +204,21 @@ function fillSchoolPath(schoolName) {
     .type('2024');
 
   cy.contains('button', /^Complete$/)
-    .should('be.enabled')
+    .should('be.visible')
+    .and('be.enabled')
     .click();
 
-  cy.wait('@saveInstitutions')
-    .its('response.statusCode')
-    .should('eq', 200);
+  cy.wait('@saveInstitutions').then(({ request, response }) => {
+    expect(response, 'real select-institutions response').to.exist;
+    expect(response.statusCode).to.eq(200);
+    expect(request.body).to.include({
+      etudie: false,
+    });
+    expect(request.body.institutions).to.have.length(1);
+    expect(request.body.institutions[0]).to.include({
+      niveau: 'bachelor',
+    });
+  });
 
   cy.contains('h3', /^Build your academic path$/).should('not.exist');
   cy.contains('h2', /^Education$/)
@@ -209,6 +226,132 @@ function fillSchoolPath(schoolName) {
     .should('contain.text', schoolName)
     .and('contain.text', 'Bachelor / Licence')
     .and('contain.text', '2020 - 2024');
+}
+
+function openProjectModal() {
+  projectsSection()
+    .should('be.visible')
+    .within(() => {
+      cy.get('button, [role="button"]', { timeout: 10000 })
+        .then(($buttons) => {
+          const addButton = [...$buttons].find((button) => {
+            const text = button.textContent?.trim() || '';
+            const ariaLabel = button.getAttribute('aria-label') || '';
+            const title = button.getAttribute('title') || '';
+
+            return /add project|add projects|new project|add|\+/i.test(text) ||
+              /add project|add projects|new project|add/i.test(ariaLabel) ||
+              /add project|add projects|new project|add/i.test(title);
+          });
+
+          expect(addButton, 'project add button').to.exist;
+
+          cy.wrap(addButton)
+            .scrollIntoView()
+            .should('be.visible')
+            .and('not.be.disabled')
+            .click({ force: true });
+        });
+    });
+
+  cy.contains('h2, h3', /create a new project|add project|project/i, {
+    timeout: 10000,
+  }).should('be.visible');
+}
+
+function selectTodayProjectDate() {
+  const today = new Date();
+  const todayDay = String(today.getDate());
+
+  cy.contains('label', /^Project date$/)
+    .parent()
+    .as('projectDateField');
+
+  cy.get('@projectDateField')
+    .find('button.date-picker__control, button')
+    .contains(/select project date/i)
+    .should('be.visible')
+    .click();
+
+  cy.get('body').then(($body) => {
+    const todayButton = [...$body.find('button')].find((button) => {
+      const text = button.textContent.trim();
+
+      return (
+        text === todayDay &&
+        !button.disabled &&
+        !button.getAttribute('aria-disabled') &&
+        button.offsetParent !== null
+      );
+    });
+
+    expect(todayButton, `visible date button for day ${todayDay}`).to.exist;
+
+    cy.wrap(todayButton)
+      .scrollIntoView()
+      .should('be.visible')
+      .click({ force: true });
+  });
+
+  cy.get('@projectDateField')
+    .find('button.date-picker__control')
+    .should('not.contain.text', 'Select project date');
+}
+
+function uploadProjectImage() {
+  cy.get('input#projectImage')
+    .selectFile('cypress/fixtures/project-cover.png', { force: true });
+
+  cy.get('.cropper-modal', { timeout: 10000 })
+    .should('be.visible');
+
+  cy.contains('.cropper-modal h3', /crop uploaded image/i, { timeout: 10000 })
+    .should('be.visible');
+
+  cy.get('.cropper-modal .image-cropper', { timeout: 15000 })
+    .should('be.visible');
+
+  cy.get('.cropper-modal')
+    .contains('button, [role="button"]', /^Crop image$/i)
+    .should('be.visible')
+    .and('not.be.disabled')
+    .click({ force: true });
+
+  cy.get('.cropper-modal', { timeout: 20000 })
+    .should('not.exist');
+}
+function createProjectFromModal(project) {
+  cy.intercept('POST', '**/api/add-projet').as('createProject');
+
+  openProjectModal();
+
+  cy.get('input[placeholder="Enter your project title"]')
+    .should('be.visible')
+    .clear()
+    .type(project.title)
+    .should('have.value', project.title);
+
+  selectTodayProjectDate();
+  uploadProjectImage();
+
+  cy.get('textarea[placeholder="Describe your project, its goal, features, and tools used..."]')
+    .should('be.visible')
+    .clear()
+    .type(project.description)
+    .should('have.value', project.description);
+
+  cy.contains('button', /^Submit project$/)
+    .should('be.visible')
+    .and('be.enabled')
+    .click();
+
+  cy.wait('@createProject').then(({ request, response }) => {
+    expect(response, 'real add-projet response').to.exist;
+    expect(response.statusCode).to.eq(201);
+    expect(request.body, 'multipart project payload').to.exist;
+  });
+
+  cy.contains('h2', /^Create a new project$/).should('not.exist');
 }
 
 describe('Portfolio about me and academic path real E2E', () => {
@@ -220,10 +363,10 @@ describe('Portfolio about me and academic path real E2E', () => {
     ensureE2EStudent(email);
     fetchAcademicSchool().as('academicSchool');
 
+    cy.intercept('GET', '**/api/users/portfolio/*').as('fetchPortfolio');
+
     loginThroughUi(email);
     openOwnPortfolio();
-
-    cy.intercept('GET', '**/api/users/portfolio/*').as('fetchPortfolio');
 
     updateAboutMe(aboutText);
 
@@ -246,5 +389,36 @@ describe('Portfolio about me and academic path real E2E', () => {
         .and('contain.text', 'Bachelor / Licence')
         .and('contain.text', '2020 - 2024');
     });
+  });
+
+  it('logs in as a real student, creates a project, and keeps it after reload', () => {
+    const runId = Date.now();
+    const email = `e2e.portfolio.project.${runId}@test.com`;
+    const project = {
+      title: `Cypress Project ${runId}`,
+      description: 'Project created by Cypress E2E test with real backend.',
+    };
+
+    ensureE2EStudent(email);
+
+    cy.intercept('GET', '**/api/users/portfolio/*').as('fetchPortfolio');
+
+    loginThroughUi(email);
+    openOwnPortfolio();
+
+    createProjectFromModal(project);
+
+    projectsSection()
+      .should('contain.text', project.title)
+      .and('contain.text', project.description);
+
+    cy.intercept('GET', '**/api/users/portfolio/*').as('reloadPortfolioAfterProject');
+    cy.reload();
+    cy.wait('@reloadPortfolioAfterProject')
+      .its('response.statusCode')
+      .should('eq', 200);
+
+    projectsSection()
+      .should('contain.text', project.title);
   });
 });

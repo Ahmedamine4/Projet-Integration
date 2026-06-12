@@ -461,15 +461,30 @@ const allDomains = computed(() => {
 });
 
 function buildStudentCarouselDescription(student) {
-  const score = student.portfolioScore
-    ? `Portfolio score ${student.portfolioScore}`
-    : 'Strong portfolio';
+  const description =
+    student.about ||
+    student.aboutMe ||
+    student.bio ||
+    student.description ||
+    student.a_propos ||
+    student.raw?.about ||
+    student.raw?.aboutMe ||
+    student.raw?.bio ||
+    student.raw?.description ||
+    student.raw?.a_propos ||
+    '';
 
-  const domains = student.domains?.length
-    ? student.domains.slice(0, 2).join(', ')
-    : 'multiple domains';
+  const trimmedDescription = String(description).trim();
 
-  return `${score} with experience in ${domains}.`;
+  if (!trimmedDescription) {
+    return 'No description available yet.';
+  }
+
+  if (trimmedDescription.length <= 110) {
+    return trimmedDescription;
+  }
+
+  return `${trimmedDescription.slice(0, 107).trim()}...`;
 }
 
 function resetFilters() {
