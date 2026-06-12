@@ -17,7 +17,7 @@ router.post('/recommandations/:portfolioId', authorizeRoles(ROLES.PROFESSEUR, RO
 router.patch('/recommandations/:interactionId/visibilite', authorizeRoles(ROLES.ETUDIANT), toggleVisibiliteRecommandation);
 
 
-router.get('/recommandations/me', authorizeRoles(ROLES.ETUDIANT), getMesRecommandations);
+router.get('/recommandations/me', getMesRecommandations);
 
 
 router.get('/recommandations/portfolio/:etudiantId', getRecommandationsPortfolio);

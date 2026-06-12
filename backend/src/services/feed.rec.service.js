@@ -55,7 +55,11 @@ export const getProfessionnelFeedStudentsTop = async (professionnelId, { page, l
 
   const utilisateursData = ids.length
     ? await prisma.utilisateur.findMany({
-        where: { utilisateur_id: { in: ids } },
+        where: {
+          utilisateur_id: { in: ids },
+          role: 'etudiant',        // ← ajouter ce filtre
+          etudiant: { isNot: null }, // ← garantit que la relation existe
+        },
         select: {
           utilisateur_id: true,
           nom: true,
@@ -135,7 +139,7 @@ export const getProfessionnelFeedSuggestions = async (professionnelId, { page, l
 
   const utilisateursData = ids.length
     ? await prisma.utilisateur.findMany({
-        where: { utilisateur_id: { in: ids } },
+        where: { utilisateur_id: { in: ids }, role: 'etudiant', etudiant: { isNot: null } },
         select: {
           utilisateur_id: true,
           nom: true,

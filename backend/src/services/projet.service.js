@@ -142,7 +142,7 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
     const experience = await tx.experience.findFirst({
       where: { experience_id: experienceId, utilisateur_id: etudiantId, type: 'projet', deleted_at: null },
       include: {
-        projet: { include: { validation: true } },
+        projet: { include: { validation: true, repository: true } },
       },
     });
 
@@ -164,7 +164,18 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
     }
 
     if (experience.technologies_locked && data.technologies !== undefined) {
-      throw new Error('Les technologies importées depuis GitHub sont verrouillées');
+      const repositoryLanguage = experience.projet.repository?.language;
+      const technologies = JSON.parse(data.technologies || '[]');
+      const normalizedTechnologies = Array.isArray(technologies)
+        ? technologies.map((tech) => String(tech).trim().toLowerCase()).filter(Boolean)
+        : [];
+
+      if (repositoryLanguage) {
+        const normalizedRepositoryLanguage = String(repositoryLanguage).trim().toLowerCase();
+        if (!normalizedTechnologies.includes(normalizedRepositoryLanguage)) {
+          throw new Error(`Les technologies importées depuis GitHub sont verrouillées et doivent inclure "${repositoryLanguage}"`);
+        }
+      }
     }
 
     await tx.experience.update({
@@ -178,6 +189,7 @@ export const editProjet = async (etudiantId, experienceId, data, file) => {
           ? (data.projetType === 'academique' ? 'academique' : 'personnel')
           : experience.type_specifique,
         photo: photoUrl ?? experience.photo,
+        is_draft: false,
       },
     });
 

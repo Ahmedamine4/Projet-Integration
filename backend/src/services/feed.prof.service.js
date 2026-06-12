@@ -68,6 +68,7 @@ export const getProfFeedStudentsTop = async (profId, { page, limit } = {}) => {
       utilisateur_id: { not: profId },
       bloque: false,
       role: 'etudiant',
+      etudiant: { isNot: null },
     },
     select: {
       utilisateur_id: true,

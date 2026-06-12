@@ -13,6 +13,7 @@ const fileInput = ref(null);
 const tempAvatarPreview = ref('');
 const tempAvatarFile = ref(null);
 const showImageConfirm = ref(false);
+const uploadingAvatar = ref(false);
 
 const authStore = useAuthStore();
 const userStore = useUserStore();
@@ -30,6 +31,7 @@ watch(user, (u) => {
   firstName.value = u?.prenom || u?.firstName || '';
   lastName.value = u?.nom || u?.lastName || '';
   email.value = u?.email || u?.emailAddress || '';
+  avatarPreview.value = u?.photo || '';
   originalFirstName.value = firstName.value;
   originalLastName.value = lastName.value;
 }, { immediate: true });
@@ -129,29 +131,51 @@ const initials = computed(() => {
 
 function triggerFileInput() { fileInput.value?.click(); }
 
-function revokeObjectUrl(url) {
-  if (!url) return;
+function isObjectUrl(url) {
+  return typeof url === 'string' && url.startsWith('blob:');
+}
 
+function revokeObjectUrl(url) {
+  if (!isObjectUrl(url)) return;
   URL.revokeObjectURL(url);
 }
 
 function onFileChange(event) {
   const file = event.target.files?.[0] || null;
   if (file) {
+    revokeObjectUrl(tempAvatarPreview.value);
     tempAvatarFile.value = file;
     tempAvatarPreview.value = URL.createObjectURL(file);
     showImageConfirm.value = true;
   }
 }
 
-function confirmImageUpload() {
-  avatarPreview.value = tempAvatarPreview.value;
-  tempAvatarFile.value = null;
-  tempAvatarPreview.value = '';
-  showImageConfirm.value = false;
+async function confirmImageUpload() {
+  if (!tempAvatarFile.value || uploadingAvatar.value) return;
+
+  uploadingAvatar.value = true;
+
+  try {
+    const photo = await authStore.uploadProfilePhoto(tempAvatarFile.value);
+
+    revokeObjectUrl(tempAvatarPreview.value);
+    avatarPreview.value = photo;
+    tempAvatarFile.value = null;
+    tempAvatarPreview.value = '';
+    showImageConfirm.value = false;
+
+    if (fileInput.value) fileInput.value.value = '';
+  } catch (error) {
+    console.error(error);
+    alert(error?.response?.data?.message || error?.message || 'Failed to upload profile picture');
+  } finally {
+    uploadingAvatar.value = false;
+  }
 }
 
 function cancelImageUpload() {
+  if (uploadingAvatar.value) return;
+
   revokeObjectUrl(tempAvatarPreview.value);
   tempAvatarFile.value = null;
   tempAvatarPreview.value = '';
@@ -345,12 +369,14 @@ async function handleDeleteAccount() {
               <div class="confirm-actions">
                 <button
                   class="btn btn-primary btn-sm"
+                  :disabled="uploadingAvatar"
                   @click="confirmImageUpload"
                 >
-                  Apply
+                  {{ uploadingAvatar ? 'Uploading...' : 'Apply' }}
                 </button>
                 <button
                   class="btn btn-ghost btn-sm"
+                  :disabled="uploadingAvatar"
                   @click="cancelImageUpload"
                 >
                   Cancel

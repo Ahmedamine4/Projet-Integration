@@ -79,10 +79,10 @@ const getGithubContributionsCount = async (etudiantId) => {
   }
 };
 
-const calculateScoreBucket = (academicCount, personalCount, academicWeight = 0.7) => {
-  const academicScore = normalizeCount(academicCount, 2);
-  const personalScore = normalizeCount(personalCount, 3);
-  return clamp01(academicScore * academicWeight + personalScore * (1 - academicWeight));
+const calculateScoreBucket = (academicCount, personalCount) => {
+  const academicScore = normalizeCount(academicCount, 2) * 1.2;
+  const personalScore = normalizeCount(personalCount, 2);
+  return clamp01(Math.max(academicScore, personalScore));
 };
 
 export async function calculatePortfolioScore(etudiantId) {
@@ -167,14 +167,14 @@ export async function calculatePortfolioScore(etudiantId) {
   };
 
   const finalScore = clamp01(
-    projectsScore * 0.18 +
-    stagesScore * 0.18 +
-    activitiesScore * 0.10 +
-    certificationsScore * 0.15 +
-    recommendationsScore * 0.12 +
-    gitScore * 0.15 +
-    profileScore * 0.12
-  );
+  stagesScore          * 0.30 +
+  projectsScore        * 0.25 +
+  activitiesScore      * 0.18 +
+  certificationsScore  * 0.12 + 
+  recommendationsScore * 0.08 +
+  gitScore             * 0.05 +
+  profileScore         * 0.02
+);
 
   const scoreValue = Math.round(finalScore * 100);
 
