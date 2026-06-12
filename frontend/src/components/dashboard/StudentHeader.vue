@@ -1,5 +1,6 @@
 <script setup>
-import { Users, FolderKanban, GraduationCap , Mail, Award } from 'lucide-vue-next'
+import { Users, FolderKanban, GraduationCap, Mail, Award } from 'lucide-vue-next'
+import Button from '@/components/common/actions/BaseButton.vue'
 
 defineProps({
   student: {
@@ -13,12 +14,14 @@ defineProps({
   }
 })
 
+const emit = defineEmits(['request-recommendation'])
+
 const iconMap = {
   'Followers': Users,
   'Follower': Users,
   'Projects': FolderKanban,
-  'Internships': GraduationCap ,       
-  'Letter of \n recommendation': Mail,  
+  'Internships': GraduationCap,
+  'Letter of \n recommendation': Mail,
   'Certifications': Award,
 }
 
@@ -41,9 +44,19 @@ const colorMap = {
   <div class="student-header">
     <!-- LEFT: Student profile -->
     <div class="student-profile">
-      <img v-if="student.photo" :src="student.photo" class="student-avatar" alt="Avatar">
+      <!-- Correction ici : Utilisation de student.avatar comme validé par le validateur de props -->
+      <img v-if="student.avatar" :src="student.avatar" class="student-avatar" alt="Avatar">
       <div class="profile-info">
         <h2>Welcome, {{ student.firstName }} {{ student.lastName }}</h2>
+        <Button
+          class="rec-button"
+          type="button"
+          variant="submit"
+          size="xs"
+          @click="emit('request-recommendation')"
+        >
+          Request a letter of recommendation
+        </Button>
       </div>
     </div>
 
@@ -81,6 +94,7 @@ const colorMap = {
   background: var(--color-background);
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-radius: 28px;
+  box-sizing: border-box;
 }
 
 /* ── Profile ── */
@@ -88,6 +102,7 @@ const colorMap = {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  flex-shrink: 0;
 }
 
 .student-avatar {
@@ -97,10 +112,21 @@ const colorMap = {
   object-fit: cover;
 }
 
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .student-profile h2 {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 2rem;
+  font-size: 1.75rem;
+  color: var(--color-primary);
+}
+
+.rec-button {
+  width: fit-content;
 }
 
 /* ── Stats container ── */
@@ -108,11 +134,13 @@ const colorMap = {
   display: flex;
   flex-direction: row;
   gap: 15px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* ── Stat card ── */
 .stat-card {
-  min-width: 130px;
+  min-width: 120px;
   padding: 1rem 1.2rem;
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
   border-left: 4px solid var(--accent, #ccc);
@@ -121,15 +149,15 @@ const colorMap = {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  background: var(--color-background);
+  box-sizing: border-box;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  border-left-color: var(--accent, #ccc);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
 }
 
-/* Number + icon row */
 .stat-top {
   display: flex;
   align-items: center;
@@ -150,25 +178,89 @@ const colorMap = {
   line-height: 1;
 }
 
-/* Label below */
 .stat-label {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xxs);
   opacity: 0.55;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 600;
+  white-space: pre-line; /* Permet de prendre en compte le \n dans le label */
 }
 
-/* ── Responsive ── */
-@media (max-width: 1000px) {
+/* === TABLET (1024px) === */
+@media (max-width: 1024px) {
   .student-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .student-profile {
+    width: 100%;
   }
 
   .student-stats-container {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
+  }
+}
+
+/* === MOBILE (640px et moins) === */
+@media (max-width: 640px) {
+  .student-header {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .student-profile {
+    flex-direction: row; /* reste horizontal */
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .student-avatar {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  .profile-info {
+    flex: 1;
+    min-width: 0;
+    gap: 0.4rem;
+  }
+
+  .student-profile h2 {
+    font-size: 1rem;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .rec-button {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .student-stats-container {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .stat-card {
+    min-width: 0;
+    padding: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 1.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.6rem;
   }
 }
 </style>
