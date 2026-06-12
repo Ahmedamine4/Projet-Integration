@@ -1,10 +1,9 @@
 import {
   creerOffre,
-  getToutesLesDemandes,
-  envoyerDemande,
-  getOffresPagination,
+  getMesOffres,
   getDemandesPagination,
   terminerOffre,
+  getTypesOffres,
 } from "../services/recruteur.service.js";
 
 
@@ -24,35 +23,14 @@ export const getMesOffresController = async (req, res) => {
   try {
     const utilisateurId = req.user.utilisateur_id;
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const offres = await getMesOffres(utilisateurId);
 
-    const result = await getOffresPagination(page, limit, utilisateurId);
-
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-export const envoyerDemandeController = async (req, res) => {
-  try {
-    const utilisateurId = req.user.utilisateur_id;
-    const { offreId } = req.params;
-    const { message } = req.body;
-
-    const demande = await envoyerDemande(
-      offreId,
-      utilisateurId,
-      message
-    );
-
-    res.status(201).json({
+    res.status(200).json({
       success: true,
-      data: demande
+      data: offres,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -86,4 +64,13 @@ export const getDemandesParOffreController = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-    
+
+export const getTypesOffresController = async (req, res) => {
+  try {
+    const typesOffres = await getTypesOffres();
+
+    res.json(typesOffres);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};  

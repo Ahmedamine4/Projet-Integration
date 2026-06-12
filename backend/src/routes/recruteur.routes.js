@@ -2,9 +2,9 @@ import express from "express";
 import {
   createOffreController,
   getMesOffresController,
-  envoyerDemandeController,
   terminerOffreController,
   getDemandesParOffreController,
+  getTypesOffresController,
 } from "../controllers/recruteur.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 const router = express.Router();
@@ -22,16 +22,12 @@ router.patch(
   terminerOffreController
 );
 
-// Envoyer une demande sur une offre
-router.post(
-  "/offres/:offreId/demandes",
-  envoyerDemandeController
-);
-
 // Récupérer les demandes d'une offre (pagination)
 router.get(
   "/offres/:offreId/demandes",
   getDemandesParOffreController
 );
+
+router.get("/types-offres", getTypesOffresController);
 
 export default router;
