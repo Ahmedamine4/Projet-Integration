@@ -5,3 +5,6 @@
 docker-compose.override.yml
 node_modules/
 .vscode
+coverage/
+backend/coverage/
+*.log

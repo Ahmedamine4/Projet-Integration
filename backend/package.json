@@ -13,7 +13,15 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node prisma/seed.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "vitest --config vitest.config.js",
+    "test:integration": "vitest --config vitest.integration.config.js",
+    "test:performance": "k6 run tests/performance/run-all.js",
+    "test:all": "npm run test",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "prisma:generate": "prisma generate"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -42,9 +50,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/ui": "^4.1.8",
     "eslint": "^10.4.0",
     "globals": "^17.6.0",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.8"
   },
   "keywords": []
 }
