@@ -1,40 +1,186 @@
 import prisma from '../config/prisma.js';
+import { Prisma } from '@prisma/client';
 
 const PAGE_SIZE = 10;
 
 
-const FEED_OFFRES_COUNT = 5;
-const FEED_USERS_COUNT = 5;
-const FEED_EXPERIENCES_COUNT = 10;
+const DEFAULT_LIMIT_OFFRES = 5;
+const DEFAULT_LIMIT_USERS = 5;
+const DEFAULT_LIMIT_EXPERIENCES = 10;
+const POOL_SIZE_EXPERIENCES = 300; // taille du pool sur lequel le score est calculé avant pagination
+const RANDOM_JITTER_MAX = 6; // bruit aléatoire ajouté au score pour varier l'ordre à chaque appel
 
-// Mélange un tableau (Fisher-Yates)
-const shuffle = (arr) => {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+const toPositiveInt = (val, def) => {
+  const n = parseInt(val, 10);
+  return Number.isFinite(n) && n > 0 ? n : def;
 };
 
-export const getFeedEtudiant = async (etudiantId) => {
+// ----------------------------------------------------------
+// 1) Offres — paginé + ordre aléatoire à chaque appel
+// ----------------------------------------------------------
+export const getFeedOffres = async (etudiantId, { page, limit } = {}) => {
+  const pageNum = toPositiveInt(page, 1);
+  const pageSize = toPositiveInt(limit, DEFAULT_LIMIT_OFFRES);
+  const skip = (pageNum - 1) * pageSize;
+
+  const total = await prisma.offre.count();
+
+  // On tire des ids aléatoirement (PostgreSQL ORDER BY random())
+  const randomRows = await prisma.$queryRaw(
+    Prisma.sql`SELECT offre_id FROM offres ORDER BY random() OFFSET ${skip} LIMIT ${pageSize}`
+  );
+  const ids = randomRows.map((r) => r.offre_id);
+
+  const offresData = ids.length
+    ? await prisma.offre.findMany({
+        where: { offre_id: { in: ids } },
+        select: {
+          offre_id: true,
+          entreprise: true,
+          localisation: true,
+          technologies: true,
+          description: true,
+          type: true,
+          date: true,
+          utilisateur: {
+            select: {
+              utilisateur_id: true,
+              nom: true,
+              prenom: true,
+              photo: true,
+              professionnel: { select: { entreprise: true, poste: true } },
+            },
+          },
+        },
+      })
+    : [];
+
+  // Préserver l'ordre aléatoire renvoyé par la requête SQL
+  const byId = new Map(offresData.map((o) => [o.offre_id, o]));
+  const offres = ids.map((id) => byId.get(id)).filter(Boolean);
+
+  return {
+    data: offres,
+    pagination: {
+      page: pageNum,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize) || 1,
+    },
+  };
+};
+
+// ----------------------------------------------------------
+// 2) Suggestions d'utilisateurs (non suivis, non soi-même) — paginé + aléatoire
+// ----------------------------------------------------------
+export const getFeedSuggestions = async (etudiantId, { page, limit } = {}) => {
+  const pageNum = toPositiveInt(page, 1);
+  const pageSize = toPositiveInt(limit, DEFAULT_LIMIT_USERS);
+  const skip = (pageNum - 1) * pageSize;
+
+  const following = await prisma.follow.findMany({
+    where: { followerId: etudiantId },
+    select: { followingId: true },
+  });
+  const excludeIds = [etudiantId, ...following.map((f) => f.followingId)];
+
+  const where = {
+    utilisateur_id: { notIn: excludeIds },
+    bloque: false,
+    role: 'etudiant',
+  };
+
+  const total = await prisma.utilisateur.count({ where });
+
+  const randomRows = await prisma.$queryRaw(
+    Prisma.sql`SELECT utilisateur_id FROM utilisateurs WHERE bloque = false AND role = 'etudiant' AND utilisateur_id NOT IN (${Prisma.join(excludeIds.length ? excludeIds : ['__none__'])}) ORDER BY random() OFFSET ${skip} LIMIT ${pageSize}`
+  );
+  const ids = randomRows.map((r) => r.utilisateur_id);
+
+  const utilisateursData = ids.length
+    ? await prisma.utilisateur.findMany({
+        where: { utilisateur_id: { in: ids } },
+        select: {
+          utilisateur_id: true,
+          nom: true,
+          prenom: true,
+          photo: true,
+          role: true,
+          etudiant: {
+            select: {
+              niveau: true,
+              institutions: {
+                select: { institution: { select: { nom: true } } },
+                take: 1,
+              },
+            },
+          },
+          professionnel: { select: { poste: true, entreprise: true } },
+          professeur: { select: { specialite: true, departement: true } },
+        },
+      })
+    : [];
+
+  const byId = new Map(utilisateursData.map((u) => [u.utilisateur_id, u]));
+  const utilisateurs = ids.map((id) => byId.get(id)).filter(Boolean);
+
+  const data = utilisateurs.map((u) => ({
+    utilisateur_id: u.utilisateur_id,
+    nom: u.nom,
+    prenom: u.prenom,
+    photo: u.photo,
+    role: u.role,
+    sous_titre:
+      u.role === 'etudiant'
+        ? u.etudiant?.institutions?.[0]?.institution?.nom ?? u.etudiant?.niveau ?? null
+        : u.role === 'professionnel'
+        ? `${u.professionnel?.poste ?? ''} ${u.professionnel?.entreprise ? '· ' + u.professionnel.entreprise : ''}`.trim()
+        : u.role === 'professeur'
+        ? u.professeur?.specialite ?? u.professeur?.departement ?? null
+        : null,
+  }));
+
+  return {
+    data,
+    pagination: {
+      page: pageNum,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize) || 1,
+    },
+  };
+};
+
+// ----------------------------------------------------------
+// 3) Expériences — score + filtres + pagination
+// ----------------------------------------------------------
+// Filtres acceptés :
+//  - technologie : nom d'une technologie (Competence.type = 'technologie')
+//  - domaine     : nom d'un domaine (Competence.type = 'domaine')
+//  - meme_ecole  : 'true' -> uniquement les expériences d'étudiants partageant une institution avec moi
+//  - following   : 'true' -> uniquement les expériences des personnes que je suis
+//  - trending    : 'true' -> tri par score de portfolio (crédibilité) au lieu du score de pertinence
+export const getFeedExperiences = async (etudiantId, { page, limit, technologie, domaine, meme_ecole, following: followingFilter, trending } = {}) => {
+  const pageNum = toPositiveInt(page, 1);
+  const pageSize = toPositiveInt(limit, DEFAULT_LIMIT_EXPERIENCES);
+  const skip = (pageNum - 1) * pageSize;
+
+  const isMemeEcole = String(meme_ecole).toLowerCase() === 'true';
+  const isFollowingOnly = String(followingFilter).toLowerCase() === 'true';
+  const isTrending = String(trending).toLowerCase() === 'true';
+
   // ----------------------------------------------------------
-  // 1) Données de contexte sur l'utilisateur courant
+  // Données de contexte sur l'utilisateur courant
   // ----------------------------------------------------------
-  const [following, mesInstitutions, mesCompetences] = await Promise.all([
-    // Liste des utilisateurs déjà suivis
+  const [followingRows, mesInstitutions, mesCompetences] = await Promise.all([
     prisma.follow.findMany({
       where: { followerId: etudiantId },
       select: { followingId: true },
     }),
-
-    // Institutions de l'étudiant courant
     prisma.valideEtudiant.findMany({
       where: { utilisateur_id: etudiantId },
       select: { institution_id: true },
     }),
-
-    // Compétences (technologies + domaines) développées par l'étudiant courant
     prisma.competenceDeveloppee.findMany({
       where: { experience: { utilisateur_id: etudiantId } },
       select: { competence_id: true },
@@ -42,133 +188,101 @@ export const getFeedEtudiant = async (etudiantId) => {
     }),
   ]);
 
-  const followingIds = new Set(following.map((f) => f.followingId));
+  const followingIds = new Set(followingRows.map((f) => f.followingId));
   const mesInstitutionIds = new Set(mesInstitutions.map((i) => i.institution_id));
   const mesCompetenceIds = new Set(mesCompetences.map((c) => c.competence_id));
 
   // ----------------------------------------------------------
-  // 2) Offres aléatoires
+  // Construction du filtre Prisma
   // ----------------------------------------------------------
-  const offresPool = await prisma.offre.findMany({
-    select: {
-      offre_id: true,
-      entreprise: true,
-      localisation: true,
-      technologies: true,
-      description: true,
-      type: true,
-      date: true,
-      utilisateur: {
-        select: {
-          utilisateur_id: true,
-          nom: true,
-          prenom: true,
-          photo: true,
-          professionnel: { select: { entreprise: true, poste: true } },
-        },
-      },
-    },
-    take: 50,
-    orderBy: { date: 'desc' },
-  });
+  const where = {
+    visibilite: true,
+    is_draft: false,
+    deleted_at: null,
+    utilisateur_id: { not: etudiantId },
+  };
 
-  const offres = shuffle(offresPool).slice(0, FEED_OFFRES_COUNT);
+  if (isFollowingOnly) {
+    const ids = [...followingIds];
+    where.utilisateur_id = { in: ids.length > 0 ? ids : ['__none__'] };
+  }
 
-  // ----------------------------------------------------------
-  // 3) Utilisateurs suggérés (non suivis, non soi-même)
-  // ----------------------------------------------------------
-  const utilisateursPool = await prisma.utilisateur.findMany({
-    where: {
-      utilisateur_id: { notIn: [etudiantId, ...followingIds] },
-      bloque: false,
-    },
-    select: {
-      utilisateur_id: true,
-      nom: true,
-      prenom: true,
-      photo: true,
-      role: true,
-      etudiant: {
-        select: {
-          niveau: true,
-          institutions: {
-            select: { institution: { select: { nom: true } } },
-            take: 1,
-          },
-        },
-      },
-      professionnel: { select: { poste: true, entreprise: true } },
-      professeur: { select: { specialite: true, departement: true } },
-    },
-    take: 50,
-  });
+  if (isMemeEcole) {
+    const ids = [...mesInstitutionIds];
+    where.etudiant = {
+      institutions: { some: { institution_id: { in: ids.length > 0 ? ids : ['__none__'] } } },
+    };
+  }
 
-  const utilisateursSuggeres = shuffle(utilisateursPool)
-    .slice(0, FEED_USERS_COUNT)
-    .map((u) => ({
-      utilisateur_id: u.utilisateur_id,
-      nom: u.nom,
-      prenom: u.prenom,
-      photo: u.photo,
-      role: u.role,
-      sous_titre:
-        u.role === 'etudiant'
-          ? u.etudiant?.institutions?.[0]?.institution?.nom ?? u.etudiant?.niveau ?? null
-          : u.role === 'professionnel'
-          ? `${u.professionnel?.poste ?? ''} ${u.professionnel?.entreprise ? '· ' + u.professionnel.entreprise : ''}`.trim()
-          : u.role === 'professeur'
-          ? u.professeur?.specialite ?? u.professeur?.departement ?? null
-          : null,
-    }));
+  if (technologie) {
+    where.competence_dev = {
+      ...(where.competence_dev ?? {}),
+      some: { competence: { type: 'technologie', nom: { equals: technologie, mode: 'insensitive' } } },
+    };
+  }
+
+  if (domaine) {
+    // Si on a déjà un filtre "some" pour technologie, on combine avec AND pour exiger les deux
+    if (where.competence_dev?.some) {
+      where.AND = [
+        ...(where.AND ?? []),
+        { competence_dev: { some: { competence: { type: 'technologie', nom: { equals: technologie, mode: 'insensitive' } } } } },
+        { competence_dev: { some: { competence: { type: 'domaine', nom: { equals: domaine, mode: 'insensitive' } } } } },
+      ];
+      delete where.competence_dev;
+    } else {
+      where.competence_dev = {
+        some: { competence: { type: 'domaine', nom: { equals: domaine, mode: 'insensitive' } } },
+      };
+    }
+  }
 
   // ----------------------------------------------------------
-  // 4) Expériences (publications) avec calcul de score
+  // Pool d'expériences correspondant aux filtres
   // ----------------------------------------------------------
-  const experiencesPool = await prisma.experience.findMany({
-    where: {
-      visibilite: true,
-      is_draft: false,
-      deleted_at: null,
-      utilisateur_id: { not: etudiantId },
-    },
-    select: {
-      experience_id: true,
-      titre: true,
-      description: true,
-      photo: true,
-      type: true,
-      type_specifique: true,
-      date_experience: true,
-      utilisateur_id: true,
-      etudiant: {
-        select: {
-          utilisateur: {
-            select: {
-              utilisateur_id: true,
-              nom: true,
-              prenom: true,
-              photo: true,
+  const [experiencesPool, total] = await Promise.all([
+    prisma.experience.findMany({
+      where,
+      select: {
+        experience_id: true,
+        titre: true,
+        description: true,
+        photo: true,
+        type: true,
+        type_specifique: true,
+        date_experience: true,
+        utilisateur_id: true,
+        etudiant: {
+          select: {
+            utilisateur: {
+              select: {
+                utilisateur_id: true,
+                nom: true,
+                prenom: true,
+                photo: true,
+              },
             },
+            institutions: {
+              select: { institution_id: true, institution: { select: { nom: true } } },
+            },
+            portfolio: { select: { score_credibilite: true } },
           },
-          institutions: {
-            select: { institution_id: true, institution: { select: { nom: true } } },
+        },
+        competence_dev: {
+          select: {
+            competence: { select: { competence_id: true, nom: true, type: true } },
           },
-          portfolio: { select: { score_credibilite: true } },
+        },
+        interactions: {
+          where: { type: { in: ['like', 'commentaire'] } },
+          select: { type: true },
         },
       },
-      competence_dev: {
-        select: {
-          competence: { select: { competence_id: true, nom: true, type: true } },
-        },
-      },
-      interactions: {
-        where: { type: { in: ['like', 'commentaire'] } },
-        select: { type: true },
-      },
-    },
-    orderBy: { date_experience: 'desc' },
-    take: 100,
-  });
+      orderBy: { date_experience: 'desc' },
+      take: POOL_SIZE_EXPERIENCES,
+    }),
+    prisma.experience.count({ where }),
+  ]);
 
   const now = Date.now();
 
@@ -231,6 +345,11 @@ export const getFeedEtudiant = async (etudiantId) => {
       score += recenceBonus;
     }
 
+    // g) Bruit aléatoire (pour varier l'ordre à chaque appel, sans casser la pertinence globale)
+    const jitter = Math.floor(Math.random() * (RANDOM_JITTER_MAX + 1));
+    breakdown.alea = jitter;
+    score += jitter;
+
     return {
       experience_id: exp.experience_id,
       titre: exp.titre,
@@ -252,25 +371,49 @@ export const getFeedEtudiant = async (etudiantId) => {
       domaines: competencesExp.filter((c) => c.type === 'domaine').map((c) => c.nom),
       stats: { likes, commentaires: comments },
       is_following_auteur: isFollowed,
+      portfolio_score: portfolioScore,
       score,
       score_breakdown: breakdown,
     };
   });
 
-  
-  experiencesScored.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return new Date(b.date) - new Date(a.date);
-  });
+  // ----------------------------------------------------------
+  // Tri
+  // ----------------------------------------------------------
+  if (isTrending) {
+    // Trending = on privilégie les portfolios les mieux notés
+    experiencesScored.sort((a, b) => {
+      if (b.portfolio_score !== a.portfolio_score) return b.portfolio_score - a.portfolio_score;
+      if (b.score !== a.score) return b.score - a.score;
+      return new Date(b.date) - new Date(a.date);
+    });
+  } else {
+    experiencesScored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return new Date(b.date) - new Date(a.date);
+    });
+  }
 
-  const experiences = experiencesScored.slice(0, FEED_EXPERIENCES_COUNT);
+  const data = experiencesScored.slice(skip, skip + pageSize);
 
   return {
-    offres,
-    utilisateurs_suggeres: utilisateursSuggeres,
-    experiences,
+    data,
+    pagination: {
+      page: pageNum,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize) || 1,
+    },
+    filters_appliques: {
+      technologie: technologie ?? null,
+      domaine: domaine ?? null,
+      meme_ecole: isMemeEcole,
+      following: isFollowingOnly,
+      trending: isTrending,
+    },
   };
 };
+
 
 export const getFeedTechnologiesDomaines = async () => {
   const [technologies, domaines] = await Promise.all([
