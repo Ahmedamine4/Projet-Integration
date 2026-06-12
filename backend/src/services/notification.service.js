@@ -137,15 +137,24 @@ export const creerNotification = async (
     },
   });
 
-  if (utilisateur?.email) {
-    envoyerNotificationEmail({
+  console.log("EMAIL DESTINATAIRE:", utilisateur?.email);
+
+  if (!utilisateur?.email) {
+    console.log("❌ Aucun email trouvé pour cet utilisateur");
+    return notification;
+  }
+
+  try {
+    await envoyerNotificationEmail({
       email: utilisateur.email,
       subject,
       message,
       userSource: notification.utilisateur_source,
-    }).catch((err) => {
-      console.error("Erreur lors de l'envoi de l'email :", err);
     });
+
+    console.log("✅ Email envoyé avec succès");
+  } catch (err) {
+    console.error("❌ EMAIL FAILED:", err);
   }
 
   return notification;

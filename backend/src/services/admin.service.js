@@ -67,7 +67,6 @@ export async function getAdminInstitutions() {
 export async function creerInstitutionAvecDirecteur({ nom, email_directeur }) {
   const institutionName = nom?.trim();
   const directeurEmail = normalizeEmail(email_directeur);
-
   if (!institutionName || !directeurEmail) {
     throw new Error("Le nom de l'institution et l'email du directeur sont requis");
   }
@@ -142,8 +141,8 @@ export async function creerInstitutionAvecDirecteur({ nom, email_directeur }) {
 
   await creerNotification(
       result.directeur.utilisateur_id,
-      `VOTRE MDPS `,
-      'Votre institution a été créée avec succès. Vos identifiants de connexion sont :\n\n' + `Email : ${result.directeur.email}\nMot de passe temporaire : ${motDePasse}\n\nVeuillez vous connecter et changer votre mot de passe dès que possible.`
+      'Votre institution a été créée avec succès. Vos identifiants de connexion sont :\n\n' + `Email : ${result.directeur.email}\nMot de passe temporaire : ${motDePasse}\n\nVeuillez vous connecter et changer votre mot de passe dès que possible.`,
+      'mot_de_pass'
     );
 
   return {
