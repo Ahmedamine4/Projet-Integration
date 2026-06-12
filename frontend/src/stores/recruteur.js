@@ -72,16 +72,16 @@ export const useRecruteurStore = defineStore('recruteur', {
       }
     },
 
-    async fetchDemandesParOffre(offreId, page = 1) {
+    async fetchDemandesParOffre(offreId, page = 1, limit = 10) {
       this.loadingDemandes = true
       this.errorDemandes = null
 
       try {
         const { data } = await api.get(`/recruteur/offres/${offreId}/demandes`, {
-          params: { page },
+          params: { page, limit },
         })
-
-        this.demandesParOffre = data.data || data
+      
+        this.demandesParOffre = data
         return data
       } catch (error) {
         this.errorDemandes = error.response?.data?.message || 'Erreur chargement demandes'

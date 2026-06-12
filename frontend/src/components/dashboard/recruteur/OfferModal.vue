@@ -298,24 +298,59 @@ useBodyScrollLock(() => props.open);
   -webkit-backdrop-filter: blur(3px);
   display: flex;
   justify-content: flex-end;
-  align-items: center;
+  align-items: stretch;
+  padding: var(--space-sm);
+  box-sizing: border-box;
 }
 
 .modal-card {
   --modal-edge-space: var(--space-lg);
-  --modal-field-gap: var(--space-md);
-  --modal-inner-gap: var(--space-xs);
+  --modal-field-gap: var(--space-lg);
+
+  --modal-inner-gap: 4px;  --modal-inner-gap: 4px;
   --scrollbar-width: 10px;
+
   position: relative;
   display: flex;
   flex-direction: column;
   width: clamp(34rem, 42vw, 46rem);
   max-width: 100vw;
   background-color: var(--color-background);
-  height: calc(100vh - 2 * var(--space-sm));
+  height: 100%;
   border-radius: var(--radius-md);
-  margin-inline: var(--space-sm);
+  margin: 0;
   overflow: hidden;
+}
+
+.experience-form__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: visible;
+  scroll-behavior: smooth;
+  display: grid;
+  align-content: start;
+  gap: var(--modal-field-gap);
+  padding: var(--modal-edge-space);
+  padding-bottom: calc(var(--modal-edge-space) + 2rem);
+}
+
+.field {
+  display: grid;
+  gap: var(--modal-inner-gap);
+  position: relative;
+}
+
+.field[data-error-field="type"] {
+  z-index: 50;
+}
+
+.field[data-error-field="type"] :deep(.dropdown-menu),
+.field[data-error-field="type"] :deep(.base-dropdown__menu),
+.field[data-error-field="type"] :deep(.dropdown__menu),
+.field[data-error-field="type"] :deep([role="listbox"]) {
+  margin-top: 4px !important;
+  transform: none !important;
 }
 
 .modal-card__header {

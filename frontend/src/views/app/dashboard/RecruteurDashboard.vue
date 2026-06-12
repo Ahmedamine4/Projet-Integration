@@ -16,6 +16,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRecruteurStore } from '@/stores/recruteur'
 import OfferModal from '@/components/dashboard/recruteur/OfferModal.vue'
 import BaseButton from '@/components/common/actions/BaseButton.vue'
+import Pagination from '@/components/dashboard/PaginationComponent.vue'
 import { useHorizontalDragScroll } from '@/composables/useHorizontalDragScroll'
 
 const authStore = useAuthStore()
@@ -38,6 +39,11 @@ const demandes = ref([])
 const loadingDemandes = ref(false)
 const demandesError = ref('')
 const terminatingOfferId = ref(null)
+
+const demandesCurrentPage = ref(1)
+const demandesTotalPages = ref(1)
+const demandesTotalItems = ref(0)
+const demandesLimit = 10
 
 const selectedOffer = computed(() =>
   offers.value.find(o => getOfferId(o) === selectedOfferId.value) || null
@@ -65,9 +71,10 @@ const todayLabel = computed(() =>
 )
 
 const stats = computed(() => ({
-  total: offers.value.length,
-  stage: offers.value.filter(o => String(o.type).toLowerCase() === 'stage').length,
-  emploi: offers.value.filter(o => String(o.type).toLowerCase() === 'emploi').length,
+  publiees: offers.value.length,
+  terminees: offers.value.filter(
+    o => String(o.statut || '').toUpperCase() === 'TERMINEE'
+  ).length,
 }))
 
 const canLoop = computed(() => offers.value.length >= 4)
@@ -141,32 +148,61 @@ async function selectOffer(offer) {
     selectedOfferId.value = null
     demandes.value = []
     demandesError.value = ''
+    demandesCurrentPage.value = 1
+    demandesTotalPages.value = 1
+    demandesTotalItems.value = 0
     return
   }
 
   selectedOfferId.value = offreId
-  await fetchDemandesByOffer(offreId)
+  demandesCurrentPage.value = 1
+  await fetchDemandesByOffer(offreId, 1)
 }
 
-async function fetchDemandesByOffer(offreId) {
+async function handleDemandesPageChange(page) {
+  if (!selectedOfferId.value) return
+
+  demandesCurrentPage.value = page
+  await fetchDemandesByOffer(selectedOfferId.value, page)
+}
+
+function normalizeDemandesResponse(result) {
+  const payload = result || {}
+
+  const data = Array.isArray(payload.data)
+    ? payload.data
+    : Array.isArray(payload.demandes)
+      ? payload.demandes
+      : Array.isArray(payload)
+        ? payload
+        : []
+
+  return {
+    data,
+    total: Number(payload.total || payload.totalItems || data.length || 0),
+    page: Number(payload.page || demandesCurrentPage.value || 1),
+    totalPages: Number(payload.totalPages || 1),
+  }
+}
+
+async function fetchDemandesByOffer(offreId, page = demandesCurrentPage.value) {
   loadingDemandes.value = true
   demandesError.value = ''
   demandes.value = []
 
   try {
-    const result = await recruteurStore.fetchDemandesParOffre(offreId, 1)
+    const result = await recruteurStore.fetchDemandesParOffre(offreId, page, demandesLimit)
+    const normalized = normalizeDemandesResponse(result)
 
-    const source =
-      result?.data?.data ||
-      result?.data ||
-      recruteurStore.demandesParOffre?.data ||
-      recruteurStore.demandesParOffre ||
-      []
-
-    demandes.value = Array.isArray(source) ? source : []
+    demandes.value = normalized.data
+    demandesCurrentPage.value = normalized.page
+    demandesTotalPages.value = Math.max(1, normalized.totalPages)
+    demandesTotalItems.value = normalized.total
   } catch (err) {
     console.error('Erreur chargement demandes:', err)
     demandesError.value = err.response?.data?.message || 'Impossible de charger les demandes.'
+    demandesTotalPages.value = 1
+    demandesTotalItems.value = 0
   } finally {
     loadingDemandes.value = false
   }
@@ -189,6 +225,9 @@ async function handleTerminateOffer(offer) {
       selectedOfferId.value = null
       demandes.value = []
       demandesError.value = ''
+      demandesCurrentPage.value = 1
+      demandesTotalPages.value = 1
+      demandesTotalItems.value = 0
     }
   } catch (err) {
     console.error('Erreur terminaison offre:', err)
@@ -293,18 +332,13 @@ watch(isScrollMode, (scrollMode) => {
 
       <div class="page-header__stats">
         <div class="stat-chip">
-          <span class="stat-chip__num">{{ stats.total }}</span>
+          <span class="stat-chip__num">{{ stats.publiees }}</span>
           <span class="stat-chip__label">Offres publiées</span>
         </div>
 
         <div class="stat-chip">
-          <span class="stat-chip__num">{{ stats.stage }}</span>
-          <span class="stat-chip__label">Stages</span>
-        </div>
-
-        <div class="stat-chip">
-          <span class="stat-chip__num">{{ stats.emploi }}</span>
-          <span class="stat-chip__label">Emplois</span>
+          <span class="stat-chip__num">{{ stats.terminees }}</span>
+          <span class="stat-chip__label">Offres terminées</span>
         </div>
       </div>
     </header>
@@ -556,7 +590,7 @@ watch(isScrollMode, (scrollMode) => {
         <div></div>
 
         <span class="toolbar__count">
-          {{ demandes.length }} demande(s)
+          {{ demandesTotalItems }} demande(s)
         </span>
       </div>
 
@@ -578,41 +612,51 @@ watch(isScrollMode, (scrollMode) => {
         <p>Aucune demande pour cette offre.</p>
       </div>
 
-      <div v-else class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Étudiant</th>
-              <th>Email</th>
-              <th>Message</th>
-              <th class="th-center">Date</th>
-            </tr>
-          </thead>
+      <template v-else>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Étudiant</th>
+                <th>Email</th>
+                <th>Message</th>
+                <th class="th-center">Date</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            <tr v-for="demande in demandes" :key="getDemandeId(demande)">
-              <td>
-                <div class="user-cell">
-                  <span class="avatar">{{ getInitials(demande) }}</span>
-                  <span>{{ getStudentName(demande) }}</span>
-                </div>
-              </td>
+            <tbody>
+              <tr v-for="demande in demandes" :key="getDemandeId(demande)">
+                <td>
+                  <div class="user-cell">
+                    <span class="avatar">{{ getInitials(demande) }}</span>
+                    <span>{{ getStudentName(demande) }}</span>
+                  </div>
+                </td>
 
-              <td class="td-muted">
-                {{ getStudentEmail(demande) }}
-              </td>
+                <td class="td-muted">
+                  {{ getStudentEmail(demande) }}
+                </td>
 
-              <td class="message-cell">
-                {{ demande.message || '—' }}
-              </td>
+                <td class="message-cell">
+                  {{ demande.message || '—' }}
+                </td>
 
-              <td class="td-center td-muted">
-                {{ formatDate(demande.date || demande.createdAt || demande.date_demande) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <td class="td-center td-muted">
+                  {{ formatDate(demande.date || demande.createdAt || demande.date_demande) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="demandesTotalPages > 1" class="pagination-row">
+          <Pagination
+            :current-page="demandesCurrentPage"
+            :total-pages="demandesTotalPages"
+            @update:current-page="handleDemandesPageChange"
+          />
+        </div>
+      </template>
     </section>
 
     <OfferModal
@@ -1026,8 +1070,6 @@ watch(isScrollMode, (scrollMode) => {
   transform: translateY(-1px);
 }
 
-/* TABLE STYLE */
-
 .users-tab {
   font-family: var(--font-ui);
 }
@@ -1188,6 +1230,12 @@ tbody tr:hover td {
   line-height: 1.5;
 }
 
+.pagination-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-sm);
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -1257,6 +1305,10 @@ tbody tr:hover td {
 
   .requests-section {
     padding: var(--space-md);
+  }
+
+  .pagination-row {
+    justify-content: center;
   }
 }
 </style>
