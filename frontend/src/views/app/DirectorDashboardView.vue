@@ -16,12 +16,15 @@ const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
 const loadingStats = ref(false);
-const loadingProfessors = ref(false);
+const loadingMembers = ref(false);
 const loadingRequests = ref(false);
 const dashboardLoaded = ref(false);
 const savingProfessor = ref(false);
 const actionLoadingId = ref('');
 const error = ref('');
+
+const memberType = ref('professeur');
+const requestType = ref('inscription');
 
 const notification = reactive({
   type: 'success',
@@ -37,10 +40,10 @@ const dashboard = reactive({
   },
 });
 
-const professors = ref([]);
-const pendingStudents = ref([]);
+const members = ref([]);
+const pendingRequests = ref([]);
 
-const professorPagination = reactive({
+const memberPagination = reactive({
   page: 1,
   limit: 5,
   total: 0,
@@ -69,7 +72,7 @@ const isDirector = computed(() => user.value?.role === 'directeur');
 const isAuthResolving = computed(() => authStore.profileLoading || !authStore.profileChecked);
 
 const isLoading = computed(() =>
-  loadingStats.value || loadingProfessors.value || loadingRequests.value
+  loadingStats.value || loadingMembers.value || loadingRequests.value
 );
 
 const directorProfile = computed(() => ({
@@ -84,6 +87,14 @@ const stats = computed(() => [
   { label: 'Etudiants', value: dashboard.stats.totalStudents },
   { label: 'Demandes en attente', value: dashboard.stats.pendingRequests },
 ]);
+
+const memberTitle = computed(() =>
+  memberType.value === 'professeur' ? 'Professeurs' : 'Étudiants'
+);
+
+const requestTitle = computed(() =>
+  requestType.value === 'inscription' ? "Demandes d'inscription" : "Demandes d'activité"
+);
 
 function showNotification(message, type = 'success') {
   notification.message = message;
@@ -105,7 +116,7 @@ function resetProfessorForm() {
 function setPagination(target, source = {}) {
   target.page = source.page || 1;
   target.limit = source.limit || target.limit || 5;
-  target.total = source.total || 0;
+  target.total = source.totalItems || source.total || 0;
   target.totalPages = source.totalPages || 1;
 }
 
@@ -117,14 +128,14 @@ async function loadStats() {
 
   try {
     const { data } = await api.get('/directeur/dashboard/stats');
-    const payload = data.data || data || {};
+    const payload = data.data || {};
 
     dashboard.institution = payload.institution || null;
 
     dashboard.stats = {
-  totalProfessors: payload.stats?.totalProfessors || 0,
-  totalStudents: payload.stats?.totalStudents || 0,
-  pendingRequests: payload.stats?.pendingRequests || 0,
+      totalProfessors: payload.stats?.totalProfessors || 0,
+      totalStudents: payload.stats?.totalStudents || 0,
+      pendingRequests: payload.stats?.totalPending || 0,
     };
   } catch (err) {
     error.value = getErrorMessage(err, 'Impossible de charger les statistiques.');
@@ -133,31 +144,28 @@ async function loadStats() {
   }
 }
 
-async function loadProfessors(page = professorPagination.page) {
+async function loadMembers(page = memberPagination.page) {
   if (!isDirector.value) return;
 
-  loadingProfessors.value = true;
+  loadingMembers.value = true;
   error.value = '';
 
   try {
     const { data } = await api.get('/directeur/membres', {
       params: {
-        type: 'professeur',
+        type: memberType.value,
         page,
-        limit: professorPagination.limit,
       },
     });
 
-    professors.value = data.data || [];
+    const payload = data.data || {};
 
-    setPagination(professorPagination, data.pagination);
+    members.value = payload.membres || [];
+    setPagination(memberPagination, payload.pagination);
   } catch (err) {
-    error.value = getErrorMessage(
-      err,
-      'Impossible de charger les professeurs.'
-    );
+    error.value = getErrorMessage(err, 'Impossible de charger les membres.');
   } finally {
-    loadingProfessors.value = false;
+    loadingMembers.value = false;
   }
 }
 
@@ -170,23 +178,17 @@ async function loadRequests(page = requestsPagination.page) {
   try {
     const { data } = await api.get('/directeur/demandes', {
       params: {
-        type: 'inscription',
+        type: requestType.value,
         page,
-        limit: requestsPagination.limit,
       },
     });
 
-    pendingStudents.value = data.data || [];
-    console.log('PENDING STUDENTS:', data.data);
-    console.log('FIRST REQUEST:', data.data?.[0]);
-    console.log('FIRST REQUEST JSON:', JSON.stringify(data.data?.[0], null, 2));
+    const payload = data.data || {};
 
-    setPagination(requestsPagination, data.pagination);
+    pendingRequests.value = payload.demandes || [];
+    setPagination(requestsPagination, payload.pagination);
   } catch (err) {
-    error.value = getErrorMessage(
-      err,
-      'Impossible de charger les demandes.'
-    );
+    error.value = getErrorMessage(err, 'Impossible de charger les demandes.');
   } finally {
     loadingRequests.value = false;
   }
@@ -197,7 +199,7 @@ async function loadDashboard() {
 
   await Promise.all([
     loadStats(),
-    loadProfessors(1),
+    loadMembers(1),
     loadRequests(1),
   ]);
 
@@ -215,7 +217,7 @@ async function loadDashboardWhenReady() {
 async function refreshDashboard() {
   await Promise.all([
     loadStats(),
-    loadProfessors(professorPagination.page),
+    loadMembers(memberPagination.page),
     loadRequests(requestsPagination.page),
   ]);
 }
@@ -257,9 +259,11 @@ async function addProfessor() {
       showNotification('Professeur cree et identifiants envoyes par email.');
     }
 
+    memberType.value = 'professeur';
+
     await Promise.all([
       loadStats(),
-      loadProfessors(1),
+      loadMembers(1),
     ]);
   } catch (err) {
     error.value = getErrorMessage(err, 'Impossible de creer le professeur.');
@@ -268,23 +272,35 @@ async function addProfessor() {
   }
 }
 
-async function decideStudent(request, statut) {
-  const etudiantId =
-    request.etudiant?.etudiant_utilisateur_id ||
-    request.etudiant?.utilisateur_id ||
-    request.etudiant?.utilisateur?.utilisateur_id ||
+function getStudentId(request) {
+  return (
     request.utilisateur_id ||
+    request.etudiant?.etudiant_utilisateur_id ||
+    request.etudiant?.utilisateur?.utilisateur_id ||
+    request.etudiant_utilisateur_id ||
     request.etudiant_id ||
-    request.etudiantId;
+    request.etudiantId
+  );
+}
 
-  console.log('BODY SENT:', { etudiantId, statut });
+function getActivityExperienceId(request) {
+  return (
+    request.experience_id ||
+    request.activite?.experience_id ||
+    request.activite?.experience?.experience_id ||
+    request.experienceId
+  );
+}
+
+async function decideStudent(request, statut) {
+  const etudiantId = getStudentId(request);
 
   if (!etudiantId) {
     error.value = 'Impossible de déterminer l’identifiant de l’étudiant.';
     return;
   }
 
-  actionLoadingId.value = `${etudiantId}-${statut}`;
+  actionLoadingId.value = `inscription-${etudiantId}-${statut}`;
   error.value = '';
 
   try {
@@ -306,9 +322,39 @@ async function decideStudent(request, statut) {
   }
 }
 
-function changeProfessorPage(page) {
-  professorPagination.page = page;
-  loadProfessors(page);
+async function decideActivity(request, statut) {
+  const experienceId = getActivityExperienceId(request);
+
+  if (!experienceId) {
+    error.value = 'Impossible de déterminer l’identifiant de l’activité.';
+    return;
+  }
+
+  actionLoadingId.value = `activite-${experienceId}-${statut}`;
+  error.value = '';
+
+  try {
+    await api.put('/directeur/demandes/activite', {
+      experienceId,
+      statut,
+    });
+
+    showNotification(statut === 'valide' ? 'Activité acceptée.' : 'Activité refusée.');
+
+    await Promise.all([
+      loadStats(),
+      loadRequests(requestsPagination.page),
+    ]);
+  } catch (err) {
+    error.value = getErrorMessage(err, 'Impossible de traiter la demande d’activité.');
+  } finally {
+    actionLoadingId.value = '';
+  }
+}
+
+function changeMemberPage(page) {
+  memberPagination.page = page;
+  loadMembers(page);
 }
 
 function changeRequestsPage(page) {
@@ -316,9 +362,38 @@ function changeRequestsPage(page) {
   loadRequests(page);
 }
 
+function changeMemberType(type) {
+  if (memberType.value === type) return;
+
+  memberType.value = type;
+  memberPagination.page = 1;
+  loadMembers(1);
+}
+
+function changeRequestType(type) {
+  if (requestType.value === type) return;
+
+  requestType.value = type;
+  requestsPagination.page = 1;
+  loadRequests(1);
+}
+
 function studentName(request) {
   const student = request.etudiant?.utilisateur || request.utilisateur;
   return [student?.prenom, student?.nom].filter(Boolean).join(' ') || 'Etudiant';
+}
+
+function studentEmail(request) {
+  return request.etudiant?.utilisateur?.email || request.utilisateur?.email || '-';
+}
+
+function memberStudentName(member) {
+  const student = member.etudiant?.utilisateur || member.utilisateur;
+  return [student?.prenom, student?.nom].filter(Boolean).join(' ') || 'Étudiant';
+}
+
+function memberStudentEmail(member) {
+  return member.etudiant?.utilisateur?.email || member.utilisateur?.email || '-';
 }
 
 function professorName(professor) {
@@ -328,6 +403,34 @@ function professorName(professor) {
 
 function professorEmail(professor) {
   return professor.utilisateur?.email || professor.email || '-';
+}
+
+function activityStudentName(request) {
+  const student = request.activite?.experience?.etudiant?.utilisateur;
+  return [student?.prenom, student?.nom].filter(Boolean).join(' ') || 'Étudiant';
+}
+
+function activityStudentEmail(request) {
+  return request.activite?.experience?.etudiant?.utilisateur?.email || '-';
+}
+
+function activityTitle(request) {
+  return (
+    request.activite?.experience?.titre ||
+    request.activite?.titre ||
+    request.experience?.titre ||
+    'Activité'
+  );
+}
+
+function getStudentActionId(request, statut) {
+  const etudiantId = getStudentId(request);
+  return `inscription-${etudiantId}-${statut}`;
+}
+
+function getActivityActionId(request, statut) {
+  const experienceId = getActivityExperienceId(request);
+  return `activite-${experienceId}-${statut}`;
 }
 
 function formatDate(value) {
@@ -452,13 +555,38 @@ watch(
         </section>
 
         <section class="section">
-          <div class="section-header">
-            <h2>Professeurs</h2>
-            <span>{{ professorPagination.total }}</span>
+          <div class="section-header section-header--with-tabs">
+            <div>
+              <h2>{{ memberTitle }}</h2>
+              <span>{{ memberPagination.total }}</span>
+            </div>
+
+            <div class="tabs">
+              <button
+                type="button"
+                class="tab"
+                :class="{ 'tab--active': memberType === 'professeur' }"
+                @click="changeMemberType('professeur')"
+              >
+                Professeurs
+              </button>
+
+              <button
+                type="button"
+                class="tab"
+                :class="{ 'tab--active': memberType === 'etudiant' }"
+                @click="changeMemberType('etudiant')"
+              >
+                Étudiants
+              </button>
+            </div>
           </div>
 
           <div class="table-responsive director-table-wrapper">
-            <table class="data-table">
+            <table
+              v-if="memberType === 'professeur'"
+              class="data-table"
+            >
               <thead>
                 <tr>
                   <th>Nom</th>
@@ -470,7 +598,7 @@ watch(
 
               <tbody>
                 <tr
-                  v-for="professor in professors"
+                  v-for="professor in members"
                   :key="professor.prof_utilisateur_id || professor.utilisateur_id || professor.id"
                   class="table-row"
                 >
@@ -485,9 +613,49 @@ watch(
                   <td>{{ professor.specialite || '-' }}</td>
                 </tr>
 
-                <tr v-if="professors.length === 0">
+                <tr v-if="members.length === 0">
                   <td colspan="4">
                     Aucun professeur pour le moment.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table
+              v-else
+              class="data-table"
+            >
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Email</th>
+                  <th>Niveau</th>
+                  <th>Date début</th>
+                  <th>Date fin</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr
+                  v-for="student in members"
+                  :key="student.valide_etudiant_id || student.utilisateur_id"
+                  class="table-row"
+                >
+                  <td>
+                    <span class="student-name">
+                      {{ memberStudentName(student) }}
+                    </span>
+                  </td>
+
+                  <td>{{ memberStudentEmail(student) }}</td>
+                  <td>{{ student.niveau || student.etudiant?.niveau || '-' }}</td>
+                  <td>{{ formatDate(student.date_debut) }}</td>
+                  <td>{{ formatDate(student.date_fin) }}</td>
+                </tr>
+
+                <tr v-if="members.length === 0">
+                  <td colspan="5">
+                    Aucun étudiant pour le moment.
                   </td>
                 </tr>
               </tbody>
@@ -495,25 +663,50 @@ watch(
           </div>
 
           <div
-            v-if="professorPagination.totalPages > 1"
+            v-if="memberPagination.totalPages > 1"
             class="pagination-wrapper"
           >
             <Pagination
-              :current-page="professorPagination.page"
-              :total-pages="professorPagination.totalPages"
-              @update:current-page="changeProfessorPage"
+              :current-page="memberPagination.page"
+              :total-pages="memberPagination.totalPages"
+              @update:current-page="changeMemberPage"
             />
           </div>
         </section>
 
         <section class="section">
-          <div class="section-header">
-            <h2>Demandes d'inscription</h2>
-            <span>{{ requestsPagination.total }}</span>
+          <div class="section-header section-header--with-tabs">
+            <div>
+              <h2>{{ requestTitle }}</h2>
+              <span>{{ requestsPagination.total }}</span>
+            </div>
+
+            <div class="tabs">
+              <button
+                type="button"
+                class="tab"
+                :class="{ 'tab--active': requestType === 'inscription' }"
+                @click="changeRequestType('inscription')"
+              >
+                Inscriptions
+              </button>
+
+              <button
+                type="button"
+                class="tab"
+                :class="{ 'tab--active': requestType === 'activite' }"
+                @click="changeRequestType('activite')"
+              >
+                Activités
+              </button>
+            </div>
           </div>
 
           <div class="table-responsive director-table-wrapper">
-            <table class="data-table">
+            <table
+              v-if="requestType === 'inscription'"
+              class="data-table"
+            >
               <thead>
                 <tr>
                   <th>Etudiant</th>
@@ -526,8 +719,8 @@ watch(
 
               <tbody>
                 <tr
-                  v-for="request in pendingStudents"
-                  :key="`${request.utilisateur_id}-${request.institution_id}`"
+                  v-for="request in pendingRequests"
+                  :key="request.valide_etudiant_id || `${request.utilisateur_id}-${request.institution_id}`"
                   class="table-row"
                 >
                   <td>
@@ -536,9 +729,7 @@ watch(
                     </span>
                   </td>
 
-                  <td>
-                    {{ request.etudiant?.utilisateur?.email || request.utilisateur?.email || '-' }}
-                  </td>
+                  <td>{{ studentEmail(request) }}</td>
 
                   <td>
                     {{ request.niveau || request.etudiant?.niveau || '-' }}
@@ -546,7 +737,7 @@ watch(
 
                   <td>
                     <span class="cell-date">
-                      {{ formatDate(request.date || request.created_at || request.createdAt) }}
+                      {{ formatDate(request.date_debut || request.date || request.created_at || request.createdAt) }}
                     </span>
                   </td>
 
@@ -556,7 +747,7 @@ watch(
                         type="button"
                         variant="submit"
                         size="xs"
-                        :loading="actionLoadingId === `${request.etudiant?.etudiant_utilisateur_id}-valide`"
+                        :loading="actionLoadingId === getStudentActionId(request, 'valide')"
                         @click="decideStudent(request, 'valide')"
                       >
                         <Check :size="15" />
@@ -567,7 +758,7 @@ watch(
                         type="button"
                         variant="ghost"
                         size="xs"
-                        :loading="actionLoadingId === `${request.etudiant?.etudiant_utilisateur_id}-refuse`"
+                        :loading="actionLoadingId === getStudentActionId(request, 'refuse')"
                         @click="decideStudent(request, 'refuse')"
                       >
                         <XCircle :size="15" />
@@ -578,11 +769,85 @@ watch(
                 </tr>
 
                 <tr
-                  v-if="pendingStudents.length === 0"
+                  v-if="pendingRequests.length === 0"
                   class="empty-row"
                 >
                   <td colspan="5">
-                    Aucune demande en attente.
+                    Aucune demande d'inscription en attente.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table
+              v-else
+              class="data-table"
+            >
+              <thead>
+                <tr>
+                  <th>Étudiant</th>
+                  <th>Email</th>
+                  <th>Activité</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr
+                  v-for="request in pendingRequests"
+                  :key="getActivityExperienceId(request) || request.valide_activite_id"
+                  class="table-row"
+                >
+                  <td>
+                    <span class="student-name">
+                      {{ activityStudentName(request) }}
+                    </span>
+                  </td>
+
+                  <td>{{ activityStudentEmail(request) }}</td>
+
+                  <td>{{ activityTitle(request) }}</td>
+
+                  <td>
+                    <span class="cell-date">
+                      {{ formatDate(request.date_d_action || request.created_at || request.createdAt) }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <div class="table-actions">
+                      <BaseButton
+                        type="button"
+                        variant="submit"
+                        size="xs"
+                        :loading="actionLoadingId === getActivityActionId(request, 'valide')"
+                        @click="decideActivity(request, 'valide')"
+                      >
+                        <Check :size="15" />
+                        Accepter
+                      </BaseButton>
+
+                      <BaseButton
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        :loading="actionLoadingId === getActivityActionId(request, 'refuse')"
+                        @click="decideActivity(request, 'refuse')"
+                      >
+                        <XCircle :size="15" />
+                        Refuser
+                      </BaseButton>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr
+                  v-if="pendingRequests.length === 0"
+                  class="empty-row"
+                >
+                  <td colspan="5">
+                    Aucune demande d'activité en attente.
                   </td>
                 </tr>
               </tbody>
@@ -640,13 +905,52 @@ watch(
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }
 
+.section-header--with-tabs {
+  align-items: flex-start;
+}
+
 .section-header h2 {
   margin: 0;
   font-size: var(--font-size-lg);
 }
 
 .section-header span {
+  display: inline-block;
+  margin-top: 0.25rem;
   opacity: 0.6;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-primary-rgb), 0.03);
+}
+
+.tab {
+  border: 0;
+  border-radius: calc(var(--radius-md) - 2px);
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  opacity: 0.72;
+  transition: 0.2s ease;
+}
+
+.tab:hover {
+  opacity: 1;
+  background: rgba(var(--color-primary-rgb), 0.06);
+}
+
+.tab--active {
+  opacity: 1;
+  background: var(--color-background);
+  box-shadow: 0 1px 4px rgba(var(--color-primary-rgb), 0.12);
 }
 
 .professor-form {
@@ -721,9 +1025,18 @@ watch(
     grid-template-columns: 1fr;
   }
 
-  .section-header {
+  .section-header,
+  .section-header--with-tabs {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .tabs {
+    width: 100%;
+  }
+
+  .tab {
+    flex: 1;
   }
 }
 </style>
