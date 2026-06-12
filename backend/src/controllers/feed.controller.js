@@ -1,7 +1,4 @@
-import {getFeedTechnologiesDomaines, getFeedOffres, getFeedSuggestions, getFeedExperiences} from '../services/feed.service.js';
-import {
-  envoyerDemande,
-} from "../services/recruteur.service.js";
+import {getFeedTechnologiesDomaines, getFeedOffres, getFeedSuggestions, getFeedExperiences, envoyerDemande} from '../services/feed.service.js';
 
 export const getFeedTechnologiesAndDomaines = async (req, res) => {
   try {
