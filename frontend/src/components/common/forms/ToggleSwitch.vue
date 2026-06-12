@@ -8,18 +8,26 @@ defineProps({
   label: {
     type: String,
     required: true
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 });
 </script>
 
 <template>
-  <div class="toggle-row">
+  <div
+    class="toggle-row"
+    :class="{ 'toggle-row--disabled': disabled }"
+  >
     <span>{{ label }}</span>
 
     <label class="toggle-switch">
       <input
         v-model="model"
         type="checkbox"
+        :disabled="disabled"
       >
 
       <span />
@@ -77,5 +85,13 @@ defineProps({
 
 .toggle-switch input:checked + span::before {
   transform: translateX(22px);
+}
+
+.toggle-row--disabled {
+  opacity: 0.58;
+}
+
+.toggle-row--disabled .toggle-switch span {
+  cursor: not-allowed;
 }
 </style>

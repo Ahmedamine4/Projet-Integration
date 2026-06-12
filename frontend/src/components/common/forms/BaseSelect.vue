@@ -24,13 +24,17 @@ const props = defineProps({
     type: String,
     default: 'Select an option',
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const isOpen = ref(false);
 const selectElement = ref(null);
 
 const shouldShowOptions = computed(() => {
-  return isOpen.value && props.options.length > 0;
+  return !props.disabled && isOpen.value && props.options.length > 0;
 });
 
 const displayValue = computed(() => {
@@ -39,6 +43,8 @@ const displayValue = computed(() => {
 });
 
 function selectOption(option) {
+  if (props.disabled) return;
+
   model.value = option;
   isOpen.value = false;
 }
@@ -74,7 +80,11 @@ onBeforeUnmount(() => {
       v-bind="$attrs"
       class="select__control"
       type="button"
-      :class="{ 'select__control--placeholder': !model }"
+      :class="{
+        'select__control--placeholder': !model,
+        'select__control--disabled': disabled,
+      }"
+      :disabled="disabled"
       @click="isOpen = !isOpen"
     >
       <span class="select__value">{{ displayValue }}</span>
@@ -155,6 +165,11 @@ onBeforeUnmount(() => {
 
 .select__control--placeholder {
   color: rgba(var(--color-primary-rgb), 0.42);
+}
+
+.select__control--disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
 }
 
 .select__control:focus {

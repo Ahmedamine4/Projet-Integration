@@ -319,6 +319,14 @@ const hasEditChanges = computed(() => {
   return JSON.stringify(current) !== JSON.stringify(initial);
 });
 
+const isPendingEditExperience = computed(() =>
+  isEdit.value && props.initialValue?.validationStatus === 'en_attente'
+);
+
+const isEditingAcademicExperience = computed(() =>
+  isEdit.value && Boolean(props.initialValue?.isAcademic)
+);
+
 const resetDetectedTags = () => {
   technologies.value = [];
   domains.value = [];
@@ -536,7 +544,7 @@ const submitExperience = () => {
     !isValidURL(trimmedCertificateURL)
   ) errors.certificateURL = 'Enter a valid certificate URL';
 
-  if (config.showAcademic) {
+  if (config.showAcademic && !isEditingAcademicExperience.value) {
     if (form.isAcademic && !form.institution)
       errors.institution = `Institution is required for academic ${props.type}s`;
 
@@ -992,10 +1000,11 @@ const existingImageName = computed(() => {
               <ToggleSwitch
                 v-model="form.isAcademic"
                 :label="`Academic ${props.type}`"
+                :disabled="isEditingAcademicExperience"
               />
               <Transition name="field-reveal">
                 <div
-                  v-if="form.isAcademic"
+                  v-if="form.isAcademic && !isEditingAcademicExperience"
                   class="academic-form-group"
                 >
                   <div
@@ -1007,6 +1016,7 @@ const existingImageName = computed(() => {
                       :options="schoolOptions"
                       label="Institution"
                       placeholder="Select the institution"
+                      :disabled="isEditingAcademicExperience"
                     />
                     <BaseError
                       v-if="errors.institution"
@@ -1026,6 +1036,7 @@ const existingImageName = computed(() => {
                       label="Teacher email"
                       :placeholder="isLoadingProfessors ? 'Loading teachers...' : 'teacher@school.com'"
                       autocomplete="nope"
+                      :disabled="isEditingAcademicExperience"
                     />
                     <BaseError
                       v-if="errors.teacherEmail"
@@ -1041,6 +1052,7 @@ const existingImageName = computed(() => {
             <ToggleSwitch
               v-model="form.visibleToEveryone"
               label="Visible to everyone"
+              :disabled="isPendingEditExperience"
             />
           </div>
 

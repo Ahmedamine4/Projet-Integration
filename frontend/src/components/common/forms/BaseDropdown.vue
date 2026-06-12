@@ -28,6 +28,10 @@ const props = defineProps({
     type: Number,
     default: 4,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const isOpen = ref(false);
@@ -44,10 +48,12 @@ const filteredOptions = computed(() => {
 });
 
 const shouldShowOptions = computed(() => {
-  return isOpen.value && filteredOptions.value.length > 0;
+  return !props.disabled && isOpen.value && filteredOptions.value.length > 0;
 });
 
 function selectOption(option) {
+  if (props.disabled) return;
+
   model.value = option;
   isOpen.value = false;
 }
@@ -75,7 +81,8 @@ onBeforeUnmount(() => {
       v-bind="$attrs"
       :label
       :placeholder
-      @focus="isOpen = options.length > 0"
+      :disabled="disabled"
+      @focus="isOpen = !disabled && options.length > 0"
     />
     <Transition name="popover">
       <div
