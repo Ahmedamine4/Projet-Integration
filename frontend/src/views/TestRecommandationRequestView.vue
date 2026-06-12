@@ -35,15 +35,12 @@ function handleSubmit(data) {
 </script>
 
 <template>
-  <main class="test-page">
-    <h1>Recommendation Request Modal Test</h1>
-
     <Button
       type="button"
       variant="submit"
       @click="isModalOpen = true"
     >
-      Open recommendation request modal
+      Recommendation request 
     </Button>
 
     <RecommandationRequestModal
@@ -54,7 +51,6 @@ function handleSubmit(data) {
       @close="isModalOpen = false"
       @submit="handleSubmit"
     />
-  </main>
 </template>
 
 <style scoped>

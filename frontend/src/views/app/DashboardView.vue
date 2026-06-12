@@ -7,13 +7,15 @@ import ScoreChart from '@/components/dashboard/ScoreChart.vue'
 import Filtre from '@/components/common/forms/FilterDropdown.vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import RecommendationRequest from '@/views/TestRecommandationRequestView.vue'
+import { useInstitutionStore } from '@/stores/institution'
 
 const authStore = useAuthStore()
 
 const student = computed(() => ({
     firstName: authStore.user?.firstName ?? authStore.user?.prenom ?? '',
     lastName: authStore.user?.lastName ?? authStore.user?.nom ?? '',
-    major: authStore.user?.filiere ?? 'Génie Informatique',
+    major: authStore.user?.filiere ?? 'Computer Engineering',
     avatar: authStore.user?.photo ?? 'https://cdn-icons-png.flaticon.com/512/1250/1250689.png'
 }))
 
@@ -32,6 +34,9 @@ const scoreHistory = ref([])
 const isLoading = ref(true)
 const selectedStatus = ref('')
 const selectedType = ref('')
+const isRecommendationLoading = ref(false)
+const institutionStore = useInstitutionStore()
+const isModalOpen = ref(false)
 
 onMounted(async () => {
     try {
@@ -53,32 +58,46 @@ onMounted(async () => {
                 value: totalNiveau > 0 ? Math.round((d.niveau / totalNiveau) * 100) : 0
             }))
             scoreHistory.value = dashboardData.score_history.map(s => ({
-                month: new Date(s.date).toLocaleString('fr-FR', { month: 'short' }),
+                month: new Date(s.date).toLocaleString('en-US', { month: 'short' }),
                 score: s.score
             }))
         } else {
-            console.error('Erreur dashboard:', dashboardResult.reason)
+            console.error('Dashboard error:', dashboardResult.reason)
         }
 
         if (validationsResult.status === 'fulfilled') {
+            console.log('Validations raw:', validationsResult.value.data) // ← debug
             const validations = validationsResult.value.data.data
             requests.value = validations.map(v => ({
                 id: v.experience_id ?? Date.now(),
                 type: v.type,
-                title: v.titre ?? `Demande ${v.type}`,
+                title: v.titre ?? `Request ${v.type}`,
                 professor: v.traite_par?.nom ? `${v.traite_par.prenom ?? ''} ${v.traite_par.nom}`.trim() : 'N/A',
                 status: v.statut === 'valide' ? 'accepted' : v.statut === 'refuse' ? 'rejected' : 'pending',
                 date: v.date
             }))
         } else {
-            console.error('Erreur validations:', validationsResult.reason)
+            console.error('Validations error:', validationsResult.reason)
         }
     } catch (err) {
-        console.error('Erreur chargement dashboard:', err)
+        console.error('Dashboard loading error:', err)
     } finally {
         isLoading.value = false
     }
+    institutionStore.fetchInstitutions()
 })
+
+const schoolOptions = computed(() =>
+    institutionStore.institutions.map((i) => i.nom)
+)
+
+function handleSubmit(data) {
+    isRecommendationLoading.value = true
+    setTimeout(() => {
+        isRecommendationLoading.value = false
+        isModalOpen.value = false
+    }, 800)
+}
 
 const sortedRequests = computed(() => {
     let data = [...requests.value]
@@ -93,7 +112,7 @@ const sortedRequests = computed(() => {
 })
 
 function statusLabel(status) {
-    return { accepted: 'Acceptée', pending: 'En attente', rejected: 'Refusée' }[status]
+    return { accepted: 'Accepted', pending: 'Pending', rejected: 'Rejected' }[status]
 }
 
 const techStack = computed(() => {
@@ -140,39 +159,42 @@ function getTechColor(techName) {
         { label: 'Certifications', value: stats.certifications }
       ]"
     />
+
+    <div class="recommendation-bar">
+      <RecommendationRequest />
+    </div>
+
     <section class="section">
       <div class="section-header">
-        <h2>Technologies utilisées</h2>
+        <h2>Technologies Used</h2>
         <span>{{ techStack.length }}</span>
       </div>
-
       <RoundChart :tech-stack="techStack" />
     </section>
+
     <section class="section">
       <div class="section-header">
         <h2>Domains</h2>
         <span>{{ domaines.length }}</span>
       </div>
-
       <BarreStats :categories="domaines" />
     </section>
+
     <section class="section">
       <div class="section-header">
         <h2>Score Evolution</h2>
         <span>{{ scoreHistory.length }}</span>
       </div>
-
       <ScoreChart :scores="scoreHistory" />
     </section>
 
     <section class="section">
       <div class="section-header">
-        <h2>Demandes envoyées</h2>
+        <h2>Submitted Requests</h2>
 
         <div class="right-side">
           <div class="filter-container">
-            <label>Filtrer par type :</label>
-
+            <label>Filter by type:</label>
             <Filtre
               v-model="selectedType"
               class="status-filter"
@@ -188,8 +210,7 @@ function getTechColor(techName) {
             />
           </div>
           <div class="filter-container">
-            <label>Filtrer par statut :</label>
-
+            <label>Filter by status:</label>
             <Filtre
               v-model="selectedStatus"
               class="status-filter"
@@ -203,19 +224,18 @@ function getTechColor(techName) {
               ]"
             />
           </div>
-
           <span>{{ sortedRequests.length }}</span>
         </div>
       </div>
-        
+
       <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Titre</th>
-              <th>Professeur</th>
+              <th>Title</th>
+              <th>Professor</th>
               <th>Date</th>
-              <th>Statut</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -240,6 +260,11 @@ function getTechColor(techName) {
                 </span>
               </td>
             </tr>
+            <tr v-if="sortedRequests.length === 0">
+              <td colspan="4" style="text-align:center; opacity:0.5; padding: 2rem;">
+                No requests found.
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -250,55 +275,57 @@ function getTechColor(techName) {
 <style scoped>
 .dashboard {
     display: grid;
-    /*grid-template-columns: 1.05fr .95fr;*/
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-lg);
     padding: var(--space-xl);
 }
 
-.dashboard>.section:nth-child(5) {
+/* StudentHeader spans full width (child 1) */
+.dashboard > *:nth-child(1) {
     grid-column: 1 / -1;
 }
 
+/* recommendation-bar spans full width (child 2) */
+.dashboard > *:nth-child(2) {
+    grid-column: 1 / -1;
+}
 
-/* --- Sections & Cartes --- */
+/* Last section (Submitted Requests) spans full width (child 6) */
+.dashboard > .section:last-child {
+    grid-column: 1 / -1;
+}
+
+.recommendation-bar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.recommendation-bar :deep(main) {
+    min-height: unset;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0;
+    gap: 0;
+}
+
+.recommendation-bar :deep(h1) {
+    display: none;
+}
+
+/* --- Sections --- */
 .section {
     background: var(--color-background);
     border: 1px solid rgba(var(--color-primary-rgb), 0.08);
     border-radius: 28px;
     overflow: visible;
-
 }
 
 .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-right: 2rem;
-    padding-left: 2rem;
-    padding-top:1rem;
-    padding-bottom:1rem;
+    padding: 1rem 2rem;
     border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.08);
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-}
-
-.right-side {
-  margin-left: auto; /* pousse tout à droite */
-  display: flex;
-  align-items: center;
-  gap: 30px; /* espace filtre ↔ compteur */
-}
-
-.filter-container {
-  display: flex;
-  align-items: center;
-  gap: 10px; /* espace label ↔ dropdown */
-}
-
-.status-filter select {
-  text-align: center;
-  text-align-last: center; /* centre la valeur sélectionnée */
 }
 
 .section-header h2 {
@@ -308,14 +335,29 @@ function getTechColor(techName) {
 
 .section-header span {
     opacity: .6;
-    
 }
 
+.right-side {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-filter select {
+    text-align: center;
+    text-align-last: center;
+}
 
 /* ==========================================================================
-   GLOBAL TABLE STYLES
+   TABLE
    ========================================================================== */
-
 .table-responsive {
     width: 100%;
     overflow-x: auto;
@@ -362,13 +404,6 @@ function getTechColor(techName) {
     border-bottom: none;
 }
 
-/* ── Table Cell Contents ── */
-.student-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-}
-
 .student-name {
     font-size: var(--font-size-md);
     font-weight: var(--font-medium);
@@ -413,21 +448,10 @@ function getTechColor(techName) {
     color: var(--color-error);
 }
 
-
-/* --- Responsive / Media Queries --- */
-@media(max-width:1000px) {
+/* --- Responsive --- */
+@media (max-width: 1000px) {
     .dashboard {
         grid-template-columns: 1fr;
-    }
-
-    .student-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .student-stats {
-        width: 100%;
-        justify-content: space-between;
     }
 }
 </style>

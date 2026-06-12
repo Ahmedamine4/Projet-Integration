@@ -19,7 +19,6 @@ import {
   CategoryScale,
   LinearScale
 } from 'chart.js'
-
 import { Line } from 'vue-chartjs'
 
 ChartJS.register(
@@ -39,35 +38,34 @@ const props = defineProps({
   }
 })
 
-const chartData = computed(() => ({
-  labels: props.scores.map(i => i.month),
+const chartData = computed(() => {
+  // Create a reversed copy of the scores array
+  const reversedScores = [...props.scores].reverse()
 
-  datasets: [
-    {
-      label: 'Score',
-      data: props.scores.map(i => i.score),
-
-      borderColor: '#ec6c0f',
-      backgroundColor: 'rgba(66,184,131,.15)',
-
-      tension: 0.4,
-      fill: true,
-
-      pointRadius: 4,
-      pointHoverRadius: 7
-    }
-  ]
-}))
+  return {
+    labels: reversedScores.map(i => i.month),
+    datasets: [
+      {
+        label: 'Score',
+        data: reversedScores.map(i => i.score),
+        borderColor: '#ec6c0f',
+        backgroundColor: 'rgba(66,184,131,.15)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 7
+      }
+    ]
+  }
+})
 
 const chartOptions = {
   responsive: true,
-
   plugins: {
     legend: {
       display: false
     }
   },
-
   scales: {
     y: {
       beginAtZero: true,
