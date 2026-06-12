@@ -1,7 +1,7 @@
 import {
   creerOffre,
   getToutesLesDemandes,
-  getOffresPagination,
+  getMesOffres,
   getDemandesPagination,
   terminerOffre,
 } from "../services/recruteur.service.js";
@@ -23,14 +23,17 @@ export const getMesOffresController = async (req, res) => {
   try {
     const utilisateurId = req.user.utilisateur_id;
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const offres = await getMesOffres(utilisateurId);
 
-    const result = await getOffresPagination(page, limit, utilisateurId);
-
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(200).json({
+      success: true,
+      data: offres,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 

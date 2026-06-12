@@ -95,41 +95,6 @@ export const terminerOffre = async (offreId, utilisateurId) => {
   });
 };
 
-export const getOffresPagination = async (page = 1, limit = 10, utilisateurId) => {
-  const skip = (page - 1) * limit;
-
-  const [data, total] = await Promise.all([
-    prisma.offre.findMany({
-      where: {
-        utilisateur_id: utilisateurId,
-      },
-      skip,
-      take: limit,
-      orderBy: {
-        date: "desc",
-      },
-      include: {
-        _count: {
-          select: { demandes: true },
-        },
-      },
-    }),
-
-    prisma.offre.count({
-      where: {
-        utilisateur_id: utilisateurId,
-      },
-    }),
-  ]);
-
-  return {
-    data,
-    total,
-    page,
-    totalPages: Math.ceil(total / limit),
-  };
-};
-
 export const getDemandesPagination = async (page = 1, limit = 10, offreId) => {
   const skip = (page - 1) * limit;
 
