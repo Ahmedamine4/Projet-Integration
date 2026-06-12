@@ -31,7 +31,7 @@ export const githubCallback = async (req, res) => {
   const repos = await githubService.getUserRepos(accessToken);
 
   const etudiantId = state || req.user?.utilisateur_id;
-
+  //const etudiantId = state ;
   if (!etudiantId) {
     return res.status(400).json({
       success: false,

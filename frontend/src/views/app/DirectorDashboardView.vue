@@ -8,17 +8,21 @@ import BaseInput from '@/components/common/forms/BaseInput.vue';
 import BaseError from '@/components/common/feedback/BaseError.vue';
 import BaseNotification from '@/components/common/feedback/BaseNotification.vue';
 import BaseSpinner from '@/components/common/feedback/BaseSpinner.vue';
+import Pagination from '@/components/dashboard/PaginationComponent.vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
-const loading = ref(false);
+const loadingStats = ref(false);
+const loadingProfessors = ref(false);
+const loadingRequests = ref(false);
 const dashboardLoaded = ref(false);
 const savingProfessor = ref(false);
 const actionLoadingId = ref('');
 const error = ref('');
+
 const notification = reactive({
   type: 'success',
   message: '',
@@ -26,12 +30,28 @@ const notification = reactive({
 
 const dashboard = reactive({
   institution: null,
-  professors: [],
-  pendingStudents: [],
   stats: {
     totalProfessors: 0,
     totalStudents: 0,
+    pendingRequests: 0,
   },
+});
+
+const professors = ref([]);
+const pendingStudents = ref([]);
+
+const professorPagination = reactive({
+  page: 1,
+  limit: 5,
+  total: 0,
+  totalPages: 1,
+});
+
+const requestsPagination = reactive({
+  page: 1,
+  limit: 5,
+  total: 0,
+  totalPages: 1,
 });
 
 const DEFAULT_PROFESSOR_DEPARTEMENT = 'Informatique';
@@ -48,6 +68,10 @@ const professorForm = reactive({
 const isDirector = computed(() => user.value?.role === 'directeur');
 const isAuthResolving = computed(() => authStore.profileLoading || !authStore.profileChecked);
 
+const isLoading = computed(() =>
+  loadingStats.value || loadingProfessors.value || loadingRequests.value
+);
+
 const directorProfile = computed(() => ({
   firstName: user.value?.prenom || user.value?.firstName || 'Directeur',
   lastName: user.value?.nom || user.value?.lastName || '',
@@ -58,7 +82,7 @@ const directorProfile = computed(() => ({
 const stats = computed(() => [
   { label: 'Professeurs', value: dashboard.stats.totalProfessors },
   { label: 'Etudiants', value: dashboard.stats.totalStudents },
-  { label: 'Demandes en attente', value: dashboard.pendingStudents.length },
+  { label: 'Demandes en attente', value: dashboard.stats.pendingRequests },
 ]);
 
 function showNotification(message, type = 'success') {
@@ -78,29 +102,106 @@ function resetProfessorForm() {
   professorForm.specialite = '';
 }
 
-async function loadDashboard() {
-  if (!isDirector.value || loading.value) return;
+function setPagination(target, source = {}) {
+  target.page = source.page || 1;
+  target.limit = source.limit || target.limit || 5;
+  target.total = source.total || 0;
+  target.totalPages = source.totalPages || 1;
+}
 
-  loading.value = true;
+async function loadStats() {
+  if (!isDirector.value) return;
+
+  loadingStats.value = true;
   error.value = '';
 
   try {
     const { data } = await api.get('/directeur/dashboard/stats');
-    const payload = data.data || {};
+    const payload = data.data || data || {};
 
     dashboard.institution = payload.institution || null;
-    dashboard.professors = payload.professors || [];
-    dashboard.pendingStudents = payload.pendingStudents || [];
+
     dashboard.stats = {
-      totalProfessors: payload.stats?.totalProfessors || 0,
-      totalStudents: payload.stats?.totalStudents || 0,
+  totalProfessors: payload.stats?.totalProfessors || 0,
+  totalStudents: payload.stats?.totalStudents || 0,
+  pendingRequests: payload.stats?.pendingRequests || 0,
     };
-    dashboardLoaded.value = true;
   } catch (err) {
-    error.value = getErrorMessage(err, 'Impossible de charger le dashboard directeur.');
+    error.value = getErrorMessage(err, 'Impossible de charger les statistiques.');
   } finally {
-    loading.value = false;
+    loadingStats.value = false;
   }
+}
+
+async function loadProfessors(page = professorPagination.page) {
+  if (!isDirector.value) return;
+
+  loadingProfessors.value = true;
+  error.value = '';
+
+  try {
+    const { data } = await api.get('/directeur/membres', {
+      params: {
+        type: 'professeur',
+        page,
+        limit: professorPagination.limit,
+      },
+    });
+
+    professors.value = data.data || [];
+
+    setPagination(professorPagination, data.pagination);
+  } catch (err) {
+    error.value = getErrorMessage(
+      err,
+      'Impossible de charger les professeurs.'
+    );
+  } finally {
+    loadingProfessors.value = false;
+  }
+}
+
+async function loadRequests(page = requestsPagination.page) {
+  if (!isDirector.value) return;
+
+  loadingRequests.value = true;
+  error.value = '';
+
+  try {
+    const { data } = await api.get('/directeur/demandes', {
+      params: {
+        type: 'inscription',
+        page,
+        limit: requestsPagination.limit,
+      },
+    });
+
+    pendingStudents.value = data.data || [];
+    console.log('PENDING STUDENTS:', data.data);
+    console.log('FIRST REQUEST:', data.data?.[0]);
+    console.log('FIRST REQUEST JSON:', JSON.stringify(data.data?.[0], null, 2));
+
+    setPagination(requestsPagination, data.pagination);
+  } catch (err) {
+    error.value = getErrorMessage(
+      err,
+      'Impossible de charger les demandes.'
+    );
+  } finally {
+    loadingRequests.value = false;
+  }
+}
+
+async function loadDashboard() {
+  if (!isDirector.value) return;
+
+  await Promise.all([
+    loadStats(),
+    loadProfessors(1),
+    loadRequests(1),
+  ]);
+
+  dashboardLoaded.value = true;
 }
 
 async function loadDashboardWhenReady() {
@@ -111,6 +212,14 @@ async function loadDashboardWhenReady() {
   await loadDashboard();
 }
 
+async function refreshDashboard() {
+  await Promise.all([
+    loadStats(),
+    loadProfessors(professorPagination.page),
+    loadRequests(requestsPagination.page),
+  ]);
+}
+
 async function addProfessor() {
   if (!professorForm.email) {
     error.value = 'Email du professeur requis.';
@@ -118,6 +227,7 @@ async function addProfessor() {
   }
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   if (!emailPattern.test(professorForm.email.trim())) {
     error.value = 'Format d\'email invalide.';
     return;
@@ -128,7 +238,7 @@ async function addProfessor() {
 
   try {
     const { data } = await api.post('/directeur/professeurs', {
-      email: professorForm.email,
+      email: professorForm.email.trim(),
       prenom: professorForm.prenom || undefined,
       nom: professorForm.nom || undefined,
       departement: professorForm.departement || DEFAULT_PROFESSOR_DEPARTEMENT,
@@ -136,16 +246,21 @@ async function addProfessor() {
     });
 
     resetProfessorForm();
+
     if (data.emailSent === false) {
-      const fallbackMessage = 'Professeur cree, mais email non envoye. Verifiez la configuration email du backend.';
       const message = data.temporaryPassword
         ? `Professeur cree. Email non envoye. Mot de passe temporaire: ${data.temporaryPassword}`
-        : fallbackMessage;
+        : 'Professeur cree, mais email non envoye. Verifiez la configuration email du backend.';
+
       showNotification(message, 'warning');
     } else {
       showNotification('Professeur cree et identifiants envoyes par email.');
     }
-    await loadDashboard();
+
+    await Promise.all([
+      loadStats(),
+      loadProfessors(1),
+    ]);
   } catch (err) {
     error.value = getErrorMessage(err, 'Impossible de creer le professeur.');
   } finally {
@@ -153,18 +268,37 @@ async function addProfessor() {
   }
 }
 
-async function decideStudent(request, status) {
-  const studentId = request.utilisateur_id;
-  const institutionId = request.institution_id;
-  const loadingId = `${studentId}-${status}`;
+async function decideStudent(request, statut) {
+  const etudiantId =
+    request.etudiant?.etudiant_utilisateur_id ||
+    request.etudiant?.utilisateur_id ||
+    request.etudiant?.utilisateur?.utilisateur_id ||
+    request.utilisateur_id ||
+    request.etudiant_id ||
+    request.etudiantId;
 
-  actionLoadingId.value = loadingId;
+  console.log('BODY SENT:', { etudiantId, statut });
+
+  if (!etudiantId) {
+    error.value = 'Impossible de déterminer l’identifiant de l’étudiant.';
+    return;
+  }
+
+  actionLoadingId.value = `${etudiantId}-${statut}`;
   error.value = '';
 
   try {
-    await api.patch(`/validation/decide/${studentId}/${institutionId}`, { status });
-    showNotification(status === 'valide' ? 'Demande acceptee.' : 'Demande refusee.');
-    await loadDashboard();
+    await api.put('/directeur/demandes/inscription', {
+      etudiantId,
+      statut,
+    });
+
+    showNotification(statut === 'valide' ? 'Demande acceptée.' : 'Demande refusée.');
+
+    await Promise.all([
+      loadStats(),
+      loadRequests(requestsPagination.page),
+    ]);
   } catch (err) {
     error.value = getErrorMessage(err, 'Impossible de traiter la demande.');
   } finally {
@@ -172,13 +306,33 @@ async function decideStudent(request, status) {
   }
 }
 
+function changeProfessorPage(page) {
+  professorPagination.page = page;
+  loadProfessors(page);
+}
+
+function changeRequestsPage(page) {
+  requestsPagination.page = page;
+  loadRequests(page);
+}
+
 function studentName(request) {
-  const student = request.etudiant?.utilisateur;
+  const student = request.etudiant?.utilisateur || request.utilisateur;
   return [student?.prenom, student?.nom].filter(Boolean).join(' ') || 'Etudiant';
+}
+
+function professorName(professor) {
+  const professorUser = professor.utilisateur || professor;
+  return [professorUser?.prenom, professorUser?.nom].filter(Boolean).join(' ') || 'Professeur';
+}
+
+function professorEmail(professor) {
+  return professor.utilisateur?.email || professor.email || '-';
 }
 
 function formatDate(value) {
   if (!value) return '-';
+
   return new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
     month: '2-digit',
@@ -225,7 +379,7 @@ watch(
       </BaseError>
 
       <section
-        v-if="isAuthResolving || loading"
+        v-if="isAuthResolving || isLoading"
         class="section section--full loading-panel"
       >
         <BaseSpinner />
@@ -236,12 +390,13 @@ watch(
         <section class="section section--full">
           <div class="section-header">
             <h2>Ajouter un professeur</h2>
+
             <BaseButton
               type="button"
               variant="ghost"
               size="xs"
-              :disabled="loading"
-              @click="loadDashboard"
+              :disabled="isLoading"
+              @click="refreshDashboard"
             >
               <RefreshCw :size="16" />
               Actualiser
@@ -259,26 +414,31 @@ watch(
               placeholder="professeur@institution.ma"
               required
             />
+
             <BaseInput
               v-model="professorForm.prenom"
               label="Prenom"
               placeholder="Prenom"
             />
+
             <BaseInput
               v-model="professorForm.nom"
               label="Nom"
               placeholder="Nom"
             />
+
             <BaseInput
               v-model="professorForm.departement"
               label="Departement"
               placeholder="Informatique"
             />
+
             <BaseInput
               v-model="professorForm.specialite"
               label="Specialite"
               placeholder="Génie logiciel"
             />
+
             <BaseButton
               type="submit"
               variant="submit"
@@ -294,7 +454,7 @@ watch(
         <section class="section">
           <div class="section-header">
             <h2>Professeurs</h2>
-            <span>{{ dashboard.professors.length }}</span>
+            <span>{{ professorPagination.total }}</span>
           </div>
 
           <div class="table-responsive director-table-wrapper">
@@ -307,22 +467,25 @@ watch(
                   <th>Specialite</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr
-                  v-for="professor in dashboard.professors"
-                  :key="professor.prof_utilisateur_id"
+                  v-for="professor in professors"
+                  :key="professor.prof_utilisateur_id || professor.utilisateur_id || professor.id"
                   class="table-row"
                 >
                   <td>
                     <span class="student-name">
-                      {{ professor.utilisateur?.prenom }} {{ professor.utilisateur?.nom }}
+                      {{ professorName(professor) }}
                     </span>
                   </td>
-                  <td>{{ professor.utilisateur?.email }}</td>
+
+                  <td>{{ professorEmail(professor) }}</td>
                   <td>{{ professor.departement || '-' }}</td>
                   <td>{{ professor.specialite || '-' }}</td>
                 </tr>
-                <tr v-if="dashboard.professors.length === 0">
+
+                <tr v-if="professors.length === 0">
                   <td colspan="4">
                     Aucun professeur pour le moment.
                   </td>
@@ -330,12 +493,23 @@ watch(
               </tbody>
             </table>
           </div>
+
+          <div
+            v-if="professorPagination.totalPages > 1"
+            class="pagination-wrapper"
+          >
+            <Pagination
+              :current-page="professorPagination.page"
+              :total-pages="professorPagination.totalPages"
+              @update:current-page="changeProfessorPage"
+            />
+          </div>
         </section>
 
         <section class="section">
           <div class="section-header">
             <h2>Demandes d'inscription</h2>
-            <span>{{ dashboard.pendingStudents.length }}</span>
+            <span>{{ requestsPagination.total }}</span>
           </div>
 
           <div class="table-responsive director-table-wrapper">
@@ -349,37 +523,51 @@ watch(
                   <th>Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr
-                  v-for="request in dashboard.pendingStudents"
+                  v-for="request in pendingStudents"
                   :key="`${request.utilisateur_id}-${request.institution_id}`"
                   class="table-row"
                 >
                   <td>
-                    <span class="student-name">{{ studentName(request) }}</span>
+                    <span class="student-name">
+                      {{ studentName(request) }}
+                    </span>
                   </td>
-                  <td>{{ request.etudiant?.utilisateur?.email || '-' }}</td>
-                  <td>{{ request.niveau || request.etudiant?.niveau || '-' }}</td>
+
                   <td>
-                    <span class="cell-date">{{ formatDate(request.date) }}</span>
+                    {{ request.etudiant?.utilisateur?.email || request.utilisateur?.email || '-' }}
                   </td>
+
+                  <td>
+                    {{ request.niveau || request.etudiant?.niveau || '-' }}
+                  </td>
+
+                  <td>
+                    <span class="cell-date">
+                      {{ formatDate(request.date || request.created_at || request.createdAt) }}
+                    </span>
+                  </td>
+
                   <td>
                     <div class="table-actions">
                       <BaseButton
                         type="button"
                         variant="submit"
                         size="xs"
-                        :loading="actionLoadingId === `${request.utilisateur_id}-valide`"
+                        :loading="actionLoadingId === `${request.etudiant?.etudiant_utilisateur_id}-valide`"
                         @click="decideStudent(request, 'valide')"
                       >
                         <Check :size="15" />
                         Accepter
                       </BaseButton>
+
                       <BaseButton
                         type="button"
                         variant="ghost"
                         size="xs"
-                        :loading="actionLoadingId === `${request.utilisateur_id}-refuse`"
+                        :loading="actionLoadingId === `${request.etudiant?.etudiant_utilisateur_id}-refuse`"
                         @click="decideStudent(request, 'refuse')"
                       >
                         <XCircle :size="15" />
@@ -388,8 +576,9 @@ watch(
                     </div>
                   </td>
                 </tr>
+
                 <tr
-                  v-if="dashboard.pendingStudents.length === 0"
+                  v-if="pendingStudents.length === 0"
                   class="empty-row"
                 >
                   <td colspan="5">
@@ -398,6 +587,17 @@ watch(
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div
+            v-if="requestsPagination.totalPages > 1"
+            class="pagination-wrapper"
+          >
+            <Pagination
+              :current-page="requestsPagination.page"
+              :total-pages="requestsPagination.totalPages"
+              @update:current-page="changeRequestsPage"
+            />
           </div>
         </section>
       </template>
@@ -466,6 +666,13 @@ watch(
 .director-table-wrapper {
   border: 0;
   border-radius: 0;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-md);
+  border-top: 1px solid rgba(var(--color-primary-rgb), 0.08);
 }
 
 .data-table .empty-row:last-child td {

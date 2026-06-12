@@ -1,0 +1,9 @@
+services:
+        ai:
+          image: tijabdel/ai:prod
+          container_name: ai-container
+          restart: unless-stopped
+          ports:
+            - "8000:8000"
+          environment:
+            - ENV=production

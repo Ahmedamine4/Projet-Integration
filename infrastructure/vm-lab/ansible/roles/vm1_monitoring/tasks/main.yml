@@ -4,19 +4,26 @@
     update_cache: true
     cache_valid_time: 3600
 
-- name: Install security and monitoring packages
+- name: Install security and required packages
   apt:
     name:
       - ufw
       - fail2ban
       - unattended-upgrades
       - apt-transport-https
-      - software-properties-common
-      - wget
-      - gpg
-      - prometheus
-      - prometheus-node-exporter
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - docker.io
+      - docker-compose
     state: present
+
+- name: Enable Docker
+  service:
+    name: docker
+    enabled: true
+    state: started
 
 - name: Disable SSH root login
   lineinfile:
@@ -24,11 +31,13 @@
     regexp: "^#?PermitRootLogin"
     line: "PermitRootLogin no"
     backup: true
+  register: ssh_config
 
 - name: Reload SSH
   service:
     name: ssh
     state: reloaded
+  when: ssh_config.changed
 
 - name: Enable unattended security upgrades
   copy:
@@ -46,65 +55,37 @@
     enabled: true
     state: started
 
-- name: Create Grafana keyring directory
+- name: Create monitoring directory
   file:
-    path: /etc/apt/keyrings
+    path: /opt/monitoring
     state: directory
-    owner: root
-    group: root
     mode: "0755"
 
-- name: Add Grafana GPG key
-  shell: |
-    wget -q -O - https://packages.grafana.com/gpg.key | gpg --dearmor > /etc/apt/keyrings/grafana.gpg
+- name: Deploy Prometheus config
+  template:
+    src: "{{ role_path }}/files/prometheus.yml.j2"
+    dest: /opt/monitoring/prometheus.yml
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copy docker-compose file
+  copy:
+    src: docker-compose.yml
+    dest: /opt/monitoring/docker-compose.yml
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Pull latest monitoring images
+  command: docker-compose pull
   args:
-    creates: /etc/apt/keyrings/grafana.gpg
+    chdir: /opt/monitoring
 
-- name: Add Grafana repository
-  copy:
-    dest: /etc/apt/sources.list.d/grafana.list
-    owner: root
-    group: root
-    mode: "0644"
-    content: |
-      deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://packages.grafana.com/oss/deb stable main
-
-- name: Update apt cache after adding Grafana repo
-  apt:
-    update_cache: true
-
-- name: Install Grafana
-  apt:
-    name: grafana
-    state: present
-
-- name: Configure Prometheus targets
-  copy:
-    dest: /etc/prometheus/prometheus.yml
-    owner: root
-    group: root
-    mode: "0644"
-    content: |
-      global:
-        scrape_interval: 15s
-        scrape_timeout: 5s
-
-      scrape_configs:
-        - job_name: 'vm1-monitoring'
-          static_configs:
-            - targets: ['{{ vm1_ip }}:9100']
-
-        - job_name: 'vm2-application'
-          static_configs:
-            - targets: ['{{ vm2_ip }}:9100']
-
-        - job_name: 'vm3-database'
-          static_configs:
-            - targets: ['{{ vm3_ip }}:9100']
-
-        - job_name: 'vm4-ai'
-          static_configs:
-            - targets: ['{{ vm4_ip }}:9100']
+- name: Ensure monitoring stack is running
+  command: docker-compose up -d --remove-orphans
+  args:
+    chdir: /opt/monitoring
 
 - name: Allow SSH
   ufw:
@@ -126,33 +107,8 @@
     port: "9090"
     proto: tcp
 
-- name: Allow Node Exporter only from VM1 itself
-  ufw:
-    rule: allow
-    src: "{{ vm1_ip }}"
-    port: "9100"
-    proto: tcp
-
 - name: Enable firewall
   ufw:
     state: enabled
     policy: deny
     direction: incoming
-
-- name: Enable and start Prometheus
-  service:
-    name: prometheus
-    enabled: true
-    state: restarted
-
-- name: Enable and start Grafana
-  service:
-    name: grafana-server
-    enabled: true
-    state: started
-
-- name: Enable and start Node Exporter
-  service:
-    name: prometheus-node-exporter
-    enabled: true
-    state: started

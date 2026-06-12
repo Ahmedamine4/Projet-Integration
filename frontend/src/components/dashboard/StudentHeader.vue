@@ -1,4 +1,6 @@
 <script setup>
+import { Users, FolderKanban, GraduationCap , Mail, Award } from 'lucide-vue-next'
+
 defineProps({
   student: {
     type: Object,
@@ -10,49 +12,59 @@ defineProps({
     required: true
   }
 })
-function getStatColor(label ,value) {
-  if (label === 'Followers' || label === 'Follower') {
-    return 'black'
-  }  
+
+const iconMap = {
+  'Followers': Users,
+  'Follower': Users,
+  'Projects': FolderKanban,
+  'Internships': GraduationCap ,       
+  'Letter of \n recommendation': Mail,  
+  'Certifications': Award,
+}
+
+function getStatColor(label, value) {
+  if (label === 'Followers' || label === 'Follower') return 'black'
   if (value === 0) return 'red'
   if (value >= 3) return 'green'
-
   return 'orange'
-  }
+}
+
+const colorMap = {
+  black: '#413e3c',
+  green: '#23a279',
+  orange: '#ec6c0f',
+  red: '#bd1f1e'
+}
 </script>
 
 <template>
   <div class="student-header">
-    <!-- BLOC GAUCHE : Profil de l'étudiant -->
+    <!-- LEFT: Student profile -->
     <div class="student-profile">
-      <img
-        :src="student.avatar"
-        class="student-avatar"
-        alt="Avatar"
-      >
+      <img v-if="student.photo" :src="student.photo" class="student-avatar" alt="Avatar">
       <div class="profile-info">
-        <h2>{{ student.firstName }} {{ student.lastName }}</h2>
-        <p>{{ student.major }}</p>
+        <h2>Welcome, {{ student.firstName }} {{ student.lastName }}</h2>
       </div>
     </div>
 
-    <!-- BLOC DROITE : Conteneur global des statistiques -->
+    <!-- RIGHT: Stats -->
     <div class="student-stats-container">
       <div
         v-for="stat in stats"
         :key="stat.label"
         class="stat-card"
+        :style="{ '--accent': colorMap[getStatColor(stat.label, stat.value)] }"
       >
-        <div
-          class="stat-label"
-          :class="getStatColor(stat.label, stat.value)"
-        >
-          {{ stat.label }}
+        <div class="stat-top">
+          <component
+            :is="iconMap[stat.label]"
+            class="stat-icon"
+            :size="20"
+            :stroke-width="1.75"
+          />
+          <span class="stat-value">{{ stat.value }}</span>
         </div>
-
-        <div class="stat-value">
-          {{ stat.value }}
-        </div>
+        <div class="stat-label">{{ stat.label }}</div>
       </div>
     </div>
   </div>
@@ -60,7 +72,7 @@ function getStatColor(label ,value) {
 
 <style scoped>
 .student-header {
-  grid-column: 1/-1;
+  grid-column: 1 / -1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -71,6 +83,7 @@ function getStatColor(label ,value) {
   border-radius: 28px;
 }
 
+/* ── Profile ── */
 .student-profile {
   display: flex;
   align-items: center;
@@ -90,29 +103,43 @@ function getStatColor(label ,value) {
   font-size: 2rem;
 }
 
-.student-profile p {
-  margin-top: 0.4rem;
-  opacity: 0.65;
-}
-
+/* ── Stats container ── */
 .student-stats-container {
   display: flex;
   flex-direction: row;
   gap: 15px;
 }
 
+/* ── Stat card ── */
 .stat-card {
   min-width: 130px;
-  padding: 1rem;
-  text-align: center;
+  padding: 1rem 1.2rem;
   border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+  border-left: 4px solid var(--accent, #ccc);
   border-radius: 18px;
   transition: var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(var(--color-secondary-rgb), 0.35);
+  border-left-color: var(--accent, #ccc);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+/* Number + icon row */
+.stat-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-icon {
+  opacity: 0.6;
+  color: var(--accent, #ccc);
+  flex-shrink: 0;
 }
 
 .stat-value {
@@ -120,48 +147,19 @@ function getStatColor(label ,value) {
   font-weight: 700;
   font-family: var(--font-ui);
   color: var(--color-primary);
+  line-height: 1;
 }
 
-/*.stat-label {
-  margin-top: 0.4rem;
-  opacity: 0.6;
-  font-size: var(--font-size-sm);
-}*/
+/* Label below */
 .stat-label {
-  display: flex;
-  align-items: center;
-  font-size: var(--font-size-md);
-  gap: 5px;
-  white-space: pre-line;
-  min-height: 60px;
+  font-size: var(--font-size-sm);
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
-.stat-label::before {
-  content: "";
-  width: 5px;
-  height: 20px;
-  border-radius: 999px;
-  background: #ccc;
-}
-
-/* Couleurs conditionnelles */
-.stat-label.black::before {
-  background: #413e3c;
-}
-
-.stat-label.green::before {
-  background: #23a279;
-}
-
-.stat-label.orange::before {
-  background: #ec6c0f;
-}
-
-.stat-label.red::before {
-  background: #bd1f1e;
-}
-
-
+/* ── Responsive ── */
 @media (max-width: 1000px) {
   .student-header {
     flex-direction: column;

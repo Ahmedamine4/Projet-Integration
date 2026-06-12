@@ -164,8 +164,6 @@ export async function creerInstitutionAvecDirecteur({ nom, email_directeur }) {
 export async function assignerDirecteur({
   utilisateur_id,
   institution_id,
-  poste,
-  bureau,
 }) {
   const result = await prisma.$transaction(async (tx) => {
     const institution = await tx.institution.findUnique({

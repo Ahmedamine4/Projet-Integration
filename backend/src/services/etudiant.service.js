@@ -122,14 +122,14 @@ export const getDemandesEtudiant = async (etudiantId, { type, statut, page }) =>
     rawStages = await prisma.valideStage.findMany({
       where: {
         ...filtreStatut,
-        experience: { ...whereExperience },
+        stage: { experience: { ...whereExperience } },
       },
       select: {
         statut: true,
         date_d_action: true,
         experience_id: true,
         commentaire: true,
-        experience: { select: { titre: true } },
+        stage: { select: { experience: { select: { titre: true } } } },
         professeur: {
           select: { utilisateur: { select: { nom: true, prenom: true } } },
         },
@@ -142,14 +142,14 @@ export const getDemandesEtudiant = async (etudiantId, { type, statut, page }) =>
     rawProjets = await prisma.valideProjet.findMany({
       where: {
         ...filtreStatut,
-        experience: { ...whereExperience },
+        projet: { experience: { ...whereExperience } },
       },
       select: {
         statut: true,
         date_d_action: true,
         experience_id: true,
         commentaire: true,
-        experience: { select: { titre: true } },
+        projet: { select: { experience: { select: { titre: true } } } },
         professeur: {
           select: { utilisateur: { select: { nom: true, prenom: true } } },
         },
@@ -200,7 +200,7 @@ export const getDemandesEtudiant = async (etudiantId, { type, statut, page }) =>
   const stages = rawStages.map((i) => ({
     type: 'stage',
     experience_id: i.experience_id,
-    titre: i.experience?.titre ?? null,
+    titre: i.stage?.experience?.titre ?? null,
     statut: i.statut,
     commentaire: i.commentaire ?? null,
     date: i.date_d_action,
@@ -214,7 +214,7 @@ export const getDemandesEtudiant = async (etudiantId, { type, statut, page }) =>
   const projets = rawProjets.map((i) => ({
     type: 'projet',
     experience_id: i.experience_id,
-    titre: i.experience?.titre ?? null,
+    titre: i.projet?.experience?.titre ?? null,
     statut: i.statut,
     commentaire: i.commentaire ?? null,
     date: i.date_d_action,

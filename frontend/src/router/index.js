@@ -55,7 +55,7 @@ const routes = [
     meta: {
       requiresAuth: true,
       layout: 'app',
-      roles: ['directeur'],
+      role: 'directeur',
     },
   },
   {
@@ -114,24 +114,45 @@ const routes = [
     },
   },
   {
+  path: '/recruiter-dashboard',
+  name: 'recruiter-dashboard',
+  component: () => import('@/views/app/dashboard/RecruteurDashboard.vue'),
+  meta: {
+    requiresAuth: true,
+    role: 'professionnel',
+    layout: 'app',
+  },
+},
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: NotFoundView,
   },
+  {
+  path: '/admin-dashboard',
+  name: 'admin-dashboard',
+  component: () => import('@/views/app/AdminDashboardView.vue'),
+  meta: {
+    requiresAuth: true,
+    role: 'administrateur',
+    layout: 'app',
+  },
+},
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore();
+
   const requiresAuth = to.matched.some((record) => {
     return record.meta.requiresAuth;
   });
 
   if (requiresAuth && !authStore.profileChecked) {
-    return true;
+    await authStore.fetchProfile();
   }
 
   if (requiresAuth && !authStore.isAuthenticated) {
@@ -141,12 +162,21 @@ router.beforeEach((to) => {
     };
   }
 
-  if (to.meta.role && authStore.user?.role) {
-    if (authStore.user.role !== to.meta.role) {
-      return {
-        path: authStore.user.role === 'professeur' ? '/prof-dashboard' : '/dashboard',
-      };
-    }
+  const requiredRole = to.meta.role;
+  const userRole = authStore.user?.role;
+
+  if (requiredRole && userRole !== requiredRole) {
+    const redirects = {
+      professeur: '/prof-dashboard',
+      professionnel: '/recruiter-dashboard',
+      etudiant: '/dashboard',
+      directeur: '/director-dashboard',
+      administrateur: '/admin-dashboard',
+    };
+
+    return {
+      path: redirects[userRole] || '/dashboard',
+    };
   }
 
   return true;
