@@ -1017,18 +1017,48 @@ watch(
 }
 
 @media (max-width: 640px) {
-  .dashboard {
-    padding: var(--space-md);
+  :global(html),
+  :global(body),
+  :global(#app) {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
-  .professor-form {
-    grid-template-columns: 1fr;
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100vw;
+    min-width: 0;
+    padding: 0.75rem;
+    gap: 1rem;
+    overflow-x: hidden;
+  }
+
+  .dashboard > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .section {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .section-header,
   .section-header--with-tabs {
-    align-items: flex-start;
     flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+  }
+
+  .professor-form {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 0.8rem;
   }
 
   .tabs {
@@ -1036,6 +1066,54 @@ watch(
   }
 
   .tab {
+    flex: 1;
+  }
+
+  .table-responsive,
+  .director-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table {
+    min-width: 620px;
+  }
+
+  :deep(.student-header),
+  :deep(.header),
+  :deep(.dashboard-header) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    margin-top: 3rem;
+  }
+
+  :deep(.student-header h2),
+  :deep(.dashboard-header h2),
+  :deep(.welcome-title) {
+    font-size: 1.5rem !important;
+    line-height: 1.1;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  :deep(.stats-grid),
+  :deep(.stats),
+  :deep(.student-stats) {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+  }
+
+  :deep(.stat-card) {
+    min-width: 0;
     flex: 1;
   }
 }
