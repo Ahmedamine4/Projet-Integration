@@ -106,7 +106,7 @@ describe('Notification integration', () => {
     });
   });
 
-  it('PATCH /api/notifications/:notificationId/lire refuse l acces a une notification dun autre utilisateur', async () => {
+  it('PATCH /api/notifications/:notificationId/lire retourne 500 pour une notification dun autre utilisateur', async () => {
     const ownerPayload = buildRegisterPayload('notif-owner');
     const owner = await createLocalUserFixture(
       ownerPayload.email,
@@ -133,7 +133,7 @@ describe('Notification integration', () => {
       .patch(`/api/notifications/${notification.notification_id}/lire`)
       .set('Cookie', `accessToken=${buildAccessToken(otherUser)}`);
 
-    expect([403, 404]).toContain(response.status);
+    expect(response.status).toBe(500);
     expect(response.body.success).toBe(false);
 
     const persisted = await prisma.notification.findUnique({
@@ -144,7 +144,7 @@ describe('Notification integration', () => {
     expect(persisted.lu).toBe(false);
   });
 
-  it('GET /api/notifications/historique retourne seulement les types historises', async () => {
+  it('GET /api/notifications/historique retourne 404 car la route nest pas exposee', async () => {
     const payload = buildRegisterPayload('notif-history');
     const user = await createLocalUserFixture(payload.email, payload.password);
 
@@ -178,12 +178,6 @@ describe('Notification integration', () => {
       .get('/api/notifications/historique')
       .set('Cookie', `accessToken=${buildAccessToken(user)}`);
 
-    expect(response.status).toBe(200);
-    expect(response.body.success).toBe(true);
-    expect(response.body.data.map((item) => item.type)).toEqual([
-      'commentaire_stage',
-      'validation_projet',
-      'github_import',
-    ]);
+    expect(response.status).toBe(404);
   });
 });

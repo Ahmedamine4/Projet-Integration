@@ -50,9 +50,7 @@ app.use('/api/follow', followRoutes);
 app.use('/api/stages', stageRoutes);
 // Branchement des routes de gestion des activites
 app.use('/api/activites', activiteRoutes);
-app.use('/api', feedRoutes);
-app.use('/api/prof', feedProfRoutes);
-app.use('/api/professionnel', feedProfessionnelRoutes);
+
 
 //Getting institutions
 app.use('/api/getInstitutions', getInstitutionRoutes);
@@ -75,7 +73,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/recruteur', recruteurRoutes);
 // Branchement des routes d'ajout du projet
 app.use('/api', projetRoutes);
-
+app.use('/api', feedRoutes);
+app.use('/api/prof', feedProfRoutes);
+app.use('/api/professionnel', feedProfessionnelRoutes);
 // Route de test
 app.get("/", (req, res) => {
   res.send('<h1> Hello, API is running maintenant ! </h1>');

@@ -4,6 +4,13 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import prisma from '../../src/config/prisma.js';
 import {
+  assertAuthTestEnvironment,
+  buildAccessToken,
+  buildRegisterPayload,
+  cleanupAuthFixtures,
+  createLocalUserFixture,
+} from '../helpers/auth.helpers.js';
+import {
   assertInstitutionTestEnvironment,
   cleanupInstitutionFixtures,
   createInstitutionFixture,
@@ -13,24 +20,31 @@ const { default: app } = await import('../../src/app.js');
 
 describe('Institution integration', () => {
   beforeAll(async () => {
+    assertAuthTestEnvironment();
     assertInstitutionTestEnvironment();
     await prisma.$connect();
   });
 
   beforeEach(async () => {
     await cleanupInstitutionFixtures();
+    await cleanupAuthFixtures();
   });
 
   afterAll(async () => {
     await cleanupInstitutionFixtures();
+    await cleanupAuthFixtures();
     await prisma.$disconnect();
   });
 
   it('GET /api/getInstitutions retourne les institutions', async () => {
+    const payload = buildRegisterPayload('institutions-list');
+    const user = await createLocalUserFixture(payload.email, payload.password);
     const institution1 = await createInstitutionFixture('listing-1');
     const institution2 = await createInstitutionFixture('listing-2');
 
-    const response = await request(app).get('/api/getInstitutions');
+    const response = await request(app)
+      .get('/api/getInstitutions')
+      .set('Cookie', `accessToken=${buildAccessToken(user)}`);
 
     expect(response.status).toBe(200);
 

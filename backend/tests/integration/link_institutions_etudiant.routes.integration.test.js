@@ -5,6 +5,7 @@ import request from 'supertest';
 import prisma from '../../src/config/prisma.js';
 import {
   assertAuthTestEnvironment,
+  buildAccessToken,
   buildRegisterPayload,
   cleanupAuthFixtures,
   createLocalUserFixture,
@@ -36,8 +37,12 @@ describe('Link institutions integration', () => {
   });
 
   it('POST /api/select-institutions retourne 400 si le body est invalide', async () => {
+    const payload = buildRegisterPayload('link-invalid-body');
+    const user = await createLocalUserFixture(payload.email, payload.password);
+
     const response = await request(app)
       .post('/api/select-institutions')
+      .set('Cookie', `accessToken=${buildAccessToken(user)}`)
       .send({
         etudiantId: '',
         institutions: [],
@@ -57,6 +62,7 @@ describe('Link institutions integration', () => {
 
     const response = await request(app)
       .post('/api/select-institutions')
+      .set('Cookie', `accessToken=${buildAccessToken(student)}`)
       .send({
         etudiantId: student.utilisateur_id,
         etudie: true,
