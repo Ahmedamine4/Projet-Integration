@@ -79,15 +79,14 @@ const { handleDoubleTap } = useDoubleTap(() => {
       />
     </div>
     <div
-      v-if="project.isGithubDraft"
-      class="project-draft-badge"
+      v-if="project.isGithubDraft && !(project.isAcademic && project.validationStatus)"
+      class="project-validation-badge project-validation-badge--github-draft"
       title="GitHub draft project"
     >
       <Github
-        :size="14"
-        :stroke-width="2.2"
+        :size="21"
+        :stroke-width="2.3"
       />
-      <span>Draft</span>
     </div>
     <div
       v-if="isVisibleHighlight"
@@ -374,29 +373,6 @@ const { handleDoubleTap } = useDoubleTap(() => {
   color: var(--color-error);
 }
 
-.project-draft-badge {
-  position: absolute;
-  top: 0.85rem;
-  left: 0.85rem;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 1px solid rgba(var(--color-primary-rgb), 0.18);
-  border-radius: 999px;
-  padding: 0.38rem 0.58rem;
-  background: var(--color-background);
-  color: rgba(var(--color-primary-rgb), 0.72);
-  box-shadow: 0 0.65rem 1.35rem rgba(var(--color-primary-rgb), 0.12);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-bold);
-  line-height: 1;
-}
-
-.project-draft-badge svg {
-  flex-shrink: 0;
-}
-
 .project-match-badge {
   position: absolute;
   top: 0.85rem;
@@ -421,8 +397,8 @@ const { handleDoubleTap } = useDoubleTap(() => {
   flex-shrink: 0;
 }
 
-.project-card--github-draft .project-match-badge {
-  top: 3.55rem;
+.project-validation-badge--github-draft {
+  color: rgba(var(--color-primary-rgb), 0.72);
 }
 
 .project-visibility {

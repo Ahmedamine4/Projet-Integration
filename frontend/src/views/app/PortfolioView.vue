@@ -162,9 +162,13 @@ const selectedAcademicInstitutions = computed(() => {
 const schoolOptions = computed(() =>
   selectedAcademicInstitutions.value.map((institution) => institution.nom).filter(Boolean)
 );
+const certificationInstitutionOptions = computed(() =>
+  institutionStore.certificationInstitutions.map((institution) => institution.nom).filter(Boolean)
+);
 
 onMounted(() => {
   institutionStore.fetchInstitutions();
+  institutionStore.fetchCertificationInstitutions();
   if (portfolioUserId.value) {
     portfolioStore.fetchPortfolio(portfolioUserId.value);
   }
@@ -1197,6 +1201,7 @@ async function handleAiFiltersDetected(filters) {
       :loading="experienceModalLoading"
       :school-options="schoolOptions"
       :academic-institutions="selectedAcademicInstitutions"
+      :certification-institution-options="certificationInstitutionOptions"
       @close="closeExperienceModal"
       @open-school-path="openSchoolModal"
       @submit="handleExperienceSubmit"
