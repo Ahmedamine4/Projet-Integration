@@ -2,7 +2,6 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { Check, RefreshCw, UserPlus, XCircle } from 'lucide-vue-next';
-import StudentHeader from '@/components/dashboard/StudentHeader.vue';
 import BaseButton from '@/components/common/actions/BaseButton.vue';
 import BaseInput from '@/components/common/forms/BaseInput.vue';
 import BaseError from '@/components/common/feedback/BaseError.vue';
@@ -11,6 +10,7 @@ import BaseSpinner from '@/components/common/feedback/BaseSpinner.vue';
 import Pagination from '@/components/dashboard/PaginationComponent.vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
+import DirecteurHeader from '@/components/dashboard/DirecteurHeader.vue';
 
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
@@ -472,7 +472,7 @@ watch(
     </section>
 
     <template v-else>
-      <StudentHeader
+      <DirecteurHeader
         :student="directorProfile"
         :stats="stats"
       />
