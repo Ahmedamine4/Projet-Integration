@@ -1,0 +1,91 @@
+import '../setup/test-env.setup.js';
+
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import request from 'supertest';
+import prisma from '../../src/config/prisma.js';
+import {
+    assertAuthTestEnvironment,
+    buildAccessToken,
+    cleanupAuthFixtures,
+    createAdminFixture,
+    createProfessionalFixture,
+} from '../helpers/auth.helpers.js';
+
+const { default: app } = await import('../../src/app.js');
+
+function authCookie(user) {
+    return `accessToken=${buildAccessToken(user)}`;
+}
+
+describe('Admin integration', () => {
+    beforeAll(async () => {
+        assertAuthTestEnvironment();
+        await prisma.$connect();
+    });
+
+    beforeEach(async () => {
+        await cleanupAuthFixtures();
+    });
+
+    afterAll(async () => {
+        await cleanupAuthFixtures();
+        await prisma.$disconnect();
+    });
+
+    it('GET /api/admin/users retourne les utilisateurs pour admin', async () => {
+        const admin = await createAdminFixture(
+            `admin.users.${Date.now()}@test.integration.local`
+        );
+
+        const res = await request(app)
+            .get('/api/admin/users')
+            .set('Cookie', authCookie(admin));
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.users ?? res.body.data)).toBe(true);
+    });
+
+    it('GET /api/admin/professionnels/en-attente retourne les professionnels en attente', async () => {
+        const admin = await createAdminFixture(
+            `admin.pending.${Date.now()}@test.integration.local`
+        );
+
+        await createProfessionalFixture(
+            `pro.pending.${Date.now()}@test.integration.local`
+        );
+
+        const res = await request(app)
+            .get('/api/admin/professionnels/en-attente')
+            .set('Cookie', authCookie(admin));
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.professionnels)).toBe(true);
+    });
+
+    it('PATCH /api/admin/professionnels/:id/valider valide un professionnel', async () => {
+        const admin = await createAdminFixture(
+            `admin.validate.${Date.now()}@test.integration.local`
+        );
+
+        const professionnel = await createProfessionalFixture(
+            `pro.validate.${Date.now()}@test.integration.local`
+        );
+
+        const res = await request(app)
+            .patch(`/api/admin/professionnels/${professionnel.utilisateur_id}/valider`)
+            .set('Cookie', authCookie(admin));
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.professionnel?.statut).toBe('valide');
+    });
+
+    it('GET /api/admin/users retourne 401 sans token', async () => {
+        const res = await request(app).get('/api/admin/users');
+
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+    });
+});
