@@ -1,12 +1,11 @@
 stages:
-  - deploy
+  - test
   - security
   - lint
   - build
   #- dast
   - quality
-  - test
-
+  - deploy
 
 workflow:
   rules:
@@ -302,7 +301,6 @@ docker-build-dev:
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
-
 docker-push-prod:
   stage: deploy
 
@@ -331,7 +329,6 @@ docker-push-prod:
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-
 
 # DYNAMIC APPLICATION SECURITY TESTING (OWASP ZAP)
 # zap-dast:
