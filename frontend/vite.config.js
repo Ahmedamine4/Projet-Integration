@@ -1,24 +1,33 @@
-import { fileURLToPath, URL } from 'node:url'
+import { fileURLToPath, URL } from 'node:url';
 
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    vue()
-  ],
+  plugins: [vue()],
   test: {
-  environment: 'jsdom'
+    environment: 'jsdom',
   },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   server: {
-    host: '0.0.0.0',   
-    port: 5173
+    host: '0.0.0.0',
+    port: 5173,
+    allowedHosts: ['frontend', 'localhost', '192.168.56.11'],
+    hmr: {
+      protocol: 'wss',
+      host: '192.168.56.11',
+      clientPort: 443,
+    },
+    proxy: {
+      '/api': {
+      target: 'http://backend:3000',
+      changeOrigin: true,
+      },
+    },
   }
-  
-})
+});

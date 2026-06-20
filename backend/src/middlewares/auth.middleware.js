@@ -12,17 +12,23 @@ export const ROLES = {
   PROFESSEUR: 'professeur',
   ETUDIANT: 'etudiant',
   PROFESSIONNEL: 'professionnel',
+  DIRECTEUR: 'directeur',
 };
 
 // Récupérer le token depuis : Authorization: Bearer TOKEN
+// function getToken(req) {
+//   const authHeader = req.headers.authorization;
+
+//   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+//     return null;
+//   }
+
+//   return authHeader.split(' ')[1];
+// }
+
+// Récupérer le token depuis les cookies
 function getToken(req) {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  return authHeader.split(' ')[1];
+  return req.cookies?.accessToken || null; 
 }
 
 // Middleware hybride : local + Google
@@ -36,7 +42,7 @@ export async function authMiddleware(req, res, next) {
     });
   }
   
-  // 1. Vérifier token local Express
+  // Vérifier token local Express
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -57,7 +63,7 @@ export async function authMiddleware(req, res, next) {
     // Si ce n'est pas un token local, on essaie Google
   }
 
-  // 2. Vérifier token Google / Supabase
+  // Vérifier token Google / Supabase
   try {
     const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
 
@@ -72,9 +78,9 @@ export async function authMiddleware(req, res, next) {
 
     return next();
   } catch (error) {
-    return res.status(403).json({
+    return res.status(401).json({
       success: false,
-      message: "Token d'authentification invalide",
+      message: "Token d'authentification invalide ou expiré",
     });
   }
 }

@@ -1,76 +1,83 @@
 services:
   backend:
     container_name: back-app-container
-    ports:
-      - "3000:3000"
-      - "5555:5555" # Port pour le WebSocket
     build:
       context: ../../backend
     env_file:
       - ../../backend/.env
-    volumes:
-    - ../../backend:/app
-    - /app/node_modules
-    command: npm run dev
+    expose:
+      - "3000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     depends_on:
       db:
         condition: service_healthy
+
   frontend:
     container_name: frontend-container
     build:
       context: ../../frontend
-      #target: development # pour nginx
-    # ports:
-    #   - "5173:5173"  gerer au niveau de nginx pour le reverse proxy
+    expose:
+      - "8080"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     depends_on:
       - backend
-    volumes:
-      - ../../frontend:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+
   db:
     image: postgres:16-alpine
     container_name: postgres-db-container
     restart: always
     env_file:
-    - ../../backend/.env
+      - ../../backend/.env
     volumes:
       - postgres-db:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: appdb
+    expose:
+      - "5432"
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d appdb"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+
   ai:
     container_name: ai-container
     build:
       context: ../../ai
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     depends_on:
       - db
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+
   nginx:
     container_name: nginx-proxy
     build:
       context: ../../infrastructure/nginx
     ports:
-      - "80:80"
-      - "443:443" # On expose le port 443 pour HTTPS
+      - "80:8080"
+      - "443:8443"
     volumes:
-      - nginx-certs:/etc/nginx/ssl # Volume pour garder les certs
+      - nginx-certs:/etc/nginx/ssl
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       - frontend
       - backend
 
-
 volumes:
   postgres-db:
-  nginx-certs: # Volume pour stocker les certificats TLS de Nginx
+  nginx-certs:

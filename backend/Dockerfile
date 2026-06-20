@@ -1,31 +1,37 @@
 FROM node:24-alpine AS base
 #changement du version node
-FROM base AS development
 
 WORKDIR /app
+#hérité par toutes les stages
 
-COPY package.json .
+FROM base AS development
+
+COPY package*.json ./
 COPY prisma ./prisma
 
-RUN npm install
-RUN npx prisma generate
+RUN npm install   
+ #  npm install pour dev (flexibilité)
 
 COPY . .
 
-EXPOSE 4001
+EXPOSE 3000
+#changement du port
 
-CMD ["sh", "-c", "npx prisma migrate dev && npm run dev"] 
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run seed && npm run dev"]
+
 
 FROM base AS production
 
-WORKDIR /app
+COPY package*.json ./
+COPY prisma ./prisma
 
-COPY package.json .
+RUN npm ci --omit=dev && npm cache clean --force
+RUN npx prisma generate
 
-RUN npm install --only=production
+COPY --chown=node:node . .
 
-COPY . .
+USER node
 
-EXPOSE 4001
+EXPOSE 3000
 
-CMD ["npm","start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run seed && npm start"]

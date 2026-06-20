@@ -3,25 +3,28 @@ services:
     build:
       context: ../../backend
       target: production
+    env_file:
+      - ../../backend/.env
     environment:
       - NODE_ENV=production
+    image: tijabdel/backend:prod
 
   frontend:
     build:
       context: ../../frontend
       target: production
-    # ports:
-    #   - "80:80" car nginx va faire le reverse proxy via le port 80
     environment:
       - NODE_ENV=production
-
+    image: tijabdel/frontend:prod
   ai:
     build:
       context: ../../ai
       target: production
     environment:
       - ENV=production
-  
+    image: tijabdel/ai:prod
+
   nginx:
     volumes:
-      - ../nginx/default.prod.conf:/etc/nginx/conf.d/default.conf
+      - ../nginx/default.prod.conf:/etc/nginx/conf.d/default.conf:ro
+    image: tijabdel/nginx:prod

@@ -3,7 +3,6 @@
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,15 +12,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 // ENUMS
 
+enum StatutOffre {
+  ACTIVE
+  TERMINEE
+}
+
+enum TypeCompetence {
+  technologie
+  domaine
+}
+
+enum ActionSession {
+LOGIN
+LOGOUT
+}
 
 enum TypeExperience {
   certification
   projet
   stage
   activite
+}
+
+enum TypeSpecifique {
+  personnel
+  academique
 }
 
 enum RoleUtilisateur {
@@ -38,21 +55,43 @@ enum StatutValidation {
   refuse
 }
 
+enum TypeOffre {
+  CDI
+  CDD
+  Stage
+  Alternance
+  Freelance
+  Interim
+  Temps_partiel
+  Temps_plein
+  Apprentissage
+  Contrat_professionnel
+  VIE
+  Benevolat
+  Consultant
+  Projet_Mission_courte
+}
 
 // UTILISATEURS ET HERITAGES
-
 
 model Utilisateur {
   utilisateur_id   String          @id @default(cuid())
   nom              String          @db.VarChar(50)
   prenom           String          @db.VarChar(50)
+  photo            String?
   supabase_uid     String?         @unique
   provider         String?         @default("local")
+  bloque           Boolean?        @default(false)
   role             RoleUtilisateur
   email            String          @unique @db.VarChar(100)
   mot_de_passe     String?         @db.VarChar(255)
   telephone        String?         @db.VarChar(20)
+  a_propos         String?
   date_de_creation DateTime?       @default(now())
+  github           String?
+  instagram        String?
+  x                String?
+  linkedin         String?
 
   // Relations d'héritage (1-to-1)
   administrateur Administrateur?
@@ -62,18 +101,35 @@ model Utilisateur {
   professionnel  Professionnel?
 
   // Autres relations
-  notifications Notification[]
+  notifications_recues Notification[] @relation("NotificationCible")
+  notifications_envoyees Notification[] @relation("NotificationSource")
   connexions    Connexion[]
   interactions  Interaction[]
+  offres        Offre[]
+  demandes      Demande[]
+  following  Follow[] @relation("UserFollowing")
+  followers  Follow[] @relation("UserFollowers")
 
   @@map("utilisateurs")
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    Utilisateur @relation("UserFollowers", fields: [followerId], references: [utilisateur_id], onDelete: Cascade)
+  following   Utilisateur @relation("UserFollowing", fields: [followingId], references: [utilisateur_id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@map("follows")
 }
 
 model Administrateur {
   admin_utilisateur_id String  @id
   niveau_acces         String? @db.VarChar(50)
 
-  utilisateur            Utilisateur     @relation(fields: [admin_utilisateur_id], references: [utilisateur_id])
+  utilisateur            Utilisateur     @relation(fields: [admin_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
   professionnels_valides Professionnel[] @relation("AdminValidation")
 
   @@map("administrateurs")
@@ -86,25 +142,26 @@ model Directeur {
 
   institution_id String @unique
 
-  utilisateur Utilisateur @relation(fields: [directeur_utilisateur_id], references: [utilisateur_id])
-  institution Institution @relation(fields: [institution_id], references: [institution_id])
+  utilisateur Utilisateur @relation(fields: [directeur_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  institution Institution @relation(fields: [institution_id], references: [institution_id], onDelete: Cascade)
 
   @@map("directeurs")
 }
 
 model Etudiant {
-  etudiant_utilisateur_id String  @id
-  promotion               String? @db.VarChar(50)
-  niveau                  String? @db.VarChar(50)
+  etudiant_utilisateur_id String                     @id
+  promotion               String?                    @db.VarChar(50)
+  niveau                  String?                    @db.VarChar(50)
+  etudie                  Boolean?
   github_API              String?
-
-  utilisateur               Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id])
-  portfolio                 Portfolio?
-  experiences               Experience[]
-  clubs                     Club[]
-  institutions              ValideEtudiant[]
-  badges                    Badge[]
-  recommandations           LettresDeRecommendations[]
+  repositories            Repository[]
+  utilisateur             Utilisateur                @relation(fields: [etudiant_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  portfolio               Portfolio?
+  experiences             Experience[]
+  clubs                   Club[]
+  institutions            ValideEtudiant[]
+  badges                  Badge[]
+  recommandations         LettresDeRecommendations[]
 
   @@map("etudiants")
 }
@@ -114,7 +171,7 @@ model Professeur {
   departement         String? @db.VarChar(50)
   specialite          String? @db.VarChar(50)
 
-  utilisateur             Utilisateur                @relation(fields: [prof_utilisateur_id], references: [utilisateur_id])
+  utilisateur             Utilisateur                @relation(fields: [prof_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
   lettres_recommandations LettresDeRecommendations[]
   institutions            Institution[]
   projets                 ValideProjet[]
@@ -126,20 +183,18 @@ model Professeur {
 model Professionnel {
   professionnel_utilisateur_id String            @id
   entreprise                   String?           @db.VarChar(100)
-  post                         String?           @db.VarChar(50)
+  poste                        String?           @db.VarChar(50)
   email_professionnel          String?           @db.VarChar(100)
   statut                       StatutValidation?
   admin_id                     String?
 
-  utilisateur Utilisateur     @relation(fields: [professionnel_utilisateur_id], references: [utilisateur_id])
-  admin       Administrateur? @relation("AdminValidation", fields: [admin_id], references: [admin_utilisateur_id])
+  utilisateur Utilisateur     @relation(fields: [professionnel_utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  admin       Administrateur? @relation("AdminValidation", fields: [admin_id], references: [admin_utilisateur_id], onDelete: SetNull)
 
   @@map("professionnels")
 }
 
-
 // ENTITÉS PRINCIPALES
-
 
 model Club {
   club_id       String        @id @default(cuid())
@@ -166,12 +221,11 @@ model Badge {
 }
 
 model Competence {
-  competence_id String       @id @default(cuid())
-  type          String?      @db.VarChar(50)
-  nom           String?      @db.VarChar(50)
-  description   String?
-  niveau        String?      @db.VarChar(50)
-  experiences   Experience[]
+  competence_id         String       @id @default(cuid())
+  type                  TypeCompetence
+  nom                   String?      @db.VarChar(50)
+  description           String?
+  competence_dev        CompetenceDeveloppee[]
 
   @@map("competences")
 }
@@ -184,31 +238,84 @@ model Portfolio {
   date_generation   DateTime?
   score_credibilite Int?
   utilisateur_id    String        @unique
-  etudiant          Etudiant      @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  etudiant          Etudiant      @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
   interactions      Interaction[]
+  history           PortfolioScoreHistory[]
 
   @@map("portfolio")
 }
 
-model Notification {
-  notification_id   String      @id @default(cuid())
-  message           String?
-  date_notification DateTime?
-  lu                Boolean?
-  type              String?     @db.VarChar(50)
-  utilisateur_id    String
-  utilisateur       Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+model Offre {
+  offre_id       String   @id @default(cuid())
+  entreprise     String?   @db.VarChar(100)
+  localisation   String?   @db.VarChar(150)
+  technologies   Json?
+  description    String?
+  type           TypeOffre?
+  statut         StatutOffre? @default(ACTIVE)
+  date           DateTime? @default(now())
+  utilisateur_id String
+  utilisateur    Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  demandes       Demande[]
 
-  @@map("notifications")
+  @@map("offres")
+}
+
+model Demande {
+  message        String?
+  offre_id       String
+  utilisateur_id String
+  offre          Offre      @relation(fields: [offre_id], references: [offre_id], onDelete: Cascade)
+  utilisateur    Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
+  
+  @@id([offre_id, utilisateur_id])
+  @@map("demandes")
+}
+
+model PortfolioScoreHistory {
+  history_id    String   @id @default(cuid())
+  portfolio_id  String
+  score         Int
+  breakdown     Json?
+  date          DateTime @default(now())
+  portfolio     Portfolio @relation(fields: [portfolio_id], references: [portfolio_id], onDelete: Cascade)
+
+  @@map("portfolio_score_history")
+}
+
+model Notification {
+  notification_id       String @id @default(cuid())
+  message               String?
+  date_notification     DateTime?
+  lu                    Boolean?
+  type                  String?
+
+  utilisateur_cible_id  String
+  utilisateur_source_id String?
+
+  utilisateur_cible Utilisateur @relation("NotificationCible", fields: [utilisateur_cible_id], references: [utilisateur_id], onDelete: Cascade)
+  utilisateur_source Utilisateur? @relation("NotificationSource", fields: [utilisateur_source_id], references: [utilisateur_id], onDelete: SetNull)
 }
 
 model Connexion {
-  connexion_id      String      @id @default(cuid())
-  ip_address        String?     @db.VarChar(50)
-  statut            Boolean?
-  date_de_connexion DateTime?
-  utilisateur_id    String
-  utilisateur       Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  connexion_id    String      @id @default(cuid())
+  utilisateur_id  String
+  session_token   String      @unique
+  browser         String?
+  browser_version String?
+  device_type     String?
+  os              String?
+  ip              String?
+  ville           String?
+  pays            String?
+  is_current      Boolean     @default(false)
+  date_connexion  DateTime    @default(now())
+  // Kept for the admin history tab so logout events remain auditable instead of deleting the row.
+  date_deconnexion DateTime?
+  last_active     DateTime    @default(now())
+  expires_at      DateTime
+
+  utilisateur     Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
 
   @@map("connexions")
 }
@@ -216,16 +323,17 @@ model Connexion {
 model Institution {
   institution_id String  @id @default(cuid())
   nom            String  @db.VarChar(50)
-  address        String? @db.VarChar(50)
+  addresse       String? @db.VarChar(50)
   email          String  @db.VarChar(255)
   description    String?
+  academique     Boolean?
 
   directeur      Directeur[]
   clubs          Club[]
   professeurs    Professeur[]
   activites      ValideActivite[]
   etudiants      ValideEtudiant[]
-  certifications ValideCertification[]
+  certifications Certification[]
 
   @@map("institutions")
 }
@@ -233,66 +341,61 @@ model Institution {
 // EXPERIENCES ET HERITAGES
 
 model Experience {
-  experience_id   String         @id @default(cuid())
-  titre           String?        @db.VarChar(100)
+  experience_id   String          @id @default(cuid())
+  titre           String?         @db.VarChar(100)
   date_experience DateTime?
   visibilite      Boolean?
   type            TypeExperience
+  type_specifique TypeSpecifique?
   description     String?
+  photo           String?
+  deleted_at      DateTime?
+  is_draft        Boolean    @default(false)
+  technologies_locked  Boolean    @default(false)
   utilisateur_id  String
 
-  etudiant      Etudiant       @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
+  etudiant      Etudiant       @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
   certification Certification?
   projet        Projet?
   activite      Activite?
   stage         Stage?
 
-  documentations Documentation[]
-  interactions   Interaction[]
-  competences    Competence[]
+  interactions      Interaction[]
+  competence_dev    CompetenceDeveloppee[]
 
   @@map("experiences")
 }
 
 model Certification {
-  experience_id String                   @id
+  experience_id String               @id
   document      String?
   lien_URL      String?
   code          String?
-  experience    Experience               @relation(fields: [experience_id], references: [experience_id])
-  validation    ValideCertification?
+  institution_id String?
+  institution    Institution? @relation(fields: [institution_id], references: [institution_id])
+  experience    Experience           @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
 
   @@map("certifications")
 }
 
-model Documentation {
-  documentation_id String     @id @default(cuid())
-  captures         String?
-  pdf              String?
-  experience_id    String
-  experience       Experience @relation(fields: [experience_id], references: [experience_id])
-
-  @@map("documentations")
-}
 
 model Projet {
-  experience_id    String              @id
-  type_projet      String?             @db.VarChar(50)
-  lien_github      String?
-  lien_youtube     String?
-  resultat_obtenus String?
-  role             String?             @db.VarChar(50)
-  experience       Experience          @relation(fields: [experience_id], references: [experience_id])
-  validation       ValideProjet?
+  experience_id        String      @id
+  repository_id        String?     @unique
+  lien_github          String?
+  lien_youtube         String?
+  resultat_obtenu      String?
+  experience           Experience  @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  repository           Repository? @relation(fields: [repository_id], references: [repository_id], onDelete: SetNull)
+  validation           ValideProjet?
 
   @@map("projets")
 }
-
 model Activite {
   experience_id String          @id
   type          String?         @db.VarChar(50)
   lieu          String?         @db.VarChar(100)
-  experience    Experience      @relation(fields: [experience_id], references: [experience_id])
+  experience    Experience      @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
   validation    ValideActivite?
   clubs         Club[]
 
@@ -300,11 +403,12 @@ model Activite {
 }
 
 model Stage {
-  experience_id      String           @id
-  duree              String?          @db.VarChar(50)
+  experience_id      String       @id
+  date_fin           DateTime?
+  duree              String?      @db.VarChar(50)
   missions_realisees String?
   rapport_stage      String?
-  experience         Experience       @relation(fields: [experience_id], references: [experience_id])
+  experience         Experience   @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
   validation         ValideStage?
 
   @@map("stages")
@@ -314,37 +418,48 @@ model Interaction {
   interaction_id   String            @id @default(cuid())
   type             String?           @db.VarChar(50)
   texte            String?
-  statut           StatutValidation?
+  visibilite       Boolean   @default(false)
   date_interaction DateTime?
   portfolio_id     String?
   experience_id    String?
   utilisateur_id   String
 
-  portfolio   Portfolio?  @relation(fields: [portfolio_id], references: [portfolio_id])
-  experience  Experience? @relation(fields: [experience_id], references: [experience_id])
-  utilisateur Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  portfolio   Portfolio?  @relation(fields: [portfolio_id], references: [portfolio_id], onDelete: Cascade)
+  experience  Experience? @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  utilisateur Utilisateur @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Cascade)
 
   @@map("interactions")
 }
 
-
 // TABLES DE JONCTION (Relations Many-to-Many)
-
 
 model LettresDeRecommendations {
   utilisateur_id      String
   prof_utilisateur_id String
-  type_candidature    String?           @db.VarChar(50)
+  objet               String?              @db.VarChar(255)
+  description         String?
   fichier             String?
-  statut              StatutValidation?
-  date_lettre         DateTime?
+  statut              StatutValidation?    @default(en_attente)
+  date_lettre         DateTime?            @default(now())
   commentaire         String?
 
-  etudiant   Etudiant   @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
-  professeur Professeur @relation(fields: [prof_utilisateur_id], references: [prof_utilisateur_id])
+  etudiant   Etudiant   @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
+  professeur Professeur @relation(fields: [prof_utilisateur_id], references: [prof_utilisateur_id], onDelete: Cascade)
 
   @@id([utilisateur_id, prof_utilisateur_id])
   @@map("lettres_de_recommendations")
+}
+
+model CompetenceDeveloppee {
+  experience_id String
+  competence_id String
+  niveau        String?
+
+  experience    Experience @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  competence    Competence @relation(fields: [competence_id], references: [competence_id], onDelete: Cascade)
+
+  @@id([experience_id, competence_id])
+  @@map("Competences_Developpees")
 }
 
 model ValideActivite {
@@ -353,8 +468,8 @@ model ValideActivite {
   statut         StatutValidation?
   date_d_action  DateTime?
   commentaire    String?
-  activite       Activite          @relation(fields: [experience_id], references: [experience_id])
-  institution    Institution       @relation(fields: [institution_id], references: [institution_id])
+  activite       Activite          @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  institution    Institution       @relation(fields: [institution_id], references: [institution_id], onDelete: Cascade)
 
   @@id([experience_id, institution_id])
   @@map("valide_activite")
@@ -367,8 +482,8 @@ model ValideProjet {
   date_d_action  DateTime?
   commentaire    String?
 
-  projet     Projet     @relation(fields: [experience_id], references: [experience_id])
-  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
+  projet     Projet     @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
+  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id], onDelete: Cascade)
 
   @@id([experience_id, utilisateur_id])
   @@map("valide_projet")
@@ -381,36 +496,48 @@ model ValideStage {
   date_d_action  DateTime?
   commentaire    String?
 
-  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id])
-  stage      Stage      @relation(fields: [experience_id], references: [experience_id])
+  professeur Professeur @relation(fields: [utilisateur_id], references: [prof_utilisateur_id], onDelete: Cascade)
+  stage      Stage      @relation(fields: [experience_id], references: [experience_id], onDelete: Cascade)
 
   @@id([utilisateur_id, experience_id])
   @@map("valide_stage")
 }
 
-model ValideCertification {
-  institution_id String
-  experience_id  String            @unique
-  statut         StatutValidation?
-  date_d_action  DateTime?
-  commentaire    String?
-
-  institution   Institution   @relation(fields: [institution_id], references: [institution_id])
-  certification Certification @relation(fields: [experience_id], references: [experience_id])
-
-  @@id([institution_id, experience_id])
-  @@map("valide_certification")
-}
-
 model ValideEtudiant {
-  utilisateur_id String
-  institution_id String
-  statut         StatutValidation?
-  date_d_action  DateTime?
+  valide_etudiant_id String @id @default(cuid())
+  utilisateur_id     String
+  institution_id     String
+  statut             StatutValidation?
+  date_debut         DateTime?
+  date_fin           DateTime?
+  description        String?
+  niveau             String?
 
-  etudiant       Etudiant          @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id])
-  institution    Institution       @relation(fields: [institution_id], references: [institution_id])
+  etudiant    Etudiant    @relation(fields: [utilisateur_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
+  institution Institution @relation(fields: [institution_id], references: [institution_id], onDelete: Cascade)
 
-  @@id([utilisateur_id, institution_id])
+  @@index([utilisateur_id, institution_id])
   @@map("valide_etudiant")
 }
+
+model Repository {
+  repository_id       String   @id @default(cuid())
+  github_id           Int      @unique
+  etudiant_id         String
+  title               String
+  description         String?
+  link                String
+  language            String?
+  stars               Int      @default(0)
+  forks               Int      @default(0)
+  private             Boolean  @default(false)
+  github_access_token String?
+  last_synced         DateTime @default(now())
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  etudiant            Etudiant @relation(fields: [etudiant_id], references: [etudiant_utilisateur_id], onDelete: Cascade)
+  projets             Projet[]
+
+  @@map("repositories")
+}
+

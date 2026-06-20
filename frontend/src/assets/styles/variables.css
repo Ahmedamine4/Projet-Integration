@@ -1,26 +1,53 @@
 @font-face {
   font-family: 'Inter';
-  src: url('../fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  src: url('../fonts/inter/Inter-VariableFont_opsz,wght.ttf')
+    format('truetype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'Inter';
-  src: url('../fonts/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  src: url('../fonts/inter/Inter-Italic-VariableFont_opsz,wght.ttf')
+    format('truetype');
   font-weight: 100 900;
   font-style: italic;
 }
 @font-face {
   font-family: 'Norman';
-  src: url('../fonts/fonnts.com-Norman-.otf') format('opentype');
+  src: url('../fonts/norman/fonnts.com-Norman-.otf')
+    format('opentype');
   font-weight: 100 900;
   font-style: normal;
 }
 @font-face {
   font-family: 'Norman_Stencil';
-  src: url('../fonts/fonnts.com-Norman-Stencil-.otf') format('opentype');
+  src: url('../fonts/norman/fonnts.com-Norman-Stencil-.otf')
+    format('opentype');
   font-weight: 100 900;
   font-style: normal;
+}
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('../fonts/intel-one-mono/IntelOneMono-VariableFont_wght.ttf')
+    format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('../fonts/intel-one-mono/IntelOneMono-Italic-VariableFont_wght.ttf')
+    format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  src: url('../fonts/newsreader/Newsreader-Variable.woff2')
+    format('woff2-variations');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
 }
 
 :root {
@@ -41,18 +68,20 @@
   --color-success-rgb: 35, 162, 121;
 
   /* Typography */
-    /* Fonts */
+  /* Fonts */
   --font-ui: 'Inter', sans-serif;
   --font-display: 'Norman', serif;
   --font-stencil: 'Norman_Stencil', serif;
-    /* size */
+  --font-mono: 'Intel One Mono', monospace;
+  --font-editorial: 'Newsreader', Georgia, serif;
+  /* size */
   --font-size-xxs: 0.65rem;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 2rem;
-    /* weights */
+  /* weights */
   --font-light: 300;
   --font-regular: 400;
   --font-medium: 500;

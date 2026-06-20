@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "eu-west-3"
 }
 
+variable "db_password"{
+  description ="mdp database pour prisma"
+  type=string
+  sensitive=true
+}
+
 variable "environment" {
   description = "Environnement"
   type        = string
@@ -38,4 +44,37 @@ variable "availability_zones" {
   description = "Zones de disponibilité"
   type        = list(string)
   default     = ["eu-west-3a", "eu-west-3b"]
+}
+
+variable "ssh_public_key_path" {
+  description = "Chemin vers ta clé publique SSH"
+  type        = string
+  default     = "~/.ssh/id_rsa.pub"
+}
+
+variable "your_ip" {
+  description = "Ton adresse IP publique (pour SSH et debug RDS)"
+  type        = string
+  default     = "160.177.124.101"
+}
+
+
+variable "supabase_service_role_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "jwt_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "jwt_refresh_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "github_client_secret" {
+  type      = string
+  sensitive = true
 }

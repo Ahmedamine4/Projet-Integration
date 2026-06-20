@@ -1,96 +1,164 @@
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia';
 import api from '@/services/api';
-import { supabase } from "@/services/supabase";
+import { supabase } from '@/services/supabase';
 import { ref, computed } from 'vue';
 
-function normalizeUser(user) {
-    if (!user) return null;
+function normalizeAuthUser(user) {
+  if (!user) return null;
 
-    const { prenom, nom, ...rest } = user;
-
-    return {
-        ...rest,
-        firstName: user.firstName || prenom || '',
-        lastName: user.lastName || nom || '',
-    };
+  return {
+    ...user,
+    firstName: user.prenom ?? '',
+    lastName: user.nom ?? '',
+    phone: user.telephone ?? '',
+    photo: user.photo ?? '',
+  };
 }
 
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref(null);
-    const token = ref(null);
+  const user = ref(null);
+  const profileLoading = ref(false);
+  const profileChecked = ref(false);
 
-    const isAuthenticated = computed(() => Boolean(user.value && token.value));
+  const isAuthenticated = computed(() => Boolean(user.value));
 
-    async function login(email, password) {
-        const { data } = await api.post('/auth/login', {
-            email,
-            password
-        });
+  async function fetchProfile() { // Appelé au démarrage pour vérifier si l'utilisateur est déjà connecté (cookie valide)
+      profileLoading.value = true;
 
-        user.value = normalizeUser(data.user);
-        token.value = data.token;
+      try {
+          const { data } = await api.get('/auth/profile');
+          user.value = normalizeAuthUser(data.user);
+      } catch {
+          user.value = null; // Cookie expiré ou absent
+      } finally {
+          profileLoading.value = false;
+          profileChecked.value = true;
+      }
+  }
+
+  async function updateProfile(payload) {
+    if (!user.value?.utilisateur_id) {
+      throw new Error('User not loaded');
     }
 
-    async function register(userData) {
-        const {firstName, lastName, email, password} = userData;
-        const { data } = await api.post('/auth/register', {
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            email,
-            password
-        });
+    const { data } = await api.patch(
+      `/users/update-profile/${user.value.utilisateur_id}`,
+      payload
+    );
 
-        user.value = normalizeUser(data.user);
-        token.value = data.token;
+    await fetchProfile();
+
+    return data;
+  }
+
+  async function uploadProfilePhoto(file) {
+    if (!user.value?.utilisateur_id) {
+      throw new Error('User not loaded');
     }
 
-    async function startGoogleAuth() {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-                queryParams: {
-                    prompt: 'select_account'
-                }
-            }
-        });
-        if (error) throw error;
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const { data } = await api.post(
+      `/users/${user.value.utilisateur_id}/photo`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+
+    user.value = normalizeAuthUser({
+      ...user.value,
+      photo: data.photo ?? '',
+    });
+
+    return data.photo ?? '';
+  }
+
+  async function login(email, password) {
+    const { data } = await api.post('/auth/login', {
+      email,
+      password,
+    });
+
+    user.value = normalizeAuthUser(data.user);
+  }
+
+  async function register(userData) {
+    const { firstName, lastName, email, password } = userData;
+
+    const { data } = await api.post('/auth/register', {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email,
+      password,
+    });
+
+    user.value = normalizeAuthUser(data.user);
+  }
+
+  async function startGoogleAuth() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
+      },
+    });
+
+    if (error) throw error;
+  }
+
+  async function completeGoogleAuth() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) throw error;
+
+    if (!data || !data.session) {
+      throw new Error('No Google/Supabase session found');
     }
 
-    async function completeGoogleAuth() {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        if (!data || !data.session) {
-            throw new Error('Aucune session Google/Supabase trouvée');
-        }
+    const supabaseToken = data.session.access_token;
 
-        const supabaseToken = data.session.access_token;
+    const response = await api.post('/auth/google', {
+      access_token: supabaseToken,
+    });
 
-        const response = await api.post(
-            '/auth/google',
-            {  access_token: supabaseToken  }
-        );
-        
-        user.value = normalizeUser(response.data.user);
-        token.value = response.data.token;
+    user.value = normalizeAuthUser(response.data.user);
+  }
+
+async function logout() {
+    try {
+      await api.post('/auth/logout');
+    } catch (backendError) {
+      console.error('Failed to logout:', backendError);
     }
 
-    async function logout() {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-
-        user.value = null;
-        token.value = null;
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.warn('Supabase logout warning:', error);
     }
-    return {
-        user,
-        token,
-        isAuthenticated,
-        login,
-        register,
-        startGoogleAuth,
-        completeGoogleAuth,
-        logout,
-    };
+
+    user.value = null;
+  
+  }
+
+  return {
+    user,
+    profileLoading,
+    profileChecked,
+    isAuthenticated,
+    fetchProfile,
+    updateProfile,
+    uploadProfilePhoto,
+    login,
+    register,
+    startGoogleAuth,
+    completeGoogleAuth,
+    logout,
+  };
 });
-

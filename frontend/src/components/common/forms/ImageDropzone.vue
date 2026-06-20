@@ -1,0 +1,357 @@
+<script setup>
+import { computed, onUnmounted, ref, watch } from 'vue';
+import { ImagePlus, Trash2, UploadCloud } from 'lucide-vue-next';
+import ImageCropperModal from '@/components/common/forms/ImageCropperModal.vue';
+
+const model = defineModel({
+  type: Object,
+  default: null
+});
+
+const props = defineProps({
+  title: {
+    type: String,
+    default: 'Upload project screenshot'
+  },
+  subtitle: {
+    type: String,
+    default: 'PNG, JPG, or WebP. Click to browse.'
+  },
+  emptyText: {
+    type: String,
+    default: 'No file selected'
+  },
+  accept: {
+    type: String,
+    default: 'image/*'
+  },
+  initialPreviewUrl: {
+    type: String,
+    default: '',
+  },
+  initialFileName: {
+    type: String,
+    default: '',
+  },
+  cropWidth: {
+    type: Number,
+    default: 0,
+  },
+  cropHeight: {
+    type: Number,
+    default: 0,
+  },
+});
+
+const isDragging = ref(false);
+const isInitialPreviewCleared = ref(false);
+const pendingCropFile = ref(null);
+const shouldCrop = computed(() => props.cropWidth > 0 && props.cropHeight > 0);
+
+const updateFile = (file) => {
+  isInitialPreviewCleared.value = false;
+  model.value = file || null;
+};
+
+const selectFile = (file) => {
+  if (!file) return;
+
+  if (shouldCrop.value && file.type?.startsWith('image/')) {
+    pendingCropFile.value = file;
+    return;
+  }
+
+  updateFile(file);
+};
+
+const handleFileChange = (event) => {
+  selectFile(event.target.files?.[0]);
+  event.target.value = '';
+};
+
+const handleDrop = (event) => {
+  isDragging.value = false;
+  selectFile(event.dataTransfer.files?.[0]);
+};
+
+const clearFile = () => {
+  releasePreviewURL();
+  isInitialPreviewCleared.value = true;
+  pendingCropFile.value = null;
+  model.value = null;
+};
+
+const closeCropper = () => {
+  pendingCropFile.value = null;
+};
+
+const handleCroppedFile = (file) => {
+  updateFile(file);
+  closeCropper();
+};
+
+const previewURL = ref('');
+
+const displayPreviewURL = computed(() => {
+  if (previewURL.value) return previewURL.value;
+  if (isInitialPreviewCleared.value) return '';
+  return props.initialPreviewUrl;
+});
+const hasPreview = computed(() => !!displayPreviewURL.value);
+
+const displayFileName = computed(() => {
+  if (model.value?.name) return model.value.name;
+  if (isInitialPreviewCleared.value) return props.emptyText;
+  return props.initialFileName || props.emptyText;
+});
+const hasDisplayedFile = computed(() => {
+  return Boolean(model.value || displayPreviewURL.value);
+});
+
+function releasePreviewURL() {
+  if (!previewURL.value) return;
+  URL.revokeObjectURL(previewURL.value);
+  previewURL.value = '';
+}
+
+watch(model, (newPreview) => {
+  releasePreviewURL();
+  if (newPreview instanceof Blob)
+    previewURL.value = URL.createObjectURL(newPreview);
+});
+
+watch(
+  () => props.initialPreviewUrl,
+  () => {
+    isInitialPreviewCleared.value = false;
+  }
+);
+
+onUnmounted(releasePreviewURL);
+</script>
+
+<template>
+  <label
+    class="drop-zone"
+    :class="{ 'drop-zone--active': isDragging }"
+    for="projectImage"
+    @dragover.prevent="isDragging = true"
+    @dragleave.prevent="isDragging = false"
+    @drop.prevent="handleDrop"
+  >
+    <div class="drop-zone__preview">
+      <img
+        v-if="hasPreview"
+        :src="displayPreviewURL"
+        alt=""
+      >
+      <ImagePlus v-else />
+    </div>
+    <div class="drop-zone__content">
+      <button
+        v-if="hasDisplayedFile"
+        type="button"
+        class="drop-zone__clear"
+        @click.prevent.stop="clearFile"
+      >
+        <Trash2 :size="15" />
+      </button>
+      <span class="drop-zone__eyebrow">
+        <UploadCloud :size="15" />
+        Drop image here
+      </span>
+      <span class="drop-zone__title">
+        {{ title }}
+      </span>
+      <span class="drop-zone__subtitle">
+        {{ subtitle }}
+      </span>
+
+      <input
+        id="projectImage"
+        type="file"
+        :accept="accept"
+        class="hidden-input"
+        @change="handleFileChange"
+      >
+
+      <p
+        class="file-name"
+        :class="{
+          'file-name--empty': !hasDisplayedFile,
+          'file-name--selected': hasDisplayedFile
+        }"
+      >
+        {{ displayFileName }}
+      </p>
+    </div>
+  </label>
+  <ImageCropperModal
+    :open="Boolean(pendingCropFile)"
+    :file="pendingCropFile"
+    title="Crop uploaded image"
+    :output-width="cropWidth || 1280"
+    :output-height="cropHeight || 720"
+    @close="closeCropper"
+    @crop="handleCroppedFile"
+  />
+</template>
+
+<style scoped>
+.drop-zone {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-md);
+  border: 1.5px dashed rgba(var(--color-primary-rgb), 0.18);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  text-align: left;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--color-surface-rgb), 0.44),
+    var(--color-background)
+  );
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.drop-zone:hover,
+.drop-zone--active {
+  border-color: rgba(var(--color-secondary-rgb), 0.56);
+  box-shadow: 0 12px 26px rgba(var(--color-primary-rgb), 0.06);
+  transform: translateY(-1px);
+}
+
+.drop-zone__clear {
+  position: absolute;
+  top: calc(var(--space-xs) * -1);
+  right: calc(var(--space-xs) * -1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 999px;
+  background-color: transparent;
+  color: rgba(var(--color-primary-rgb), 0.78);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.drop-zone__clear:is(:hover, :focus-visible) {
+  color: var(--color-error);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.drop-zone__preview {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--color-secondary-rgb), 0.14),
+    rgba(var(--color-primary-rgb), 0.05)
+  );
+  color: rgba(var(--color-primary-rgb), 0.68);
+  overflow: hidden;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.08);
+}
+
+.drop-zone__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.drop-zone__preview svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.drop-zone__content {
+  position: relative;
+  display: grid;
+  gap: 0.32rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.drop-zone__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: fit-content;
+  color: var(--color-secondary);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.drop-zone__title {
+  color: var(--color-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-medium);
+  line-height: 1.25;
+}
+
+.drop-zone__subtitle {
+  color: rgba(var(--color-primary-rgb), 0.58);
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+}
+
+.drop-zone__title,
+.drop-zone__subtitle {
+  overflow-wrap: anywhere;
+}
+
+.file-name {
+  margin: 0;
+  margin-top: 0.1rem;
+  background: rgba(var(--color-primary-rgb), 0.06);
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-name--empty {
+  color: rgba(var(--color-primary-rgb), 0.52);
+}
+
+.file-name--selected {
+  color: var(--color-success);
+  background: rgba(var(--color-success-rgb), 0.08);
+}
+
+.hidden-input {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .drop-zone {
+    grid-template-columns: 1fr;
+  }
+
+  .drop-zone__preview {
+    aspect-ratio: 16 / 9;
+  }
+}
+</style>

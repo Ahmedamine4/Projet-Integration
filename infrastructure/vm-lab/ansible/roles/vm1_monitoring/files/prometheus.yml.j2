@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 5s
+
+scrape_configs:
+  - job_name: 'vms'
+    static_configs:
+      - targets:
+          - "{{ vm2_ip }}:9100"
+          - "{{ vm3_ip }}:9100"
+          - "{{ vm4_ip }}:9100"
+  - job_name: 'containers'
+    static_configs:
+      - targets:
+          - "{{ vm2_ip }}:8081"
+          - "{{ vm3_ip }}:8081"
+          - "{{ vm4_ip }}:8081"
+  - job_name: 'nginx'
+    static_configs:
+      - targets:
+          - "{{ vm2_ip }}:9113"
+  - job_name: 'postgres'
+    static_configs:
+      - targets:
+          - "{{ vm3_ip }}:9187"

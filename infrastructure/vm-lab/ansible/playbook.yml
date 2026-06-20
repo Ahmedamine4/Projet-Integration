@@ -1,0 +1,17 @@
+---
+- name: Configure VM according to its role
+  hosts: all
+  become: true
+
+  roles:
+    - role: vm1_monitoring
+      when: vm_role | default('') == "vm1"
+
+    - role: vm2_basic
+      when: vm_role | default('') == "vm2"
+
+    - role: vm3_db_secure
+      when: vm_role | default('') == "vm3"
+
+    - role: vm4_ai_basic
+      when: vm_role | default('') == "vm4"
