@@ -1,0 +1,1 @@
+{"virtualbox":{"/ansible":{"type":"virtualbox","guestpath":"/ansible","hostpath":"C:/Projet-Integration/infrastructure/vm-lab/monitoring/ansible","disabled":false,"__vagrantfile":true},"/vagrant":{"guestpath":"/vagrant","hostpath":"C:/Projet-Integration/infrastructure/vm-lab/monitoring","disabled":false,"__vagrantfile":true}}}
